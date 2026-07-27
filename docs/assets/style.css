@@ -2553,9 +2553,9 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .footnotes p {
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
-  line-height: 1.6;
+  line-height: 1.2;
   margin: 0;
 }
 
