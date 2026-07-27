@@ -798,7 +798,7 @@ function initArchParticles() {
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
-// Tagline particle network — connected nodes with gold lines, gentle drift
+// Tagline honeycomb basalt columns — hexagonal pillar grid with pulse animation
 function initTaglineParticles() {
   var container = document.querySelector('[data-tagline-particles]');
   var canvas = container ? container.querySelector('.tagline-canvas') : null;
@@ -808,10 +808,14 @@ function initTaglineParticles() {
   if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   var ctx = canvas.getContext('2d');
-  var particles = [];
-  var PARTICLE_COUNT = 50;
-  var CONNECT_DIST = 140;   // max distance for line connection
   var running = true;
+  var time = 0;
+
+  // Hex geometry
+  var HEX_R = 38;              // circumradius (center to vertex)
+  var HEX_GAP = 4;             // gap between hexagons
+  var STEP = HEX_R * 2 + HEX_GAP;
+  var ROW_H = Math.sqrt(3) * HEX_R + HEX_GAP;
 
   function resize() {
     var rect = container.getBoundingClientRect();
@@ -824,81 +828,95 @@ function initTaglineParticles() {
     ctx.scale(dpr, dpr);
   }
 
-  function createParticle(w, h) {
-    return {
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.3,
-      vy: (Math.random() - 0.5) * 0.25,
-      r: 1.2 + Math.random() * 1.4,
-      alpha: 0.25 + Math.random() * 0.35
-    };
-  }
-
-  function initParticles() {
-    var rect = container.getBoundingClientRect();
-    var w = rect.width;
-    var h = rect.height;
-    particles = [];
-    for (var i = 0; i < PARTICLE_COUNT; i++) {
-      particles.push(createParticle(w, h));
+  // Draw a single hexagon path (flat-top orientation)
+  function hexPath(cx, cy, r) {
+    ctx.beginPath();
+    for (var i = 0; i < 6; i++) {
+      var angle = Math.PI / 3 * i;
+      var hx = cx + r * Math.cos(angle);
+      var hy = cy + r * Math.sin(angle);
+      if (i === 0) ctx.moveTo(hx, hy);
+      else ctx.lineTo(hx, hy);
     }
+    ctx.closePath();
   }
 
   resize();
-  initParticles();
 
   function draw() {
     if (!running) return;
     var rect = container.getBoundingClientRect();
     var w = rect.width;
     var h = rect.height;
+    time += 0.008;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Update positions
-    for (var i = 0; i < particles.length; i++) {
-      var p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      // Bounce off edges
-      if (p.x < 0 || p.x > w) p.vx *= -1;
-      if (p.y < 0 || p.y > h) p.vy *= -1;
-      p.x = Math.max(0, Math.min(w, p.x));
-      p.y = Math.max(0, Math.min(h, p.y));
-    }
+    // Center the grid vertically
+    var cols = Math.ceil(w / STEP) + 2;
+    var rows = Math.ceil(h / ROW_H) + 2;
+    var totalW = cols * STEP;
+    var totalH = rows * ROW_H;
+    var offsetX = (w - totalW) / 2 + STEP;
+    var offsetY = (h - totalH) / 2 + ROW_H;
 
-    // Draw connections
-    for (var i = 0; i < particles.length; i++) {
-      for (var j = i + 1; j < particles.length; j++) {
-        var dx = particles[i].x - particles[j].x;
-        var dy = particles[i].y - particles[j].y;
+    for (var row = 0; row < rows; row++) {
+      var rowOffset = (row % 2) * (STEP / 2);
+      for (var col = 0; col < cols; col++) {
+        var cx = offsetX + col * STEP + rowOffset;
+        var cy = offsetY + row * ROW_H;
+
+        // Skip hexagons fully outside viewport
+        if (cx < -HEX_R * 2 || cx > w + HEX_R * 2) continue;
+        if (cy < -HEX_R * 2 || cy > h + HEX_R * 2) continue;
+
+        // Distance from center for radial fade
+        var dx = cx - w / 2;
+        var dy = cy - h / 2;
         var dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < CONNECT_DIST) {
-          var opacity = (1 - dist / CONNECT_DIST) * 0.18;
-          ctx.strokeStyle = 'rgba(200,167,91,' + opacity.toFixed(3) + ')';
-          ctx.lineWidth = 0.6;
-          ctx.beginPath();
-          ctx.moveTo(particles[i].x, particles[i].y);
-          ctx.lineTo(particles[j].x, particles[j].y);
-          ctx.stroke();
-        }
-      }
-    }
+        var maxDist = Math.sqrt(w * w + h * h) / 2;
+        var fadeAlpha = 1 - Math.min(1, dist / maxDist);
+        fadeAlpha = fadeAlpha * fadeAlpha; // quadratic falloff for softer edges
 
-    // Draw particles
-    for (var i = 0; i < particles.length; i++) {
-      var p = particles[i];
-      // Outer glow
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(0.1, p.r * 2.5), 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200,167,91,' + (p.alpha * 0.15).toFixed(3) + ')';
-      ctx.fill();
-      // Core dot
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(0.1, p.r), 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(200,167,91,' + p.alpha.toFixed(3) + ')';
-      ctx.fill();
+        // Pulse: each hex has a unique phase based on position
+        var phase = (col * 0.7 + row * 1.1 + time) % (Math.PI * 2);
+        var pulse = 0.6 + 0.4 * Math.sin(phase);
+
+        var baseAlpha = fadeAlpha * pulse;
+
+        // Hex outline
+        hexPath(cx, cy, HEX_R);
+        ctx.strokeStyle = 'rgba(200,167,91,' + (baseAlpha * 0.22).toFixed(3) + ')';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+
+        // Inner hex (smaller, simulates depth/column top)
+        hexPath(cx, cy, HEX_R * 0.7);
+        ctx.strokeStyle = 'rgba(200,167,91,' + (baseAlpha * 0.10).toFixed(3) + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+
+        // Vertex dots — 6 corners of the hexagon
+        for (var i = 0; i < 6; i++) {
+          var angle = Math.PI / 3 * i;
+          var vx = cx + HEX_R * Math.cos(angle);
+          var vy = cy + HEX_R * Math.sin(angle);
+          ctx.beginPath();
+          ctx.arc(vx, vy, Math.max(0.1, 1.2 * baseAlpha), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.35).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        // Center dot with glow
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.max(0.1, 2.5 * baseAlpha), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.08).toFixed(3) + ')';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cx, cy, Math.max(0.1, 1.0 * baseAlpha), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.30).toFixed(3) + ')';
+        ctx.fill();
+      }
     }
 
     requestAnimationFrame(draw);
@@ -909,6 +927,5 @@ function initTaglineParticles() {
   // Resize handler
   window.addEventListener('resize', function () {
     resize();
-    initParticles();
   });
 }
