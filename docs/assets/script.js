@@ -798,7 +798,7 @@ function initArchParticles() {
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
-// Tagline honeycomb basalt columns — hexagonal pillar grid with pulse animation
+// Tagline honeycomb — compact hex grid with breathing pulse and gold flow light
 function initTaglineParticles() {
   var container = document.querySelector('[data-tagline-particles]');
   var canvas = container ? container.querySelector('.tagline-canvas') : null;
@@ -811,11 +811,19 @@ function initTaglineParticles() {
   var running = true;
   var time = 0;
 
-  // Hex geometry
-  var HEX_R = 38;              // circumradius (center to vertex)
-  var HEX_GAP = 4;             // gap between hexagons
+  // Compact hex geometry for ~80px height
+  var HEX_R = 22;
+  var HEX_GAP = 3;
   var STEP = HEX_R * 2 + HEX_GAP;
   var ROW_H = Math.sqrt(3) * HEX_R + HEX_GAP;
+
+  // Flow light: 3 waves sweep left→right at different speeds
+  var FLOW_WAVES = [
+    { speed: 0.015, width: 120, alpha: 0.38 },
+    { speed: 0.009, width: 90,  alpha: 0.22 },
+    { speed: 0.022, width: 60,  alpha: 0.28 }
+  ];
+  var flowPositions = [0, 300, 600]; // staggered start positions
 
   function resize() {
     var rect = container.getBoundingClientRect();
@@ -828,7 +836,7 @@ function initTaglineParticles() {
     ctx.scale(dpr, dpr);
   }
 
-  // Draw a single hexagon path (flat-top orientation)
+  // Draw hexagon path (flat-top)
   function hexPath(cx, cy, r) {
     ctx.beginPath();
     for (var i = 0; i < 6; i++) {
@@ -848,11 +856,18 @@ function initTaglineParticles() {
     var rect = container.getBoundingClientRect();
     var w = rect.width;
     var h = rect.height;
-    time += 0.008;
+    time += 0.012;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Center the grid vertically
+    // Update flow light positions (loop across viewport + margin)
+    for (var f = 0; f < FLOW_WAVES.length; f++) {
+      flowPositions[f] += FLOW_WAVES[f].speed * 60;
+      if (flowPositions[f] > w + FLOW_WAVES[f].width * 2) {
+        flowPositions[f] = -FLOW_WAVES[f].width * 2;
+      }
+    }
+
     var cols = Math.ceil(w / STEP) + 2;
     var rows = Math.ceil(h / ROW_H) + 2;
     var totalW = cols * STEP;
@@ -861,60 +876,84 @@ function initTaglineParticles() {
     var offsetY = (h - totalH) / 2 + ROW_H;
 
     for (var row = 0; row < rows; row++) {
-      var rowOffset = (row % 2) * (STEP / 2);
+      var rowOff = (row % 2) * (STEP / 2);
       for (var col = 0; col < cols; col++) {
-        var cx = offsetX + col * STEP + rowOffset;
+        var cx = offsetX + col * STEP + rowOff;
         var cy = offsetY + row * ROW_H;
 
-        // Skip hexagons fully outside viewport
+        // Skip hexagons outside viewport
         if (cx < -HEX_R * 2 || cx > w + HEX_R * 2) continue;
         if (cy < -HEX_R * 2 || cy > h + HEX_R * 2) continue;
 
-        // Distance from center for radial fade
+        // Radial fade from center
         var dx = cx - w / 2;
         var dy = cy - h / 2;
         var dist = Math.sqrt(dx * dx + dy * dy);
         var maxDist = Math.sqrt(w * w + h * h) / 2;
         var fadeAlpha = 1 - Math.min(1, dist / maxDist);
-        fadeAlpha = fadeAlpha * fadeAlpha; // quadratic falloff for softer edges
+        fadeAlpha = fadeAlpha * fadeAlpha;
 
-        // Pulse: each hex has a unique phase based on position
-        var phase = (col * 0.7 + row * 1.1 + time) % (Math.PI * 2);
-        var pulse = 0.6 + 0.4 * Math.sin(phase);
+        // Breathing: slow, deep pulse with position-based phase
+        var breathPhase = (col * 0.5 + row * 0.8 + time * 0.6);
+        var breath = 0.35 + 0.65 * Math.pow((Math.sin(breathPhase) + 1) / 2, 1.5);
 
-        var baseAlpha = fadeAlpha * pulse;
+        // Calculate flow light intensity at this hex position
+        var flowIntensity = 0;
+        for (var f = 0; f < FLOW_WAVES.length; f++) {
+          var wave = FLOW_WAVES[f];
+          var fp = flowPositions[f];
+          var distToFlow = Math.abs(cx - fp);
+          if (distToFlow < wave.width) {
+            // Smooth bell curve for flow light
+            var flowFactor = Math.cos((distToFlow / wave.width) * Math.PI * 0.5);
+            flowFactor = flowFactor * flowFactor;
+            flowIntensity += wave.alpha * flowFactor;
+          }
+        }
+        flowIntensity = Math.min(0.7, flowIntensity);
+
+        var baseAlpha = fadeAlpha * breath;
+        var totalAlpha = baseAlpha + flowIntensity * fadeAlpha;
 
         // Hex outline
         hexPath(cx, cy, HEX_R);
-        ctx.strokeStyle = 'rgba(200,167,91,' + (baseAlpha * 0.22).toFixed(3) + ')';
-        ctx.lineWidth = 0.8;
+        ctx.strokeStyle = 'rgba(200,167,91,' + (totalAlpha * 0.30).toFixed(3) + ')';
+        ctx.lineWidth = 0.7 + flowIntensity * 0.8;
         ctx.stroke();
 
-        // Inner hex (smaller, simulates depth/column top)
-        hexPath(cx, cy, HEX_R * 0.7);
-        ctx.strokeStyle = 'rgba(200,167,91,' + (baseAlpha * 0.10).toFixed(3) + ')';
-        ctx.lineWidth = 0.5;
+        // Flow glow: bright fill when flow light passes
+        if (flowIntensity > 0.05) {
+          hexPath(cx, cy, HEX_R);
+          ctx.fillStyle = 'rgba(232,213,163,' + (flowIntensity * 0.08).toFixed(3) + ')';
+          ctx.fill();
+        }
+
+        // Inner hex for depth
+        hexPath(cx, cy, HEX_R * 0.65);
+        ctx.strokeStyle = 'rgba(200,167,91,' + (totalAlpha * 0.12).toFixed(3) + ')';
+        ctx.lineWidth = 0.4;
         ctx.stroke();
 
-        // Vertex dots — 6 corners of the hexagon
+        // Vertex dots
         for (var i = 0; i < 6; i++) {
           var angle = Math.PI / 3 * i;
           var vx = cx + HEX_R * Math.cos(angle);
           var vy = cy + HEX_R * Math.sin(angle);
+          var dotR = 0.8 + flowIntensity * 1.2;
           ctx.beginPath();
-          ctx.arc(vx, vy, Math.max(0.1, 1.2 * baseAlpha), 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.35).toFixed(3) + ')';
+          ctx.arc(vx, vy, Math.max(0.1, dotR), 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(200,167,91,' + (totalAlpha * (0.30 + flowIntensity * 0.45)).toFixed(3) + ')';
           ctx.fill();
         }
 
-        // Center dot with glow
+        // Center glow
         ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(0.1, 2.5 * baseAlpha), 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.08).toFixed(3) + ')';
+        ctx.arc(cx, cy, Math.max(0.1, 1.5 + flowIntensity * 2.5), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(232,213,163,' + (totalAlpha * 0.10).toFixed(3) + ')';
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(0.1, 1.0 * baseAlpha), 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(200,167,91,' + (baseAlpha * 0.30).toFixed(3) + ')';
+        ctx.arc(cx, cy, Math.max(0.1, 0.8 + flowIntensity * 0.8), 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(200,167,91,' + (totalAlpha * 0.40).toFixed(3) + ')';
         ctx.fill();
       }
     }
@@ -924,7 +963,6 @@ function initTaglineParticles() {
 
   requestAnimationFrame(draw);
 
-  // Resize handler
   window.addEventListener('resize', function () {
     resize();
   });

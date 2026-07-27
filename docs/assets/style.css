@@ -2518,14 +2518,14 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    Site Tagline & Footnotes
    ========================================= */
 .landing-section--tagline {
-  padding: 64px 0;
+  padding: 12px 0;
   background: transparent;
   border: none;
   box-shadow: none;
   margin-bottom: 0;
   position: relative;
   overflow: hidden;
-  min-height: 280px;
+  min-height: 80px;
 }
 
 .tagline-particles {
