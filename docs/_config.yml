@@ -21,7 +21,7 @@ plugins:
 
 # 导航配置
 nav:
-  - title: 返回项目
+  - title: Github
     url: https://github.com/anviod/edgex
   - title: 首页
     url: /
@@ -29,12 +29,8 @@ nav:
     url: /guide/
   - title: 设备驱动
     url: /drivers/
-  - title: 测试验证
-    url: /testing/
   - title: 边缘计算
     url: /edge/
-  - title: 开发计划
-    url: /development_plan/
 
 # 页面配置
 permalink: /:path/:basename.html
