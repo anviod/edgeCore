@@ -117,7 +117,7 @@ func (s *PointScheduler) Read(ctx context.Context, points []model.Point) (map[st
 
 		// Batch Read Timeout = 3s (aligned with scan's ReadProperty timeout).
 		// Device 1234 room-simulator responds within 1-2s; 500ms was too short.
-		resp, err := s.client.ReadMultiPropertyWithTimeout(s.targetDevice, chunk, 3*time.Second)
+		resp, err := safeReadMultiProperty(s.client, s.targetDevice, chunk, 3*time.Second)
 		if err != nil {
 			// Set firstErr if this is the first error
 			if firstErr == nil {
@@ -424,6 +424,11 @@ func (s *PointScheduler) buildReadRequest(points []model.Point) (btypes.Multiple
 }
 
 func (s *PointScheduler) readSinglePropertiesWithTimeout(chunk btypes.MultiplePropertyData, pointMap map[string]model.Point, result map[string]model.Value, timeout time.Duration) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[BACnet] panic in readSinglePropertiesWithTimeout (recovered): %v", r)
+		}
+	}()
 	for _, obj := range chunk.Objects {
 		for _, prop := range obj.Properties {
 			// Construct PropertyData for Single Read

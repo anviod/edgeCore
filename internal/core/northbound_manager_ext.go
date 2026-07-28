@@ -2,8 +2,12 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
+	"github.com/anviod/edgex/internal/capability"
 	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgex/internal/northbound/edgos_nats"
 	"github.com/anviod/edgex/internal/northbound/http"
 	"github.com/anviod/edgex/internal/northbound/mqtt"
 )
@@ -103,6 +107,102 @@ func (nm *NorthboundManager) UpsertHTTPConfig(cfg model.HTTPConfig) error {
 func (nm *NorthboundManager) SetChannelManager(cm *ChannelManager) {
 	nm.cm = cm
 }
+
+// BindShadowCore attaches ShadowCore → EAN Event publishing on the hot path.
+// Safe to call multiple times; subscription is registered once.
+func (nm *NorthboundManager) BindShadowCore(sc *ShadowCore) {
+	if nm == nil || sc == nil {
+		return
+	}
+	nm.mu.Lock()
+	nm.shadowCore = sc
+	if nm.eanShadowBridge == nil {
+		nm.eanShadowBridge = capability.NewShadowEventBridge()
+	}
+	nm.mu.Unlock()
+
+	nm.eanShadowOnce.Do(func() {
+		sc.Subscribe(func(shadowDeviceID string, points map[string]model.ShadowPoint) {
+			nm.onShadowDelta(shadowDeviceID, points)
+		})
+	})
+	nm.refreshEANEventPublishers()
+}
+
+// RefreshEANEventPublishers re-collects EventPublishers from connected edgeOS clients.
+func (nm *NorthboundManager) RefreshEANEventPublishers() {
+	nm.refreshEANEventPublishers()
+}
+
+func (nm *NorthboundManager) refreshEANEventPublishers() {
+	nm.mu.RLock()
+	bridge := nm.eanShadowBridge
+	mqttClients := make([]*edgos_mqtt.Client, 0, len(nm.edgeOSMQTTClients))
+	for _, c := range nm.edgeOSMQTTClients {
+		mqttClients = append(mqttClients, c)
+	}
+	natsClients := make([]*edgos_nats.Client, 0, len(nm.edgeOSNATSClients))
+	for _, c := range nm.edgeOSNATSClients {
+		natsClients = append(natsClients, c)
+	}
+	nm.mu.RUnlock()
+	if bridge == nil {
+		return
+	}
+	pubs := make([]*capability.EventPublisher, 0, len(mqttClients)+len(natsClients))
+	for _, c := range mqttClients {
+		if rt := c.CapabilityRuntime(); rt != nil {
+			pubs = append(pubs, rt.Events())
+		}
+	}
+	for _, c := range natsClients {
+		if rt := c.CapabilityRuntime(); rt != nil {
+			pubs = append(pubs, rt.Events())
+		}
+	}
+	bridge.SetPublishers(pubs)
+}
+
+func (nm *NorthboundManager) onShadowDelta(shadowDeviceID string, points map[string]model.ShadowPoint) {
+	if len(points) == 0 {
+		return
+	}
+	nm.refreshEANEventPublishers()
+
+	nm.mu.RLock()
+	bridge := nm.eanShadowBridge
+	sc := nm.shadowCore
+	nm.mu.RUnlock()
+	if bridge == nil {
+		return
+	}
+
+	channelID, deviceID := "", shadowDeviceID
+	if sc != nil {
+		if cid, did, err := sc.ResolvePublishTarget(shadowDeviceID); err == nil {
+			channelID, deviceID = cid, did
+		}
+	}
+	if strings.HasPrefix(deviceID, "shadow-") {
+		deviceID = strings.TrimPrefix(deviceID, "shadow-")
+	}
+
+	views := make(map[string]capability.ShadowPointView, len(points))
+	for pointID, pt := range points {
+		ts := pt.CollectedAt
+		if ts.IsZero() {
+			ts = pt.Timestamp
+		}
+		views[pointID] = capability.ShadowPointView{
+			Value:         pt.Value,
+			PreviousValue: pt.PreviousValue,
+			Quality:       pt.Quality,
+			TimestampMs:   ts.UnixMilli(),
+		}
+	}
+	bridge.HandleDelta(deviceID, channelID, views)
+}
+
 
 // findDevice retrieves a device by ID from all channels via ChannelManager
 func (nm *NorthboundManager) findDevice(dID string) any {

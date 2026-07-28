@@ -213,6 +213,9 @@ func main() {
 		return cfgManager.SaveConfig(current)
 	})
 	nbm.SetChannelManager(cm)
+	if shadowCore != nil {
+		nbm.BindShadowCore(shadowCore)
+	}
 	cm.SetStatusHandler(func(deviceID string, status int) {
 		nbm.OnDeviceStatusChange(deviceID, status)
 	})
@@ -276,6 +279,7 @@ func main() {
 			wireShadowStack(shadowCore)
 			cm.SetShadowIngress(shadowIngress)
 			srv.SetShadowCore(shadowCore)
+			nbm.BindShadowCore(shadowCore)
 			srv.SetVirtualShadowEngine(virtualShadow)
 			if vsm == nil && cfgManager != nil {
 				vsm = core.NewVirtualShadowManager(virtualShadow, cm, shadowCore, func(devices []model.VirtualShadowDeviceConfig) error {

@@ -170,12 +170,13 @@ func (sc *ShadowCore) ApplyShadowWrites(msgs []model.ShadowIngressMessage) error
 
 	type deviceNotify struct {
 		shadowDeviceID string
+		prevPoints     map[string]model.ShadowPoint
 		changed        map[string]model.ShadowPoint
 	}
 	pending := make(map[string]*deviceNotify)
 
 	for _, msg := range msgs {
-		shadowDeviceID, version, updatedAt, changed, _, err := sc.applyShadowWriteLocked(msg)
+		shadowDeviceID, version, updatedAt, changed, prevPoints, _, err := sc.applyShadowWriteLocked(msg)
 		if err != nil {
 			for _, n := range pending {
 				returnShadowPointsMap(n.changed)
@@ -188,7 +189,11 @@ func (sc *ShadowCore) ApplyShadowWrites(msgs []model.ShadowIngressMessage) error
 		}
 		n, ok := pending[shadowDeviceID]
 		if !ok {
-			n = &deviceNotify{shadowDeviceID: shadowDeviceID, changed: borrowShadowPointsMap(len(changed))}
+			n = &deviceNotify{
+				shadowDeviceID: shadowDeviceID,
+				prevPoints:     prevPoints,
+				changed:        borrowShadowPointsMap(len(changed)),
+			}
 			pending[shadowDeviceID] = n
 		}
 		for pid, pt := range changed {
@@ -201,7 +206,7 @@ func (sc *ShadowCore) ApplyShadowWrites(msgs []model.ShadowIngressMessage) error
 	sc.mu.Unlock()
 
 	for _, n := range pending {
-		notifyPoints := cloneShadowPointsForNotify(n.changed)
+		notifyPoints := cloneShadowDeltaForNotify(n.prevPoints, n.changed)
 		returnShadowPointsMap(n.changed)
 		sc.enqueueNotify(n.shadowDeviceID, notifyPoints)
 	}
@@ -210,13 +215,13 @@ func (sc *ShadowCore) ApplyShadowWrites(msgs []model.ShadowIngressMessage) error
 
 func (sc *ShadowCore) applyShadowWrite(msg model.ShadowIngressMessage) (*model.ShadowWriteResponse, error) {
 	sc.mu.Lock()
-	shadowDeviceID, version, updatedAt, changed, _, err := sc.applyShadowWriteLocked(msg)
+	shadowDeviceID, version, updatedAt, changed, prevPoints, _, err := sc.applyShadowWriteLocked(msg)
 	sc.mu.Unlock()
 	if err != nil {
 		returnShadowPointsMap(changed)
 		return nil, err
 	}
-	notifyPoints := cloneShadowPointsForNotify(changed)
+	notifyPoints := cloneShadowDeltaForNotify(prevPoints, changed)
 	returnShadowPointsMap(changed)
 	sc.enqueueNotify(shadowDeviceID, notifyPoints)
 	return &model.ShadowWriteResponse{
@@ -231,6 +236,7 @@ func (sc *ShadowCore) applyShadowWriteLocked(msg model.ShadowIngressMessage) (
 	version uint64,
 	updatedAt time.Time,
 	changed map[string]model.ShadowPoint,
+	prevPoints map[string]model.ShadowPoint,
 	profile *model.DeviceCommunicationProfile,
 	err error,
 ) {
@@ -242,6 +248,9 @@ func (sc *ShadowCore) applyShadowWriteLocked(msg model.ShadowIngressMessage) (
 		sc.realShadows[shadowDeviceID] = entry
 	}
 	prev := entry.load()
+	if prev != nil {
+		prevPoints = prev.Points
+	}
 
 	version = sc.versionCounter.Add(1)
 	updatedAt = time.Now()
@@ -287,7 +296,7 @@ func (sc *ShadowCore) applyShadowWriteLocked(msg model.ShadowIngressMessage) (
 		version, updatedAt, changed, commProfile,
 	)
 	entry.publish(snap)
-	return shadowDeviceID, version, updatedAt, changed, commProfile, nil
+	return shadowDeviceID, version, updatedAt, changed, prevPoints, commProfile, nil
 }
 
 // UpdateDeviceRTT 更新设备的RTT数据
@@ -360,13 +369,18 @@ func (sc *ShadowCore) WriteShadowPoint(req model.ShadowWriteRequest) (*model.Sha
 	changed := borrowShadowPointsMap(1)
 	changed[req.PointID] = shadowPoint
 
+	var prevPoints map[string]model.ShadowPoint
+	if prev != nil {
+		prevPoints = prev.Points
+	}
+
 	snap := buildSnapshotFromEntry(
 		prev, prev.ShadowDeviceID, prev.PhysicalDeviceID, prev.ChannelID,
 		version, updatedAt, changed, prev.CommunicationProfile,
 	)
 	entry.publish(snap)
 
-	notifyPoints := cloneShadowPointsForNotify(changed)
+	notifyPoints := cloneShadowDeltaForNotify(prevPoints, changed)
 	returnShadowPointsMap(changed)
 	sc.mu.Unlock()
 	sc.enqueueNotify(req.ShadowDeviceID, notifyPoints)
@@ -493,7 +507,7 @@ func (sc *ShadowCore) CompareAndSwap(deviceID string, expectedVersion uint64, up
 	)
 	entry.publish(snap)
 
-	notifyPoints := cloneShadowPointsForNotify(changed)
+	notifyPoints := cloneShadowDeltaForNotify(prev.Points, changed)
 	returnShadowPointsMap(changed)
 	sc.mu.Unlock()
 	sc.enqueueNotify(deviceID, notifyPoints)
@@ -596,6 +610,7 @@ func (sc *ShadowCore) WriteVirtualShadowDevice(channelID, virtualDeviceID string
 
 	sc.mu.Lock()
 	vd, exists := sc.virtualShadows[virtualDeviceID]
+	var prevPoints map[string]model.ShadowPoint
 	if !exists {
 		vd = &model.VirtualDevice{
 			VirtualDeviceID: virtualDeviceID,
@@ -603,6 +618,14 @@ func (sc *ShadowCore) WriteVirtualShadowDevice(channelID, virtualDeviceID string
 			Points:          make(map[string]model.ShadowPoint),
 		}
 		sc.virtualShadows[virtualDeviceID] = vd
+	} else if len(vd.Points) > 0 {
+		// Snapshot prior values before in-place mutation (vd.Points is mutated below).
+		prevPoints = make(map[string]model.ShadowPoint, len(points))
+		for pid := range points {
+			if old, ok := vd.Points[pid]; ok {
+				prevPoints[pid] = old
+			}
+		}
 	}
 	if channelID != "" {
 		vd.ChannelID = channelID
@@ -629,7 +652,7 @@ func (sc *ShadowCore) WriteVirtualShadowDevice(channelID, virtualDeviceID string
 	}
 	sc.mu.Unlock()
 
-	sc.enqueueNotify(VirtualShadowID(virtualDeviceID), cloneShadowPointsForNotify(points))
+	sc.enqueueNotify(VirtualShadowID(virtualDeviceID), cloneShadowDeltaForNotify(prevPoints, points))
 }
 
 // ResolvePublishTarget 解析订阅通知中的 channel / device，供 ShadowBridge 与 WebSocket 使用。

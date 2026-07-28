@@ -21,6 +21,44 @@ import (
 	"go.uber.org/zap"
 )
 
+// safeSchedulerRead wraps scheduler.Read with panic recovery.
+// BACnet uses CGO (C library via pcap/UDP), and certain malformed
+// responses or network conditions can trigger a SIGSEGV in the C layer.
+// On Windows this crashes the process with exit code 0xffffffff.
+// This wrapper ensures the gateway process survives such crashes.
+func safeSchedulerRead(scheduler *PointScheduler, ctx context.Context, points []model.Point) (map[string]model.Value, error) {
+	var result map[string]model.Value
+	var err error
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				zap.L().Error("[BACnet] CGO panic in scheduler.Read (recovered)",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+				err = fmt.Errorf("CGO panic recovered: %v", r)
+			}
+		}()
+		result, err = scheduler.Read(ctx, points)
+	}()
+	return result, err
+}
+
+// safeReadMultiProperty wraps ReadMultiPropertyWithTimeout with panic recovery.
+// The BACnet library may panic on malformed UDP responses, nil pointer
+// dereferences, or concurrent map access — any of which would crash the
+// process if the scheduler goroutine is not protected.
+func safeReadMultiProperty(client bacnetlib.Client, dev btypes.Device, mpd btypes.MultiplePropertyData, timeout time.Duration) (resp btypes.MultiplePropertyData, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			zap.L().Error("[BACnet] panic in ReadMultiPropertyWithTimeout (recovered)",
+				zap.Any("panic", r),
+				zap.Stack("stack"))
+			err = fmt.Errorf("panic recovered: %v", r)
+		}
+	}()
+	return client.ReadMultiPropertyWithTimeout(dev, mpd, timeout)
+}
+
 func init() {
 	drv.RegisterDriver("bacnet-ip", func() drv.Driver {
 		return NewBACnetDriver()
@@ -438,7 +476,10 @@ func (d *BACnetDriver) ReadPoints(ctx context.Context, points []model.Point) (ma
 	// raw, err — scheduler.Read returns (map[pointID]Value, error)
 	// 部分成功时 err==nil 且 raw 中包含成功读取的点位。
 	// 全部失败时 err!=nil 或 raw 为空。
-	raw, err := scheduler.Read(ctx, points)
+	// safeSchedulerRead wraps scheduler.Read with panic recovery —
+	// BACnet library may panic on malformed UDP responses or concurrent
+	// access races, which would crash the process if unrecovered.
+	raw, err := safeSchedulerRead(scheduler, ctx, points)
 	now := time.Now()
 	results := make(map[string]model.Value, len(points))
 	failed := 0

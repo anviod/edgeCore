@@ -332,6 +332,13 @@ func (cm *ConnectionManager) StartBackgroundLoop(fn func(context.Context)) {
 
 	go func() {
 		defer close(done)
+		defer func() {
+			if r := recover(); r != nil {
+				zap.L().Error("[ConnectionManager] background goroutine panic recovered",
+					zap.Any("panic", r),
+					zap.Stack("stack"))
+			}
+		}()
 		fn(ctx)
 	}()
 }

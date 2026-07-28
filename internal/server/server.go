@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/anviod/edgex/internal/ai_agent"
+	"github.com/anviod/edgex/internal/capability"
 	"github.com/anviod/edgex/internal/config"
 	"github.com/anviod/edgex/internal/core"
 	"github.com/anviod/edgex/internal/mcp"
@@ -79,6 +80,8 @@ type Server struct {
 	aiAgent                *ai_agent.Agent
 	aiSettingsMem          *model.AICopilotSettings
 	mcpServer              *mcp.MCPServer // MCP 协议服务端（懒初始化）
+	eanRuntime             *capability.Runtime
+	eanRuntimeOnce         sync.Once
 	storageAttachHook      func(*storage.Storage)
 	runtimeStartHook       func()
 	shadowSubscribeOnce    sync.Once
@@ -412,6 +415,17 @@ func (s *Server) setupRoutes() {
 	api.Get("/mcp/status", s.handleMcpStatus)
 	api.Get("/mcp/key", s.handleMcpGetKey)
 	api.Post("/mcp/generate-key", s.handleMcpGenerateKey)
+
+	// EAN 2.0 Capability Runtime REST 端点（UI 专用，走 JWT）
+	api.Get("/capability/agent/status", s.handleEanAgentStatus)
+	api.Get("/capability/list", s.handleEanCapabilityList)
+	api.Get("/capability/list/:id", s.handleEanCapabilityDetail)
+	api.Post("/capability/invoke", s.handleEanInvoke)
+	api.Get("/capability/invoke/:id/status", s.handleEanInvokeStatus)
+	api.Get("/capability/discovery/agents", s.handleEanDiscoveryAgents)
+	api.Get("/capability/events/history", s.handleEanEventHistory)
+	api.Delete("/capability/events/history", s.handleEanEventClear)
+	api.Get("/capability/settings", s.handleEanSettings)
 
 	// 系统设置
 	api.Get("/system", s.getSystemConfig)

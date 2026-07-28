@@ -10,9 +10,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/anviod/edgex/internal/capability"
+	"github.com/anviod/edgex/internal/execution"
 	"github.com/anviod/edgex/internal/mcp"
 	"github.com/anviod/edgex/internal/model"
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -2286,7 +2289,45 @@ func (s *Server) initMCPServer() *mcp.MCPServer {
 	s.registerMCPTools(mcpSrv)
 	s.registerMCPResources(mcpSrv)
 	s.registerMCPPrompts(mcpSrv)
+	// EAN 2.0: auto-register Capability → MCP Tool (Invoke via Runtime, not JSON-RPC CRUD).
+	if rt := s.ensureCapabilityRuntime(); rt != nil {
+		n := mcp.RegisterCapabilityTools(mcpSrv, rt, s.mcpRequireFullAccess)
+		s.logger.Info("EAN Capability tools registered on MCP", zap.Int("count", n))
+	}
 	return mcpSrv
+}
+
+// ensureCapabilityRuntime builds (once) a local Capability Runtime for MCP / in-process Invoke.
+func (s *Server) ensureCapabilityRuntime() *capability.Runtime {
+	s.eanRuntimeOnce.Do(func() {
+		agentID := "edgex"
+		if s.nbm != nil {
+			cfg := s.nbm.GetConfig()
+			if len(cfg.EdgeOSMQTT) > 0 && cfg.EdgeOSMQTT[0].NodeID != "" {
+				agentID = cfg.EdgeOSMQTT[0].NodeID
+			} else if len(cfg.EdgeOSNATS) > 0 && cfg.EdgeOSNATS[0].NodeID != "" {
+				agentID = cfg.EdgeOSNATS[0].NodeID
+			}
+		}
+		rt, err := capability.NewRuntime(capability.RuntimeConfig{
+			AgentID:              agentID,
+			AgentVersion:         capability.RuntimeVersion,
+			Transport:            capability.TransportSDK,
+			HeartbeatIntervalSec: 60,
+			Metadata: map[string]any{
+				"northbound": "mcp",
+			},
+		}, capability.NoopBus{})
+		if err != nil {
+			s.logger.Warn("Failed to create EAN Capability Runtime for MCP", zap.Error(err))
+			return
+		}
+		exec := execution.NewDriverExecutor(s.cm)
+		exec.SetAI(execution.NewAIAdapter(s.ensureAiAgent()))
+		rt.SetMapper(execution.NewCapabilityMapper(exec))
+		s.eanRuntime = rt
+	})
+	return s.eanRuntime
 }
 
 // registerMCPPrompts 注册 MCP 提示词模板

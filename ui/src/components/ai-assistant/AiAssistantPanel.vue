@@ -159,6 +159,7 @@
                     <AiWorkbenchEdge v-else-if="state.workspace === 'edge'" />
                     <AiWorkbenchDiagnostics v-else-if="state.workspace === 'diagnostics'" />
                     <AiMcpHelp v-else-if="state.workspace === 'mcp'" />
+                    <AiEanPanel v-else-if="state.workspace === 'ean'" />
                   </div>
                 </section>
 
@@ -226,6 +227,7 @@ import AiWorkbenchCases from './AiWorkbenchCases.vue'
 import AiWorkbenchEdge from './AiWorkbenchEdge.vue'
 import AiWorkbenchDiagnostics from './AiWorkbenchDiagnostics.vue'
 import AiMcpHelp from './AiMcpHelp.vue'
+import AiEanPanel from './AiEanPanel.vue'
 import AiSettingsDialog from './AiSettingsDialog.vue'
 
 const route = useRoute()
@@ -409,8 +411,8 @@ const onResizeStart = (e) => {
 const onResizeMove = (e) => {
   if (!resizeStart) return
   setSize(
-    Math.max(480, Math.min(960, resizeStart.width + e.clientX - resizeStart.pointerX)),
-    Math.max(420, Math.min(window.innerHeight - 40, resizeStart.height + e.clientY - resizeStart.pointerY))
+    Math.max(320, resizeStart.width + e.clientX - resizeStart.pointerX),
+    Math.max(240, resizeStart.height + e.clientY - resizeStart.pointerY)
   )
 }
 const onResizeEnd = (e) => {

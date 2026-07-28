@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/anviod/edgex/internal/capability"
 	"github.com/anviod/edgex/internal/model"
 	"github.com/anviod/edgex/internal/northbound/bacnet"
 	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
@@ -53,6 +54,10 @@ type NorthboundManager struct {
 	cancel            context.CancelFunc
 	saveFunc          func(model.NorthboundConfig) error
 	mu                sync.RWMutex
+
+	shadowCore        *ShadowCore
+	eanShadowBridge   *capability.ShadowEventBridge
+	eanShadowOnce     sync.Once
 }
 
 func NewNorthboundManager(cfg model.NorthboundConfig, pipeline *DataPipeline, sb model.SouthboundManager, s *storage.Storage, saveFunc func(model.NorthboundConfig) error) *NorthboundManager {

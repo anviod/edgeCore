@@ -271,6 +271,137 @@
           </div>
         </div>
       </a-tab-pane>
+
+      <!-- ── Tab 4: EAN 接入 ── -->
+      <a-tab-pane key="ean" title="EAN 接入">
+        <div class="ai-settings-tab-body">
+          <div class="ai-settings-intro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M4.93 4.93l2.12 2.12"/><path d="M16.95 16.95l2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.93 19.07l2.12-2.12"/><path d="M16.95 7.05l2.12-2.12"/></svg>
+            <span>Edge Agent Network — EAN 复用北向 edgeOS 通道作为传输层，不单独创建 MQTT/NATS 客户端</span>
+          </div>
+
+          <!-- 无北向通道提示 -->
+          <div v-if="!eanNorthboundAvailable" class="ai-settings-ean-alert">
+            <div class="ai-settings-ean-alert__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div class="ai-settings-ean-alert__body">
+              <div class="ai-settings-ean-alert__title">未检测到 edgeOS 北向通道</div>
+              <div class="ai-settings-ean-alert__desc">
+                EAN 依赖北向 edgeOS(MQTT) 或 edgeOS(NATS) 通道进行 Agent 注册、能力发现和事件发布。
+                请先创建并启用至少一个 edgeOS 北向通道。
+              </div>
+              <a-button size="small" type="primary" @click="goToNorthbound">前往北向通道配置</a-button>
+            </div>
+          </div>
+
+          <!-- 北向通道信息卡片 -->
+          <div v-else class="ai-settings-card ai-settings-card--vertical">
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">复用北向通道</span>
+                <span class="ai-settings-card__desc">
+                  EAN 直接复用已创建的 edgeOS 通道，不额外占用连接资源
+                </span>
+              </div>
+              <span class="ai-settings-status-dot ai-settings-status-dot--on"></span>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 通道详情 -->
+            <div class="ai-settings-ean-nb">
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">通道名称</span>
+                <span class="ai-settings-ean-nb__value">{{ eanNorthboundChannel?.name || '—' }}</span>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">通道类型</span>
+                <span class="ai-settings-ean-nb__value">{{ eanNorthboundChannel?.type || '—' }}</span>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">接入地址</span>
+                <code class="ai-settings-ean-mono">{{ eanNorthboundChannel?.broker || eanNorthboundChannel?.url || '—' }}</code>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">节点 ID</span>
+                <code class="ai-settings-ean-mono">{{ eanNorthboundChannel?.node_id || '—' }}</code>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">运行状态</span>
+                <span class="ai-settings-ean-nb__status" :class="eanNorthboundChannel?.status === 'Running' ? 'ok' : 'warn'">
+                  {{ eanNorthboundChannel?.status || 'stopped' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-settings-card ai-settings-card--vertical" style="margin-top: 12px;">
+            <!-- Agent 信息 (只读) -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">EAN 服务</span>
+                <span class="ai-settings-card__desc">
+                  {{ eanSettings.enabled ? 'Agent 已注册 · 传输层就绪' : 'EAN 服务未启用' }}
+                </span>
+              </div>
+              <span class="ai-settings-status-dot" :class="eanSettings.enabled ? 'ai-settings-status-dot--on' : 'ai-settings-status-dot--off'"></span>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- Agent ID -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">Agent ID</span>
+                <span class="ai-settings-card__desc">全局唯一标识符，由 EdgeX 自动生成</span>
+              </div>
+              <code class="ai-settings-ean-mono">{{ eanSettings.agent_id || '—' }}</code>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 传输协议 + 能力数量 -->
+            <div class="ai-settings-card__row--fields">
+              <div class="ai-settings-card__field" style="flex:1">
+                <label class="ai-settings-card__field-label">传输协议</label>
+                <code class="ai-settings-ean-mono">{{ (eanSettings.transport || 'mqtt').toUpperCase() }}</code>
+              </div>
+              <div class="ai-settings-card__field" style="flex:1">
+                <label class="ai-settings-card__field-label">已注册能力</label>
+                <span class="ai-settings-ean-count">{{ eanSettings.capabilities_count ?? 0 }}</span>
+                <span class="ai-settings-card__hint">由 Driver Commands 自动生成</span>
+              </div>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 心跳间隔 -->
+            <div class="ai-settings-card__field">
+              <label class="ai-settings-card__field-label">心跳间隔 (秒)</label>
+              <code class="ai-settings-ean-mono">{{ eanSettings.heartbeat_sec || 60 }}s</code>
+              <div class="ai-settings-card__hint">Agent 向 EdgeOS 发送心跳的间隔，默认 60 秒</div>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 事件自动发布 -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">事件自动发布</span>
+                <span class="ai-settings-card__desc">
+                  {{ eanSettings.event_auto_publish ? '设备状态变化时自动发布 EAN Event' : '事件发布已暂停' }}
+                </span>
+              </div>
+              <span class="ai-settings-status-dot" :class="eanSettings.event_auto_publish ? 'ai-settings-status-dot--on' : 'ai-settings-status-dot--off'"></span>
+            </div>
+          </div>
+          <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border-2);">
+            <a-button size="small" type="outline" @click="goToNorthbound">前往北向通道配置</a-button>
+            <span style="margin-left: 8px; font-size: 12px; color: var(--color-text-3);">EAN 启停和心跳配置已迁移至北向通道弹窗</span>
+          </div>
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 接入方式（仅 MCP Tab 可见） -->
@@ -332,7 +463,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import {
   AI_AUTH_TYPES,
@@ -341,6 +472,7 @@ import {
   findProvider,
   applyProviderPreset
 } from '@/constants/aiProviders'
+import eanApi from '@/api/ean'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -357,6 +489,44 @@ const visible = computed({
 
 const form = ref(defaultAiSettings())
 const activeTab = ref('remote')
+
+/* ── EAN 设置 ── */
+const eanSettings = reactive({
+  enabled: false,
+  agent_id: '',
+  transport: 'mqtt',
+  heartbeat_sec: 60,
+  event_auto_publish: true,
+  capabilities_count: 0
+})
+const eanNorthboundAvailable = ref(false)
+const eanNorthboundChannel = ref(null)
+
+async function fetchEanSettings() {
+  try {
+    const res = await eanApi.getSettings()
+    if (res?.code === '0' || res?.code === 0) {
+      const d = res.data || {}
+      eanSettings.enabled = d.enabled ?? false
+      eanSettings.agent_id = d.agent_id || ''
+      eanSettings.transport = d.transport || 'mqtt'
+      eanSettings.heartbeat_sec = d.heartbeat_sec ?? 60
+      eanSettings.event_auto_publish = d.event_auto_publish ?? true
+      eanSettings.capabilities_count = d.capabilities_count ?? 0
+      eanNorthboundAvailable.value = d.northbound_available ?? false
+      eanNorthboundChannel.value = d.northbound_channel || null
+    }
+  } catch {
+    // EAN 后端不可用时保持默认值
+  }
+}
+
+function goToNorthbound() {
+  visible.value = false
+  if (typeof window !== 'undefined') {
+    window.location.href = '/#/northbound'
+  }
+}
 
 /* ── 接入方式 ── */
 const mcpClient = ref('claude')
@@ -717,10 +887,10 @@ const authHint = computed(() => {
   return a?.desc || ''
 })
 
-// MCP Tab 独立于 deployment_mode — 不会改变 deployment_mode 也不会被其控制
+// MCP Tab / EAN Tab 独立于 deployment_mode — 不会改变 deployment_mode 也不会被其控制
 const onTabChange = (key) => {
-  // MCP Tab 是独立配置区，不映射到 deployment_mode
-  if (key !== 'mcp') {
+  // MCP / EAN Tab 是独立配置区，不映射到 deployment_mode
+  if (key !== 'mcp' && key !== 'ean') {
     form.value.deployment_mode = key
   }
 }
@@ -736,6 +906,8 @@ const syncForm = async (settings) => {
   form.value = { ...defaultAiSettings(), ...(settings || {}) }
   // 始终从后端获取 MCP Key 明文 — 不依赖 sessionStorage（可能过期/被清）
   await fetchMcpKeyFromBackend()
+  // 并行拉取 EAN 设置
+  fetchEanSettings()
   // MCP Tab 状态由自身 mcp_enabled 决定，不跟随 deployment_mode
   if (form.value.mcp_enabled) {
     activeTab.value = 'mcp'

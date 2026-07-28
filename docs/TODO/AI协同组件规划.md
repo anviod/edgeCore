@@ -1,18 +1,18 @@
-# EdgeX AI协同规划 — 工业协议逆向工程 · 生产配置交付
+# EdgeX AI协同组件规划 — EAN 2.0 Capability Runtime
 
-> **产品定位**：**工业协议工程 Copilot** — **不是**聊天助手。输入厂家资料与/或报文抓包，输出 **Protocol Model + Point Definition + Driver Parameter + Validation Case**，经人工确认后可直接导入 EdgeX 生产环境。  
-> **核心价值**：「工程师花 2 天分析协议」→「AI 30 分钟生成候选配置，工程师确认上线」。  
+> **产品定位**：**EAN 2.0 EdgeX Capability Runtime** — Edge Agent Network 2.0 中 EdgeX 边缘网关的统一能力运行时。在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力，**不是重新设计**。复用已有 AI、MCP、Execution Mapper、ShadowCore，新增 Capability Runtime 层。  
+> **核心价值**：「工程师花 2 天分析协议」→「AI 30 分钟生成候选配置，工程师确认上线」；同时 Capability 统一接入 EAN 2.0 网络，支持跨 Agent 发现、编排、调用。  
 > **工程铁律**：任何 AI 能力不得以牺牲稳定性为代价；**禁止** AI 调用进入 ScanEngine / Pipeline Worker 热路径；所有写配置须经 **Human-in-the-loop** 确认后落库。  
-> **架构结论**：**工业边缘自治 + AI 协同中心** — RK3588/3688 等边缘网关运行 EdgeX 采集内核、**报文捕获/解码**与 AI Agent Client；LLM/VLM/Embedding 与 **protocol_knowledge.db（bbolt）** 统一由远端 **AI Model Center** 承担；**AI 故障不得影响工业采集与规则执行**。
+> **架构结论**：**工业边缘自治 + AI 协同中心 + Capability Runtime** — RK3588/3688 等边缘网关运行 EdgeX 采集内核、Capability Runtime、报文捕获/解码与 AI Agent Client；LLM/VLM/Embedding 与 **protocol_knowledge.db（bbolt）** 统一由远端 **AI Model Center** 承担；**AI 故障不得影响工业采集与规则执行**。
 
 
 | 项       | 内容                                                                                                            |
 | ------- | ------------------------------------------------------------------------------------------------------------- |
-| 版本      | **V1.5**                                                                                                      |
-| 更新      | 2026-07-23                                                                                                    |
-| 状态      | **规划中**                                                                                                       |
-| 产品名     | **EdgeX Industrial Protocol Copilot**（代码路径 `internal/ai_agent/` 可保留）                                          |
-| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md)                                          |
+| 版本      | **V2.0**                                                                                                      |
+| 更新      | 2026-07-27                                                                                                    |
+| 状态      | **EAN-MVP 已落地**（Capability Runtime + MQTT/NATS Bridge + DriverExecutor + AI Adapter + MCP Adapter + Shadow→Event/`previous_value`；详见 [EAN2.0-EdgeX-EdgeOS改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md)） |
+| 产品名     | **EdgeX Industrial Protocol Copilot + EAN 2.0 Capability Runtime**（代码路径 `internal/ai_agent/` · `internal/capability/`） |
+| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md) · [EAN 2.0 通信协议规范](../edgeos/EdgeX通信协议规范(MQTT-NATS).md) |
 | 关联 TODO | [设备点位读写系统升级改造计划](./设备点位读写系统升级改造计划.md) · [边缘计算优化升级 2.0](./边缘计算优化升级2.0.md)                                      |
 | 用户文档    | [边缘计算场景手册](../edge/EDGE_COMPUTING_SCENARIO_MANUAL.md) · [边缘计算最佳实践](../guide/EDGE_COMPUTING_BEST_PRACTICES.md) |
 
@@ -27,6 +27,371 @@
   <img src="../img/AI助手配置.png" width="100%" />
   <p><small>图 2: 支持本地模型和在线接口</small></p>
 </div>
+
+---
+
+## EAN 2.0 概述（V2.0 新增）
+
+### EAN 2.0 设计原则
+
+> **不是重新设计，而是在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力。**
+
+| 原则 | 说明 |
+|------|------|
+| **EdgeX 改动最小** | 复用已有 AI、MCP、Execution Mapper、ShadowCore、ScanEngine、Driver |
+| **EdgeOS 增加平台能力** | 发现、编排、治理、调度、资源管理 |
+| **协议统一** | Capability、Discovery、Invoke、Event 统一模型 |
+| **Capability 为核心** | 所有能力（Driver Command / AI Skill / MCP Tool / Workflow Node）统一映射到 Capability |
+
+### EAN 2.0 统一能力模型
+
+```text
+Device    AI    Workflow    Service    Cloud
+         \      |      /      /
+          \     |     /      /
+           \    |    /      /
+            \   |   /      /
+             \  |  /      /
+              Agent
+                 |
+            Capability
+                 |
+              Invoke
+                 |
+            Execution
+```
+
+### EdgeX 在 EAN 2.0 中的角色：Capability Runtime
+
+EdgeX 继续承担工业通信和能力执行，在现有 AI/MCP 基础上统一到 **Capability Runtime**：
+
+```text
+AI / HTTP / SDK / MCP / Workflow
+           │
+           ▼
+    Capability Invoke
+           │
+           ▼
+   Invoke Dispatcher（新增）
+           │
+           ▼
+  Capability Registry（新增）
+           │
+           ▼
+  Execution Mapper（少量升级）
+           │
+           ▼
+     ShadowCore
+           │
+           ▼
+     ScanEngine
+           │
+           ▼
+        Driver
+```
+
+### V1.5 → V2.0 能力映射
+
+| V1.5 模块 | V2.0 定位 | 变更程度 | 代码路径 |
+|-----------|-----------|---------|---------|
+| AI Agent Client | Capability Runtime 组件 | 少量升级 | `internal/ai_agent/` |
+| MCP Handler | Capability → Tool → MCP Adapter | 少量升级 | `internal/server/mcp_handler.go` |
+| Execution Mapper | Capability → Driver Command 映射 | 少量升级 | `internal/execution/` |
+| ShadowCore | Capability 状态缓存 | 保持 | `internal/shadow/` |
+| ScanEngine / Driver | 底层执行 | 保持 | `internal/driver/*` |
+| Invoke Dispatcher | **新增** | 新增 | `internal/capability/dispatcher.go` |
+| Capability Registry | **新增** | 新增 | `internal/capability/registry.go` |
+| Event Publisher | **新增** | 新增 | `internal/capability/event_publisher.go` |
+| Discovery Publisher | **新增** | 新增 | `internal/capability/discovery_publisher.go` |
+
+### EAN 2.0 与 EdgeOS 协作边界
+
+| 模块 | EdgeX（执行层） | EdgeOS（平台层） |
+|------|---------------|----------------|
+| Agent 生命周期 | Agent 注册、上线、心跳、下线 | 全局 Agent 管理与查询 |
+| Capability | 自动生成、注册、执行 | 聚合、检索、跨节点发现 |
+| Discovery | 发布自身 Descriptor | 建立全局 Discovery 索引 |
+| Invoke | 接收请求并执行 | 发起跨 Agent 调用、编排 |
+| Execution | Execution Mapper、ScanEngine、Driver | 不直接执行设备操作 |
+| Shadow | ShadowCore 状态维护 | 聚合状态、跨节点同步（可选） |
+| Workflow | 提供 Capability 节点 | 负责流程编排与调度 |
+| AI | MCP、Planner、Tool Adapter | 多 Agent 任务规划 |
+| Event | 发布设备事件 | 订阅、路由、规则处理 |
+| MQTT/NATS | 通信接入与协议实现 | 消息治理、集群协调 |
+| Security | Capability 权限校验 | 全局认证、授权、命名空间 |
+| Observability | 本地运行指标 | 全局监控、告警、审计 |
+
+---
+
+## §E1 EAN 2.0 Capability Runtime 详细设计（V2.0 新增）
+
+### §E1.1 Capability Registry
+
+已有 Driver / Commands 自动生成 Capability，无需人工维护。
+
+```text
+Driver
+    │
+    ▼
+Commands（读/写/扫描）
+    │
+    ▼
+Capability（自动映射）
+    │
+    ▼
+Registry（本地缓存 + 发布到 EdgeOS）
+```
+
+**自动生成规则**：
+
+| Driver 命令 | 自动生成 Capability ID | 参数映射 |
+|------------|----------------------|---------|
+| `ReadPoints` | `{protocol}.read_{register_type}` | device_id, addresses[] |
+| `WritePoint` | `{protocol}.write_{register_type}` | device_id, address, value |
+| `ScanDevices` | `{protocol}.scan_devices` | channel_id, network |
+| `GetDevicePoints` | `{protocol}.list_points` | device_id |
+| `Diagnostics` | `system.diagnostics` | — |
+| `AI.protocol_reverse` | `ai.protocol_reverse` | payload |
+| `AI.doc_parse` | `ai.doc_parse` | payload |
+
+**Capability Descriptor 发布**：
+
+EdgeX 启动时，Capability Registry 收集所有 Capability，通过 MQTT/NATS 发布到 `$edgeos/discovery/capability`。
+
+### §E1.2 Invoke Dispatcher（新增）
+
+统一入口。所有 MQTT、HTTP、SDK、MCP、Workflow 调用统一为 `Capability Invoke`。
+
+```text
+MQTT    HTTP    SDK    MCP    Workflow
+    \      |      /      /      /
+     \     |     /      /      /
+      \    |    /      /      /
+       \   |   /      /      /
+        \  |  /      /      /
+      Invoke Dispatcher
+             │
+             ▼
+      Capability Registry
+             │
+             ▼
+      Execution Mapper
+             │
+             ▼
+         ShadowCore
+             │
+             ▼
+         ScanEngine
+             │
+             ▼
+          Driver
+```
+
+**Dispatcher 路由逻辑**（伪代码）：
+
+```go
+func Dispatch(invoke InvokeRequest) {
+    capability := registry.Get(invoke.Capability)
+    
+    switch capability.Category {
+    case "device":
+        executionMapper.ExecuteDriverCommand(invoke)
+    case "ai":
+        aiAdapter.Execute(invoke)
+    case "system":
+        systemHandler.Execute(invoke)
+    }
+}
+```
+
+### §E1.3 AI Adapter 升级
+
+**V1.5 架构**：
+
+```text
+AI → MCP Tool
+```
+
+**V2.0 架构**：
+
+```text
+AI
+    │
+    ▼
+Capability Planner（新增）
+    │
+    ▼
+Capability Invoke（统一入口）
+    │
+    ▼
+Invoke Dispatcher
+    │
+    ▼
+Execution Mapper
+```
+
+AI 负责规划（Planning），Execution 继续由 Execution Mapper 执行。
+
+### §E1.4 MCP Adapter 升级
+
+**V1.5 架构**：
+
+```text
+MCP Tool → Command（直接调用）
+```
+
+**V2.0 架构**：
+
+```text
+Capability（统一能力模型）
+    │
+    ▼
+Tool（自动生成 MCP Tool）
+    │
+    ▼
+MCP Server
+```
+
+Tool 由 Capability 自动生成，无需人工维护 Tool 清单。
+
+### §E1.5 Execution Mapper 升级
+
+增加 Capability → Driver Command 映射：
+
+```text
+Capability: modbus_tcp.read_holding_register
+    │
+    ▼
+Execution Mapper 解析 arguments
+    │
+    ▼
+Driver Command: ReadPoints(device_id, addresses, function_code=3)
+    │
+    ▼
+ScanEngine → Driver
+```
+
+无需修改驱动实现，仅在 Execution Mapper 增加 Capability 到 Driver Command 的映射层。
+
+### §E1.6 Event Publisher（新增）
+
+Capability 执行导致设备状态变化时，自动发布 Event：
+
+```text
+Capability: modbus_tcp.write_register
+    │
+    ▼
+写入成功
+    │
+    ▼
+ShadowCore 更新
+    │
+    ▼
+Event Publisher 发布事件
+    │
+    ▼
+$edgeos/event/edgex-node-001
+```
+
+**自动 Event 类型映射**：
+
+| 操作 | 自动发布 Event |
+|------|---------------|
+| 点位值变化 | `{point_id}.changed` |
+| 设备上线 | `device.online` |
+| 设备离线 | `device.offline` |
+| 告警触发 | `alarm.created` |
+| Capability 执行完成 | `capability.invoked` |
+
+### §E1.7 Discovery Publisher（新增）
+
+**启动流程**：
+
+```text
+EdgeX 启动
+    │
+    ▼
+初始化 ChannelManager / ScanEngine
+    │
+    ▼
+DiscoveryPublisher 收集 Agent 信息
+    │
+    ▼
+发布 Agent Descriptor → $edgeos/discovery/agent
+    │
+    ▼
+发布 Capability Descriptor → $edgeos/discovery/capability
+    │
+    ▼
+启动 Heartbeat 定时器 → $edgeos/heartbeat/edgex-node-001
+```
+
+**关闭流程**：
+
+```text
+EdgeX 关闭（Graceful Shutdown）
+    │
+    ▼
+DiscoveryPublisher 发布 Offline
+    │
+    ▼
+$edgeos/discovery/agent/offline
+```
+
+### §E1.8 ShadowCore 升级
+
+ShadowCore 继续维护设备状态，同时支持按 Capability ID 查询缓存：
+
+```json
+{
+  "capability_cache": {
+    "modbus_tcp.read_holding_register": {
+      "device_slave_1": {
+        "last_result": [...],
+        "last_updated": 1776787200000
+      }
+    }
+  }
+}
+```
+
+Execution 优先读取 Shadow，减少 Driver 调用。
+
+### §E1.9 EAN 2.0 Topic 规范（EdgeX 侧）
+
+保留所有 V1.0 `edgex/*` Topic 作为兼容层，新增 EAN 2.0 Topic：
+
+| Topic/Subject | 方向 | QoS | 说明 |
+|---------------|------|-----|------|
+| `$edgeos/discovery/agent` | EdgeX → EdgeOS | 1 | Agent 注册/更新 |
+| `$edgeos/discovery/agent/offline` | EdgeX → EdgeOS | 1 | Agent 下线 |
+| `$edgeos/discovery/capability` | EdgeX → EdgeOS | 1 | Capability 注册 |
+| `$edgeos/invoke/{agent_id}` | EdgeOS → EdgeX | 1 | Capability 调用请求 |
+| `$edgeos/reply/{agent_id}` | EdgeX → EdgeOS | 1 | Capability 调用响应 |
+| `$edgeos/event/{agent_id}` | EdgeX → EdgeOS | 1 | 事件上报 |
+| `$edgeos/state/{agent_id}` | EdgeX → EdgeOS | 1 | Shadow 全量上报 |
+| `$edgeos/state/{agent_id}/delta` | EdgeX → EdgeOS | 1 | Shadow 增量更新 |
+| `$edgeos/heartbeat/{agent_id}` | EdgeX → EdgeOS | 0 | 心跳 |
+
+详细协议规范参见 [EdgeX通信协议规范(MQTT-NATS) V2.0](../edgeos/EdgeX通信协议规范(MQTT-NATS).md)。
+
+### §E1.10 Capability SDK（新增）
+
+SDK 面向 Capability 编程，而非面向 Driver 编程：
+
+```go
+// 调用 Capability（不直接调用 Driver）
+result, err := sdk.InvokeCapability(ctx, InvokeRequest{
+    Target:     "edgex-node-001",
+    Capability: "modbus_tcp.read_holding_register",
+    Arguments: map[string]interface{}{
+        "device_id": "slave-1",
+        "address":   "40001",
+    },
+})
+```
+
+---
 
 ## §0 背景与目标
 
@@ -1108,6 +1473,27 @@ protocol_knowledge.db（AI Server 独立 bbolt 文件）
 
 ## §13 分阶段实施路线图
 
+### V2.0 新增：EAN 2.0 Capability Runtime 阶段
+
+| 阶段 | 时间 | 交付 | 验收 |
+|------|------|------|------|
+| **EAN-MVP** | 2026 Q3 | Capability Registry（自动生成）+ Invoke Dispatcher + Discovery Publisher + Event Publisher；MQTT `$edgeos/*` Topic 接入；保留 V1.0 `edgex/*` 兼容层 | EdgeX 启动后自动发布 Agent + Capability Descriptor；EdgeOS 可发现 EdgeX Capability；Invoke 请求可路由到 Driver；V1.0 Topic 100% 兼容 |
+| **EAN-增强** | 2026 Q4 | AI Adapter 升级（Capability Planner）；MCP Adapter 升级（Capability → Tool 自动生成）；ShadowCore Capability 缓存；EAN 2.0 完整协议实现（Discovery/Invoke/Event/State） | AI 规划输出 Capability Invoke 而非直接 MCP Tool；MCP Tool 清单自动同步 Capability；Shadow 优先命中 ≥ 90%；协议一致性测试通过 |
+| **EAN-企业级** | 2027 Q1 | Capability SDK 发布；跨 EdgeOS 集群 Agent 发现；Workflow Center 集成；Resource Manager 工业资源锁 | 第三方可通过 SDK 调用 EdgeX Capability；多 EdgeOS 节点 Agent 注册同步；Workflow 可编排跨 Agent Capability；PLC/COM 资源锁无冲突 |
+| **EAN-持续** | — | A2A / OpenAI Agent 协议适配器；Capability 市场索引 | 外部 AI Agent 可发现/调用 EdgeX Capability |
+
+```text
+EAN-MVP ──► EAN-增强 ──► EAN-企业级
+    │           │            │
+    │           │            └─ SDK / 跨集群 / Workflow
+    │           │
+    │           └─ AI Planner / MCP Auto-Tool / Shadow Cache
+    │
+    └─ Capability Registry / Dispatcher / Discovery / Event
+       $edgeos/* Topic / V1.0 兼容
+```
+
+### V1.5 既有能力路线（保留）
 
 | 阶段      | 时间      | 交付                                                                                     | 验收                                                                                                      |
 | ------- | ------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -1221,6 +1607,435 @@ MVP ──► 增强 ──► 企业级
 
 ---
 
+## §E2 EAN 2.0 UI 规划（V2.0 新增）
+
+> **设计原则**：EAN 2.0 UI 遵循现有工业软件设计风格（Siemens / Schneider / ABB / Rockwell 风格），金色主题 + Apple Design Language（毛玻璃、大圆角、cubic-bezier 动画），严格左对齐、1280px 最大宽度。新增 Capability Runtime 可视化**嵌入现有 AI 助手面板**，**不新增独立路由页面**。
+
+### §E2.1 UI 架构概览
+
+```text
+现有 UI 架构（保持）
+├── 首页 Dashboard (/)                     — 系统监控总览
+├── 采集通道 (/channels)                   — Channel 管理
+├── 设备列表 (/channels/:id/devices)        — Device 管理
+├── 点位数据 (/channels/:id/devices/:id/points) — Point 管理
+├── 边缘计算 (/edge-compute)               — EdgeRule 场景
+├── 节点同步 (/node-sync)                  — EdgeOS 连接
+├── 北向上报 (/northbound)                 — Northbound
+└── 系统设置 (/system)                     — 全局配置
+
+全局浮动组件（保持）
+├── AiAssistantPanel.vue                   — AI 助手主面板（FAB + Dialog）
+├── AiAssistantIcon.vue                    — FAB 图标
+└── AiQuotaBar.vue                         — 配额指示
+
+EAN 2.0 新增 UI（嵌入 AiAssistantPanel 内部）
+├── AiEanAgentStatus.vue                   — Agent 状态卡片（§E2.2）
+├── AiCapabilityList.vue                  — Capability 注册表（§E2.3）
+├── AiInvokeConsole.vue                    — Capability 调用控制台（§E2.4）
+├── AiEventMonitor.vue                     — EAN Event 监控（§E2.5）
+├── AiDiscoveryView.vue                    — Agent 发现视图（§E2.6）
+└── AiEanSettingsTab.vue                   — EAN 设置 Tab（§E2.7）
+```
+
+### §E2.2 Agent 状态卡片 — AiEanAgentStatus.vue
+
+**定位**：显示当前 EdgeX 节点作为 EAN Agent 的状态概览，嵌入 AI 助手面板顶部。
+
+**数据来源**：`GET /api/capability/agent/status`（本地 Capability Runtime 提供）
+
+```text
+┌──────────────────────────────────────────────┐
+│  Agent 状态                         [在线] ● │
+│                                              │
+│  edgex-node-001    device    v2.0.0          │
+│  ─────────────────────────────────────────── │
+│  上线时间      2026-07-28 10:30:00           │
+│  心跳间隔      30s                            │
+│  已注册 Capability   15                      │
+│  Transport       MQTT (edgeOS)              │
+│  EdgeOS 连接      已连接 (latency 12ms)     │
+│                                              │
+│  ┌─ Capability 分类 ────────────────────┐    │
+│  │  device: 12    ai: 2    system: 1    │    │
+│  └─────────────────────────────────────┘    │
+└──────────────────────────────────────────────┘
+```
+
+**字段映射**：
+
+| UI 字段 | 数据源 | 说明 |
+|--------|--------|------|
+| Agent ID | `agent.id` | 节点唯一标识 |
+| Kind | `agent.kind` | device / ai / service |
+| Status | `agent.status` | online / offline / degraded |
+| Capability 数 | `capabilities.length` | 已注册能力总数 |
+| Transport | `agent.transport` | mqtt / nats |
+| EdgeOS 连接 | 北向通道连接状态 | 复用现有 MQTT/NATS 连接状态 |
+| Capability 分类 | 按 `category` 分组计数 | device / ai / system |
+
+**实现要点**：
+
+- 复用 `useAiAssistant.js` 的 MCP 连接状态轮询机制，扩展为同时轮询 Agent 状态
+- 状态指示灯使用金色主题 `#D4A843` 在线 / `#FF4D4F` 离线
+- 卡片使用 `backdrop-filter: blur(20px)` 毛玻璃效果 + `border-radius: 16px`
+
+### §E2.3 Capability 注册表 — AiCapabilityList.vue
+
+**定位**：展示当前 EdgeX 节点自动生成的所有 Capability，嵌入 AI 助手面板的 Capability Tab。
+
+**数据来源**：`GET /api/capability/list`
+
+**布局**：表格式列表，支持搜索和分类过滤。
+
+```text
+┌──────────────────────────────────────────────────────┐
+│  Capability 注册表                    [搜索...] [筛选▾] │
+│  ─────────────────────────────────────────────────── │
+│  ID                          分类    权限   状态      │
+│  ─────────────────────────────────────────────────── │
+│  modbus_tcp.read_holding_register  device  read   ● │
+│  modbus_tcp.write_register          device  write  ● │
+│  bacnet.read_property               device  read   ● │
+│  ai.protocol_reverse                 ai      read   ● │
+│  ai.doc_parse                        ai      read   ● │
+│  system.diagnostics                  system  read   ● │
+│  ─────────────────────────────────────────────────── │
+│  共 15 个 Capability     device: 12  ai: 2  sys: 1  │
+└──────────────────────────────────────────────────────┘
+```
+
+**交互**：
+
+- 点击某行展开详情（`input_schema` / `output_schema` / `timeout_sec`）
+- 详情面板底部有「测试调用」按钮，跳转到 §E2.4 Invoke Console
+- 筛选器支持按 `category`（device/ai/system）和 `permission`（read/write）过滤
+- 搜索支持按 Capability ID 或 `description` 模糊匹配
+
+**数据结构**：
+
+```json
+{
+  "capabilities": [
+    {
+      "id": "modbus_tcp.read_holding_register",
+      "agent_id": "edgex-node-001",
+      "description": "读取 Modbus TCP 保持寄存器",
+      "category": "device",
+      "input_schema": { "type": "object", "properties": { "device_id": {}, "address": {} } },
+      "output_schema": { "type": "object" },
+      "timeout_sec": 10,
+      "permission": "read"
+    }
+  ]
+}
+```
+
+### §E2.4 Capability 调用控制台 — AiInvokeConsole.vue
+
+**定位**：手动测试和调试 Capability 调用，嵌入 AI 助手面板的 Invoke Tab。
+
+**数据来源**：
+
+- `POST /api/capability/invoke` — 发起调用
+- `GET /api/capability/invoke/{invoke_id}/status` — 查询状态
+
+**布局**：左右分栏（960px 宽度下左右 60/40 比例）。
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  Capability 调用控制台                                     │
+│  ──────────────────────────────────────────────────────── │
+│  ┌─ 请求面板 ────────────────┐ ┌─ 响应/状态面板 ──────┐  │
+│  │                            │ │                       │  │
+│  │  Capability                │ │  Status: completed ●   │  │
+│  │  [modbus_tcp.read_    ▾]  │ │  Latency: 120ms        │  │
+│  │                            │ │  Invoke ID: inv-001    │  │
+│  │  Target Agent              │ │                       │  │
+│  │  [edgex-node-001        ] │ │  ┌─ Result ─────────┐  │  │
+│  │                            │ │  │ {                 │  │  │
+│  │  Arguments (JSON)          │ │  │   "success": true,│  │  │
+│  │  ┌──────────────────────┐ │ │  │   "values": [...], │  │  │
+│  │  │ {                    │ │ │  │   "timestamp": ... │  │  │
+│  │  │   "device_id": "sla │ │ │  │ }                 │  │  │
+│  │  │   "address": "40001"│ │ │  └──────────────────┘  │  │
+│  │  │ }                    │ │ │                       │  │
+│  │  └──────────────────────┘ │ │  [复制结果]             │  │
+│  │                            │ │                       │  │
+│  │  Options                   │ │  ┌─ 调用历史 ────────┐  │  │
+│  │  Timeout: [10]s           │ │  │ 10:30 inv-001 ✓   │  │  │
+│  │  Priority: [normal ▾]     │ │  │ 10:29 inv-000 ✓   │  │
+│  │  Retry:    [0]            │ │  │ 10:28 inv-xxx ✗   │  │  │
+│  │                            │ │  └──────────────────┘  │  │
+│  │  [▶ 执行调用]             │ │                       │  │
+│  └────────────────────────────┘ └───────────────────────┘  │
+└──────────────────────────────────────────────────────────┘
+```
+
+**交互**：
+
+- Capability 选择器：下拉列表，按分类分组（device / ai / system），选中后自动填充 `input_schema` 模板
+- Arguments 编辑器：基于 `input_schema` 动态生成表单字段或 JSON 编辑器（复杂 Schema 用 JSON 模式）
+- 执行后显示实时状态：`queued → running → completed/failed/timeout`
+- 异步调用支持轮询状态更新
+- 调用历史记录最近 20 条，可点击快速回填
+- 「复制结果」一键复制 JSON 响应
+
+**实现要点**：
+
+- Arguments 编辑器可复用 `AiJsonPreview.vue` 的 JSON 编辑能力
+- 状态显示复用 `AiStatusBadge.vue`（扩展 `queued` / `running` 状态）
+- 请求面板宽度不足时自动切换为上下布局
+
+### §E2.5 EAN Event 监控 — AiEventMonitor.vue
+
+**定位**：实时展示 EAN 2.0 Event 流，嵌入 AI 助手面板的 Event Tab。
+
+**数据来源**：
+
+- WebSocket 订阅 `/api/capability/events/stream`（实时推送）
+- `GET /api/capability/events/history?limit=100`（历史回溯）
+
+**布局**：事件流列表，支持过滤和暂停。
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  Event 监控                      [暂停] [清除] [过滤▾]    │
+│  ──────────────────────────────────────────────────────── │
+│  ● 10:30:15  temperature.changed     info               │
+│    agent: edgex-node-001  device: slave-1               │
+│    value: 45.2 → 42.1                                 │
+│                                                          │
+│  ● 10:30:12  device.online          info               │
+│    agent: edgex-node-001  device: slave-2               │
+│                                                          │
+│  ● 10:30:10  alarm.created          warning            │
+│    agent: edgex-node-001  device: slave-1               │
+│    alert_type: device_offline                           │
+│                                                          │
+│  ● 10:30:05  capability.invoked     info               │
+│    agent: edgex-node-001  cap: modbus_tcp.read_...     │
+│    invoke_id: inv-001  latency: 120ms                   │
+│                                                          │
+│  ─────────────────────────────────────────────────────── │
+│  已接收 128 条事件        流速 ~12 evt/s    内存 2.1MB   │
+└──────────────────────────────────────────────────────────┘
+```
+
+**交互**：
+
+- 实时滚动，新事件从顶部插入（`unshift`），带入场动画
+- 「暂停」冻结滚动但不停止接收（后台缓冲）
+- 过滤器支持按 `event_type`（changed / online / offline / alarm / invoked）和 `severity`（info / warning / critical）
+- 严重级别颜色：info 金色 `#D4A843`、warning 橙色 `#FA8C16`、critical 红色 `#FF4D4F`
+- 底部状态栏显示：已接收事件数、流速、WebSocket 内存占用
+- 点击事件行展开详情（完整 payload）
+
+**实现要点**：
+
+- 复用 `stores/event.js` 的 Pinia 事件队列机制，扩展 EAN Event 类型
+- WebSocket 连接复用 `useAiAssistant.js` 的连接管理
+- 事件列表超过 200 条时自动清理旧事件
+- 使用 `requestAnimationFrame` 节流渲染，避免高频事件导致卡顿
+
+### §E2.6 Agent 发现视图 — AiDiscoveryView.vue
+
+**定位**：展示 EAN 2.0 网络中已发现的所有 Agent 及其 Capability，嵌入 AI 助手面板的 Discovery Tab。
+
+**数据来源**：`GET /api/capability/discovery/agents`
+
+**布局**：Agent 卡片网格（2 列），每张卡片显示一个远端 Agent 概览。
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  Agent 发现                          [刷新] 共 3 个 Agent  │
+│  ──────────────────────────────────────────────────────── │
+│  ┌─ edgex-node-002 ──────────┐ ┌─ ai-model-center ────┐  │
+│  │  device  ● online          │ │  ai  ● online         │  │
+│  │  v2.0.0  MQTT              │ │  v1.0.0  MQTT          │  │
+│  │  Cap: 12  Last: 10s ago    │ │  Cap: 8   Last: 5s ago │  │
+│  │  [查看 Capability]        │ │  [查看 Capability]     │  │
+│  └───────────────────────────┘ └───────────────────────┘  │
+│  ┌─ edgex-node-003 ──────────┐                            │
+│  │  device  ○ offline         │                            │
+│  │  v1.5.0  NATS              │                            │
+│  │  Cap: 8   Last: 2m ago     │                            │
+│  │  [查看 Capability]        │                            │
+│  └───────────────────────────┘                            │
+└──────────────────────────────────────────────────────────┘
+```
+
+**交互**：
+
+- 点击「查看 Capability」展开该 Agent 的 Capability 列表（复用 `AiCapabilityList.vue` 组件的只读模式）
+- Agent 离线时卡片降低不透明度（`opacity: 0.5`），状态灯变灰
+- 支持手动刷新（拉取最新 Discovery 数据）
+- 自动刷新间隔：30s（与心跳对齐）
+
+### §E2.7 EAN 设置 Tab — AiEanSettingsTab.vue
+
+**定位**：在现有 `AiSettingsDialog.vue` 的 Tab 栏中新增「EAN 接入」Tab，与「MCP 接入」「本地 AI 模型」「云端大模型」并列。
+
+**布局**：卡片分组，两列布局（960px 宽度下）。
+
+```text
+┌──────────────────────────────────────────────────────────┐
+│  AI 助手设置                                              │
+│  ┌────────┬──────────┬──────────┬──────────┐             │
+│  │ MCP 接入│ EAN 接入 │本地模型   │ 云端模型  │             │
+│  └────────┴──────────┴──────────┴──────────┘             │
+│                                                          │
+│  ┌─ Agent 配置 ────────────────┐ ┌─ Discovery ─────────┐  │
+│  │                              │ │                      │  │
+│  │  Agent ID                    │ │  自动发现     [● 开启] │  │
+│  │  [edgex-node-001         ]   │ │                      │  │
+│  │                              │ │  心跳间隔             │  │
+│  │  Agent Kind                  │ │  [30] 秒              │  │
+│  │  [device                 ▾]  │ │                      │  │
+│  │                              │ │  离线超时             │  │
+│  │  Agent 版本                  │ │  [90] 秒              │  │
+│  │  [2.0.0                 ]   │ │                      │  │
+│  │                              │ │  Capability 自动注册  │  │
+│  │  Transport                   │ │  [● 开启]             │  │
+│  │  (●) MQTT  ( ) NATS         │ │                      │  │
+│  │                              │ │  Event 自动发布       │  │
+│  └──────────────────────────────┘ │  [● 开启]             │  │
+│                                     │                      │  │
+│  ┌─ Invoke 配置 ───────────────┐ │  Shadow 增量上报      │  │
+│  │                              │ │  [● 开启]             │  │
+│  │  默认超时                    │ └──────────────────────┘  │
+│  │  [10] 秒                     │                            │
+│  │                              │                            │
+│  │  默认重试                    │                            │
+│  │  [0] 次                      │                            │
+│  │                              │                            │
+│  │  资源锁                      │                            │
+│  │  [● 开启]                    │                            │
+│  └──────────────────────────────┘                            │
+│                                                          │
+│  端点状态  POST /api/capability  [就绪 ●]                  │
+└──────────────────────────────────────────────────────────┘
+```
+
+**字段说明**：
+
+| 字段 | 配置项 | 默认值 | 说明 |
+|------|--------|--------|------|
+| Agent ID | `ean.agent_id` | 节点 hostname | 自动生成，可手动覆盖 |
+| Agent Kind | `ean.agent_kind` | `device` | device / ai / service |
+| Agent 版本 | `ean.agent_version` | 跟随软件版本 | 手动覆盖 |
+| Transport | `ean.transport` | 复用北向通道 | MQTT / NATS |
+| 心跳间隔 | `ean.heartbeat_interval` | 30s | 10～300s |
+| 离线超时 | `ean.offline_timeout` | 90s | 3× 心跳间隔 |
+| 自动发现 | `ean.discovery_enabled` | true | 启动时发布 Descriptor |
+| Capability 自动注册 | `ean.capability_auto_register` | true | Driver 变更时自动更新 |
+| Event 自动发布 | `ean.event_auto_publish` | true | 设备事件自动发布到 EAN |
+| Shadow 增量上报 | `ean.shadow_delta_publish` | true | Shadow 变更时增量上报 |
+| 默认超时 | `ean.invoke_default_timeout` | 10s | Invoke 默认超时 |
+| 默认重试 | `ean.invoke_default_retry` | 0 | Invoke 默认重试次数 |
+| 资源锁 | `ean.resource_lock_enabled` | true | 并发 Invoke 资源锁 |
+
+**API**：
+
+- `GET /api/capability/settings` — 读取 EAN 设置
+- `PUT /api/capability/settings` — 保存 EAN 设置
+
+**实现要点**：
+
+- 复用 `AiSettingsDialog.vue` 的 Tab 框架，新增第四个 Tab
+- 卡片分组样式复用现有 MCP Tab 的 8px `border-radius`、1px 半透明边框、divider 分隔字段
+- Agent ID 默认只读（自动生成），点击编辑图标后可修改
+- Transport 选项跟随北向通道配置联动：无 MQTT 北向通道时提示先配置
+- 底部端点状态复用 `AiSettingsDialog.vue` 的 `POST /api/capability [就绪 ●]` 徽章
+
+### §E2.8 AI 助手面板 Tab 结构升级
+
+**V1.5 Tab 结构**：
+
+```text
+对话 │ 协议分析 │ 校验 │ 验证 │ 场景 │ 诊断
+```
+
+**V2.0 Tab 结构**（新增 EAN 相关 Tab）：
+
+```text
+对话 │ EAN │ 协议分析 │ 校验 │ 验证 │ 场景 │ 诊断
+      │
+      ├─ Agent 状态（AiEanAgentStatus.vue）
+      ├─ Capability（AiCapabilityList.vue）
+      ├─ Invoke（AiInvokeConsole.vue）
+      ├─ Event（AiEventMonitor.vue）
+      └─ Discovery（AiDiscoveryView.vue）
+```
+
+**实现方式**：
+
+- EAN Tab 内部使用子 Tab（Sub-Tab）切换 5 个子视图
+- Sub-Tab 使用 1px 下划线风格（与主 Tab 的 2px ink-bar 区分）
+- 默认显示 Agent 状态子 Tab
+- EAN Tab 仅在 `ean.discovery_enabled = true` 时显示（设置中关闭后隐藏）
+
+### §E2.9 现有组件复用与扩展
+
+| 现有组件 | EAN 2.0 复用方式 |
+|---------|---------------|
+| `AiAssistantPanel.vue` | 新增 EAN Tab 容器，子 Tab 切换逻辑 |
+| `AiSettingsDialog.vue` | 新增第四个 Tab「EAN 接入」 |
+| `AiStatusBadge.vue` | 扩展 `queued` / `running` 状态用于 Invoke |
+| `AiJsonPreview.vue` | Invoke Console 的 Arguments 编辑器和 Result 展示 |
+| `AiEmptyState.vue` | Discovery 无 Agent / Capability 列表为空时使用 |
+| `useAiAssistant.js` | 扩展轮询 Agent 状态（复用 MCP 轮询模式） |
+| `useAiCopilot.js` | 新增 `agentStatus` / `capabilities` / `eanEvents` 响应式状态 |
+| `api/ai.js` | 新增 EAN 相关 API 封装（`getAgentStatus` / `listCapabilities` / `invokeCapability` / `getEvents`） |
+| `stores/event.js` | 扩展支持 EAN Event 类型（`capability.invoked` / `agent.heartbeat`） |
+| `constants/aiProviders.js` | 新增 `eanTransport` 常量（mqtt / nats） |
+
+### §E2.10 新增 API 端点
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/capability/agent/status` | 获取当前 Agent 状态（ID/Kind/Version/Capability 数/连接状态） |
+| GET | `/api/capability/list` | 列出所有已注册 Capability（支持 `?category=&permission=` 过滤） |
+| GET | `/api/capability/list/:id` | 获取单个 Capability 详情（含 input/output schema） |
+| POST | `/api/capability/invoke` | 发起 Capability 调用 |
+| GET | `/api/capability/invoke/:invoke_id/status` | 查询 Invoke 状态与结果 |
+| GET | `/api/capability/discovery/agents` | 查询已发现的远端 Agent 列表 |
+| GET | `/api/capability/discovery/agents/:agent_id/capabilities` | 查询远端 Agent 的 Capability 列表 |
+| GET | `/api/capability/events/history` | 查询 Event 历史（`?limit=&event_type=&severity=`） |
+| WS | `/api/capability/events/stream` | WebSocket 实时 Event 推送 |
+| GET | `/api/capability/settings` | 读取 EAN 设置 |
+| PUT | `/api/capability/settings` | 保存 EAN 设置 |
+
+### §E2.11 前端文件结构
+
+```text
+ui/src/
+├── components/
+│   └── ai-assistant/
+│       ├── AiAssistantPanel.vue          # 修改：新增 EAN Tab
+│       ├── AiSettingsDialog.vue          # 修改：新增「EAN 接入」Tab
+│       ├── AiStatusBadge.vue             # 修改：扩展 Invoke 状态
+│       ├── AiJsonPreview.vue             # 复用：Invoke 编辑器
+│       ├── AiEmptyState.vue              # 复用：空状态
+│       ├── AiEanAgentStatus.vue          # 新增：Agent 状态卡片
+│       ├── AiCapabilityList.vue          # 新增：Capability 注册表
+│       ├── AiInvokeConsole.vue           # 新增：Capability 调用控制台
+│       ├── AiEventMonitor.vue            # 新增：Event 监控
+│       ├── AiDiscoveryView.vue           # 新增：Agent 发现视图
+│       └── AiEanSettingsTab.vue          # 新增：EAN 设置 Tab 内容
+├── composables/
+│   ├── useAiAssistant.js                 # 修改：扩展 Agent 状态轮询
+│   └── useAiCopilot.js                   # 修改：新增 EAN 响应式状态
+├── api/
+│   └── ai.js                             # 修改：新增 EAN API 封装
+├── stores/
+│   └── event.js                          # 修改：扩展 EAN Event 类型
+└── constants/
+    └── aiProviders.js                    # 修改：新增 EAN 常量
+```
+
+---
+
 
 
 ## 附录：交叉引用
@@ -1231,6 +2046,76 @@ MVP ──► 增强 ──► 企业级
 - 点位模型：`internal/model/types.go`
 - Modbus 解码：`internal/driver/modbus/decoder.go`
 - BACnet：`internal/driver/bacnet/encoding/whois.go`
+- **EAN 2.0 通信协议规范**：[EdgeX通信协议规范(MQTT-NATS) V2.0](../edgeos/EdgeX通信协议规范(MQTT-NATS).md)
+
+---
+
+## 附录 E：EAN 2.0 新增技能清单（V2.0）
+
+建议在 `.cursor/skills/` 维护 **EAN 2.0 Capability Runtime Skills**：
+
+| Skill | 触发场景 |
+|-------|---------|
+| `ean-capability-registry` | 自动生成/注册 Capability |
+| `ean-invoke-dispatcher` | 统一 Capability 调用路由 |
+| `ean-discovery-publisher` | Agent/Capability Descriptor 发布 |
+| `ean-event-publisher` | 设备事件自动发布到 EAN |
+| `ean-mcp-adapter` | Capability → MCP Tool 自动映射 |
+| `ean-ai-planner` | AI 规划输出 Capability Invoke |
+| `ean-shadow-cache` | ShadowCore Capability 缓存查询 |
+
+---
+
+## 附录 F：EAN 2.0 代码路径规划
+
+| 模块 | 代码路径 | 说明 |
+|------|---------|------|
+| Capability Registry | `internal/capability/registry.go` | Capability 自动生成与本地缓存 |
+| Invoke Dispatcher | `internal/capability/dispatcher.go` | 统一调用入口与路由 |
+| Discovery Publisher | `internal/capability/discovery_publisher.go` | Agent/Capability Descriptor 发布 |
+| Event Publisher | `internal/capability/event_publisher.go` | 事件自动发布 |
+| AI Adapter | `internal/ai_agent/planner/` | Capability Planner |
+| MCP Adapter | `internal/server/mcp_capability_adapter.go` | Capability → Tool 映射 |
+| Execution Mapper | `internal/execution/capability_mapper.go` | Capability → Driver Command |
+| Shadow Cache | `internal/shadow/capability_cache.go` | Capability 结果缓存 |
+| EAN SDK | `pkg/eansdk/` | 面向 Capability 的 SDK |
+| 协议类型 | `internal/capability/types.go` | EAN Agent/Capability/Invoke/Event 类型（**不**放在 MCP protocol.go，避免与 MCP JSON-RPC 混淆） |
+
+---
+
+## 附录 G：EAN 2.0 验收标准（V2.0 新增）
+
+### G.1 架构验收
+
+| # | 标准 |
+|---|------|
+| E1 | Capability Registry 自动生成所有 Driver Command 对应的 Capability |
+| E2 | Invoke Dispatcher 统一路由 MQTT/HTTP/SDK/MCP/Workflow 到 Driver |
+| E3 | Discovery Publisher 启动时自动发布 Agent + Capability Descriptor |
+| E4 | Event Publisher 点位变化时自动发布 `$edgeos/event/{agent_id}` |
+| E5 | V1.0 `edgex/*` Topic 100% 兼容，业务无感知 |
+| E6 | AI 故障 / EdgeOS 离线时，EdgeX 采集与规则执行零影响 |
+
+### G.2 功能验收
+
+| # | 标准 |
+|---|------|
+| EF1 | EdgeOS 可通过 `$edgeos/discovery/capability` 查询 EdgeX 的所有 Capability |
+| EF2 | EdgeOS 可通过 `$edgeos/invoke/{agent_id}` 调用 EdgeX Capability 并收到响应 |
+| EF3 | MCP Tool 清单自动同步 Capability，新增驱动无需手动维护 Tool |
+| EF4 | AI Planner 输出 Capability Invoke 而非直接 MCP Tool 调用 |
+| EF5 | ShadowCore Capability 缓存命中时，不触发 Driver 读取 |
+| EF6 | Graceful Shutdown 时发布 Agent Offline，EdgeOS 正确感知 |
+
+### G.3 性能验收
+
+| # | 标准 |
+|---|------|
+| EP1 | Invoke Dispatcher 路由延迟 < 1ms（本地 Capability） |
+| EP2 | Discovery Publisher 启动发布延迟 < 5s |
+| EP3 | Event Publisher 发布延迟 < 5ms（异步） |
+| EP4 | Shadow Capability 缓存命中时读延迟 < 1ms |
+| EP5 | ScanEngine 稳定性：Capability Runtime 满载时 lag P99 增幅 < 3% |
 
 
 

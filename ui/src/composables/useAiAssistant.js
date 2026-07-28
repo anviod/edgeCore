@@ -56,8 +56,9 @@ const clampPosition = (position, size) => {
   if (position?.x == null || position?.y == null) return { x: null, y: null }
   const w = size?.width || 860
   const h = size?.height || 620
-  const maxX = Math.max(8, (typeof window !== 'undefined' ? window.innerWidth : 1200) - Math.min(w, 200))
-  const maxY = Math.max(8, (typeof window !== 'undefined' ? window.innerHeight : 800) - Math.min(h, 80))
+  // 确保面板至少 80px 可见，但不限制最大位置
+  const maxX = Math.max(8, (typeof window !== 'undefined' ? window.innerWidth : 1200) - Math.min(w, 80))
+  const maxY = Math.max(8, (typeof window !== 'undefined' ? window.innerHeight : 800) - Math.min(h, 40))
   return {
     x: Math.max(8, Math.min(position.x, maxX)),
     y: Math.max(8, Math.min(position.y, maxY))
@@ -145,6 +146,13 @@ export const AI_WORKSPACES = [
     goal: 'G6',
     description: 'MCP Server · 外部 LLM 操作接口',
     icon: 'mcp'
+  },
+  {
+    id: 'ean',
+    label: 'EAN 协作',
+    goal: 'G7',
+    description: 'Edge Agent Network · 能力注册与调度',
+    icon: 'ean'
   }
 ]
 

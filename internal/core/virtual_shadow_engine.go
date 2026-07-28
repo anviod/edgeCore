@@ -222,6 +222,12 @@ func (vse *VirtualShadowEngine) handleShadowUpdate(shadowDeviceID string, points
 }
 
 func (vse *VirtualShadowEngine) recomputeVirtualDevice(deviceID string) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[VirtualShadowEngine] panic in recomputeVirtualDevice %s (recovered): %v", deviceID, r)
+		}
+	}()
+
 	vse.mu.Lock()
 	defer vse.mu.Unlock()
 
@@ -409,8 +415,15 @@ func (vse *VirtualShadowEngine) GetVirtualDevice(deviceID string) (*model.Virtua
 		return nil, fmt.Errorf("virtual device not found: %s", deviceID)
 	}
 
-	copy := *device
-	return &copy, nil
+	vd := *device
+	vd.Points = cloneShadowPoints(device.Points)
+	vd.FormulaPoints = make(map[string]string, len(device.FormulaPoints))
+	for k, v := range device.FormulaPoints {
+		vd.FormulaPoints[k] = v
+	}
+	vd.Dependencies = make([]string, len(device.Dependencies))
+	copy(vd.Dependencies, device.Dependencies)
+	return &vd, nil
 }
 
 func (vse *VirtualShadowEngine) GetAllVirtualDevices() []*model.VirtualDevice {
@@ -419,8 +432,15 @@ func (vse *VirtualShadowEngine) GetAllVirtualDevices() []*model.VirtualDevice {
 
 	result := make([]*model.VirtualDevice, 0, len(vse.virtualDevices))
 	for _, device := range vse.virtualDevices {
-		copy := *device
-		result = append(result, &copy)
+		vd := *device
+		vd.Points = cloneShadowPoints(device.Points)
+		vd.FormulaPoints = make(map[string]string, len(device.FormulaPoints))
+		for k, v := range device.FormulaPoints {
+			vd.FormulaPoints[k] = v
+		}
+		vd.Dependencies = make([]string, len(device.Dependencies))
+		copy(vd.Dependencies, device.Dependencies)
+		result = append(result, &vd)
 	}
 	return result
 }

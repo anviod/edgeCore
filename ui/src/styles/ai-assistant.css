@@ -795,6 +795,94 @@
   background: color-mix(in srgb, var(--ai-accent) 8%, transparent);
 }
 
+/* ── EAN 设置 ── */
+.ai-settings-ean-mono {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--ai-accent);
+  background: color-mix(in srgb, var(--ai-accent) 8%, transparent);
+  padding: 4px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.ai-settings-ean-count {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ai-accent);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.ai-settings-ean-alert {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+  background: color-mix(in srgb, #f59e0b 8%, var(--bg));
+}
+
+.ai-settings-ean-alert__icon {
+  flex-shrink: 0;
+  color: #f59e0b;
+  margin-top: 2px;
+}
+
+.ai-settings-ean-alert__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-settings-ean-alert__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ai-text, var(--text-primary));
+}
+
+.ai-settings-ean-alert__desc {
+  font-size: 12px;
+  color: var(--ai-text-muted, var(--text-secondary));
+  line-height: 1.6;
+}
+
+.ai-settings-ean-nb {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 0 4px;
+}
+
+.ai-settings-ean-nb__item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ai-settings-ean-nb__label {
+  font-size: 11px;
+  color: var(--ai-text-faint, var(--text-tertiary));
+}
+
+.ai-settings-ean-nb__value {
+  font-size: 13px;
+  color: var(--ai-text, var(--text-primary));
+  font-weight: 500;
+}
+
+.ai-settings-ean-nb__status {
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-settings-ean-nb__status.ok { color: #10b981; }
+.ai-settings-ean-nb__status.warn { color: #f59e0b; }
+
 /* ── 接入方式 ── */
 .ai-settings-access {
   margin-top: 18px;

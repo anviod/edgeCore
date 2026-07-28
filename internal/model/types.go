@@ -434,9 +434,17 @@ type EdgeOSMQTTConfig struct {
 	ConnectTimeout       int                            `json:"connect_timeout" yaml:"connect_timeout"`
 	AutoReconnect        bool                           `json:"auto_reconnect" yaml:"auto_reconnect"`
 	MaxReconnectInterval int                            `json:"max_reconnect_interval" yaml:"max_reconnect_interval"`
-	HeartbeatInterval    string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s"
+	HeartbeatInterval    string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s" V1 心跳
 	Devices              map[string]DevicePublishConfig `json:"devices" yaml:"devices"`                       // Key: DeviceID, Value: DevicePublishConfig
 	VirtualDevices       OpcUaDeviceMap                 `json:"virtual_devices" yaml:"virtual_devices"`
+
+	// EAN 2.0 能力层配置 | EAN 2.0 capability layer config
+	// EANEnabled 控制北向 EAN Runtime 启停；MCP Runtime 不受此字段影响
+	EANEnabled          bool `json:"ean_enabled" yaml:"ean_enabled"`
+	// EANHeartbeatSec EAN 心跳周期（秒），0 时使用默认值 60
+	EANHeartbeatSec     int  `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
+	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
+	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
 }
 
 // EdgeOSNATSConfig defines configuration for edgeOS(NATS) northbound channel
@@ -456,9 +464,17 @@ type EdgeOSNATSConfig struct {
 	PingInterval        int                            `json:"ping_interval" yaml:"ping_interval"`
 	MaxPingsOutstanding int                            `json:"max_pings_outstanding" yaml:"max_pings_outstanding"`
 	JetStreamEnabled    bool                           `json:"jetstream_enabled" yaml:"jetstream_enabled"`
-	HeartbeatInterval   string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s"
+	HeartbeatInterval   string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s" V1 心跳
 	Devices             map[string]DevicePublishConfig `json:"devices" yaml:"devices"`                       // Key: DeviceID, Value: DevicePublishConfig
 	VirtualDevices      OpcUaDeviceMap                 `json:"virtual_devices" yaml:"virtual_devices"`
+
+	// EAN 2.0 能力层配置 | EAN 2.0 capability layer config
+	// EANEnabled 控制北向 EAN Runtime 启停；MCP Runtime 不受此字段影响
+	EANEnabled          bool `json:"ean_enabled" yaml:"ean_enabled"`
+	// EANHeartbeatSec EAN 心跳周期（秒），0 时使用默认值 60
+	EANHeartbeatSec     int  `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
+	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
+	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
 }
 
 // BACnetServerConfig 北向 BACnet Server 配置，以从机模式运行，对外暴露点位数据
@@ -580,6 +596,7 @@ type ProtocolConfig struct {
 // ShadowPoint represents a single point in a shadow device
 type ShadowPoint struct {
 	Value          any       `json:"value"`
+	PreviousValue  any       `json:"previous_value,omitempty"` // notify-only: prior value before this delta
 	Unit           string    `json:"unit"`
 	RW             string    `json:"rw"` // "r" or "rw"
 	SamplePeriodMs int       `json:"sample_period_ms"`

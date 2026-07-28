@@ -1,6 +1,7 @@
 package edgos_nats
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/anviod/edgex/internal/capability"
 	"github.com/anviod/edgex/internal/model"
 	"github.com/anviod/edgex/internal/northbound/reconnect"
 	"github.com/anviod/edgex/internal/storage"
@@ -75,6 +77,10 @@ type Client struct {
 	aggregatorMu      sync.RWMutex
 
 	reconnectSched reconnect.Scheduler
+
+	// EAN 2.0 Capability Runtime (optional; V1.0 edgex.* subjects remain unchanged)
+	eanMu      sync.RWMutex
+	eanRuntime *capability.Runtime
 }
 
 // NewClient creates a new edgeOS(NATS) client
@@ -103,9 +109,9 @@ func (c *Client) GetStatus() int {
 	return c.status
 }
 
-// GetStats returns client statistics
+// GetStats returns client statistics (including EAN Runtime metrics if enabled)
 func (c *Client) GetStats() EdgeOSNATSStats {
-	return EdgeOSNATSStats{
+	stats := EdgeOSNATSStats{
 		SuccessCount:    atomic.LoadInt64(&c.successCount),
 		FailCount:       atomic.LoadInt64(&c.failCount),
 		ReconnectCount:  atomic.LoadInt64(&c.reconnectCount),
@@ -113,16 +119,23 @@ func (c *Client) GetStats() EdgeOSNATSStats {
 		LastOfflineTime: atomic.LoadInt64(&c.lastOfflineTime),
 		LastOnlineTime:  atomic.LoadInt64(&c.lastOnlineTime),
 	}
+	// 附加 EAN Runtime 指标（如果已启用）
+	if rt := c.CapabilityRuntime(); rt != nil {
+		snap := rt.Metrics()
+		stats.EANMetrics = &snap
+	}
+	return stats
 }
 
 // EdgeOSNATSStats represents client statistics
 type EdgeOSNATSStats struct {
-	SuccessCount    int64 `json:"success_count"`
-	FailCount       int64 `json:"fail_count"`
-	ReconnectCount  int64 `json:"reconnect_count"`
-	PublishCount    int64 `json:"publish_count"`
-	LastOfflineTime int64 `json:"last_offline_time"`
-	LastOnlineTime  int64 `json:"last_online_time"`
+	SuccessCount    int64                          `json:"success_count"`
+	FailCount       int64                          `json:"fail_count"`
+	ReconnectCount  int64                          `json:"reconnect_count"`
+	PublishCount    int64                          `json:"publish_count"`
+	LastOfflineTime int64                          `json:"last_offline_time"`
+	LastOnlineTime  int64                          `json:"last_online_time"`
+	EANMetrics      *capability.InvokeMetricsSnapshot `json:"ean_metrics,omitempty"`
 }
 
 // deviceAggregator aggregates points for periodic device-level push
@@ -133,10 +146,18 @@ type deviceAggregator struct {
 	mu           sync.RWMutex
 }
 
-// UpdateConfig updates client configuration
+// UpdateConfig updates client configuration.
+// 连接级字段（URL/ClientID/Username/Password/NodeID）变化触发全量重连；
+// EAN 字段（EANEnabled/EANHeartbeatSec）变化走热更新路径，不中断北向连接。
+// | Connection-level fields trigger full restart;
+// | EAN fields are hot-applied without dropping the northbound connection.
 func (c *Client) UpdateConfig(cfg model.EdgeOSNATSConfig) error {
+	// 在锁内捕获旧 EAN 状态和重连决策，锁外执行重连/热更新以避免死锁
+	// | Capture old EAN state and restart decision under lock;
+	// | execute restart/hot-update outside lock to avoid deadlock.
 	c.configMu.Lock()
-	defer c.configMu.Unlock()
+	oldEANEnabled := c.config.EANEnabled
+	oldHeartbeat := c.config.EANHeartbeatSec
 
 	needRestart := c.config.URL != cfg.URL ||
 		c.config.ClientID != cfg.ClientID ||
@@ -146,14 +167,62 @@ func (c *Client) UpdateConfig(cfg model.EdgeOSNATSConfig) error {
 
 	c.config = cfg
 	c.nodeID = cfg.NodeID
+	c.configMu.Unlock()
 
 	if needRestart {
+		// 全量重连 — OnConnect 回调会根据新配置条件性启动 EAN Runtime
+		// | Full restart — OnConnect will conditionally start EAN Runtime based on new config
 		c.Stop()
 		c.stopChan = make(chan struct{})
 		return c.Start()
 	}
 
+	// EAN 热更新：无需重连，仅检测 EAN 字段变化
+	// | EAN hot update: apply EAN field changes without reconnection
+	c.applyEANConfigChange(oldEANEnabled, cfg.EANEnabled, oldHeartbeat, cfg.EANHeartbeatSec)
 	return nil
+}
+
+// applyEANConfigChange 处理 EAN 配置字段变化，无需重连北向通道。
+// | Handles EAN config field changes without reconnecting the northbound channel.
+// false→true: 启动 Runtime；true→false: 停止 Runtime；心跳变化: 重启 Runtime。
+func (c *Client) applyEANConfigChange(oldEnabled, newEnabled bool, oldHeartbeat, newHeartbeat int) {
+	if !oldEnabled && newEnabled {
+		// false → true：启动 EAN Runtime
+		if c.GetStatus() == StatusConnected {
+			rt, err := c.EnsureCapabilityRuntime(capability.RuntimeVersion)
+			if err != nil {
+				zap.L().Warn("EAN hot-start failed (NATS)", zap.Error(err))
+			} else if rt != nil {
+				c.StartEAN(context.Background())
+				zap.L().Info("EAN Runtime hot-started (NATS) (EANEnabled false→true)")
+			}
+		}
+		return
+	}
+
+	if oldEnabled && !newEnabled {
+		// true → false：停止 EAN Runtime
+		c.StopCapabilityRuntime()
+		return
+	}
+
+	// 心跳间隔变化且 EAN 仍启用：重启 Runtime 以应用新参数
+	// | Heartbeat interval changed while EAN enabled: restart Runtime to apply new parameter
+	if newEnabled && oldHeartbeat != newHeartbeat {
+		c.StopCapabilityRuntime()
+		if c.GetStatus() == StatusConnected {
+			rt, err := c.EnsureCapabilityRuntime(capability.RuntimeVersion)
+			if err != nil {
+				zap.L().Warn("EAN hot-restart failed (NATS) (heartbeat change)", zap.Error(err))
+			} else if rt != nil {
+				c.StartEAN(context.Background())
+				zap.L().Info("EAN Runtime hot-restarted (NATS) (heartbeat changed)",
+					zap.Int("old_sec", oldHeartbeat),
+					zap.Int("new_sec", newHeartbeat))
+			}
+		}
+	}
 }
 
 // Start starts the edgeOS(NATS) client
@@ -286,6 +355,22 @@ func (c *Client) doConnect() error {
 
 	c.publishNodeOnline()
 	c.subscribeToCommands()
+
+	// EAN 2.0 Capability Runtime: auto-ensure + publish $edgeos/* descriptors.
+	// V1.0 edgex.* compatibility paths above are unchanged.
+	// EnsureCapabilityRuntime returns (nil, nil) when EANEnabled=false — skip start in that case.
+	rt, err := c.EnsureCapabilityRuntime(capability.RuntimeVersion)
+	if err != nil {
+		zap.L().Warn("Failed to ensure EAN Capability Runtime (NATS)",
+			zap.Error(err),
+			zap.String("node_id", nodeID),
+		)
+	} else if rt != nil {
+		c.startEANLocked(context.Background())
+	} else {
+		zap.L().Info("EAN capability layer disabled, skipping Runtime start (NATS)",
+			zap.String("node_id", nodeID))
+	}
 	return nil
 }
 
@@ -510,6 +595,8 @@ func (c *Client) subscribeToCommands() {
 
 // handleDiscoverCommand handles device discovery commands
 func (c *Client) handleDiscoverCommand(msg *nats.Msg) {
+	zap.L().Warn("DEPRECATED: V1 discover command received (NATS), migrate to EAN *.scan_devices Capability Invoke",
+		zap.String("subject", msg.Subject))
 	var message Message
 	if err := json.Unmarshal(msg.Data, &message); err != nil {
 		zap.L().Error("Failed to unmarshal discover command",
@@ -545,6 +632,8 @@ func (c *Client) handleDiscoverCommand(msg *nats.Msg) {
 
 // handleWriteCommand handles write commands for devices
 func (c *Client) handleWriteCommand(msg *nats.Msg) {
+	zap.L().Warn("DEPRECATED: V1 write command received (NATS), migrate to EAN *.write_register Capability Invoke",
+		zap.String("subject", msg.Subject))
 	var message Message
 	if err := json.Unmarshal(msg.Data, &message); err != nil {
 		zap.L().Error("Failed to unmarshal write command",
@@ -776,6 +865,8 @@ func (c *Client) handleWriteCommand(msg *nats.Msg) {
 
 // handleTaskCommand handles task control commands
 func (c *Client) handleTaskCommand(msg *nats.Msg) {
+	zap.L().Warn("DEPRECATED: V1 task command received (NATS), migrate to EAN Capability Invoke",
+		zap.String("subject", msg.Subject))
 	var message Message
 	if err := json.Unmarshal(msg.Data, &message); err != nil {
 		zap.L().Error("Failed to unmarshal task command",
@@ -1271,6 +1362,12 @@ func (c *Client) setStatus(s int) {
 
 // Stop stops the client
 func (c *Client) Stop() {
+	// 使用 StopCapabilityRuntime 而非 stopEAN：确保 eanRuntime 置 nil，
+	// 避免重连后 OnConnect 误判 Runtime 已存在而跳过创建。
+	// | Use StopCapabilityRuntime (not stopEAN) to nil out eanRuntime,
+	// | preventing OnConnect from skipping Runtime creation after reconnect.
+	c.StopCapabilityRuntime()
+
 	close(c.stopChan)
 
 	c.subMu.Lock()
@@ -1290,7 +1387,7 @@ func (c *Client) Stop() {
 		nodeID := c.config.NodeID
 		c.configMu.RUnlock()
 
-		// Publish offline status
+		// Publish offline status (V1.0 compat)
 		subject := fmt.Sprintf("edgex.nodes.%s.status", nodeID)
 		payload := map[string]interface{}{
 			"status":    "offline",
