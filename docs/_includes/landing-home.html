@@ -19,6 +19,7 @@
         <span class="value-tag">IEC 104</span>
         <span class="value-tag">AI 助手</span>
         <span class="value-tag">MCP 服务</span>
+        <span class="value-tag">EAN 2.0</span>
       </div>
       <div class="hero-actions">
         <a class="button-link button-link--primary" href="guide/USER_MANUAL.html">用户手册</a>
@@ -70,6 +71,44 @@
       <span class="feature-card__tag">Northbound</span>
       <h3>北向管理器</h3>
       <p>统一发布器，支持 store-and-forward、自动重连、主题模板与负载 schema 控制。</p>
+    </article>
+  </div>
+</section>
+
+<!-- AI 能力专题 -->
+<section class="landing-section">
+  <div class="section-heading">
+    <div class="section-kicker">AI 加持</div>
+    <h2>MCP 与 EAN 2.0 能力体系</h2>
+    <p>94 个 MCP 工具覆盖从只读诊断到全功能 CRUD — LLM 直连工业网关，写操作卡在 Human-in-the-loop 门禁后面。</p>
+  </div>
+  <div class="grid-3">
+    <article class="feature-card">
+      <span class="feature-card__tag">MCP Server</span>
+      <h3>33 个原生工具</h3>
+      <p>JSON-RPC 2.0 over Streamable HTTP / SSE。8 只读 + 1 写操作 + 24 全功能 CRUD，6 个资源端点，13 个提示词模板。支持 Claude Desktop、Cursor、Windsurf、Continue.dev。</p>
+      <div class="feature-card__links">
+        <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入指南</a>
+        <a class="mini-link" href="ai-power.html">AI 能力专题</a>
+      </div>
+    </article>
+    <article class="feature-card">
+      <span class="feature-card__tag">EAN 2.0</span>
+      <h3>63 个协议能力</h3>
+      <p>15 种工业协议 × 4 种能力（读/写/扫描/列点）= 60 个设备能力 + 3 个系统/AI 能力。MQTT/NATS 传输，心跳发现，Invoke 调度带超时和状态机。</p>
+      <div class="feature-card__links">
+        <a class="mini-link" href="TODO/AI协同组件规划.html">AI 协同规划</a>
+        <a class="mini-link" href="edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html">EAN 改造指南</a>
+      </div>
+    </article>
+    <article class="feature-card">
+      <span class="feature-card__tag">Bridge</span>
+      <h3>94 工具统一暴露</h3>
+      <p>EAN Capability 自动映射为 ean_* MCP 工具，加上 31 个 edgex_* 原生工具。LLM 一次连接访问全部能力，写操作门禁在协议层拦截，不侵入 Runtime。</p>
+      <div class="feature-card__links">
+        <a class="mini-link" href="ai-power.html">专题详情</a>
+        <a class="mini-link" href="TODO/EAN2-Joint-Verification-Report.html">验证报告</a>
+      </div>
     </article>
   </div>
 </section>
@@ -394,6 +433,13 @@
         <div class="milestone-date">2026-07 MVP产品</div>
       </div>
     </div>
+    <div class="milestone-item milestone-item--new">
+      <div class="milestone-dot milestone-dot--new"></div>
+      <div>
+        <div class="milestone-title">EAN 2.0</div>
+        <div class="milestone-date">2026-07 63 能力上线</div>
+      </div>
+    </div>
   </div>
 
   <div class="roadmap-footer">
@@ -445,6 +491,7 @@
         <a class="mini-link" href="edge/index.html">边缘计算</a>
         <a class="mini-link" href="TODO/SLA评估.html">SLA 评估</a>
         <a class="mini-link" href="architecture/6. 影子设备设计.html">影子设备</a>
+        <a class="mini-link" href="ai-power.html">AI 能力专题</a>
       </div>
     </article>
 
