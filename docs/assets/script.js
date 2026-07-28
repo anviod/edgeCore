@@ -798,7 +798,7 @@ function initArchParticles() {
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
-// Tagline honeycomb — compact hex grid with breathing pulse and gold flow light
+// Tagline honeycomb — compact hex grid with breathing pulse and metal-grade gold flow
 function initTaglineParticles() {
   var container = document.querySelector('[data-tagline-particles]');
   var canvas = container ? container.querySelector('.tagline-canvas') : null;
@@ -847,6 +847,20 @@ function initTaglineParticles() {
       else ctx.lineTo(hx, hy);
     }
     ctx.closePath();
+  }
+
+  // Metal gradient stroke — brushed gold with directional highlight
+  function metalStroke(cx, cy, r, alpha, flowBoost) {
+    var grad = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r);
+    var a0 = (alpha * 0.50).toFixed(3);
+    var a1 = (alpha * (0.85 + flowBoost * 0.15)).toFixed(3);
+    var a2 = (alpha * 0.45).toFixed(3);
+    grad.addColorStop(0, 'rgba(143,115,65,' + a0 + ')');
+    grad.addColorStop(0.35, 'rgba(200,167,91,' + a1 + ')');
+    grad.addColorStop(0.5, 'rgba(232,213,163,' + a1 + ')');
+    grad.addColorStop(0.65, 'rgba(200,167,91,' + a1 + ')');
+    grad.addColorStop(1, 'rgba(143,115,65,' + a2 + ')');
+    return grad;
   }
 
   resize();
@@ -915,10 +929,11 @@ function initTaglineParticles() {
         var baseAlpha = fadeAlpha * breath;
         var totalAlpha = baseAlpha + flowIntensity * fadeAlpha;
 
-        // Hex outline
+        // ── Hex outline — 2× width, metal gradient ──
         hexPath(cx, cy, HEX_R);
-        ctx.strokeStyle = 'rgba(200,167,91,' + (totalAlpha * 0.30).toFixed(3) + ')';
-        ctx.lineWidth = 0.7 + flowIntensity * 0.8;
+        ctx.strokeStyle = metalStroke(cx, cy, HEX_R, totalAlpha, flowIntensity);
+        ctx.lineWidth = (0.7 + flowIntensity * 0.8) * 2; // 2× original width
+        ctx.lineJoin = 'miter';
         ctx.stroke();
 
         // Flow glow: bright fill when flow light passes
@@ -928,33 +943,31 @@ function initTaglineParticles() {
           ctx.fill();
         }
 
-        // Inner hex for depth
+        // Inner hex for depth — 2× width
         hexPath(cx, cy, HEX_R * 0.65);
-        ctx.strokeStyle = 'rgba(200,167,91,' + (totalAlpha * 0.12).toFixed(3) + ')';
-        ctx.lineWidth = 0.4;
+        ctx.strokeStyle = metalStroke(cx, cy, HEX_R * 0.65, totalAlpha * 0.5, flowIntensity);
+        ctx.lineWidth = 0.4 * 2; // 2× original width
         ctx.stroke();
 
-        // Vertex dots
+        // Vertex dots — brighter metallic glints
         for (var i = 0; i < 6; i++) {
           var angle = Math.PI / 3 * i;
           var vx = cx + HEX_R * Math.cos(angle);
           var vy = cy + HEX_R * Math.sin(angle);
-          var dotR = 0.8 + flowIntensity * 1.2;
+          var dotR = (0.8 + flowIntensity * 1.2) * 2; // 2× radius for metal glint
           ctx.beginPath();
           ctx.arc(vx, vy, Math.max(0.1, dotR), 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(200,167,91,' + (totalAlpha * (0.30 + flowIntensity * 0.45)).toFixed(3) + ')';
+          // Metal glint: bright center → gold mid → dark edge
+          var glintGrad = ctx.createRadialGradient(vx, vy, 0, vx, vy, Math.max(0.2, dotR));
+          var ga = (totalAlpha * (0.30 + flowIntensity * 0.45)).toFixed(3);
+          glintGrad.addColorStop(0, 'rgba(255,242,210,' + ga + ')');
+          glintGrad.addColorStop(0.5, 'rgba(232,213,163,' + (ga * 0.7).toFixed(3) + ')');
+          glintGrad.addColorStop(1, 'rgba(143,115,65,' + (ga * 0.3).toFixed(3) + ')');
+          ctx.fillStyle = glintGrad;
           ctx.fill();
         }
 
-        // Center glow
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(0.1, 1.5 + flowIntensity * 2.5), 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(232,213,163,' + (totalAlpha * 0.10).toFixed(3) + ')';
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(cx, cy, Math.max(0.1, 0.8 + flowIntensity * 0.8), 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(200,167,91,' + (totalAlpha * 0.40).toFixed(3) + ')';
-        ctx.fill();
+        // ── Center glow removed per spec ──
       }
     }
 

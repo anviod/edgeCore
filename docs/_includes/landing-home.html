@@ -25,7 +25,7 @@
         <a class="button-link button-link--primary" href="guide/USER_MANUAL.html">用户手册</a>
         <a class="button-link button-link--secondary" href="architecture/index.html">架构设计</a>
         <a class="button-link button-link--secondary" href="drivers/index.html">驱动索引</a>
-        <a class="button-link button-link--secondary" href="API/index.html">API 规范</a>
+        <a class="button-link button-link--secondary" href="API/AI.html">AI 专题</a>
       </div>
     </div>
     <div class="hero-visual" aria-hidden="true" data-hero-visual data-fx-count="12"></div>
@@ -89,7 +89,7 @@
       <p>JSON-RPC 2.0 over Streamable HTTP / SSE。8 只读 + 1 写操作 + 24 全功能 CRUD，6 个资源端点，13 个提示词模板。支持 Claude Desktop、Cursor、Windsurf、Continue.dev。</p>
       <div class="feature-card__links">
         <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入指南</a>
-        <a class="mini-link" href="ai-power.html">AI 能力专题</a>
+        <a class="mini-link" href="API/AI.html">AI 能力专题</a>
       </div>
     </article>
     <article class="feature-card">
@@ -106,7 +106,7 @@
       <h3>94 工具统一暴露</h3>
       <p>EAN Capability 自动映射为 ean_* MCP 工具，加上 31 个 edgex_* 原生工具。LLM 一次连接访问全部能力，写操作门禁在协议层拦截，不侵入 Runtime。</p>
       <div class="feature-card__links">
-        <a class="mini-link" href="ai-power.html">专题详情</a>
+        <a class="mini-link" href="API/AI.html">专题详情</a>
         <a class="mini-link" href="TODO/EAN2-Joint-Verification-Report.html">验证报告</a>
       </div>
     </article>
@@ -161,295 +161,6 @@
   <p class="arch-note">每个阶段暴露确定性接口；新增协议或计算节点无需改动流水线主干。</p>
 </section>
 
-
-
-<!-- 项目概览 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">规格参数</div>
-    <h2>运行时规格</h2>
-  </div>
-  <table class="overview-table">
-    <tbody>
-      <tr>
-        <td class="overview-label">运行时类型</td>
-        <td>单进程边缘网关</td>
-        <td class="overview-label">南向协议</td>
-        <td>22+（Modbus, S7, OPC UA, BACnet, IEC 104, EtherNet/IP 等）</td>
-      </tr>
-      <tr>
-        <td class="overview-label">部署方式</td>
-        <td>deb / rpm / 便携二进制</td>
-        <td class="overview-label">支持平台</td>
-        <td>Linux, Windows, ARM64, x86_64</td>
-      </tr>
-      <tr>
-        <td class="overview-label">核心引擎</td>
-        <td>ScanEngine, ShadowCore, Execution Mapper, Snapshot Engine</td>
-        <td class="overview-label">开源协议</td>
-        <td>Apache License 2.0</td>
-      </tr>
-    </tbody>
-  </table>
-</section>
-
-<!-- 产品路线图 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">开发计划</div>
-    <h2>开发计划与里程碑</h2>
-    <p>EdgeX 边缘网关产品演进路线，按季度规划核心功能交付。</p>
-  </div>
-
-  <div class="roadmap-intro">
-    <h4>规划说明</h4>
-    <p>
-      路线图由协议覆盖率、可靠性与可观测性目标驱动。
-      交付物随现场验证与硬件就绪情况动态调整。
-      优先级标记：
-      <span class="priority-label priority-label--high">高</span> /
-      <span class="priority-label priority-label--medium">中</span> /
-      <span class="priority-label priority-label--planned">规划中</span>。
-    </p>
-  </div>
-
-  <div class="quarter-header">
-    <h3>Q3 2026 交付计划</h3>
-    <span class="quarter-badge quarter-badge--active">进行中</span>
-  </div>
-  <table class="roadmap-table">
-    <thead>
-      <tr>
-        <th>功能模块</th>
-        <th>功能描述</th>
-        <th>预计交付</th>
-        <th>负责团队</th>
-        <th>优先级</th>
-        <th>状态</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>工业验证 Phase 2</td>
-        <td>各协议联机长跑（24h/72h）、断网恢复与 PLC 重启场景，统一工业验证报告归档</td>
-        <td>2026-09</td>
-        <td>质量保障组</td>
-        <td><span class="badge badge-high">高</span></td>
-        <td><span class="badge badge-progress">进行中</span></td>
-      </tr>
-      <tr>
-        <td>ARMv7 板端验收</td>
-        <td>目标网关硬件 2h/72h 长跑、Shadow 读路径与 ScanEngine SLA 板端复验</td>
-        <td>2026-09</td>
-        <td>平台架构组</td>
-        <td><span class="badge badge-high">高</span></td>
-        <td><span class="badge badge-progress">进行中</span></td>
-      </tr>
-      <tr>
-        <td>ShadowCore 跨通道聚合</td>
-        <td>虚拟影子跨通道引用、多源点位聚合与公式依赖图扩展</td>
-        <td>2026-09</td>
-        <td>平台架构组</td>
-        <td><span class="badge badge-med">中</span></td>
-        <td><span class="badge badge-progress">进行中</span></td>
-      </tr>
-      <tr>
-        <td>多节点同步通信</td>
-        <td>基于 go-libp2p 的分布式配置同步，多网关集群部署与一致性保证</td>
-        <td>2026-09</td>
-        <td>平台架构组</td>
-        <td><span class="badge badge-med">中</span></td>
-        <td><span class="badge badge-research">预研中</span></td>
-      </tr>
-      <tr>
-        <td>高可用接管</td>
-        <td>故障自动接管与租约机制，主备节点自动切换，采集任务无缝迁移</td>
-        <td>2026-09</td>
-        <td>平台架构组</td>
-        <td><span class="badge badge-med">中</span></td>
-        <td><span class="badge badge-research">预研中</span></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="quarter-header">
-    <h3>Q4 2026 交付计划</h3>
-    <span class="quarter-badge quarter-badge--planned">规划中</span>
-  </div>
-  <table class="roadmap-table">
-    <thead>
-      <tr>
-        <th>功能模块</th>
-        <th>功能描述</th>
-        <th>预计交付</th>
-        <th>负责团队</th>
-        <th>优先级</th>
-        <th>状态</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>IEC 104 M2 增强</td>
-        <td>遥调、时钟同步、SOE 事件记录、双点遥控与链路冗余</td>
-        <td>2026-12</td>
-        <td>驱动开发组</td>
-        <td><span class="badge badge-high">高</span></td>
-        <td><span class="badge badge-pending">待启动</span></td>
-      </tr>
-      <tr>
-        <td>SNMP 联机压测</td>
-        <td>SNMP 驱动与真实网络设备联调、大规模 OID 压测报告</td>
-        <td>2026-12</td>
-        <td>驱动开发组</td>
-        <td><span class="badge badge-med">中</span></td>
-        <td><span class="badge badge-pending">待启动</span></td>
-      </tr>
-      <tr>
-        <td>万点级吞吐优化</td>
-        <td>真实驱动 10k Tag 压测、Pipeline 批合并与 100k points/s 吞吐路径评估</td>
-        <td>2026-12</td>
-        <td>平台架构组</td>
-        <td><span class="badge badge-high">高</span></td>
-        <td><span class="badge badge-pending">待启动</span></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div class="quarter-header">
-    <h3>已交付里程碑</h3>
-  </div>
-  <div class="milestone-grid">
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">Modbus TCP/RTU</div>
-        <div class="milestone-date">2026-02 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">BACnet IP</div>
-        <div class="milestone-date">2026-02 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">OPC UA 客户端</div>
-        <div class="milestone-date">2026-03 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">Siemens S7</div>
-        <div class="milestone-date">2026-05 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">EtherNet/IP</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">Omron FINS</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">SNMP v2c/v3</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">IEC 104 M1</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">DL/T645-2007</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">Mitsubishi SLMP</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">Profinet IO</div>
-        <div class="milestone-date">2026-06 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item">
-      <div class="milestone-dot"></div>
-      <div>
-        <div class="milestone-title">KNXnet/IP</div>
-        <div class="milestone-date">2026-07 发布</div>
-      </div>
-    </div>
-    <div class="milestone-item milestone-item--new">
-      <div class="milestone-dot milestone-dot--new"></div>
-      <div>
-        <div class="milestone-title">SLA 工业级</div>
-        <div class="milestone-date">2026-07 发布</div>
-      </div>
-    </div>
-
-    <div class="milestone-item milestone-item--new">
-      <div class="milestone-dot milestone-dot--new"></div>
-      <div>
-        <div class="milestone-title">EtherCAT M1</div>
-        <div class="milestone-date">2026-07 发布 · PDO/SDO </div>
-      </div>
-    </div>
-    
-    <div class="milestone-item milestone-item--new">
-      <div class="milestone-dot milestone-dot--new"></div>
-      <div>
-        <div class="milestone-title">AI MCP服务</div>
-        <div class="milestone-date">2026-07 全流程 LLM工具 </div>
-      </div>
-    </div>
-    <div class="milestone-item milestone-item--new">
-      <div class="milestone-dot milestone-dot--new"></div>
-      <div>
-        <div class="milestone-title">AI Copilot</div>
-        <div class="milestone-date">2026-07 MVP产品</div>
-      </div>
-    </div>
-    <div class="milestone-item milestone-item--new">
-      <div class="milestone-dot milestone-dot--new"></div>
-      <div>
-        <div class="milestone-title">EAN 2.0</div>
-        <div class="milestone-date">2026-07 63 能力上线</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="roadmap-footer">
-    <p>
-      战略分阶段路线见 <a href="ROADMAP.html">分阶段开发路线图</a>
-      · 季度交付明细与技术方案见 <a href="development_plan/index.html">开发计划总览</a>
-    </p>
-  </div>
-</section>
-
 <!-- 文档导航 -->
 <section class="landing-section">
   <div class="section-heading">
@@ -491,7 +202,7 @@
         <a class="mini-link" href="edge/index.html">边缘计算</a>
         <a class="mini-link" href="TODO/SLA评估.html">SLA 评估</a>
         <a class="mini-link" href="architecture/6. 影子设备设计.html">影子设备</a>
-        <a class="mini-link" href="ai-power.html">AI 能力专题</a>
+        <a class="mini-link" href="API/AI.html">AI 能力专题</a>
       </div>
     </article>
 

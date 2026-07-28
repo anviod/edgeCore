@@ -6,7 +6,7 @@ description: EdgeX 工业边缘网关 AI 能力体系 — MCP 协议操作接口
 
 # AI 能力专题 — MCP 与 EAN 2.0
 
-[产品指南](guide/PRODUCT.zh-CN.html) · [MCP 接入指南](guide/mcp-access-guide.html) · [AI 协同规划](TODO/AI协同组件规划.html) · [EAN 改造指南](edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html)
+[产品指南](../guide/PRODUCT.zh-CN.html) · [MCP 接入指南](../guide/mcp-access-guide.html) · [AI 协同规划](../TODO/AI协同组件规划.html) · [EAN 改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html)
 
 EdgeX v2.x 在工业采集内核之上叠加了两层 AI 能力：**MCP Server** 把网关的通道、设备、点位暴露给外部 LLM 客户端操作；**EAN 2.0 Capability Runtime** 把 15 种协议驱动的读写扫描能力统一为可发现、可调用的 Capability，再通过 MCP 桥接层暴露为 `ean_*` 工具。两层合计 94 个 MCP 工具，覆盖从只读诊断到全功能 CRUD 的完整操作链路。
 
@@ -421,8 +421,8 @@ MCP API Key 与系统 JWT 完全独立。即使 API Key 泄露，攻击者也只
 
 ## 相关文档
 
-- [MCP 接入指南](guide/mcp-access-guide.html) — 客户端配置、认证流程、工具清单
-- [AI 协同组件规划](TODO/AI协同组件规划.html) — EAN 2.0 架构设计、能力模型、V1.5→V2.0 映射
-- [EAN 2.0 改造指南](edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html) — EdgeX/EdgeOS 联调方案
-- [通信协议规范](edgeos/EdgeX通信协议规范(MQTT-NATS).html) — MQTT/NATS 主题与消息格式
-- [EAN 联合验证报告](TODO/EAN2-Joint-Verification-Report.html) — 全链路测试结果
+- [MCP 接入指南](../guide/mcp-access-guide.html) — 客户端配置、认证流程、工具清单
+- [AI 协同组件规划](../TODO/AI协同组件规划.html) — EAN 2.0 架构设计、能力模型、V1.5→V2.0 映射
+- [EAN 2.0 改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html) — EdgeX/EdgeOS 联调方案
+- [通信协议规范](../edgeos/EdgeX通信协议规范(MQTT-NATS).html) — MQTT/NATS 主题与消息格式
+- [EAN 联合验证报告](../TODO/EAN2-Joint-Verification-Report.html) — 全链路测试结果
