@@ -2570,9 +2570,11 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .site-footer__row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: center;
   gap: 8px 14px;
+  white-space: nowrap;
   font-size: 0.9rem;
   color: var(--text-muted);
 }
