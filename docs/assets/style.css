@@ -2517,48 +2517,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 /* =========================================
    Site Tagline & Footnotes
    ========================================= */
-.landing-section--tagline {
-  padding: 12px 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  margin-bottom: 0;
-  position: relative;
-  overflow: hidden;
-  min-height: 80px;
-}
-
-.tagline-particles {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.tagline-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.site-tagline {
-  text-align: center;
-  padding: 24px 0;
-  position: relative;
-  z-index: 1;
-}
-
-.site-tagline p {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-}
-
 .landing-section--footnotes {
   padding-top: 0;
   padding-bottom: 16px;
@@ -2604,7 +2562,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    Footer
    ========================================= */
 .site-footer {
-  width: min(100% - 48px, var(--shell-width));
+  width: min(calc(100% - 48px), var(--shell-width));
   margin: 60px auto 0;
   padding: 32px 0;
   border-top: 1px solid var(--gold-border);
@@ -2614,7 +2572,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: center;
   gap: 8px 14px;
   font-size: 0.9rem;
   color: var(--text-muted);
@@ -2771,7 +2728,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   }
   .arch-arrow { width: 16px; }
   .overview-table .overview-label { width: 90px; }
-  .site-tagline p { font-size: 0.9rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
