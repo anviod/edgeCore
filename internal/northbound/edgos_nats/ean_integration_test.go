@@ -106,6 +106,7 @@ func TestEANIntegrationNATSDiscoveryInvokeEvent(t *testing.T) {
 		ConnectTimeout: 5,
 		ReconnectWait:  1,
 		MaxReconnects:  1,
+		EANEnabled:     true,
 	}
 	client := edgos_nats.NewClient(cfg, stubSB{}, nil)
 	require.NoError(t, client.Start())

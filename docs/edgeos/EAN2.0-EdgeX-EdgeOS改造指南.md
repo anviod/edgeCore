@@ -1,7 +1,7 @@
 # EAN 2.0 EdgeX ↔ EdgeOS 改造指南
 
-> **文档版本**: 1.0  
-> **日期**: 2026-07-27  
+> **文档版本**: 1.1  
+> **日期**: 2026-07-29  
 > **适用范围**: EdgeX Capability Runtime（本仓库）与 EdgeOS Coordination Platform（对端必须实现）  
 > **协议基线**: [EdgeX通信协议规范(MQTT-NATS).md](./EdgeX通信协议规范(MQTT-NATS).md)  
 > **规划基线**: [AI协同组件规划.md](../TODO/AI协同组件规划.md)
@@ -29,6 +29,8 @@ Edge Agent Network（EAN）2.0 在现有 EdgeX + EdgeOS 架构上增加统一 Ag
 | Shadow → EAN Event（含 `previous_value`） | ✅ |
 | AI Adapter（`ai.protocol_reverse` / `ai.doc_parse`） | ✅ |
 | NATS 与 MQTT 对称 + 本机联调 | ✅ |
+| EAN 启停并入 EdgeOS 通道（`EANEnabled` / 热更新） | ✅ |
+| V1 `device_report` 连接/重注册兜底 | ✅ |
 | EdgeOS 必做功能清单（本文档） | ✅ |
 
 ### 1.3 非目标
@@ -81,6 +83,8 @@ MQTT/NATS/MCP/HTTP
 | Driver + AI 执行 | `internal/execution/` |
 | MCP Tool 自动生成 | `internal/mcp/capability_adapter.go` |
 | Shadow→Event 绑定 | `internal/core/northbound_manager_ext.go` |
+
+> Shadow→Event 的 `EventPublisher` 列表在 **EAN Runtime 启停/连接生命周期**刷新（`SetOnEANRuntimeChanged` → `refreshEANEventPublishers`），**不**在每次 Shadow delta 热路径上刷新。通知回调同步执行；若北向管理器正在持写锁则延迟阻塞刷新，避免死锁并消除异步窗口内仍用旧 publisher 列表的竞态。
 
 ### 2.3 EAN Topic / Subject（MQTT 与 NATS 相同字符串）
 
@@ -167,10 +171,19 @@ ShadowCore COW 写入时，在 **通知克隆** 中附加变更前值（不写�
 
 | 传输 | V1 Topic/Subject 示例 |
 |------|----------------------|
-| MQTT | `edgex/nodes/register`、`edgex/heartbeat/{node}`、`edgex/cmd/{node}/{device}/write` |
-| NATS | `edgex.nodes.register`、`edgex.heartbeat.{node}`、`edgex.cmd.{node}.{device}.write` |
+| MQTT | `edgex/nodes/register`、`edgex/devices/report`、`edgex/heartbeat/{node}`、`edgex/cmd/{node}/{device}/write` |
+| NATS | `edgex.nodes.register`、`edgex.devices.report`、`edgex.heartbeat.{node}`、`edgex.cmd.{node}.{device}.write` |
 
 EAN 与 V1 并行：新功能用 `$edgeos/*`；旧 EdgeOS 可继续用 V1。
+
+**设备清单 `device_report`（EdgeX 行为）**：
+
+1. **连接成功后主动发布**（与重注册命令路径一致），不唯依赖 `register_response`  
+2. **`register_response` status=success** 时再发一次（EdgeOS 确认后对齐）  
+3. **5s 超时兜底**：若本连接周期内尚未成功发出过 report，再重试一次（覆盖 publish 丢失 / 从未收到 success 的空窗）  
+4. 重注册命令（`node_register`）路径同样立即 `publishDeviceReport`（节点已存在时 EdgeOS 可能不再回 `register_response`）
+
+EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`（双传输对称）；漏订任一侧会导致该传输上的设备数空窗或滞后。
 
 ---
 
@@ -260,7 +273,7 @@ EAN 与 V1 并行：新功能用 `$edgeos/*`；旧 EdgeOS 可继续用 V1。
 | OS-20 | Agent 生命周期视图 | online/offline/heartbeat 超时判定（建议 2～3 个心跳周期） |
 | OS-21 | 权限与命名空间 | 按租户/项目限制可 Invoke 的 Capability（尤其 write/admin/AI） |
 | OS-22 | 审计 | 记录跨节点 Invoke 的 initiator、target、capability、结果 |
-| OS-23 | V1 兼容网关（过渡期） | 若仍有 V1 客户端：可保留 `edgex/*` 适配，但新功能禁止只做 V1 |
+| OS-23 | V1 兼容网关（过渡期） | 若仍有 V1 客户端：可保留 `edgex/*` 适配，但新功能禁止只做 V1；**V1 设备清单须订** MQTT `edgex/devices/report` **与** NATS `edgex.devices.report`（勿只订 MQTT） |
 
 ### 3.6 EdgeOS 侧「不要做」的事
 
@@ -393,6 +406,7 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 - [ ] Agent 心跳超时标记 offline，与 `discovery/agent/offline` 一致  
 - [ ] 权限：限制 write/admin/AI Capability 的调用方  
 - [ ] 与 V1 并存时无 Topic 冲突 / 双处理重复副作用  
+- [ ] V1 设备清单：MQTT 订 `edgex/devices/report`，NATS 订 `edgex.devices.report`（双传输对称）  
 
 ---
 
@@ -406,6 +420,7 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 | State 同步 Topic | `$edgeos/state/*` 已预留 | EdgeOS 需要全量/增量状态时可再实现 |
 | Capability Planner | AI 规划输出仍以任务交付物为主 | EAN-增强阶段：Planner 直接产出 Capability Invoke 图 |
 | 全量 `internal/core` stress | 长时间压力测试可能触达超时 | 与本改造无关；CI 建议 `-short` 或拆分 stress |
+| V1 device_report 依赖 EdgeOS 订阅 | EdgeX 已连接即发 + 超时兜底；若 EdgeOS messaging 未订对应 Topic/Subject，清单仍无法入库 | EdgeOS 按 OS-23 补齐 MQTT/NATS 双订，并用 `ReconcileDevices` 对账 |
 
 ---
 
@@ -419,9 +434,10 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 | `internal/model/types.go` | `ShadowPoint.PreviousValue`（notify-only） |
 | `internal/core/shadow_pool.go` | `cloneShadowDeltaForNotify` |
 | `internal/core/shadow_core.go` | 写路径携带 previous |
-| `internal/core/northbound_manager_ext.go` | Event Bridge 传递 previous |
+| `internal/core/northbound_manager_ext.go` | Event Bridge 传递 previous；publisher 生命周期刷新（同步 + 写锁下延迟） |
 | `internal/core/shadow_previous_value_test.go` | previous_value 单测 |
-| `internal/northbound/edgos_{mqtt,nats}/ean_bridge.go` | WiredExecutor |
+| `internal/northbound/edgos_{mqtt,nats}/ean_bridge.go` | WiredExecutor；`notifyEANRuntimeChanged` 同步回调 |
+| `internal/northbound/edgos_{mqtt,nats}/client.go` | 连接/重注册/`register_response`/5s 超时 `device_report` 兜底 |
 | `internal/northbound/edgos_nats/ean_integration_test.go` | NATS 真实联调 |
 | `internal/northbound/edgos_mqtt/ean_integration_test.go` | MQTT 校验 previous_value |
 | `internal/server/mcp_handler.go` | MCP Runtime 注入 AIAdapter |

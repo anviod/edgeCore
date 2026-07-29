@@ -47,7 +47,7 @@ description: EdgeX EdgeX-EdgeOS MQTT/NATS 通信测试方案
 | 操作 | EdgeX 发布 | EdgeOS 发布 | 说明 |
 |------|-----------|-------------|------|
 | 节点注册 | `edgex.nodes.register` | `edgex.nodes.{node_id}.response` | 点分隔替代斜杠 |
-| 设备上报 | `edgex.devices.report` | — | |
+| 设备上报 | `edgex.devices.report` | — | **EdgeOS 必须订阅**（与 MQTT `edgex/devices/report` 对称） |
 | 点位元数据上报 | `edgex.points.report` | — | 上报点位定义列表 |
 | 设备点位值同步 | `edgex.points.{node_id}.{device_id}` | — | 首次/全量同步 |
 | 心跳 | `edgex.nodes.{node_id}.heartbeat` | — | |

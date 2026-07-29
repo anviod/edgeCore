@@ -52,6 +52,28 @@ func (b natsBus) Subscribe(topic string, _ byte, handler func(topic string, payl
 	return nil
 }
 
+// SetOnEANRuntimeChanged registers a callback invoked when the EAN Capability
+// Runtime is started or stopped (connect / disconnect / EAN enable toggles).
+// Used by NorthboundManager to refresh shadow event publishers off the hot path.
+func (c *Client) SetOnEANRuntimeChanged(fn func()) {
+	c.eanMu.Lock()
+	c.onEANRuntimeChanged = fn
+	c.eanMu.Unlock()
+}
+
+func (c *Client) notifyEANRuntimeChanged() {
+	c.eanMu.RLock()
+	fn := c.onEANRuntimeChanged
+	c.eanMu.RUnlock()
+	if fn == nil {
+		return
+	}
+	// Synchronous so Shadow→Event publishers update before the next delta.
+	// refreshEANEventPublishers is deadlock-safe when the caller holds nm.mu
+	// (TryRLock + deferred blocking refresh).
+	fn()
+}
+
 // AttachCapabilityRuntime binds an EAN 2.0 Capability Runtime to this NATS client.
 func (c *Client) AttachCapabilityRuntime(rt *capability.Runtime) {
 	c.eanMu.Lock()
@@ -123,6 +145,7 @@ func (c *Client) startEANLocked(ctx context.Context) {
 		zap.L().Warn("EAN Capability Runtime start failed (NATS)", zap.Error(err))
 	}
 	rt.OnConnected(ctx)
+	c.notifyEANRuntimeChanged()
 }
 
 func (c *Client) stopEAN() {
@@ -144,6 +167,7 @@ func (c *Client) StopCapabilityRuntime() {
 	if rt != nil {
 		rt.Stop()
 		zap.L().Info("EAN Capability Runtime stopped (NATS) (EANEnabled=false or channel disabled)")
+		c.notifyEANRuntimeChanged()
 	}
 }
 

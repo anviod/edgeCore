@@ -79,8 +79,14 @@ type Client struct {
 	reconnectSched reconnect.Scheduler
 
 	// EAN 2.0 Capability Runtime (optional; V1.0 edgex.* subjects remain unchanged)
-	eanMu      sync.RWMutex
-	eanRuntime *capability.Runtime
+	eanMu               sync.RWMutex
+	eanRuntime          *capability.Runtime
+	onEANRuntimeChanged func()
+
+	// deviceReportGen bumps on each connect; fallback timer ignores stale gens.
+	// deviceReportOK is set after a successful publishDeviceReport in this generation.
+	deviceReportGen atomic.Uint64
+	deviceReportOK  atomic.Bool
 }
 
 // NewClient creates a new edgeOS(NATS) client
@@ -353,8 +359,16 @@ func (c *Client) doConnect() error {
 		zap.String("component", "edgos-nats-client"),
 	)
 
-	c.publishNodeOnline()
+	// Subscribe before publishing registration so we do not miss
+	// register_response (which also triggers publishDeviceReport).
 	c.subscribeToCommands()
+	c.publishNodeOnline()
+
+	// Inventory on connect (same as re-register): EdgeOS may skip
+	// register_response when the node is already known.
+	c.deviceReportOK.Store(false)
+	c.publishDeviceReport()
+	c.scheduleDeviceReportFallback()
 
 	// EAN 2.0 Capability Runtime: auto-ensure + publish $edgeos/* descriptors.
 	// V1.0 edgex.* compatibility paths above are unchanged.
@@ -918,6 +932,9 @@ func (c *Client) handleNodeRegisterCommand(msg *nats.Msg) {
 
 	// Trigger node re-registration by publishing node online status again
 	c.publishNodeOnline()
+	// Re-register may not yield another register_response (node already known);
+	// publish device inventory immediately so EdgeOS stays in sync.
+	c.publishDeviceReport()
 
 	// Send response back to EdgeOS
 	response := Message{
@@ -984,6 +1001,34 @@ func (c *Client) handleRegisterResponseCommand(msg *nats.Msg) {
 			zap.String("status", status),
 		)
 	}
+}
+
+// scheduleDeviceReportFallback republishes inventory if the connect-time
+// publish failed/was lost and no later successful report arrived within 5s.
+func (c *Client) scheduleDeviceReportFallback() {
+	gen := c.deviceReportGen.Add(1)
+	go func() {
+		timer := time.NewTimer(5 * time.Second)
+		defer timer.Stop()
+		select {
+		case <-c.stopChan:
+			return
+		case <-timer.C:
+		}
+		if c.deviceReportGen.Load() != gen {
+			return
+		}
+		if c.deviceReportOK.Load() {
+			return
+		}
+		if c.GetStatus() != StatusConnected {
+			return
+		}
+		zap.L().Info("NATS device_report fallback: republishing inventory after connect",
+			zap.String("node_id", c.nodeID),
+		)
+		c.publishDeviceReport()
+	}()
 }
 
 // publishDeviceReport publishes all device information to EdgeOS
@@ -1066,6 +1111,7 @@ func (c *Client) publishDeviceReport() {
 			zap.String("node_id", nodeID),
 		)
 	} else {
+		c.deviceReportOK.Store(true)
 		zap.L().Info("Device report published successfully",
 			zap.String("node_id", nodeID),
 			zap.Int("device_count", len(devices)),

@@ -106,6 +106,7 @@ func TestEANIntegrationMQTTDiscoveryInvokeEvent(t *testing.T) {
 		KeepAlive:      30,
 		ConnectTimeout: 5,
 		AutoReconnect:  false,
+		EANEnabled:     true,
 	}
 	client := edgos_mqtt.NewClient(cfg, stubSB{}, nil)
 	require.NoError(t, client.Start())

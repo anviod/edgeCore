@@ -255,11 +255,12 @@ func (nm *NorthboundManager) Start() {
 	for _, cfg := range nm.config.EdgeOSMQTT {
 		if cfg.Enable {
 			client := edgos_mqtt.NewClient(cfg, nm.sb, nm.storage)
+			nm.wireEdgeOSMQTTClient(client)
+			nm.edgeOSMQTTClients[cfg.ID] = client
 			if err := client.Start(); err != nil {
 				log.Printf("Failed to start edgeOS(MQTT) client [%s]: %v", cfg.Name, err)
 			} else {
 				log.Printf("Northbound edgeOS(MQTT) client [%s] started", cfg.Name)
-				nm.edgeOSMQTTClients[cfg.ID] = client
 			}
 		}
 	}
@@ -268,11 +269,12 @@ func (nm *NorthboundManager) Start() {
 	for _, cfg := range nm.config.EdgeOSNATS {
 		if cfg.Enable {
 			client := edgos_nats.NewClient(cfg, nm.sb, nm.storage)
+			nm.wireEdgeOSNATSClient(client)
+			nm.edgeOSNATSClients[cfg.ID] = client
 			if err := client.Start(); err != nil {
 				log.Printf("Failed to start edgeOS(NATS) client [%s]: %v", cfg.Name, err)
 			} else {
 				log.Printf("Northbound edgeOS(NATS) client [%s] started", cfg.Name)
-				nm.edgeOSNATSClients[cfg.ID] = client
 			}
 		}
 	}

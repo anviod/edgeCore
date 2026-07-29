@@ -56,6 +56,28 @@ func (b mqttBus) Subscribe(topic string, qos byte, handler func(topic string, pa
 	return nil
 }
 
+// SetOnEANRuntimeChanged registers a callback invoked when the EAN Capability
+// Runtime is started or stopped (connect / disconnect / EAN enable toggles).
+// Used by NorthboundManager to refresh shadow event publishers off the hot path.
+func (c *Client) SetOnEANRuntimeChanged(fn func()) {
+	c.eanMu.Lock()
+	c.onEANRuntimeChanged = fn
+	c.eanMu.Unlock()
+}
+
+func (c *Client) notifyEANRuntimeChanged() {
+	c.eanMu.RLock()
+	fn := c.onEANRuntimeChanged
+	c.eanMu.RUnlock()
+	if fn == nil {
+		return
+	}
+	// Synchronous so Shadow→Event publishers update before the next delta.
+	// refreshEANEventPublishers is deadlock-safe when the caller holds nm.mu
+	// (TryRLock + deferred blocking refresh).
+	fn()
+}
+
 // AttachCapabilityRuntime binds an EAN 2.0 Capability Runtime to this MQTT client.
 // V1.0 edgex/* topics continue to work independently as the compatibility layer.
 func (c *Client) AttachCapabilityRuntime(rt *capability.Runtime) {
@@ -129,6 +151,7 @@ func (c *Client) startEANLocked(ctx context.Context) {
 	}
 	// Re-subscribe / re-publish on every MQTT connect (including reconnect).
 	rt.OnConnected(ctx)
+	c.notifyEANRuntimeChanged()
 }
 
 func (c *Client) stopEAN() {
@@ -150,6 +173,7 @@ func (c *Client) StopCapabilityRuntime() {
 	if rt != nil {
 		rt.Stop()
 		zap.L().Info("EAN Capability Runtime stopped (EANEnabled=false or channel disabled)")
+		c.notifyEANRuntimeChanged()
 	}
 }
 

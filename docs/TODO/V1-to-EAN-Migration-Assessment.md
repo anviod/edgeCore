@@ -2,11 +2,11 @@
 
 | 属性 | 值 |
 |---|---|
-| 文档版本 | 2.12 |
-| 日期 | 2026-07-28 |
+| 文档版本 | 2.13 |
+| 日期 | 2026-07-29 |
 | 适用范围 | EdgeX + EdgeOS 联合架构 |
-| 状态 | **Phase 1 已完成 / Phase 2 跨系统路径已打通并实机复验通过（MQTT + NATS）/ Phase 3 EdgeX 侧全部完成（EX-P3-01~09）/ EdgeOS 侧 OS-P3-01/02 完成 / v2.12：设备数对账不一致已定位并在 EdgeOS 侧修复（全量 `go test ./...` 全绿）** |
-| 变更说明 | v2.12（EdgeOS 侧）: **设备数/上报一致性**——根因：V1 `edgex/devices/report` 全量快照在 EdgeOS 只 Upsert 不剪枝（实机 EdgeX=4 / EdgeOS 曾=14）；非 Discovery/EAN Event/双传输重复计数。修复：`ReconcileDevices`、EAN→Registry 镜像、`POST /api/nodes/:id/devices/reconcile`；实机恢复 devices=4、nodes=1、agents=1、native_caps=63；`go test ./...` 全绿 + UI build 通过。残留：messaging 未订 NATS `edgex.devices.report`；EdgeX 重注册后 device_report 未稳定触发（需 EdgeX 侧确认）。v2.11（双侧）: NATS 传输对称联调端到端复验——EdgeX NATS stats API 返回 `ean_metrics`（total_invokes=8, success_rate=100%），对齐 MQTT；EdgeOS 3 个 Invoke 测试全部 completed（system.diagnostics/modbus_tcp.list_points/bacnet_ip.list_points），P50=3ms P99=6ms v1_fallback=0；OS-P3-01 V1 Fallback 移除（v1_bridge_caps=0）；OS-P3-02 前端写操作切换 EAN Invoke（ControlView/PointListView）。v2.10（EdgeOS 侧）: NATS 对称补齐——NATS 延迟订阅/Connect·Reconnect 补订对齐 MQTT；Health 新增 `transport_details[{name,connected,endpoint}]`，`northbound_runtime` 改为 `mqttBus+natsBus`；UI Overview/DebugHelp/Dashboard 展示分传输连接态与 broker 地址；联调帮助拆分 MQTT/NATS 步骤并补充 NATS Subject 用例；`go test ./internal/ean/` + UI build 通过；实机复验（2026-07-28）：4222 可达、`registered_transports=2`、Agent `transport=["nats"]`/`northbound=edgeos_nats`、63 native Cap、`system.diagnostics` Invoke completed（avg≈5ms，`v1_fallback=0`）。v2.9（EdgeOS 侧）: NATS 传输对称联调——启用 `ean.nats.enabled=true`（`nats://127.0.0.1:4222`），EdgeOS `registered_transports=2`（mqtt+nats），63 条原生 Cap 通过 NATS 通道索引（`v1_bridge_caps=0`），`system.diagnostics` 通过双传输 Invoke 端到端成功（6ms / `v1_fallback=0`）；EdgeX NATS 北向通道 `EAN-NATS` 已启用（`ean_enabled=true`）。v2.8（EdgeOS 侧）: Governance 权限修复——default 租户无策略时放行 admin/write/ai（修复 system.diagnostics 502）；实机复验 63 条原生 Cap + system.diagnostics Invoke 端到端成功。v2.7（EdgeOS 侧）: 启动韧性对齐 messaging.Manager——MQTT ConnectRetry/AutoReconnect + 订阅延后补订，broker 不可用时不 fatal；Health 增加 `invoke_metrics`/`registered_transports`；默认 MQTT broker 改为 `18083`；UI 对齐 `source`/原生 Cap 计数/Invoke 指标；诚实勾选 Phase 3 EdgeOS 进度。v2.6（EdgeX 侧）: 深化双 Runtime 战略定位。v2.5（EdgeX 侧）: 明确双 Runtime。v2.4（EdgeOS 侧功能）: 仅对接北向 EAN Runtime；V1 purge/AgentSource |
+| 状态 | **Phase 1 已完成 / Phase 2 跨系统路径已打通并实机复验通过（MQTT + NATS）/ Phase 3 EdgeX 侧全部完成（EX-P3-01~09）/ EdgeOS 侧 OS-P3-01/02 完成 / v2.12：设备数对账不一致已定位并在 EdgeOS 侧修复 / v2.13：EdgeX 侧 `device_report` 连接/重注册/超时兜底与 publisher 刷新竞态收尾** |
+| 变更说明 | v2.13（EdgeX 侧）: **收尾残留**——① `notifyEANRuntimeChanged` 改为同步刷新 publisher，`refreshEANEventPublishers` 在持 `nm.mu` 时 TryRLock 失败则延迟阻塞刷新（消竞态、防死锁）；② 连接成功即发 V1 `device_report` + 5s 未成功则重试，与重注册/`register_response` 路径对齐；③ 改造指南明确 EdgeOS 须双订 MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`。v2.12（EdgeOS 侧）: **设备数/上报一致性**——根因：V1 `edgex/devices/report` 全量快照在 EdgeOS 只 Upsert 不剪枝（实机 EdgeX=4 / EdgeOS 曾=14）；非 Discovery/EAN Event/双传输重复计数。修复：`ReconcileDevices`、EAN→Registry 镜像、`POST /api/nodes/:id/devices/reconcile`；实机恢复 devices=4、nodes=1、agents=1、native_caps=63；`go test ./...` 全绿 + UI build 通过。**仍属 EdgeOS 侧**：若 messaging 未订 NATS `edgex.devices.report`，NATS 传输上的 V1 清单仍可能空窗（见改造指南 OS-23）。v2.11（双侧）: NATS 传输对称联调端到端复验——EdgeX NATS stats API 返回 `ean_metrics`（total_invokes=8, success_rate=100%），对齐 MQTT；EdgeOS 3 个 Invoke 测试全部 completed（system.diagnostics/modbus_tcp.list_points/bacnet_ip.list_points），P50=3ms P99=6ms v1_fallback=0；OS-P3-01 V1 Fallback 移除（v1_bridge_caps=0）；OS-P3-02 前端写操作切换 EAN Invoke（ControlView/PointListView）。v2.10（EdgeOS 侧）: NATS 对称补齐——NATS 延迟订阅/Connect·Reconnect 补订对齐 MQTT；Health 新增 `transport_details[{name,connected,endpoint}]`，`northbound_runtime` 改为 `mqttBus+natsBus`；UI Overview/DebugHelp/Dashboard 展示分传输连接态与 broker 地址；联调帮助拆分 MQTT/NATS 步骤并补充 NATS Subject 用例；`go test ./internal/ean/` + UI build 通过；实机复验（2026-07-28）：4222 可达、`registered_transports=2`、Agent `transport=["nats"]`/`northbound=edgeos_nats`、63 native Cap、`system.diagnostics` Invoke completed（avg≈5ms，`v1_fallback=0`）。v2.9（EdgeOS 侧）: NATS 传输对称联调——启用 `ean.nats.enabled=true`（`nats://127.0.0.1:4222`），EdgeOS `registered_transports=2`（mqtt+nats），63 条原生 Cap 通过 NATS 通道索引（`v1_bridge_caps=0`），`system.diagnostics` 通过双传输 Invoke 端到端成功（6ms / `v1_fallback=0`）；EdgeX NATS 北向通道 `EAN-NATS` 已启用（`ean_enabled=true`）。v2.8（EdgeOS 侧）: Governance 权限修复——default 租户无策略时放行 admin/write/ai（修复 system.diagnostics 502）；实机复验 63 条原生 Cap + system.diagnostics Invoke 端到端成功。v2.7（EdgeOS 侧）: 启动韧性对齐 messaging.Manager——MQTT ConnectRetry/AutoReconnect + 订阅延后补订，broker 不可用时不 fatal；Health 增加 `invoke_metrics`/`registered_transports`；默认 MQTT broker 改为 `18083`；UI 对齐 `source`/原生 Cap 计数/Invoke 指标；诚实勾选 Phase 3 EdgeOS 进度。v2.6（EdgeX 侧）: 深化双 Runtime 战略定位。v2.5（EdgeX 侧）: 明确双 Runtime。v2.4（EdgeOS 侧功能）: 仅对接北向 EAN Runtime；V1 purge/AgentSource |
 
 ---
 
@@ -19,7 +19,7 @@ EdgeX 内部维持双 Capability Runtime 架构，这是面向不同场景的互
 - **MCP Runtime（基础能力层）**：Server 启动即就绪，零外部依赖。通过 LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作，无需 MQTT/NATS 连接，无需 EdgeOS 参与。63 条 Capability + 94 个 MCP 工具始终可用。
 - **北向 EAN Runtime（高级协作层）**：依赖 EdgeOS(MQTT/NATS) 北向通道连接，启用后 EdgeOS 可远程发现并调用本设备 Capability，支持跨系统 Agent 编排和分布式调用。属于高级功能，不是基础功能。
 
-EAN 配置当前为独立段（`ean:`），**计划**合并到 EdgeOS(MQTT/NATS) 北向通道配置字段中（`EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish`），由北向管理器统一持久化和热更新。合并后用户在北向通道弹窗中即可控制 EAN 启停，无需单独配置入口。当前代码中该合并尚未实现。
+EAN 配置（`EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish`）**已合并**到 EdgeOS(MQTT/NATS) 北向通道配置字段，由北向管理器统一持久化和热更新。用户在北向通道弹窗中即可控制 EAN 启停。EdgeOS 侧独立 `ean:` 段仍用于 Coordination Platform 自身连接参数，与 EdgeX 通道字段分工不同。
 
 V1 协议中，设备映射（`Devices` 字段）和数据上报路径（`edgex/points/*`、`edgex/data/*`）因 pub/sub 批量推送效率优势和外部集成依赖而长期保留。其余功能（节点注册、心跳、设备发现、命令下发/响应、Capability 发现）全部迁移到 EAN 2.0。
 
@@ -27,18 +27,17 @@ V1 协议中，设备映射（`Devices` 字段）和数据上报路径（`edgex/
 
 ## 2. 当前架构状态（与代码一致）
 
-### 2.1 EAN 设置现状
+### 2.1 EAN 设置现状（EdgeX）
 
-当前 EAN 配置为独立段，与北向通道配置分离：
+EdgeX 侧 EAN 启停已并入北向 EdgeOS 通道配置（EX-P3-02/08 已落地）：
 
 | 位置 | 现状 |
 |---|---|
-| `config.yaml` `ean:` 段 | 独立配置，含 `enabled`、`mqtt`、`nats`、`heartbeat`、`planner_id` |
-| `config.yaml` `middlewares:` 段 | 北向 MQTT 通道配置（broker、订阅 topic 等） |
-| AI 助手 "EAN 接入" Tab | UI 已完善（EanOverviewView / EanAgentsView / EanInvokeView / EanEventsView） |
-| `/api/ean/*` | EAN 2.0 API 路由已注册（invoke / agents / events / audit / health） |
+| `EdgeOSMQTTConfig` / `EdgeOSNATSConfig` | 含 `ean_enabled` / `ean_heartbeat_sec` / `ean_event_auto_publish`；热更新启停 Runtime |
+| 北向通道 UI | 通道配置中控制 EAN 能力层 |
+| MCP Runtime | 进程级独立，不受 `EANEnabled` 影响 |
 
-**现状**：EAN 配置尚未合并到北向通道配置中，独立运行。合并设计见第 4 章。
+EdgeOS Coordination Platform 仍可有自身 `ean:` / messaging 配置（订阅 `$edgeos/*` 与 V1 Topic），与 EdgeX 通道字段不是同一配置面。
 
 ### 2.2 V1 与 EAN 双路径现状
 
@@ -531,9 +530,9 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 
 | 调整项 | 状态 | 说明 |
 |---|---|---|
-| `EdgeOSMQTTConfig` / `EdgeOSNATSConfig` 新增 EAN 字段 | **设计态** | `EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish` 尚未加入模型（`types.go:421` / `types.go:443`） |
+| `EdgeOSMQTTConfig` / `EdgeOSNATSConfig` 新增 EAN 字段 | **已落地** | `EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish` 已在 `types.go` |
 | 北向通道 `OnConnect` 中启动 Runtime | **已实现** | `client.go:305` 无条件调用 `EnsureCapabilityRuntime()` + `startEANLocked()` |
-| EAN 启停控制 | **未实现** | 无 `EANEnabled` 字段，`EnsureCapabilityRuntime` 不检查开关，随通道连接自动启停 |
+| EAN 启停控制 | **已落地** | `EnsureCapabilityRuntime` 检查 `EANEnabled`；热更新 true↔false 启停 Runtime |
 | EAN 心跳间隔配置 | **未实现** | 硬编码 `HeartbeatIntervalSec: 30`（`ean_bridge.go:87`），不可配置 |
 | EAN Runtime 停止方法 | **未实现** | 无 `StopCapabilityRuntime()` 方法，通道断连时 Runtime 仅暂停而非显式停止 |
 | V1 命令处理标记 deprecated | **未实现** | 无 DEPRECATED 日志告警 |
@@ -1155,9 +1154,9 @@ ean:
 | `HeartbeatInterval` | string | V1 心跳间隔 | 现有（V1 保留） |
 | `Devices` | map | 设备映射配置 | 现有（V1 保留） |
 | `VirtualDevices` | OpcUaDeviceMap | 虚拟设备映射 | 现有 |
-| `EANEnabled` | bool | EAN 能力层启用 | **新增（设计态）** |
-| `EANHeartbeatSec` | int | EAN 心跳间隔（秒） | **新增（设计态）** |
-| `EANEventAutoPublish` | bool | EAN 事件自动发布 | **新增（设计态）** |
+| `EANEnabled` | bool | EAN 能力层启用 | **已落地** |
+| `EANHeartbeatSec` | int | EAN 心跳间隔（秒） | **已落地** |
+| `EANEventAutoPublish` | bool | EAN 事件自动发布 | **已落地** |
 
 ---
 

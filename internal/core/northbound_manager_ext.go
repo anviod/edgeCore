@@ -126,6 +126,8 @@ func (nm *NorthboundManager) BindShadowCore(sc *ShadowCore) {
 			nm.onShadowDelta(shadowDeviceID, points)
 		})
 	})
+	// Collect once at bind time; subsequent updates happen on EdgeOS client
+	// connect/disconnect (not on every shadow delta).
 	nm.refreshEANEventPublishers()
 }
 
@@ -134,8 +136,47 @@ func (nm *NorthboundManager) RefreshEANEventPublishers() {
 	nm.refreshEANEventPublishers()
 }
 
+// wireEdgeOSMQTTClient hooks EAN runtime lifecycle so shadow event publishers
+// refresh only when clients connect/disconnect — not on the shadow hot path.
+func (nm *NorthboundManager) wireEdgeOSMQTTClient(client *edgos_mqtt.Client) {
+	if client == nil {
+		return
+	}
+	client.SetOnEANRuntimeChanged(func() {
+		nm.refreshEANEventPublishers()
+	})
+}
+
+// wireEdgeOSNATSClient hooks EAN runtime lifecycle so shadow event publishers
+// refresh only when clients connect/disconnect — not on the shadow hot path.
+func (nm *NorthboundManager) wireEdgeOSNATSClient(client *edgos_nats.Client) {
+	if client == nil {
+		return
+	}
+	client.SetOnEANRuntimeChanged(func() {
+		nm.refreshEANEventPublishers()
+	})
+}
+
 func (nm *NorthboundManager) refreshEANEventPublishers() {
+	// Prefer sync refresh so connect/start paths close the publisher race window.
+	// If a writer already holds nm.mu (Stop/UpdateConfig), defer a blocking
+	// refresh instead of deadlocking.
+	if !nm.mu.TryRLock() {
+		go nm.refreshEANEventPublishersWait()
+		return
+	}
+	nm.applyEANEventPublishersLocked()
+}
+
+func (nm *NorthboundManager) refreshEANEventPublishersWait() {
 	nm.mu.RLock()
+	nm.applyEANEventPublishersLocked()
+}
+
+// applyEANEventPublishersLocked requires nm.mu held for read and releases it
+// before SetPublishers (bridge has its own lock).
+func (nm *NorthboundManager) applyEANEventPublishersLocked() {
 	bridge := nm.eanShadowBridge
 	mqttClients := make([]*edgos_mqtt.Client, 0, len(nm.edgeOSMQTTClients))
 	for _, c := range nm.edgeOSMQTTClients {
@@ -167,7 +208,6 @@ func (nm *NorthboundManager) onShadowDelta(shadowDeviceID string, points map[str
 	if len(points) == 0 {
 		return
 	}
-	nm.refreshEANEventPublishers()
 
 	nm.mu.RLock()
 	bridge := nm.eanShadowBridge

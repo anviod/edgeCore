@@ -31,8 +31,6 @@ nav:
     url: /drivers/
   - title: 边缘计算
     url: /edge/
-  - title: AI 能力
-    url: /API/AI/
 
 # 页面配置
 permalink: /:path/:basename.html
