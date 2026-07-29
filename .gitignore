@@ -9,6 +9,7 @@ logs/gateway.edgex.log
 .idea/
 .trae/
 *.exe
+*.exe~
 dist/
 *.log
 *.txt
