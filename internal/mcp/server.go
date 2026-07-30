@@ -202,11 +202,21 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 
 // ── tools/call ──
 
-func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
+func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) (resp *JSONRPCResponse) {
+	// Panic recovery: prevents a single tool handler crash from killing the
+	// HTTP connection and cascading into SSE stream termination.
+	// panic 恢复：防止单个工具处理器崩溃导致 HTTP 连接中断和 SSE 流终止。
+	defer func() {
+		if r := recover(); r != nil {
+			errResp := JSONRPCErrorResponse(req.ID, ErrInternalError, fmt.Sprintf("tool execution panic: %v", r))
+			resp = &errResp
+		}
+	}()
+
 	var params CallToolParams
 	if err := json.Unmarshal(req.Params, &params); err != nil {
-		resp := JSONRPCErrorResponse(req.ID, ErrInvalidParams, "Invalid tool call params: "+err.Error())
-		return &resp
+		errResp := JSONRPCErrorResponse(req.ID, ErrInvalidParams, "Invalid tool call params: "+err.Error())
+		return &errResp
 	}
 
 	s.mu.RLock()
@@ -214,8 +224,8 @@ func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
 	s.mu.RUnlock()
 
 	if !ok {
-		resp := JSONRPCErrorResponse(req.ID, ErrMethodNotFound, fmt.Sprintf("Tool not found: %s", params.Name))
-		return &resp
+		errResp := JSONRPCErrorResponse(req.ID, ErrMethodNotFound, fmt.Sprintf("Tool not found: %s", params.Name))
+		return &errResp
 	}
 
 	result, err := handler(params.Arguments)
@@ -223,8 +233,8 @@ func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = NewErrorResult(err.Error())
 	}
 
-	resp := JSONRPCSuccessResponse(req.ID, result)
-	return &resp
+	successResp := JSONRPCSuccessResponse(req.ID, result)
+	return &successResp
 }
 
 // ── resources/list ──

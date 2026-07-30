@@ -539,18 +539,23 @@ func (d *BACnetDriver) ReadPoints(ctx context.Context, points []model.Point) (ma
 		return results, nil
 	}
 
-	// All points failed — increment failure count and trigger recovery if needed
-	// 全部失败 — 递增失败计数，必要时触发恢复
-	d.mu.Lock()
-	if devCtx, ok := d.deviceContexts[targetID]; ok {
-		devCtx.ConsecutiveFailures++
-		failures := devCtx.ConsecutiveFailures
-		d.mu.Unlock()
-		if failures >= readFailureRecoveryThreshold {
-			d.scheduleDeviceRecovery(targetID)
+	// All points failed — increment failure count and trigger recovery if needed.
+	// Skip recovery if the error is purely a point-address issue (device is fine).
+	// 全部失败 — 递增失败计数，必要时触发恢复。
+	// 如果错误仅是点位地址问题（设备本身正常），跳过设备恢复。
+	isPointAddressError := err != nil && strings.Contains(err.Error(), "invalid addresses")
+	if !isPointAddressError {
+		d.mu.Lock()
+		if devCtx, ok := d.deviceContexts[targetID]; ok {
+			devCtx.ConsecutiveFailures++
+			failures := devCtx.ConsecutiveFailures
+			d.mu.Unlock()
+			if failures >= readFailureRecoveryThreshold {
+				d.scheduleDeviceRecovery(targetID)
+			}
+		} else {
+			d.mu.Unlock()
 		}
-	} else {
-		d.mu.Unlock()
 	}
 
 	if err != nil {
@@ -945,31 +950,55 @@ func (d *BACnetDriver) SetDeviceConfig(config map[string]any) error {
 				}
 			}
 
-			// 异步发现策略：
-			// 当用户明确提供了 IP + 端口 + 实例ID 三要素时，直接信任用户配置，
-			// 不触发异步发现，避免 locateDeviceAddress 用错误的发现端口覆盖用户配置。
-			// 仅在缺少关键信息（无IP或无端口）时才触发异步探测。
-			// Async discovery strategy:
-			// When user explicitly provides IP + port + instanceID, trust the config
-			// and do NOT trigger async discovery to avoid overwriting user-specified port.
-			// Only probe when critical info is missing (no IP or no port).
-			skipAsyncDiscovery := (ip != "" && port > 0)
-			if skipAsyncDiscovery {
-				zap.L().Info("SetDeviceConfig: user provided IP+port+instanceID, skipping async discovery",
-					zap.Int("device_id", newID), zap.String("ip", ip), zap.Int("port", port))
-			} else if d.connected && d.client != nil {
-				go func() {
-					if found, ok := d.locateDeviceAddress(d.client, newID, ip, port); ok {
-						d.applyDiscoveredDevice(newID, ip, port, found)
-						zap.L().Info("Async discovery confirmed device",
-							zap.Int("device_id", newID),
-							zap.String("ip", deviceIPFromAddr(found, ip)),
-							zap.Int("port", devicePortFromAddr(found)))
-					} else {
-						zap.L().Debug("Async discovery did not find device", zap.Int("device_id", newID))
-					}
-				}()
+			// 发现策略：
+		// 当用户明确提供了 IP + 端口 + 实例ID 三要素时，直接信任用户配置，不触发发现。
+		// 当缺少 IP 或端口时，先尝试同步发现（3s 超时），成功则立即创建设备上下文；
+		// 同步失败则回退到异步发现，避免阻塞通道启动。
+		// Discovery strategy:
+		// When user provides IP+port+instanceID, trust config and skip discovery.
+		// When IP or port is missing, try synchronous discovery first (3s timeout)
+		// to create device context immediately; fall back to async on failure.
+		skipAsyncDiscovery := (ip != "" && port > 0)
+		if skipAsyncDiscovery {
+			zap.L().Info("SetDeviceConfig: user provided IP+port+instanceID, skipping async discovery",
+				zap.Int("device_id", newID), zap.String("ip", ip), zap.Int("port", port))
+		} else if d.connected && d.client != nil {
+			// Synchronous discovery with timeout to avoid blocking channel startup.
+			// 同步发现（带超时），避免阻塞通道启动。
+			discovered := false
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				if found, ok := d.locateDeviceAddress(d.client, newID, ip, port); ok {
+					d.applyDiscoveredDevice(newID, ip, port, found)
+					zap.L().Info("Sync discovery confirmed device",
+						zap.Int("device_id", newID),
+						zap.String("ip", deviceIPFromAddr(found, ip)),
+						zap.Int("port", devicePortFromAddr(found)))
+					discovered = true
+				}
+			}()
+			select {
+			case <-done:
+				if !discovered {
+					zap.L().Warn("Sync discovery did not find device, will retry async",
+						zap.Int("device_id", newID))
+					// Fall back to async retry in background
+					go func() {
+						if found, ok := d.locateDeviceAddress(d.client, newID, ip, port); ok {
+							d.applyDiscoveredDevice(newID, ip, port, found)
+							zap.L().Info("Async retry discovery confirmed device",
+								zap.Int("device_id", newID))
+						}
+					}()
+				}
+			case <-time.After(3 * time.Second):
+				zap.L().Warn("Sync discovery timed out, continuing with async",
+					zap.Int("device_id", newID))
+				// The goroutine above continues running in background;
+				// it will apply the result if it eventually succeeds.
 			}
+		}
 		}
 	}
 

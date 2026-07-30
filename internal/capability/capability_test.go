@@ -31,6 +31,26 @@ func TestGenerateDefaultCapabilities(t *testing.T) {
 	require.True(t, ids["ai.protocol_reverse"])
 }
 
+func TestGenerateUnifiedCapabilities(t *testing.T) {
+	caps := capability.GenerateUnifiedCapabilities("edgex-node-001")
+	require.Equal(t, 7, len(caps), "expected 7 unified capabilities")
+
+	ids := map[string]bool{}
+	for _, c := range caps {
+		ids[c.ID] = true
+		require.Equal(t, "edgex-node-001", c.AgentID)
+		require.NotEmpty(t, c.Description)
+		require.NotEmpty(t, c.Metadata["driver_command"])
+	}
+	require.True(t, ids["read_points"], "missing read_points")
+	require.True(t, ids["write_points"], "missing write_points")
+	require.True(t, ids["scan_devices"], "missing scan_devices")
+	require.True(t, ids["list_points"], "missing list_points")
+	require.True(t, ids["get_diagnostics"], "missing get_diagnostics")
+	require.True(t, ids["ai_protocol_reverse"], "missing ai_protocol_reverse")
+	require.True(t, ids["ai_doc_parse"], "missing ai_doc_parse")
+}
+
 func TestRegistryAndDispatcher(t *testing.T) {
 	agent := capability.Agent{ID: "node-1", Kind: capability.AgentKindDevice, Version: "2.0.0"}
 	reg := capability.NewRegistry(agent)
@@ -40,6 +60,7 @@ func TestRegistryAndDispatcher(t *testing.T) {
 	disp := capability.NewDispatcher(reg)
 	disp.SetMapper(execution.NewCapabilityMapper(nil))
 
+	// Test legacy protocol-specific capability
 	resp := disp.Dispatch(context.Background(), capability.InvokeRequest{
 		Capability: "modbus_tcp.read_holding_register",
 		Arguments: map[string]any{
@@ -55,6 +76,45 @@ func TestRegistryAndDispatcher(t *testing.T) {
 	})
 	require.Equal(t, capability.InvokeRejected, missing.Status)
 	require.Equal(t, "E009", missing.Result.ErrorCode)
+}
+
+func TestRegistryAndDispatcherUnified(t *testing.T) {
+	agent := capability.Agent{ID: "node-1", Kind: capability.AgentKindDevice, Version: "2.0.0"}
+	reg := capability.NewRegistry(agent)
+	require.NoError(t, reg.RegisterAll(capability.GenerateUnifiedCapabilities("node-1")))
+
+	disp := capability.NewDispatcher(reg)
+	disp.SetMapper(execution.NewCapabilityMapper(nil))
+
+	// Test unified read_points
+	resp := disp.Dispatch(context.Background(), capability.InvokeRequest{
+		Capability: "read_points",
+		Arguments: map[string]any{
+			"device_id": "slave-1",
+			"address":   "40001",
+		},
+	})
+	require.Equal(t, capability.InvokeCompleted, resp.Status)
+	require.True(t, resp.Result.Success)
+
+	// Test unified write_points
+	resp = disp.Dispatch(context.Background(), capability.InvokeRequest{
+		Capability: "write_points",
+		Arguments: map[string]any{
+			"device_id": "slave-1",
+			"address":   "40001",
+			"value":     25.5,
+		},
+	})
+	require.Equal(t, capability.InvokeCompleted, resp.Status)
+	require.True(t, resp.Result.Success)
+
+	// Test unified get_diagnostics
+	resp = disp.Dispatch(context.Background(), capability.InvokeRequest{
+		Capability: "get_diagnostics",
+	})
+	require.Equal(t, capability.InvokeCompleted, resp.Status)
+	require.True(t, resp.Result.Success)
 }
 
 func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {

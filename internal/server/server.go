@@ -31,6 +31,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -97,6 +98,7 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 		IdleTimeout:  120 * time.Second,
 		// Long scan/browse/export work must use async job APIs, not stretch these.
 	})
+	app.Use(recover.New())
 	app.Use(cors.New())
 
 	hub := newHub()
@@ -233,6 +235,7 @@ func (s *Server) SwitchPort(newPort int) error {
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	})
+	newApp.Use(recover.New())
 	newApp.Use(cors.New())
 	s.app = newApp
 	s.setupRoutes()

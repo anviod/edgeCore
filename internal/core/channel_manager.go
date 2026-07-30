@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1551,7 +1552,185 @@ func (cm *ChannelManager) ScanChannel(ctx context.Context, channelID string, par
 	// Scan is a discovery operation (WhoIs/ReadProperty) that uses its own
 	// ephemeral client. Holding driverMus would block all ReadPoint/WritePoint
 	// on the same channel for the full discovery window.
-	return scanner.Scan(ctx, params)
+	result, err := scanner.Scan(ctx, params)
+	if err != nil {
+		return result, err
+	}
+
+	// Post-scan: auto-update existing BACnet device addresses.
+	// BACnet devices use dynamic UDP ports that change on reboot.
+	// When a scan discovers an existing device with a new port, persist it
+	// so the driver can reconnect without manual intervention.
+	// 扫描后自动更新已有 BACnet 设备地址：设备重启后 UDP 端口会变化，
+	// 扫描发现新端口后自动持久化，避免设备离线需要手动修正。
+	if okCh && ch.Protocol == "bacnet-ip" {
+		// Recover from any reflection/panic errors so the scan result
+		// is still returned to the caller. Address auto-update is a
+		// best-effort optimization, not a critical-path operation.
+		// 地址自动更新是尽力而为的优化操作，任何异常都不应影响扫描结果返回。
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					zap.L().Warn("autoUpdateBACnetAddresses panicked (recovered, scan result unaffected)",
+						zap.Any("panic", r),
+						zap.Stack("stack"))
+				}
+			}()
+			cm.autoUpdateBACnetAddresses(ch, result)
+		}()
+	}
+
+	return result, nil
+}
+
+// autoUpdateBACnetAddresses extracts scan results via reflection and updates
+// existing devices whose IP or port has changed. Uses reflection to avoid a
+// hard dependency on the bacnet package's ScanResult type.
+// autoUpdateBACnetAddresses 通过反射提取扫描结果，更新 IP 或端口已变化的已有设备。
+func (cm *ChannelManager) autoUpdateBACnetAddresses(ch *model.Channel, scanResult any) {
+	if scanResult == nil {
+		return
+	}
+
+	// Build a lookup map: bacnet_device_id (int) → device ID (string)
+	deviceIDByBacnetID := make(map[int]string)
+	for _, dev := range ch.Devices {
+		if id, ok := getDeviceID(dev.Config); ok {
+			deviceIDByBacnetID[id] = dev.ID
+		}
+	}
+	if len(deviceIDByBacnetID) == 0 {
+		return
+	}
+
+	sliceVal := reflect.ValueOf(scanResult)
+	if sliceVal.Kind() != reflect.Slice {
+		return
+	}
+
+	updated := 0
+	for i := 0; i < sliceVal.Len(); i++ {
+		item := sliceVal.Index(i)
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		// Extract fields by JSON tag (bacnet_device_id, ip, port, diff_status)
+		bacnetID := extractIntField(item, "DeviceID")
+		if bacnetID == 0 {
+			bacnetID = extractIntByJSONTag(item, "bacnet_device_id")
+		}
+		if bacnetID == 0 {
+			continue
+		}
+
+		// Only update existing devices (skip newly discovered ones)
+		diffStatus := extractStringByJSONTag(item, "diff_status")
+		if diffStatus == "new" {
+			continue
+		}
+
+		deviceKey, found := deviceIDByBacnetID[bacnetID]
+		if !found {
+			continue
+		}
+
+		ip := extractStringByJSONTag(item, "ip")
+		port := extractIntByJSONTag(item, "port")
+		if ip == "" || port <= 0 {
+			continue
+		}
+
+		// OnBACnetAddressDiscovered handles the actual config update + persistence
+		cm.OnBACnetAddressDiscovered(deviceKey, ip, port)
+		updated++
+	}
+
+	if updated > 0 {
+		zap.L().Info("ScanChannel: auto-updated BACnet device addresses",
+			zap.String("channel", ch.ID),
+			zap.Int("updated", updated),
+		)
+	}
+}
+
+// extractIntField extracts an int from a struct field by Go field name.
+// 安全提取 struct 字段的 int 值；非 struct 类型直接返回 0。
+func extractIntField(v reflect.Value, fieldName string) int {
+	if v.Kind() != reflect.Struct {
+		return 0
+	}
+	f := v.FieldByName(fieldName)
+	if !f.IsValid() {
+		return 0
+	}
+	switch f.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return int(f.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return int(f.Uint())
+	case reflect.Float32, reflect.Float64:
+		return int(f.Float())
+	}
+	return 0
+}
+
+// extractIntByJSONTag extracts an int from a struct field by its JSON tag.
+// 通过 JSON tag 匹配 struct 字段并提取 int 值。
+func extractIntByJSONTag(v reflect.Value, jsonTag string) int {
+	if v.Kind() != reflect.Struct {
+		return 0
+	}
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tag := field.Tag.Get("json")
+		tagName := strings.Split(tag, ",")[0]
+		if tagName == jsonTag {
+			f := v.Field(i)
+			switch f.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				return int(f.Int())
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				return int(f.Uint())
+			case reflect.Float32, reflect.Float64:
+				return int(f.Float())
+			}
+			return 0
+		}
+	}
+	// Fallback: try by field name
+	return extractIntField(v, jsonTag)
+}
+
+// extractStringByJSONTag extracts a string from a struct field by its JSON tag.
+// 通过 JSON tag 匹配 struct 字段并提取 string 值。
+func extractStringByJSONTag(v reflect.Value, jsonTag string) string {
+	if v.Kind() != reflect.Struct {
+		return ""
+	}
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tag := field.Tag.Get("json")
+		tagName := strings.Split(tag, ",")[0]
+		if tagName == jsonTag {
+			f := v.Field(i)
+			if f.Kind() == reflect.String {
+				return f.String()
+			}
+			return ""
+		}
+	}
+	// Fallback: try by field name
+	f := v.FieldByName(jsonTag)
+	if f.IsValid() && f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
 }
 
 // ScanDevice 扫描设备下的对象（点位）。ctx 应由调用方设置超时（OPC UA Browse 可达 180s）。

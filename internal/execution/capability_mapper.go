@@ -34,6 +34,8 @@ func NewCapabilityMapper(executor Executor) *CapabilityMapper {
 }
 
 // Map converts a Capability Invoke into a DriverCommand without executing it.
+// For unified capabilities (unified=true), protocol may be empty — the
+// DriverExecutor will auto-resolve it from the channel's Protocol field.
 func (m *CapabilityMapper) Map(req capability.InvokeRequest, cap capability.Capability) (DriverCommand, error) {
 	protocol, _ := cap.Metadata["protocol"].(string)
 	driverCmd, _ := cap.Metadata["driver_command"].(string)
@@ -46,6 +48,14 @@ func (m *CapabilityMapper) Map(req capability.InvokeRequest, cap capability.Capa
 	args := map[string]any{}
 	for k, v := range req.Arguments {
 		args[k] = v
+	}
+	// For unified capabilities, allow explicit protocol override from args.
+	// If not specified, DriverExecutor.resolveDeviceWithProtocol auto-resolves
+	// from the channel's Protocol field via SouthboundManager.
+	if protocol == "" {
+		if p, ok := args["protocol"].(string); ok && p != "" {
+			protocol = p
+		}
 	}
 	return DriverCommand{
 		Protocol: protocol,
@@ -74,9 +84,9 @@ func (m *CapabilityMapper) MapAndExecute(ctx context.Context, req capability.Inv
 
 func inferDriverCommand(capabilityID string) string {
 	switch {
-	case strings.HasSuffix(capabilityID, ".read_holding_register"), strings.HasSuffix(capabilityID, ".read_points"):
+	case strings.HasSuffix(capabilityID, ".read_holding_register"):
 		return "ReadPoints"
-	case strings.HasSuffix(capabilityID, ".write_register"), strings.HasSuffix(capabilityID, ".write_point"):
+	case strings.HasSuffix(capabilityID, ".write_register"):
 		return "WritePoint"
 	case strings.HasSuffix(capabilityID, ".scan_devices"):
 		return "ScanDevices"
@@ -87,6 +97,21 @@ func inferDriverCommand(capabilityID string) string {
 	case capabilityID == "ai.protocol_reverse":
 		return "AI.protocol_reverse"
 	case capabilityID == "ai.doc_parse":
+		return "AI.doc_parse"
+	// Unified MCP tools (merged from 63 protocol-specific capabilities)
+	case capabilityID == "read_points":
+		return "ReadPoints"
+	case capabilityID == "write_points":
+		return "WritePoint"
+	case capabilityID == "scan_devices":
+		return "ScanDevices"
+	case capabilityID == "list_points":
+		return "GetDevicePoints"
+	case capabilityID == "get_diagnostics":
+		return "Diagnostics"
+	case capabilityID == "ai_protocol_reverse":
+		return "AI.protocol_reverse"
+	case capabilityID == "ai_doc_parse":
 		return "AI.doc_parse"
 	default:
 		return ""

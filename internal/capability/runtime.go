@@ -19,6 +19,9 @@ type RuntimeConfig struct {
 	Protocols            []string // driver protocols to auto-register; empty = KnownDriverProtocols
 	Metadata             map[string]any
 	Endpoint             *AgentEndpoint
+	// Unified generates 9 consolidated capabilities instead of 63 protocol-specific ones.
+	// Used by MCP Runtime to reduce LLM tool count. Northbound EAN Runtime uses false (default).
+	Unified bool
 }
 
 // Runtime is the EdgeX Capability Runtime entrypoint (EAN 2.0).
@@ -71,7 +74,12 @@ func NewRuntime(cfg RuntimeConfig, bus Bus) (*Runtime, error) {
 	}
 
 	registry := NewRegistry(agent)
-	caps := GenerateDefaultCapabilities(cfg.AgentID, cfg.Protocols)
+	var caps []Capability
+	if cfg.Unified {
+		caps = GenerateUnifiedCapabilities(cfg.AgentID)
+	} else {
+		caps = GenerateDefaultCapabilities(cfg.AgentID, cfg.Protocols)
+	}
 	if err := registry.RegisterAll(caps); err != nil {
 		return nil, err
 	}

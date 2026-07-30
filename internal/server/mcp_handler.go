@@ -81,13 +81,13 @@ func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 	// ── 查询类工具 ──
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_list_channels",
+		Name:        "list_channels",
 		Description: "列出所有采集通道及其状态（协议、连接状态、设备数量、点位数量）",
 		InputSchema: mcp.InputSchema{Type: "object", Properties: map[string]mcp.PropertyDef{}},
 	}, s.mcpListChannels)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_list_devices",
+		Name:        "list_devices",
 		Description: "列出指定通道下的所有设备（名称、从站地址、在线状态、采集间隔）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -98,72 +98,22 @@ func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 		},
 	}, s.mcpListDevices)
 
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_list_points",
-		Description: "列出指定设备和通道下的所有点位（名称、地址、数据类型、缩放、扫描类、读写属性、当前值）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID"},
-				"device_id":  {Type: "string", Description: "设备 ID"},
-			},
-			Required: []string{"channel_id", "device_id"},
-		},
-	}, s.mcpListPoints)
+	// NOTE: list_points, read_point, read_point_batch,
+	// write_point, write_point_batch, get_diagnostics
+	// are REMOVED — their functions are covered by unified EAN capabilities
+	// (read_points, write_points, list_points, get_diagnostics) registered
+	// via RegisterCapabilityTools. See capability/generator.go GenerateUnifiedCapabilities.
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_read_point",
-		Description: "读取指定点位的当前实时值（返回采集值、时间戳、质量状态）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID"},
-				"device_id":  {Type: "string", Description: "设备 ID"},
-				"point_id":   {Type: "string", Description: "点位 ID"},
-			},
-			Required: []string{"channel_id", "device_id", "point_id"},
-		},
-	}, s.mcpReadPoint)
-
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_get_system_info",
+		Name:        "get_system_info",
 		Description: "获取 EdgeX 网关系统信息（CPU/内存/磁盘使用率、运行时间、Go 版本、协议支持列表）",
 		InputSchema: mcp.InputSchema{Type: "object", Properties: map[string]mcp.PropertyDef{}},
 	}, s.mcpGetSystemInfo)
 
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_get_diagnostics",
-		Description: "获取通道或设备的诊断信息（连接状态、数据质量、错误计数、延迟统计、重启次数）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID（可选，不填则返回所有通道摘要）"},
-				"device_id":  {Type: "string", Description: "设备 ID（可选，需配合 channel_id 使用）"},
-			},
-		},
-	}, s.mcpGetDiagnostics)
-
-	// ── 操作类工具 ──
-
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_write_point",
-		Description: "向指定点位写入控制值（写操作需要人工确认，不会自动执行；仅支持 R/W 点位）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID"},
-				"device_id":  {Type: "string", Description: "设备 ID"},
-				"point_id":   {Type: "string", Description: "点位 ID（必须为 R/W 权限）"},
-				"value":      {Type: "string", Description: "写入值（数字、布尔值或字符串）"},
-			},
-			Required: []string{"channel_id", "device_id", "point_id", "value"},
-		},
-	}, s.mcpWritePoint)
-
 	// ── 协议分析类工具 ──
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_analyze_protocol",
+		Name:        "analyze_protocol",
 		Description: "分析工业协议特征（根据端口号、帧模式、协议名称推断协议类型，返回协议 ID、置信度和特征描述）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -176,7 +126,7 @@ func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpAnalyzeProtocol)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_get_protocol_help",
+		Name:        "get_protocol_help",
 		Description: "获取指定工业协议的接入帮助（地址格式、功能码、数据类型、字节序、典型配置示例）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -196,7 +146,7 @@ func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	// 通道管理
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_create_channel",
+		Name:        "create_channel",
 		Description: "创建南向采集通道（需要 MCP 全功能激活；自动配置协议驱动参数）。TCP 协议（modbus-tcp/s7/bacnet/opcua 等）必须在 config 中提供 ip 字段",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -210,7 +160,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpCreateChannel)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_delete_channel",
+		Name:        "delete_channel",
 		Description: "删除指定通道（需要 MCP 全功能激活；会同时删除通道下所有设备和点位）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -222,7 +172,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpDeleteChannel)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_start_channel",
+		Name:        "start_channel",
 		Description: "启动指定通道的采集引擎（需要 MCP 全功能激活）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -234,7 +184,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpStartChannel)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_stop_channel",
+		Name:        "stop_channel",
 		Description: "停止指定通道的采集引擎（需要 MCP 全功能激活）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -247,7 +197,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 设备管理
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_create_device",
+		Name:        "create_device",
 		Description: "在指定通道下创建设备（需要 MCP 全功能激活；自动配置从站地址、采集间隔等参数）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -261,7 +211,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpCreateDevice)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_delete_device",
+		Name:        "delete_device",
 		Description: "删除指定设备（需要 MCP 全功能激活；会同时删除设备下所有点位）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -275,7 +225,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 点位管理
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_create_point",
+		Name:        "create_point",
 		Description: "在指定设备下创建采集点位（需要 MCP 全功能激活；自动配置地址、数据类型、缩放等参数）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -299,7 +249,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpCreatePoint)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_delete_point",
+		Name:        "delete_point",
 		Description: "删除指定点位（需要 MCP 全功能激活）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -312,38 +262,12 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 		},
 	}, s.mcpDeletePoint)
 
-	// 批量读写测试
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_read_point_batch",
-		Description: "批量读取多个点位的实时值（需要 MCP 全功能激活；用于点位读取测试验证）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID"},
-				"device_id":  {Type: "string", Description: "设备 ID"},
-				"point_ids":  {Type: "array", Description: "点位 ID 列表"},
-			},
-			Required: []string{"channel_id", "device_id", "point_ids"},
-		},
-	}, s.mcpReadPointBatch)
-
-	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_write_point_batch",
-		Description: "批量写入多个点位值（需要 MCP 全功能激活；用于点位写入测试验证；仅支持 R/W 点位）",
-		InputSchema: mcp.InputSchema{
-			Type: "object",
-			Properties: map[string]mcp.PropertyDef{
-				"channel_id": {Type: "string", Description: "通道 ID"},
-				"device_id":  {Type: "string", Description: "设备 ID"},
-				"writes":     {Type: "array", Description: "写入列表：[{\"point_id\": \"...\", \"value\": \"...\"}]"},
-			},
-			Required: []string{"channel_id", "device_id", "writes"},
-		},
-	}, s.mcpWritePointBatch)
+	// NOTE: read_point_batch and write_point_batch are REMOVED.
+	// Use unified read_points (with addresses[]) and write_points (with writes[]) instead.
 
 	// 边缘规则
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_create_edge_rule",
+		Name:        "create_edge_rule",
 		Description: "创建边缘计算规则（需要 MCP 全功能激活；支持阈值告警、计算、状态、窗口等类型）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -362,7 +286,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpCreateEdgeRule)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_delete_edge_rule",
+		Name:        "delete_edge_rule",
 		Description: "删除边缘计算规则（需要 MCP 全功能激活）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -375,7 +299,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 虚拟设备
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_create_virtual_device",
+		Name:        "create_virtual_device",
 		Description: "创建虚拟设备用于公式计算（需要 MCP 全功能激活；虚拟设备通过公式引用真实点位，不占用物理连接）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -389,7 +313,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	}, s.mcpCreateVirtualDevice)
 
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_delete_virtual_device",
+		Name:        "delete_virtual_device",
 		Description: "删除虚拟设备（需要 MCP 全功能激活）",
 		InputSchema: mcp.InputSchema{
 			Type:       "object",
@@ -402,7 +326,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 通道重启
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_restart_channel",
+		Name:        "restart_channel",
 		Description: "重启指定通道的采集引擎（需要 MCP 全功能激活；先停止再启动，用于恢复异常连接）",
 		InputSchema: mcp.InputSchema{
 			Type:       "object",
@@ -413,7 +337,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 通道配置查询
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_get_channel_config",
+		Name:        "get_channel_config",
 		Description: "获取指定通道的完整配置（包括 IP、端口、驱动参数、设备数、点位总数）",
 		InputSchema: mcp.InputSchema{
 			Type:       "object",
@@ -424,7 +348,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 设备更新
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_update_device",
+		Name:        "update_device",
 		Description: "更新已存在设备的配置（需要 MCP 全功能激活；支持修改名称、采集间隔、从站地址等参数）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -441,7 +365,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 点位更新
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_update_point",
+		Name:        "update_point",
 		Description: "更新已存在点位的配置（需要 MCP 全功能激活；支持修改名称、地址、数据类型、缩放、字节序等参数）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -465,14 +389,14 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 边缘规则列表
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_list_edge_rules",
+		Name:        "list_edge_rules",
 		Description: "列出所有边缘计算规则（规则名称、类型、条件、状态、触发次数）",
 		InputSchema: mcp.InputSchema{Type: "object", Properties: map[string]mcp.PropertyDef{}},
 	}, s.mcpListEdgeRules)
 
 	// 历史数据
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_get_point_history",
+		Name:        "get_point_history",
 		Description: "获取指定点位的历史数据（最近 N 条记录，含时间戳、值、质量）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -489,7 +413,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 设备启停
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_enable_device",
+		Name:        "enable_device",
 		Description: "启用或禁用指定设备（需要 MCP 全功能激活；禁用后停止采集但不删除配置）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -504,7 +428,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 
 	// 配置导出
 	mcpSrv.RegisterTool(mcp.Tool{
-		Name:        "edgex_export_config",
+		Name:        "export_config",
 		Description: "导出 EdgeX 完整配置（所有通道、设备、点位、边缘规则的 JSON 配置，可用于备份或迁移）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
@@ -789,7 +713,7 @@ func (s *Server) mcpCreateChannel(args json.RawMessage) (*mcp.CallToolResult, er
 		"status":     "created",
 	}
 	resultJSON, _ := json.MarshalIndent(result, "", "  ")
-	return mcp.NewSuccessResult("## 通道创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n通道已创建并启用。可通过 `edgex_start_channel` 启动采集引擎。"), nil
+	return mcp.NewSuccessResult("## 通道创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n通道已创建并启用。可通过 `start_channel` 启动采集引擎。"), nil
 }
 
 // mcpDeleteChannel 删除通道
@@ -906,7 +830,7 @@ func (s *Server) mcpCreateDevice(args json.RawMessage) (*mcp.CallToolResult, err
 		"status":     "created",
 	}
 	resultJSON, _ := json.MarshalIndent(result, "", "  ")
-	return mcp.NewSuccessResult("## 设备创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n设备已创建并启用。可通过 `edgex_create_point` 添加采集点位。"), nil
+	return mcp.NewSuccessResult("## 设备创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n设备已创建并启用。可通过 `create_point` 添加采集点位。"), nil
 }
 
 // mcpDeleteDevice 删除设备
@@ -1037,7 +961,7 @@ func (s *Server) mcpCreatePoint(args json.RawMessage) (*mcp.CallToolResult, erro
 		"status":        "created",
 	}
 	resultJSON, _ := json.MarshalIndent(result, "", "  ")
-	return mcp.NewSuccessResult("## 点位创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n点位已创建。可通过 `edgex_read_point` 或 `edgex_read_point_batch` 验证读取。"), nil
+	return mcp.NewSuccessResult("## 点位创建成功\n\n```json\n" + string(resultJSON) + "\n```\n\n点位已创建。可通过 `read_point` 或 `read_point_batch` 验证读取。"), nil
 }
 
 // mcpDeletePoint 删除点位
@@ -1605,7 +1529,7 @@ func (s *Server) mcpListEdgeRules(args json.RawMessage) (*mcp.CallToolResult, er
 	}
 	rules := s.ecm.GetRules()
 	if len(rules) == 0 {
-		return mcp.NewSuccessResult("## 边缘规则列表\n\n当前没有配置任何边缘计算规则。可通过 `edgex_create_edge_rule` 创建。"), nil
+		return mcp.NewSuccessResult("## 边缘规则列表\n\n当前没有配置任何边缘计算规则。可通过 `create_edge_rule` 创建。"), nil
 	}
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("## 边缘规则列表 (共 %d 个)\n\n", len(rules)))
@@ -1639,6 +1563,9 @@ func (s *Server) mcpGetPointHistory(args json.RawMessage) (*mcp.CallToolResult, 
 	if err := json.Unmarshal(args, &params); err != nil {
 		return mcp.NewErrorResult("参数解析失败: " + err.Error()), nil
 	}
+	if params.DeviceID == "" {
+		return mcp.NewErrorResult("device_id 是必需参数 | device_id is required"), nil
+	}
 	limit := 100
 	if params.Limit > 0 {
 		limit = int(params.Limit)
@@ -1663,10 +1590,22 @@ func (s *Server) mcpGetPointHistory(args json.RawMessage) (*mcp.CallToolResult, 
 		return mcp.NewErrorResult("获取历史数据失败: " + err.Error()), nil
 	}
 	if len(history) == 0 {
-		return mcp.NewSuccessResult(fmt.Sprintf("## 点位 `%s` 历史数据\n\n暂无历史数据。点位可能尚未采集到数据。", params.PointID)), nil
+		// Check if device storage is enabled — most common cause of blank history
+		// 检查设备存储是否启用——历史空白最常见原因
+		hint := "暂无历史数据。"
+		if s.dsm != nil && !s.dsm.IsStorageEnabled(params.DeviceID) {
+			hint += "该设备未启用历史存储。请在 EdgeX UI → 设备配置 → 存储策略中启用并选择策略（realtime/minute_aligned/interval）。"
+		} else {
+			hint += "设备可能尚未采集到数据，请确认通道已启动且设备在线。"
+		}
+		return mcp.NewSuccessResult(fmt.Sprintf("## 设备 `%s` 历史数据\n\n%s", params.DeviceID, hint)), nil
 	}
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("## 点位 `%s` 历史数据 (最近 %d 条)\n\n", params.PointID, len(history)))
+	label := params.PointID
+	if label == "" {
+		label = params.DeviceID
+	}
+	sb.WriteString(fmt.Sprintf("## 设备 `%s` 历史数据 (最近 %d 条)\n\n", label, len(history)))
 	sb.WriteString("| 时间 | 值 | 质量 |\n")
 	sb.WriteString("|------|-----|------|\n")
 	for _, h := range history {
@@ -1743,7 +1682,7 @@ func (s *Server) mcpExportConfig(args json.RawMessage) (*mcp.CallToolResult, err
 						"point_id": p.ID, "name": p.Name, "address": p.Address,
 						"datatype": p.DataType, "readwrite": p.ReadWrite, "scale": p.Scale,
 						"offset": p.Offset, "unit": p.Unit, "word_order": p.WordOrder,
-						"scan_class": p.ScanClass, "register_type": string(p.RegisterType),
+						"scan_class": p.ScanClass, "register_type": fmt.Sprintf("%d", p.RegisterType),
 						"function_code": p.FunctionCode,
 					})
 				}
@@ -1753,7 +1692,7 @@ func (s *Server) mcpExportConfig(args json.RawMessage) (*mcp.CallToolResult, err
 			chData["devices"] = devList
 			chList = append(chList, chData)
 		}
-		export["channels"] = chList
+	export["channels"] = chList
 	}
 	if params.Scope == "all" || params.Scope == "rules" {
 		if s.ecm != nil {
@@ -2214,7 +2153,7 @@ func (s *Server) mcpResourceConfig(uri string) (*mcp.ReadResourceResult, error) 
 				ptList = append(ptList, map[string]any{
 					"point_id": p.ID, "name": p.Name, "address": p.Address, "datatype": p.DataType,
 					"scale": p.Scale, "offset": p.Offset, "unit": p.Unit, "readwrite": p.ReadWrite,
-					"word_order": p.WordOrder, "scan_class": p.ScanClass, "register_type": string(p.RegisterType), "function_code": p.FunctionCode,
+					"word_order": p.WordOrder, "scan_class": p.ScanClass, "register_type": fmt.Sprintf("%d", p.RegisterType), "function_code": p.FunctionCode,
 				})
 			}
 			devData["points"] = ptList
@@ -2314,6 +2253,7 @@ func (s *Server) ensureCapabilityRuntime() *capability.Runtime {
 			AgentVersion:         capability.RuntimeVersion,
 			Transport:            capability.TransportSDK,
 			HeartbeatIntervalSec: 60,
+			Unified:              true, // MCP Runtime uses 9 unified capabilities (not 63 protocol-specific)
 			Metadata: map[string]any{
 				"northbound": "mcp",
 			},
@@ -2559,7 +2499,11 @@ func (s *Server) handleMCPSSE(c *fiber.Ctx) error {
 		fmt.Fprintf(w, "event: endpoint\ndata: /api/mcp?session=%s\n\n", sessionID)
 		w.Flush()
 
-		ticker := time.NewTicker(30 * time.Second)
+		// Dense heartbeat (10s) for faster SSE connection health detection.
+		// 30s was too sparse: a blocked scan could miss the heartbeat window
+		// and cause the client to drop the connection.
+		// 密集心跳（10s）：30s 过于稀疏，扫描阻塞可能错过心跳窗口导致断连。
+		ticker := time.NewTicker(10 * time.Second)
 		defer ticker.Stop()
 
 		for {
@@ -2592,11 +2536,11 @@ func (s *Server) handleMCPHelp(c *fiber.Ctx) error {
 		Category    string `json:"category"` // read / write
 	}
 	readTools := []string{
-		"edgex_list_channels", "edgex_list_devices", "edgex_list_points",
-		"edgex_read_point", "edgex_get_system_info", "edgex_get_diagnostics",
-		"edgex_analyze_protocol", "edgex_get_protocol_help",
-		"edgex_list_edge_rules", "edgex_get_point_history", "edgex_export_config",
-		"edgex_get_channel_config",
+		"list_channels", "list_devices", "list_points",
+		"read_point", "get_system_info", "get_diagnostics",
+		"analyze_protocol", "get_protocol_help",
+		"list_edge_rules", "get_point_history", "export_config",
+		"get_channel_config",
 	}
 	readOnly := make(map[string]bool)
 	for _, n := range readTools {

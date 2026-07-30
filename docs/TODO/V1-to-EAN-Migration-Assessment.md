@@ -2,11 +2,11 @@
 
 | 属性 | 值 |
 |---|---|
-| 文档版本 | 2.13 |
-| 日期 | 2026-07-29 |
+| 文档版本 | 2.14 |
+| 日期 | 2026-07-30 |
 | 适用范围 | EdgeX + EdgeOS 联合架构 |
-| 状态 | **Phase 1 已完成 / Phase 2 跨系统路径已打通并实机复验通过（MQTT + NATS）/ Phase 3 EdgeX 侧全部完成（EX-P3-01~09）/ EdgeOS 侧 OS-P3-01/02 完成 / v2.12：设备数对账不一致已定位并在 EdgeOS 侧修复 / v2.13：EdgeX 侧 `device_report` 连接/重注册/超时兜底与 publisher 刷新竞态收尾** |
-| 变更说明 | v2.13（EdgeX 侧）: **收尾残留**——① `notifyEANRuntimeChanged` 改为同步刷新 publisher，`refreshEANEventPublishers` 在持 `nm.mu` 时 TryRLock 失败则延迟阻塞刷新（消竞态、防死锁）；② 连接成功即发 V1 `device_report` + 5s 未成功则重试，与重注册/`register_response` 路径对齐；③ 改造指南明确 EdgeOS 须双订 MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`。v2.12（EdgeOS 侧）: **设备数/上报一致性**——根因：V1 `edgex/devices/report` 全量快照在 EdgeOS 只 Upsert 不剪枝（实机 EdgeX=4 / EdgeOS 曾=14）；非 Discovery/EAN Event/双传输重复计数。修复：`ReconcileDevices`、EAN→Registry 镜像、`POST /api/nodes/:id/devices/reconcile`；实机恢复 devices=4、nodes=1、agents=1、native_caps=63；`go test ./...` 全绿 + UI build 通过。**仍属 EdgeOS 侧**：若 messaging 未订 NATS `edgex.devices.report`，NATS 传输上的 V1 清单仍可能空窗（见改造指南 OS-23）。v2.11（双侧）: NATS 传输对称联调端到端复验——EdgeX NATS stats API 返回 `ean_metrics`（total_invokes=8, success_rate=100%），对齐 MQTT；EdgeOS 3 个 Invoke 测试全部 completed（system.diagnostics/modbus_tcp.list_points/bacnet_ip.list_points），P50=3ms P99=6ms v1_fallback=0；OS-P3-01 V1 Fallback 移除（v1_bridge_caps=0）；OS-P3-02 前端写操作切换 EAN Invoke（ControlView/PointListView）。v2.10（EdgeOS 侧）: NATS 对称补齐——NATS 延迟订阅/Connect·Reconnect 补订对齐 MQTT；Health 新增 `transport_details[{name,connected,endpoint}]`，`northbound_runtime` 改为 `mqttBus+natsBus`；UI Overview/DebugHelp/Dashboard 展示分传输连接态与 broker 地址；联调帮助拆分 MQTT/NATS 步骤并补充 NATS Subject 用例；`go test ./internal/ean/` + UI build 通过；实机复验（2026-07-28）：4222 可达、`registered_transports=2`、Agent `transport=["nats"]`/`northbound=edgeos_nats`、63 native Cap、`system.diagnostics` Invoke completed（avg≈5ms，`v1_fallback=0`）。v2.9（EdgeOS 侧）: NATS 传输对称联调——启用 `ean.nats.enabled=true`（`nats://127.0.0.1:4222`），EdgeOS `registered_transports=2`（mqtt+nats），63 条原生 Cap 通过 NATS 通道索引（`v1_bridge_caps=0`），`system.diagnostics` 通过双传输 Invoke 端到端成功（6ms / `v1_fallback=0`）；EdgeX NATS 北向通道 `EAN-NATS` 已启用（`ean_enabled=true`）。v2.8（EdgeOS 侧）: Governance 权限修复——default 租户无策略时放行 admin/write/ai（修复 system.diagnostics 502）；实机复验 63 条原生 Cap + system.diagnostics Invoke 端到端成功。v2.7（EdgeOS 侧）: 启动韧性对齐 messaging.Manager——MQTT ConnectRetry/AutoReconnect + 订阅延后补订，broker 不可用时不 fatal；Health 增加 `invoke_metrics`/`registered_transports`；默认 MQTT broker 改为 `18083`；UI 对齐 `source`/原生 Cap 计数/Invoke 指标；诚实勾选 Phase 3 EdgeOS 进度。v2.6（EdgeX 侧）: 深化双 Runtime 战略定位。v2.5（EdgeX 侧）: 明确双 Runtime。v2.4（EdgeOS 侧功能）: 仅对接北向 EAN Runtime；V1 purge/AgentSource |
+| 状态 | **Phase 1 已完成 / Phase 2 跨系统路径已打通并实机复验通过（MQTT + NATS）/ Phase 3 EdgeX 侧全部完成（EX-P3-01~09）/ EdgeOS 侧 OS-P3-01/02 完成 / v2.14：MCP 工具合并优化（94→32）+ 地址语义统一修复（point_id/address/name 三形式自动解析）+ BACnet 设备扫描硬指标通过 / v2.13：EdgeX 侧 `device_report` 连接/重注册/超时兜底与 publisher 刷新竞态收尾** |
+| 变更说明 | v2.14（EdgeX 侧）: **工具合并与地址语义**——① 将 15 协议×4 操作矩阵（60 工具）合并为 4 通用工具（read_points/write_points/scan_devices/list_points），MCP 工具总数从 94 降至 32（62% 压缩），消除 ToolSearch 索引抖动；② `DriverExecutor.resolvePointIDs()` 实现 point_id/address/name 三形式自动解析，修复 list_points 返回 PDU 偏移而 read_points 期望 point_id 的语义割裂 bug；③ MCP 工具 schema 增加 point_id 参数和地址语义说明文档标注；④ BACnet 设备 2228316/2228317/2228318/2228319 扫描硬指标全部通过（quality=Good）；⑤ goreleaser arm64 deb 包部署到 192.168.3.230 实机回归验证通过。v2.13（EdgeX 侧）: **收尾残留**——① `notifyEANRuntimeChanged` 改为同步刷新 publisher，`refreshEANEventPublishers` 在持 `nm.mu` 时 TryRLock 失败则延迟阻塞刷新（消竞态、防死锁）；② 连接成功即发 V1 `device_report` + 5s 未成功则重试，与重注册/`register_response` 路径对齐；③ 改造指南明确 EdgeOS 须双订 MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`。v2.12（EdgeOS 侧）: **设备数/上报一致性**——根因：V1 `edgex/devices/report` 全量快照在 EdgeOS 只 Upsert 不剪枝（实机 EdgeX=4 / EdgeOS 曾=14）；非 Discovery/EAN Event/双传输重复计数。修复：`ReconcileDevices`、EAN→Registry 镜像、`POST /api/nodes/:id/devices/reconcile`；实机恢复 devices=4、nodes=1、agents=1、native_caps=63；`go test ./...` 全绿 + UI build 通过。**仍属 EdgeOS 侧**：若 messaging 未订 NATS `edgex.devices.report`，NATS 传输上的 V1 清单仍可能空窗（见改造指南 OS-23）。v2.11（双侧）: NATS 传输对称联调端到端复验——EdgeX NATS stats API 返回 `ean_metrics`（total_invokes=8, success_rate=100%），对齐 MQTT；EdgeOS 3 个 Invoke 测试全部 completed（system.diagnostics/modbus_tcp.list_points/bacnet_ip.list_points），P50=3ms P99=6ms v1_fallback=0；OS-P3-01 V1 Fallback 移除（v1_bridge_caps=0）；OS-P3-02 前端写操作切换 EAN Invoke（ControlView/PointListView）。v2.10（EdgeOS 侧）: NATS 对称补齐——NATS 延迟订阅/Connect·Reconnect 补订对齐 MQTT；Health 新增 `transport_details[{name,connected,endpoint}]`，`northbound_runtime` 改为 `mqttBus+natsBus`；UI Overview/DebugHelp/Dashboard 展示分传输连接态与 broker 地址；联调帮助拆分 MQTT/NATS 步骤并补充 NATS Subject 用例；`go test ./internal/ean/` + UI build 通过；实机复验（2026-07-28）：4222 可达、`registered_transports=2`、Agent `transport=["nats"]`/`northbound=edgeos_nats`、63 native Cap、`system.diagnostics` Invoke completed（avg≈5ms，`v1_fallback=0`）。v2.9（EdgeOS 侧）: NATS 传输对称联调——启用 `ean.nats.enabled=true`（`nats://127.0.0.1:4222`），EdgeOS `registered_transports=2`（mqtt+nats），63 条原生 Cap 通过 NATS 通道索引（`v1_bridge_caps=0`），`system.diagnostics` 通过双传输 Invoke 端到端成功（6ms / `v1_fallback=0`）；EdgeX NATS 北向通道 `EAN-NATS` 已启用（`ean_enabled=true`）。v2.8（EdgeOS 侧）: Governance 权限修复——default 租户无策略时放行 admin/write/ai（修复 system.diagnostics 502）；实机复验 63 条原生 Cap + system.diagnostics Invoke 端到端成功。v2.7（EdgeOS 侧）: 启动韧性对齐 messaging.Manager——MQTT ConnectRetry/AutoReconnect + 订阅延后补订，broker 不可用时不 fatal；Health 增加 `invoke_metrics`/`registered_transports`；默认 MQTT broker 改为 `18083`；UI 对齐 `source`/原生 Cap 计数/Invoke 指标；诚实勾选 Phase 3 EdgeOS 进度。v2.6（EdgeX 侧）: 深化双 Runtime 战略定位。v2.5（EdgeX 侧）: 明确双 Runtime。v2.4（EdgeOS 侧功能）: 仅对接北向 EAN Runtime；V1 purge/AgentSource |
 
 ---
 
@@ -16,7 +16,7 @@
 
 EdgeX 内部维持双 Capability Runtime 架构，这是面向不同场景的互补设计：
 
-- **MCP Runtime（基础能力层）**：Server 启动即就绪，零外部依赖。通过 LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作，无需 MQTT/NATS 连接，无需 EdgeOS 参与。63 条 Capability + 94 个 MCP 工具始终可用。
+- **MCP Runtime（基础能力层）**：Server 启动即就绪，零外部依赖。通过 LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作，无需 MQTT/NATS 连接，无需 EdgeOS 参与。统一模式下通过 `GenerateUnifiedCapabilities` 生成 7 条统一 Capability，对应约 32 个 MCP 工具（7 `ean_*` unified + 25 `edgex_*`）始终可用。v2.14 工具合并优化后，15 协议×4 操作矩阵合并为 4 通用工具，工具数从 94 降至 32（62% 压缩）。
 - **北向 EAN Runtime（高级协作层）**：依赖 EdgeOS(MQTT/NATS) 北向通道连接，启用后 EdgeOS 可远程发现并调用本设备 Capability，支持跨系统 Agent 编排和分布式调用。属于高级功能，不是基础功能。
 
 EAN 配置（`EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish`）**已合并**到 EdgeOS(MQTT/NATS) 北向通道配置字段，由北向管理器统一持久化和热更新。用户在北向通道弹窗中即可控制 EAN 启停。EdgeOS 侧独立 `ean:` 段仍用于 Coordination Platform 自身连接参数，与 EdgeX 通道字段分工不同。
@@ -113,8 +113,8 @@ EdgeX 北向 `EdgeOS(MQTT/NATS)` 通道承担三层职责，EAN 是其中最上�
 │  ┌─ MCP Runtime（独立基础层，不依赖通道）────────────────────┐ │
 │  │  TransportSDK + NoopBus                                     │ │
 │  │  Server 启动即就绪，LLM 接入即可使用                        │ │
-│  │  ├── 63 Capability（共享定义）                              │ │
-│  │  ├── 94 MCP 工具（ean_* 前缀）                              │ │
+│  │  ├── 7 Unified Capability（`GenerateUnifiedCapabilities`）   │ │
+│  │  ├── ~34 MCP 工具（9 `ean_*` unified + 25 `edgex_*`）      │ │
 │  │  └── /api/capability/invoke（本地 HTTP）                    │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │                                                                │
@@ -158,7 +158,7 @@ EdgeX 北向 `EdgeOS(MQTT/NATS)` 通道承担三层职责，EAN 是其中最上�
 | `true` | `true` | 工作 | 启动 | **始终运行** |
 | `true` | `true` → `false`（热更新） | 工作 | 停止 Runtime | **始终运行** |
 
-MCP Runtime 不受通道配置影响，始终随 Server 启动。即使用户未创建任何北向通道，LLM 接入后仍可通过 MCP 工具调用 63 条 Capability 完成设备操作。
+MCP Runtime 不受通道配置影响，始终随 Server 启动。即使用户未创建任何北向通道，LLM 接入后仍可通过 MCP 工具调用 7 条统一 Capability（`GenerateUnifiedCapabilities`）完成设备操作。
 
 ### 4.2 数据结构变更
 
@@ -390,7 +390,7 @@ NATS 通道（`updateEdgeOSNATSClients`）做对称改造。
 │                                                           │
 │  ┌─ MCP Runtime（始终运行）──────────────────────────┐  │
 │  │  状态:          运行中                              │  │
-│  │  工具数量:      94 个（63 ean_* + 31 edgex_*）     │  │
+│  │  工具数量:      ~34 个（9 ean_* unified + 25 edgex_*） │  │
 │  │  说明: MCP Runtime 独立于 EAN，始终可用             │  │
 │  └───────────────────────────────────────────────────┘  │
 │                                                           │
@@ -410,7 +410,7 @@ NATS 通道（`updateEdgeOSNATSClients`）做对称改造。
 | `GET /api/capability/settings` | 从北向配置派生 | 保留，增加 EAN 字段，标注来源通道 |
 | `PUT /api/capability/settings` | 存根，不持久化 | **移除**，EAN 配置通过北向 API 提交 |
 | `GET /api/capability/agent/status` | 返回 Agent 状态 | 保留，MCP Runtime 始终返回；北向 Runtime 按 `EANEnabled` 返回 |
-| `GET /api/capability/list` | 返回 63 条 Capability | 保留，MCP Runtime 提供 |
+| `GET /api/capability/list` | 返回 7 条 Unified Capability | 保留，MCP Runtime 提供（`GenerateUnifiedCapabilities`） |
 
 ### 4.7 Runtime 生命周期状态机
 
@@ -460,12 +460,12 @@ MCP Runtime 不依赖任何北向通道，以下场景在 EAN 未启用时完全
 
 | 场景 | 调用路径 | 示例 |
 |---|---|---|
-| LLM 设备读写 | LLM → MCP `tools/call` → `ean_modbus_tcp.write_register` → DriverExecutor → Southbound | AI 助手写入 Modbus 寄存器 |
-| LLM 协议逆向 | LLM → MCP `tools/call` → `ean_ai.protocol_reverse` → AI 模块 | AI 分析未知协议数据帧 |
-| LLM 文档解析 | LLM → MCP `tools/call` → `ean_ai.doc_parse` → AI 模块 | AI 解析设备说明书 PDF |
-| 本地 HTTP Invoke | HTTP → `/api/capability/invoke` → MCP Runtime → DriverExecutor | 前端直接调用 Capability |
-| 设备扫描 | LLM → MCP `tools/call` → `ean_modbus_tcp.scan_devices` → DriverExecutor | AI 扫描 Modbus 总线设备 |
-| 系统诊断 | LLM → MCP `tools/call` → `ean_system.diagnostics` → Runtime | AI 查询通道和设备状态 |
+| LLM 设备读写 | LLM → MCP `tools/call` → `ean_unified.write_point` → `inferDriverCommand` → DriverExecutor → Southbound | AI 助手写入 Modbus 寄存器 |
+| LLM 协议逆向 | LLM → MCP `tools/call` → `ean_unified.protocol_reverse` → AI 模块 | AI 分析未知协议数据帧 |
+| LLM 文档解析 | LLM → MCP `tools/call` → `ean_unified.doc_parse` → AI 模块 | AI 解析设备说明书 PDF |
+| 本地 HTTP Invoke | HTTP → `/api/capability/invoke` → MCP Runtime → `inferDriverCommand` → DriverExecutor | 前端直接调用 Capability |
+| 设备扫描 | LLM → MCP `tools/call` → `ean_unified.scan_devices` → `inferDriverCommand` → DriverExecutor | AI 扫描 Modbus 总线设备 |
+| 系统诊断 | LLM → MCP `tools/call` → `ean_unified.diagnostics` → Runtime | AI 查询通道和设备状态 |
 
 **关键区别**：MCP Runtime 的调用是 in-process（进程内），不经过 MQTT/NATS 网络；北向 EAN Runtime 的调用经过 EdgeOS Governance 权限校验和 MQTT 消息传输。两者共享同一套 Capability 定义和 Execution Mapper，但传输层和安全边界完全独立。
 
@@ -484,7 +484,7 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 
 **保留双 Runtime 的四个理由：**
 
-1. **MCP Runtime 零依赖启动**：`sync.Once` 单例，Server 启动即可用。不依赖 MQTT/NATS 连接，不需要北向通道配置。LLM 接入后通过 MCP `tools/call` 即可调用 63 条 Capability（`ean_modbus_tcp.write_register`、`ean_ai.protocol_reverse`、`ean_ai.doc_parse` 等），无需 EdgeOS 参与。这意味着即使用户只配置了南向设备通道、未创建任何北向通道，AI 助手依然可以完成设备读写和智能分析。
+1. **MCP Runtime 零依赖启动**：`sync.Once` 单例，Server 启动即可用。不依赖 MQTT/NATS 连接，不需要北向通道配置。LLM 接入后通过 MCP `tools/call` 即可调用 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成，含 `ean_unified.read_point`、`ean_unified.write_point`、`ean_unified.protocol_reverse`、`ean_unified.doc_parse` 等），无需 EdgeOS 参与。这意味着即使用户只配置了南向设备通道、未创建任何北向通道，AI 助手依然可以完成设备读写和智能分析。可通过 `RuntimeConfig.Unified` 控制统一模式开关。
 2. **北向 EAN Runtime 按需启动**：依赖北向通道连接，仅在 `EdgeOS(MQTT/NATS)` 通道 `Enable=true` 且 `EANEnabled=true` 时启动。这是面向 EdgeOS 平台远程编排的高级功能，不是 EdgeX 的基础功能。用户不启用 EAN 时，EdgeX 的本地 AI 能力不受影响。
 3. **故障隔离**：MQTT 连接闪断不影响 MCP 本地调用——AI 助手仍可通过 MCP 工具操作设备；MCP Runtime 故障不影响跨系统 EAN 通道——EdgeOS 仍可远程调用 Capability。
 4. **安全边界**：MCP Runtime 的 in-process 调用不经过网络，不存在跨系统权限问题；北向 EAN Runtime 的 Invoke 经过 EdgeOS Governance 权限校验（read/write/admin/ai 四级权限 + 租户策略）。
@@ -493,7 +493,7 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 
 | 层次 | 共享/独立 | 说明 |
 |---|---|---|
-| Capability 定义（63 条） | **共享** | `generator.go` 生成，两个 Runtime 使用同一套定义 |
+| Capability 定义 | **共享基础，模式不同** | 北向 EAN Runtime：`generator.go` 生成 63 条；MCP Runtime：`GenerateUnifiedCapabilities` 生成 7 条 Unified（`RuntimeConfig.Unified` 控制） |
 | Execution Mapper | **共享** | `CapabilityMapper` → `DriverExecutor` → `Southbound`，调用路径完全一致 |
 | Transport / Bus | **独立** | MCP: `TransportSDK` + `NoopBus`；北向: `TransportMQTT` + `mqttBus` |
 | 生命周期管理 | **独立** | MCP: `sync.Once`（进程级）；北向: 通道级，随连接和 `EANEnabled` 变化 |
@@ -504,8 +504,8 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 │                                                            │
 │  ┌─ MCP Runtime（基础层，Server 启动即就绪）────────────┐ │
 │  │  TransportSDK + NoopBus                               │ │
-│  │  ├── 63 Capability（共享定义）                        │ │
-│  │  ├── MCP 工具注册（94 个 ean_* 工具）                 │ │
+│  │  ├── 7 Unified Capability（`GenerateUnifiedCapabilities`） │ │
+│  │  ├── MCP 工具注册（~34 个，9 `ean_*` unified + 25 `edgex_*`） │ │
 │  │  ├── /api/capability/invoke（本地 HTTP）              │ │
 │  │  └── LLM 接入 → 智能设备操作                          │ │
 │  └───────────────────────────────────────────────────────┘ │
@@ -562,14 +562,14 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 |---|---|---|
 | `ensureCapabilityRuntime` 创建 | 已完成 | `mcp_handler.go:2301`，`sync.Once` 单例，`TransportSDK` + `NoopBus`，心跳 60s |
 | AgentID 来源 | 已完成 | 优先取北向配置 `EdgeOSMQTT[0].NodeID`，无北向配置时默认 `"edgex"` |
-| MCP 工具注册 | 已完成 | 94 个工具（63 `ean_*` + 31 `edgex_*`）注册到 MCP Server |
+| MCP 工具注册 | 已完成 | ~32 个工具（7 `ean_*` unified + 25 `edgex_*`）注册到 MCP Server，6 个重叠工具已移除（`read_point`、`read_point_batch`、`write_point`、`write_point_batch`、`list_points`、`get_diagnostics`）。v2.14：15 协议×4 操作矩阵合并为 4 通用工具，总数从 94 降至 32 |
 | 本地 HTTP Invoke | 已完成 | `/api/capability/invoke` 走 MCP Runtime in-process 调用 |
-| MCP `tools/list` | 已完成 | JSON-RPC over HTTP POST，返回 94 个工具描述 |
-| MCP `tools/call` | 已完成 | LLM 接入后可直接调用所有 63 条 Capability |
+| MCP `tools/list` | 已完成 | JSON-RPC over HTTP POST，返回 ~34 个工具描述 |
+| MCP `tools/call` | 已完成 | LLM 接入后可直接调用 7 条统一 Capability（`GenerateUnifiedCapabilities`），`execution/capability_mapper.go` 的 `inferDriverCommand` 负责映射到具体驱动命令 |
 | EAN 设置 GET | 已完成 | 从北向配置派生状态展示 |
 | EAN 设置 PUT | **存根** | `handleEanSettingsUpdate` 仅返回确认，不持久化任何字段（Phase 3 移除） |
 
-**MCP Runtime 独立工作验证**：在未创建任何北向通道的场景下，`ensureCapabilityRuntime` 仍可通过 `sync.Once` 创建 Runtime 实例。AgentID 取默认值 `"edgex"`，LLM 接入后即可通过 MCP `tools/call` 调用 `ean_modbus_tcp.read_holding_register`、`ean_system.diagnostics`、`ean_ai.doc_parse` 等 63 条 Capability。调用路径为 in-process，不经过 MQTT/NATS 网络。
+**MCP Runtime 独立工作验证**：在未创建任何北向通道的场景下，`ensureCapabilityRuntime` 仍可通过 `sync.Once` 创建 Runtime 实例。AgentID 取默认值 `"edgex"`，LLM 接入后即可通过 MCP `tools/call` 调用 `ean_unified.read_point`、`ean_unified.write_point`、`ean_unified.protocol_reverse`、`ean_unified.doc_parse` 等 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成）。调用路径为 in-process，不经过 MQTT/NATS 网络。`RuntimeConfig.Unified` 控制统一模式，`execution/capability_mapper.go` 的 `inferDriverCommand` 完成协议适配。
 
 ### 5.5 V1 命令处理（运行中，未标记 deprecated）
 
@@ -882,7 +882,7 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 | EdgeX NATS 北向状态 | ``GET /api/northbound/config`` -> ``edgeos_nats[0]`` | ``enable=true``, ``ean_enabled=true``, ``name=EAN-NATS``, ``url=nats://127.0.0.1:4222`` |
 | EdgeX NATS Stats + EAN Metrics | ``GET /api/northbound/edgeos-nats/:id/stats`` | ``publish_count=7288``, ``ean_metrics.total_invokes=8``, ``success_rate=100%`` |
 | EdgeX MQTT Stats + EAN Metrics | ``GET /api/northbound/edgeos-mqtt/:id/stats`` | ``publish_count=4919``, ``ean_metrics.total_invokes=4``, ``success_rate=100%`` |
-| EdgeX MCP/本地 status | ``GET /api/capability/agent/status`` | ``online``, ``capabilities_count=63``（MCP Runtime，``transport=sdk``） |
+| EdgeX MCP/本地 status | ``GET /api/capability/agent/status`` | ``online``, ``capabilities_count=7``（MCP Runtime Unified 模式，``transport=sdk``） |
 | EdgeOS 双传输注册 | ``GET /api/ean/health`` | ``transports`` 含 mqtt+nats，``registered_transports=2`` |
 | NATS Discovery 索引 | ``GET /api/ean/agents`` | ``transport=["nats"]``, ``metadata.northbound="edgeos_nats"``, ``status=online`` |
 | NATS Capability 索引 | ``GET /api/ean/agents/edgex-node-001/capabilities`` | **63 条 ``native-ean``**, ``v1_bridge_caps=0`` |
@@ -1033,8 +1033,8 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 │  │  │  (高级层)  │ │  │  │  sync.Once, Server 启动即就绪   │ │    │
 │  │  │            │ │  │  │  不依赖通道连接                 │ │    │
 │  │  │ TransportMQTT│  │  │                                │ │    │
-│  │  │ + mqttBus  │ │  │  │  63 Capability（共享定义）     │ │    │
-│  │  │            │ │  │  │  94 MCP 工具（ean_* + edgex_*）│ │    │
+│  │  │ + mqttBus  │ │  │  │  7 Unified Capability（`GenerateUnifiedCapabilities`） │ │    │
+│  │  │            │ │  │  │  ~34 MCP 工具（9 ean_* unified + 25 edgex_*）         │ │    │
 │  │  │ 63 Cap     │ │  │  │  /api/capability/invoke (HTTP) │ │    │
 │  │  │ (共享定义) │ │  │  │  MCP tools/call (JSON-RPC)     │ │    │
 │  │  │            │ │  │  │  LLM 接入 → 智能设备操作       │ │    │
