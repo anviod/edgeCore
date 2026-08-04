@@ -5,7 +5,7 @@
         <div class="logo-section">
           <div class="logo-icon">
             <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
           <div class="logo-text">
@@ -34,240 +34,257 @@
         </div>
 
         <div v-if="installState === 'config'" class="install-panel">
-        <div class="config-form flow-form">
-          <div class="form-group">
-            <label class="form-label">
-              <IconSettings class="label-icon" />
-              Web服务端口
-            </label>
-            <div class="input-group">
-              <a-input 
-                v-model="formData.port" 
-                type="number" 
-                :placeholder="'请输入端口号 (80-65535)'" 
-                size="large"
-                :status="portStatus"
-                @blur="validatePort"
-              >
-                <template #suffix>
-                  <span v-if="portChecking" class="checking">
-                    <IconLoading class="loading" />
-                  </span>
-                  <span v-else-if="portAvailable !== null" :class="['status', portAvailable ? 'success' : 'error']">
-                    <IconCheckCircle v-if="portAvailable" />
-                    <IconCloseCircle v-else />
-                  </span>
-                </template>
-              </a-input>
-            </div>
-            <div v-if="portMessage" :class="['form-hint', portAvailable === false ? 'error' : 'success']">
-              {{ portMessage }}
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <IconUser class="label-icon" />
-              管理员用户名
-            </label>
-            <div class="input-group">
-              <a-input 
-                v-model="formData.username" 
-                :placeholder="'请输入用户名'" 
-                size="large"
-                :status="usernameStatus"
-              >
-                <template #prefix>
-                  <IconUser />
-                </template>
-              </a-input>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <IconLock class="label-icon" />
-              管理员密码
-            </label>
-            <div class="input-group">
-              <a-input-password 
-                v-model="formData.password" 
-                :placeholder="'请输入密码'" 
-                size="large"
-                :status="passwordStatus"
-                @blur="validatePassword"
-              >
-                <template #prefix>
-                  <IconLock />
-                </template>
-              </a-input-password>
-            </div>
-            <div v-if="passwordMessage" class="form-hint error">
-              {{ passwordMessage }}
-            </div>
-            <div class="password-rules">
-              <div class="rule" :class="{ pass: formData.password.length >= 8 }">
-                <IconCheckCircle v-if="formData.password.length >= 8" />
-                <IconCloseCircle v-else />
-                <span>至少8位</span>
+          <div class="config-form flow-form">
+            <div class="form-group">
+              <label class="form-label">
+                <IconSettings class="label-icon" />
+                Web服务端口
+              </label>
+              <div class="input-group">
+                <a-input 
+                  v-model="formData.port" 
+                  type="number" 
+                  :placeholder="'请输入端口号 (80-65535)'" 
+                  size="large"
+                  :status="portStatus"
+                  @blur="validatePort"
+                >
+                  <template #suffix>
+                    <span v-if="portChecking" class="checking">
+                      <IconLoading class="loading" />
+                    </span>
+                    <span v-else-if="portAvailable !== null" :class="['status', portAvailable ? 'success' : 'error']">
+                      <IconCheckCircle v-if="portAvailable" />
+                      <IconCloseCircle v-else />
+                    </span>
+                  </template>
+                </a-input>
               </div>
-              <div class="rule" :class="{ pass: /[A-Z]/.test(formData.password) }">
-                <IconCheckCircle v-if="/[A-Z]/.test(formData.password)" />
-                <IconCloseCircle v-else />
-                <span>大写字母</span>
-              </div>
-              <div class="rule" :class="{ pass: /[a-z]/.test(formData.password) }">
-                <IconCheckCircle v-if="/[a-z]/.test(formData.password)" />
-                <IconCloseCircle v-else />
-                <span>小写字母</span>
-              </div>
-              <div class="rule" :class="{ pass: /[0-9]/.test(formData.password) }">
-                <IconCheckCircle v-if="/[0-9]/.test(formData.password)" />
-                <IconCloseCircle v-else />
-                <span>数字</span>
-              </div>
-              <div class="rule" :class="{ pass: hasSpecialChar }">
-                <IconCheckCircle v-if="hasSpecialChar" />
-                <IconCloseCircle v-else />
-                <span>特殊符号</span>
+              <div v-if="portMessage" :class="['form-hint', portAvailable === false ? 'error' : 'success']">
+                {{ portMessage }}
               </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label class="form-label">
-              <IconLock class="label-icon" />
-              确认密码
-            </label>
-            <div class="input-group">
-              <a-input-password 
-                v-model="formData.confirmPassword" 
-                :placeholder="'请再次输入密码'" 
-                size="large"
-                :status="confirmPasswordStatus"
-                @blur="validateConfirmPassword"
+            <div class="form-group">
+              <label class="form-label">
+                <IconUser class="label-icon" />
+                管理员用户名
+              </label>
+              <div class="input-group">
+                <a-input 
+                  v-model="formData.username" 
+                  :placeholder="'请输入用户名'" 
+                  size="large"
+                  :status="usernameStatus"
+                >
+                  <template #prefix>
+                    <IconUser />
+                  </template>
+                </a-input>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <IconLock class="label-icon" />
+                管理员密码
+              </label>
+              <div class="input-group">
+                <a-input-password 
+                  v-model="formData.password" 
+                  :placeholder="'请输入密码'" 
+                  size="large"
+                  :status="passwordStatus"
+                  @blur="validatePassword"
+                >
+                  <template #prefix>
+                    <IconLock />
+                  </template>
+                </a-input-password>
+              </div>
+              <div v-if="passwordMessage" class="form-hint error">
+                {{ passwordMessage }}
+              </div>
+              <div class="password-rules">
+                <div class="rule" :class="{ pass: formData.password.length >= 8 }">
+                  <IconCheckCircle v-if="formData.password.length >= 8" />
+                  <IconCloseCircle v-else />
+                  <span>至少8位</span>
+                </div>
+                <div class="rule" :class="{ pass: /[A-Z]/.test(formData.password) }">
+                  <IconCheckCircle v-if="/[A-Z]/.test(formData.password)" />
+                  <IconCloseCircle v-else />
+                  <span>大写字母</span>
+                </div>
+                <div class="rule" :class="{ pass: /[a-z]/.test(formData.password) }">
+                  <IconCheckCircle v-if="/[a-z]/.test(formData.password)" />
+                  <IconCloseCircle v-else />
+                  <span>小写字母</span>
+                </div>
+                <div class="rule" :class="{ pass: /[0-9]/.test(formData.password) }">
+                  <IconCheckCircle v-if="/[0-9]/.test(formData.password)" />
+                  <IconCloseCircle v-else />
+                  <span>数字</span>
+                </div>
+                <div class="rule" :class="{ pass: hasSpecialChar }">
+                  <IconCheckCircle v-if="hasSpecialChar" />
+                  <IconCloseCircle v-else />
+                  <span>特殊符号</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <IconLock class="label-icon" />
+                确认密码
+              </label>
+              <div class="input-group">
+                <a-input-password 
+                  v-model="formData.confirmPassword" 
+                  :placeholder="'请再次输入密码'" 
+                  size="large"
+                  :status="confirmPasswordStatus"
+                  @blur="validateConfirmPassword"
+                >
+                  <template #prefix>
+                    <IconLock />
+                  </template>
+                </a-input-password>
+              </div>
+              <div v-if="confirmPasswordMessage" class="form-hint error">
+                {{ confirmPasswordMessage }}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <IconNav class="label-icon" />
+                网关名称
+              </label>
+              <div class="input-group">
+                <a-input 
+                  v-model="formData.gatewayName" 
+                  :placeholder="'请输入网关名称'" 
+                  size="large"
+                  :status="gatewayNameStatus"
+                >
+                  <template #prefix>
+                    <IconNav />
+                  </template>
+                </a-input>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <IconLocation class="label-icon" />
+                网关位置
+              </label>
+              <div class="input-group">
+                <a-input 
+                  v-model="formData.gatewayLocation" 
+                  :placeholder="'例如：IDC-1栋-4楼-201机房'" 
+                  size="large"
+                  :status="gatewayLocationStatus"
+                >
+                  <template #prefix>
+                    <IconLocation />
+                  </template>
+                </a-input>
+              </div>
+              <div class="form-hint">填写网关所在物理位置，便于运维管理</div>
+            </div>
+
+            <div class="form-group info-group">
+              <label class="form-label">
+                <IconFolder class="label-icon" />
+                数据存储目录
+              </label>
+              <div class="info-value">
+                <IconFolder />
+                <span>data (配置文件: data/config.db)</span>
+              </div>
+              <div class="form-hint">系统将自动在此目录下创建数据库文件，无需手动选择</div>
+            </div>
+
+            <div v-if="generalErrors.length > 0" class="error-list">
+              <div v-for="(error, index) in generalErrors" :key="index" class="error-item">
+                <IconCloseCircleFill />
+                <span>{{ error }}</span>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <a-button 
+                type="primary" 
+                size="large" 
+                long 
+                :loading="startingInstall"
+                @click="handleStartInstall"
+                class="btn-install"
               >
-                <template #prefix>
-                  <IconLock />
+                <template #icon>
+                  <IconPlayCircle />
                 </template>
-              </a-input-password>
-            </div>
-            <div v-if="confirmPasswordMessage" class="form-hint error">
-              {{ confirmPasswordMessage }}
+                开始初始化安装
+              </a-button>
             </div>
           </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <IconNav class="label-icon" />
-              网关名称
-            </label>
-            <div class="input-group">
-              <a-input 
-                v-model="formData.gatewayName" 
-                :placeholder="'请输入网关名称'" 
-                size="large"
-                :status="gatewayNameStatus"
-              >
-                <template #prefix>
-                  <IconNav />
-                </template>
-              </a-input>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">
-              <IconLocation class="label-icon" />
-              网关位置
-            </label>
-            <div class="input-group">
-              <a-input 
-                v-model="formData.gatewayLocation" 
-                :placeholder="'例如：IDC-1栋-4楼-201机房'" 
-                size="large"
-                :status="gatewayLocationStatus"
-              >
-                <template #prefix>
-                  <IconLocation />
-                </template>
-              </a-input>
-            </div>
-            <div class="form-hint">填写网关所在物理位置，便于运维管理</div>
-          </div>
-
-          <div class="form-group info-group">
-            <label class="form-label">
-              <IconFolder class="label-icon" />
-              数据存储目录
-            </label>
-            <div class="info-value">
-              <IconFolder />
-              <span>data (配置文件: data/config.db)</span>
-            </div>
-            <div class="form-hint">系统将自动在此目录下创建数据库文件，无需手动选择</div>
-          </div>
-
-          <div v-if="generalErrors.length > 0" class="error-list">
-            <div v-for="(error, index) in generalErrors" :key="index" class="error-item">
-              <IconCloseCircleFill />
-              <span>{{ error }}</span>
-            </div>
-          </div>
-
-          <div class="form-actions">
-            <a-button 
-              type="primary" 
-              size="large" 
-              long 
-              :loading="startingInstall"
-              @click="handleStartInstall"
-              class="btn-install"
-            >
-              <template #icon>
-                <IconPlayCircle />
-              </template>
-              开始初始化安装
-            </a-button>
-          </div>
-        </div>
         </div>
 
         <div v-else-if="installState === 'installing'" class="install-panel install-panel--center">
-        <div class="progress-icon install-progress-icon">
-          <IconLoading class="spinner" />
-        </div>
-        <div class="install-progress-title">正在初始化系统</div>
-        <div class="install-progress-subtitle">{{ statusText }}</div>
-
-        <div class="install-progress-bar-wrap">
-          <div class="install-progress-bar">
-            <div class="install-progress-fill" :style="{ width: progress + '%' }"></div>
+          <div class="progress-icon install-progress-icon">
+            <IconLoading class="spinner" />
           </div>
-          <div class="install-progress-info">{{ currentStep }} / {{ totalSteps }} · {{ progress }}%</div>
-        </div>
+          <div class="install-progress-title">正在初始化系统</div>
+          <div class="install-progress-subtitle">{{ statusText }}</div>
 
-        <div class="install-progress-log">
-          <div v-for="(log, index) in logMessages" :key="index" class="install-log-item">
-            {{ log }}
+          <div class="install-progress-bar-wrap">
+            <div class="install-progress-bar">
+              <div class="install-progress-fill" :style="{ width: progress + '%' }"></div>
+            </div>
+            <div class="install-progress-info">{{ currentStep }} / {{ totalSteps }} · {{ progress }}%</div>
           </div>
-        </div>
+
+          <div class="install-progress-log">
+            <div v-for="(log, index) in logMessages" :key="index" class="install-log-item">
+              {{ log }}
+            </div>
+          </div>
         </div>
 
         <div v-else-if="installState === 'completed'" class="install-panel install-panel--center">
-        <div class="complete-icon install-complete-icon">
-          <IconCheckCircleFill />
+          <div class="complete-icon install-complete-icon">
+            <IconCheckCircleFill />
+          </div>
+          <div class="install-complete-title">初始化完成</div>
+          <div class="install-complete-subtitle">
+            系统配置已完成，即将跳转到登录页面
+            <span v-if="configPort">
+              <br />服务端口: {{ configPort }}
+            </span>
+          </div>
+          <div class="install-complete-countdown">
+            自动跳转: <span class="countdown">{{ redirectCountdown }}s</span>
+          </div>
         </div>
-        <div class="install-complete-title">初始化完成</div>
-        <div class="install-complete-subtitle">
-          系统配置已完成，即将跳转到登录页面
-          <span v-if="configPort">
-            <br />服务端口: {{ configPort }}
-          </span>
-        </div>
-        <div class="install-complete-countdown">
-          自动跳转: <span class="countdown">{{ redirectCountdown }}s</span>
-        </div>
+        <div v-else-if="installState === 'failed'" class="install-panel install-panel--center">
+          <div class="complete-icon install-complete-icon install-fail-icon">
+            <IconCloseCircle />
+          </div>
+          <div class="install-complete-title">初始化失败</div>
+          <div class="install-progress-subtitle" style="color: var(--edgex-error);">
+            {{ installErrorMsg }}
+          </div>
+          <div v-if="logMessages.length" class="install-progress-log">
+            <div v-for="(log, index) in logMessages" :key="index" class="install-log-item">
+              {{ log }}
+            </div>
+          </div>
+          <div class="install-complete-countdown">
+            <a-button type="primary" @click="installState = 'config'">返回重新配置</a-button>
+          </div>
         </div>
       </div>
 
@@ -292,6 +309,7 @@ import { configStore } from '../stores/app.js'
 const appConfig = configStore()
 
 const installState = ref('config')
+const installErrorMsg = ref('')
 const formData = reactive({
   port: 8080,
   username: 'admin',
@@ -495,6 +513,8 @@ const startStatusPolling = () => {
           stopStatusPolling()
           startRedirectCountdown()
         } else if (data.status === 'failed') {
+          installState.value = 'failed'
+          installErrorMsg.value = data.message || data.error || '初始化过程中发生未知错误'
           stopStatusPolling()
         }
       }

@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal 
     :visible="props.visible" 
     @update:visible="handleClose" 
@@ -22,99 +22,99 @@
       </div>
 
       <div class="scan-container">
-      <div class="scanner-toolbar">
-        <div class="toolbar-left">
-          <a-input-search 
-            v-model="state.filterText" 
-            placeholder="搜索 NodeID / 名称" 
-            size="small" 
-            style="width: 240px" 
-            allow-clear 
-            class="industrial-input"
-          />
-          <div class="toolbar-divider"></div>
-          <!-- 状态筛选 - 极简符号点+文字 -->
-          <div class="status-filters">
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'all' }"
-              @click="state.filterStatus = 'all'"
-            >
-              <span class="status-dot dot-all"></span>
-              <span class="status-label">全部</span>
-            </div>
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'new' }"
-              @click="state.filterStatus = 'new'"
-            >
-              <span class="status-dot dot-new"></span>
-              <span class="status-label">新增</span>
-            </div>
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'exists' }"
-              @click="state.filterStatus = 'exists'"
-            >
-              <span class="status-dot dot-existing"></span>
-              <span class="status-label">存量</span>
+        <div class="scanner-toolbar">
+          <div class="toolbar-left">
+            <a-input-search 
+              v-model="state.filterText" 
+              placeholder="搜索 NodeID / 名称" 
+              size="small" 
+              style="width: 240px" 
+              allow-clear 
+              class="industrial-input"
+            />
+            <div class="toolbar-divider"></div>
+            <!-- 状态筛选 - 极简符号点+文字 -->
+            <div class="status-filters">
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'all' }"
+                @click="state.filterStatus = 'all'"
+              >
+                <span class="status-dot dot-all"></span>
+                <span class="status-label">全部</span>
+              </div>
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'new' }"
+                @click="state.filterStatus = 'new'"
+              >
+                <span class="status-dot dot-new"></span>
+                <span class="status-label">新增</span>
+              </div>
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'exists' }"
+                @click="state.filterStatus = 'exists'"
+              >
+                <span class="status-dot dot-existing"></span>
+                <span class="status-label">存量</span>
+              </div>
             </div>
           </div>
+          <div class="toolbar-right">
+            <a-button 
+              @click="handleScan" 
+              :loading="state.loading" 
+              size="small" 
+              class="scan-btn"
+            >
+              <template #icon><IconScan /></template> 重新扫描
+            </a-button>
+            <a-button 
+              type="primary" 
+              :disabled="!state.selectedKeys.length" 
+              @click="handleAddSelected" 
+              size="small" 
+              class="scan-btn"
+              style="margin-left: 8px"
+            >
+              导入选中点位 ({{ state.selectedKeys.length }})
+            </a-button>
+          </div>
         </div>
-        <div class="toolbar-right">
-          <a-button 
-            @click="handleScan" 
-            :loading="state.loading" 
-            size="small" 
-            class="scan-btn"
-          >
-            <template #icon><IconScan /></template> 重新扫描
-          </a-button>
-          <a-button 
-            type="primary" 
-            :disabled="!state.selectedKeys.length" 
-            @click="handleAddSelected" 
-            size="small" 
-            class="scan-btn"
-            style="margin-left: 8px"
-          >
-            导入选中点位 ({{ state.selectedKeys.length }})
-          </a-button>
-        </div>
-      </div>
 
-      <a-table 
-        row-key="unique_id" 
-        :loading="state.loading" 
-        :columns="scanColumns" 
-        :data="filteredScanResults" 
-        :pagination="{ pageSize: 100, size: 'small' }" 
-        :row-selection="{ type: 'checkbox', showCheckedAll: true }" 
-        v-model:selectedKeys="state.selectedKeys" 
-        :bordered="{ wrapper: true, cell: true }" 
-        :scroll="{ y: 550 }" 
-        class="industrial-table-fluid"
-      >
-        <template #status="{ record }">
-          <a-tag v-if="record.is_exists" color="gray" size="mini" class="rect-tag">
-            <template #icon><IconCheckCircle /></template>存量
-          </a-tag>
-          <a-tag v-else color="green" size="mini" class="rect-tag">
-            <template #icon><IconPlus /></template>新增
-          </a-tag>
-        </template>
+        <a-table 
+          row-key="unique_id" 
+          :loading="state.loading" 
+          :columns="scanColumns" 
+          :data="filteredScanResults" 
+          :pagination="{ pageSize: 100, size: 'small' }" 
+          :row-selection="{ type: 'checkbox', showCheckedAll: true }" 
+          v-model:selected-keys="state.selectedKeys" 
+          :bordered="{ wrapper: true, cell: true }" 
+          :scroll="{ y: 550 }" 
+          class="industrial-table-fluid"
+        >
+          <template #status="{ record }">
+            <a-tag v-if="record.is_exists" color="gray" size="mini" class="rect-tag">
+              <template #icon><IconCheckCircle /></template>存量
+            </a-tag>
+            <a-tag v-else color="green" size="mini" class="rect-tag">
+              <template #icon><IconPlus /></template>新增
+            </a-tag>
+          </template>
 
-        <template #address="{ record }">
-          <span class="font-mono text-[13px]">
-            <template v-if="props.channelProtocol === 'bacnet-ip'">
-              {{ record.type }}:{{ record.instance }}
-            </template>
-            <template v-else-if="props.channelProtocol === 'opc-ua'">
-              {{ record.node_id }}
-            </template>
-          </span>
-        </template>
-      </a-table>
+          <template #address="{ record }">
+            <span class="font-mono text-[13px]">
+              <template v-if="props.channelProtocol === 'bacnet-ip'">
+                {{ record.type }}:{{ record.instance }}
+              </template>
+              <template v-else-if="props.channelProtocol === 'opc-ua'">
+                {{ record.node_id }}
+              </template>
+            </span>
+          </template>
+        </a-table>
       </div>
     </div>
   </a-modal>

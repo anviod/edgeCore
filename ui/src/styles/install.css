@@ -223,7 +223,7 @@
 
 .install-wrapper .password-rules {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: var(--space-1);
 }
@@ -402,6 +402,17 @@
   align-items: center;
   justify-content: center;
   color: var(--edgex-success);
+}
+
+.install-wrapper .install-complete-icon.install-fail-icon {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: var(--edgex-error);
+}
+
+.install-wrapper .install-complete-icon.install-fail-icon svg,
+.install-wrapper .install-complete-icon.install-fail-icon .arco-icon {
+  color: var(--edgex-error);
 }
 
 .install-wrapper .install-complete-icon svg,

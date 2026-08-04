@@ -1,6 +1,43 @@
-* linguist-language=Go
+# Line ending policy: all text files use LF (Unix) to keep CI (Linux) and local dev consistent.
+* text=auto
 
+# Source / config / docs: enforce LF
+*.go text eol=lf
+*.js text eol=lf
+*.ts text eol=lf
+*.vue text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
 *.sh text eol=lf
+*.service text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+
+# Scripts explicitly LF
 scripts/** text eol=lf
 edgex.sh text eol=lf
 edgex.service text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.pcap binary
+*.pcapng binary
+*.db binary
+*.crt binary
+*.key binary
+*.exe binary
+*.zip binary
+*.gz binary

@@ -1,4 +1,4 @@
-# EdgeX AI协同组件规划 — EAN 2.0 Capability Runtime
+﻿# EdgeX AI协同组件规划 — EAN 2.0 Capability Runtime
 
 > **产品定位**：**EAN 2.0 EdgeX Capability Runtime** — Edge Agent Network 2.0 中 EdgeX 边缘网关的统一能力运行时。在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力，**不是重新设计**。复用已有 AI、MCP、Execution Mapper、ShadowCore，新增 Capability Runtime 层。  
 > **核心价值**：「工程师花 2 天分析协议」→「AI 30 分钟生成候选配置，工程师确认上线」；同时 Capability 统一接入 EAN 2.0 网络，支持跨 Agent 发现、编排、调用。  
@@ -9,11 +9,11 @@
 | 项       | 内容                                                                                                            |
 | ------- | ------------------------------------------------------------------------------------------------------------- |
 | 版本      | **V2.0**                                                                                                      |
-| 更新      | 2026-07-27                                                                                                    |
-| 状态      | **EAN-MVP 已落地**（Capability Runtime + MQTT/NATS Bridge + DriverExecutor + AI Adapter + MCP Adapter + Shadow→Event/`previous_value`；详见 [EAN2.0-EdgeX-EdgeOS改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md)） |
+| 更新      | 2026-08-04                                                                                                    |
+| 状态      | **EAN-MVP 已落地**（Capability Runtime + MQTT/NATS Bridge + DriverExecutor + AI Adapter + MCP Adapter + Shadow→Event/`previous_value`；MCP 工具合并优化 94→32，含 7 个 `ean_*` 统一跨协议工具；**Phase 4 全量落地 + V1 命令面全面下线，EAN 2.0 为命令/发现/Capability 唯一协议**；详见 [EAN2.0-EdgeX-EdgeOS改造指南](./EAN2.0-EdgeX-EdgeOS改造指南.md)；迁移评估见 [V1-to-EAN-Migration-Assessment](../TODO/V1-to-EAN-Migration-Assessment.md)） |
 | 产品名     | **EdgeX Industrial Protocol Copilot + EAN 2.0 Capability Runtime**（代码路径 `internal/ai_agent/` · `internal/capability/`） |
-| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md) · [EAN 2.0 通信协议规范](../edgeos/EdgeX通信协议规范(MQTT-NATS).md) |
-| 关联 TODO | [设备点位读写系统升级改造计划](./设备点位读写系统升级改造计划.md) · [边缘计算优化升级 2.0](./边缘计算优化升级2.0.md)                                      |
+| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md) · [EAN 2.0 通信协议规范](./EdgeX通信协议规范(MQTT-NATS).md) |
+| 关联 TODO | [设备点位读写系统升级改造计划](../设备点位读写系统升级改造计划.md) · [边缘计算优化升级 2.0](../TODO/边缘计算优化升级2.0.md)                                      |
 | 用户文档    | [边缘计算场景手册](../edge/EDGE_COMPUTING_SCENARIO_MANUAL.md) · [边缘计算最佳实践](../guide/EDGE_COMPUTING_BEST_PRACTICES.md) |
 
 
@@ -146,13 +146,31 @@ Registry（本地缓存 + 发布到 EdgeOS）
 
 | Driver 命令 | 自动生成 Capability ID | 参数映射 |
 |------------|----------------------|---------|
-| `ReadPoints` | `{protocol}.read_{register_type}` | device_id, addresses[] |
-| `WritePoint` | `{protocol}.write_{register_type}` | device_id, address, value |
+| `ReadPoints` | `{protocol}.read_point` | device_id, addresses[] |
+| `WritePoint` | `{protocol}.write_point` | device_id, address, value |
 | `ScanDevices` | `{protocol}.scan_devices` | channel_id, network |
 | `GetDevicePoints` | `{protocol}.list_points` | device_id |
 | `Diagnostics` | `system.diagnostics` | — |
 | `AI.protocol_reverse` | `ai.protocol_reverse` | payload |
 | `AI.doc_parse` | `ai.doc_parse` | payload |
+
+**统一能力模型（MCP Runtime）**：
+
+为减少 MCP 工具数量并简化对外接口，MCP Runtime 采用 **7 个统一 Capability** 替代原有的 63 个协议特定 Capability。统一 Capability 由 `capability/generator.go` 中的 `GenerateUnifiedCapabilities()` 函数自动生成：
+
+| 统一 Capability ID | MCP 工具名 | 功能 | 参数 |
+|-------------------|-----------|------|------|
+| `read_points` | `ean_read_points` | 统一读取点位（跨协议） | `device_id`, `point_id`/`address`/`point_ids[]`/`addresses[]` |
+| `write_points` | `ean_write_points` | 统一写入点位（跨协议） | `device_id`, `point_id`/`address`+`value`, 或 `writes[]` |
+| `scan_devices` | `ean_scan_devices` | 统一扫描设备（跨协议） | `channel_id`, `network` |
+| `list_points` | `ean_list_points` | 统一列出点位（跨协议） | `device_id` |
+| `get_diagnostics` | `ean_get_diagnostics` | 统一获取诊断信息 | `channel_id`（可选）, `device_id`（可选） |
+| `ai_protocol_reverse` | `ean_ai_protocol_reverse` | AI 协议逆向 | `payload` |
+| `ai_doc_parse` | `ean_ai_doc_parse` | AI 文档解析 | `payload` |
+
+> **地址语义统一**：`read_points` / `write_points` 的 `address`/`point_id` 参数接受三种形式，由 `DriverExecutor.resolvePointIDs()` 自动解析为内部 point_id：(1) point_id（推荐）；(2) address（寄存器地址）；(3) name（点位名称，不区分大小写）。`list_points` 的输出可直接作为 `read_points` / `write_points` 的输入。
+
+`RuntimeConfig.Unified bool` 控制使用统一能力集（`true`，MCP 场景）还是完整协议特定能力集（`false`，北向 EAN Runtime 场景）。北向 EAN Runtime 仍保留 63 个协议特定的 Capability（如 `modbus_tcp.read_point`、`s7.read_point` 等），以支持细粒度的跨 Agent 编排和协议感知调度。
 
 **Capability Descriptor 发布**：
 
@@ -259,7 +277,7 @@ Tool 由 Capability 自动生成，无需人工维护 Tool 清单。
 增加 Capability → Driver Command 映射：
 
 ```text
-Capability: modbus_tcp.read_holding_register
+Capability: modbus_tcp.read_point
     │
     ▼
 Execution Mapper 解析 arguments
@@ -278,7 +296,7 @@ ScanEngine → Driver
 Capability 执行导致设备状态变化时，自动发布 Event：
 
 ```text
-Capability: modbus_tcp.write_register
+Capability: modbus_tcp.write_point
     │
     ▼
 写入成功
@@ -345,7 +363,7 @@ ShadowCore 继续维护设备状态，同时支持按 Capability ID 查询缓存
 ```json
 {
   "capability_cache": {
-    "modbus_tcp.read_holding_register": {
+    "modbus_tcp.read_point": {
       "device_slave_1": {
         "last_result": [...],
         "last_updated": 1776787200000
@@ -373,7 +391,7 @@ Execution 优先读取 Shadow，减少 Driver 调用。
 | `$edgeos/state/{agent_id}/delta` | EdgeX → EdgeOS | 1 | Shadow 增量更新 |
 | `$edgeos/heartbeat/{agent_id}` | EdgeX → EdgeOS | 0 | 心跳 |
 
-详细协议规范参见 [EdgeX通信协议规范(MQTT-NATS) V2.0](../edgeos/EdgeX通信协议规范(MQTT-NATS).md)。
+详细协议规范参见 [EdgeX通信协议规范(MQTT-NATS) V2.0](./EdgeX通信协议规范(MQTT-NATS).md)。
 
 ### §E1.10 Capability SDK（新增）
 
@@ -383,7 +401,7 @@ SDK 面向 Capability 编程，而非面向 Driver 编程：
 // 调用 Capability（不直接调用 Driver）
 result, err := sdk.InvokeCapability(ctx, InvokeRequest{
     Target:     "edgex-node-001",
-    Capability: "modbus_tcp.read_holding_register",
+    Capability: "modbus_tcp.read_point",
     Arguments: map[string]interface{}{
         "device_id": "slave-1",
         "address":   "40001",
@@ -1617,7 +1635,9 @@ MVP ──► 增强 ──► 企业级
 - 点位模型：`internal/model/types.go`
 - Modbus 解码：`internal/driver/modbus/decoder.go`
 - BACnet：`internal/driver/bacnet/encoding/whois.go`
-- **EAN 2.0 通信协议规范**：[EdgeX通信协议规范(MQTT-NATS) V2.0](../edgeos/EdgeX通信协议规范(MQTT-NATS).md)
+- **EAN 2.0 通信协议规范**：[EdgeX通信协议规范(MQTT-NATS) V2.0](./EdgeX通信协议规范(MQTT-NATS).md)
+- **EAN 2.0 改造指南**：[EAN2.0-EdgeX-EdgeOS改造指南](./EAN2.0-EdgeX-EdgeOS改造指南.md)
+- **V1→EAN 迁移评估**：[V1-to-EAN-Migration-Assessment](../TODO/V1-to-EAN-Migration-Assessment.md)
 
 ---
 
@@ -1706,7 +1726,9 @@ MVP ──► 增强 ──► 企业级
 
 ## §17 MCP (Model Context Protocol) 接入
 
-> **V1.5 新增 / V1.7 更新**：MCP 协议允许外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）通过标准 JSON-RPC 2.0 协议安全操作 EdgeX 工业网关。MCP 提供 **33 个工具**（8 只读 + 1 写操作 + 24 全功能 CRUD）、**6 个资源端点**、**13 个提示词模板**。支持 MCP 2024-11-05 与 2025-11-25（Streamable HTTP）两个协议版本。全功能操作需用户显式确认激活。
+> **V1.5 新增 / V1.7 更新 / V2.0 整合**：MCP 协议允许外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）通过标准 JSON-RPC 2.0 协议安全操作 EdgeX 工业网关。MCP 提供 **32 个工具**（10 只读 + 2 写/管理操作 + 20 全功能 CRUD，含 7 个 `ean_*` 统一工具）、**6 个资源端点**、**13 个提示词模板**。支持 MCP 2024-11-05 与 2025-11-25（Streamable HTTP）两个协议版本。全功能操作需用户显式确认激活。
+>
+> **V2.0 MCP 工具整合变更**：移除 6 个与统一 Capability 重叠的 hand-written 工具（`read_point`、`read_point_batch`、`write_point`、`write_point_batch`、`list_points`、`get_diagnostics`），新增 7 个 `ean_*` 统一跨协议工具（如 `ean_read_points`、`ean_write_points`、`ean_scan_devices` 等），由 `capability/generator.go` 的 `GenerateUnifiedCapabilities()` 自动生成。工具总数从 94 降至 32（66% 压缩）。
 
 ### 17.1 定位
 
@@ -1734,20 +1756,20 @@ MCP 是 EdgeX 对外 AI 协同的**标准协议接口**。与 AI Agent 内部协
 │  ┌─────────────────────────────────────────────────────────────────────┐ │
 │  │  MCP Handler  internal/server/mcp_handler.go                        │ │
 │  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │ │
-│  │  │ 只读工具 (8个)    │  │ 操作工具 (25个)   │  │ 资源 (6个)       │  │ │
-│  │  │ list_channels    │  │ write_point      │  │ edgex://channels │  │ │
-│  │  │ list_devices     │  │ create_channel   │  │ edgex://system   │  │ │
-│  │  │ list_points      │  │ start/stop_chan  │  │ edgex://diag..   │  │ │
-│  │  │ read_point       │  │ create_device    │  │ edgex://protocol │  │ │
-│  │  │ get_system_info  │  │ update_device    │  │ edgex://rules    │  │ │
-│  │  │ get_diagnostics  │  │ create_point     │  │ edgex://config   │  │ │
-│  │  │ analyze_protocol │  │ read/write_batch │  └──────────────────┘  │ │
+│  │  │ 只读工具 (10个)   │  │ 操作工具 (22个)   │  │ 资源 (6个)       │  │ │
+│  │  │ list_channels    │  │ ean_write_points │  │ edgex://channels │  │ │
+│  │  │ list_devices     │  │ ean_get_diag..   │  │ edgex://system   │  │ │
+│  │  │ ean_read_points  │  │ create_channel   │  │ edgex://diag..   │  │ │
+│  │  │ ean_list_points  │  │ start/stop_chan  │  │ edgex://protocol │  │ │
+│  │  │ ean_scan_devices │  │ create_device    │  │ edgex://rules    │  │ │
+│  │  │ get_system_info  │  │ update_device    │  │ edgex://config   │  │ │
+│  │  │ analyze_protocol │  │ create_point     │  └──────────────────┘  │ │
 │  │  │ get_protocol_help│  │ create_edge_rule │                        │ │
-│  │  └──────────────────┘  │ delete_edge_rule │  ┌──────────────────┐  │ │
-│  │                        │ create_virtual   │  │ 提示词 (13个)     │  │ │
-│  │                        │ restart_channel  │  │ protocol-reverse │  │ │
+│  │  │ ean_ai_proto_rev │  │ delete_edge_rule │  ┌──────────────────┐  │ │
+│  │  │ ean_ai_doc_parse │  │ create_virtual   │  │ 提示词 (13个)     │  │ │
+│  │  └──────────────────┘  │ restart_channel  │  │ protocol-reverse │  │ │
 │  │                        │ export_config    │  │ channel-config   │  │ │
-│  │                        │ ... +15 more     │  │ modbus-quick-str │  │ │
+│  │                        │ ... +10 more     │  │ modbus-quick-str │  │ │
 │  │                        └──────────────────┘  │ ... +10 more     │  │ │
 │  │                                              └──────────────────┘  │ │
 │  └─────────────────────────────────────────────────────────────────────┘ │
@@ -1765,9 +1787,9 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 | 层级 | 说明 |
 |------|------|
 | **API Key 认证** | MCP 客户端通过 `Authorization: Bearer <mcp_api_key>` 或 `X-MCP-API-Key: <mcp_api_key>` 认证 |
-| **只读权限** | 默认状态：`edgex_list_*`、`edgex_read_point`、`edgex_get_*`、`edgex_analyze_*` 等 8 个工具可用 |
-| **写操作** | `edgex_write_point` 需人工确认，不自动执行（1 个工具） |
-| **全功能权限** | 用户通过 UI 显式激活后：创建/删除通道、设备、点位、边缘规则、虚拟设备、批量读写等 24 个工具可用 |
+| **只读权限** | 默认状态：`list_channels`、`list_devices`、`get_system_info`、`analyze_protocol`、`get_protocol_help`、`ean_read_points`、`ean_list_points`、`ean_scan_devices`、`ean_ai_protocol_reverse`、`ean_ai_doc_parse` 等 10 个工具可用 |
+| **写操作** | `ean_write_points`（write 权限）、`ean_get_diagnostics`（admin 权限）需全功能激活（2 个工具） |
+| **全功能权限** | 用户通过 UI 显式激活后：创建/删除通道、设备、点位、边缘规则、虚拟设备、配置导出等 20 个 hand-written 工具可用 |
 | **API Key 管理** | 在 EdgeX UI → AI 助手 → MCP 接入页面设置，支持随时更换；`POST /api/mcp/generate-key` 生成 256 位随机密钥 |
 | **会话管理** | MCP 2025-11-25 Streamable HTTP 会话通过 `Mcp-Session-Id` 头管理，SSE 每 30s 心跳 |
 
@@ -1778,78 +1800,81 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 
 ### 17.4 工具清单
 
-#### 只读查询工具（8 个，无需全功能激活）
+#### 只读查询工具（10 个，无需全功能激活）
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_list_channels` | 列出所有采集通道及其状态 | 无 |
-| `edgex_list_devices` | 列出指定通道下的所有设备 | `channel_id` |
-| `edgex_list_points` | 列出指定设备下的所有点位（含当前值） | `channel_id`, `device_id` |
-| `edgex_read_point` | 读取指定点位的当前实时值 | `channel_id`, `device_id`, `point_id` |
-| `edgex_get_system_info` | 获取网关系统信息（CPU/内存/协议支持） | 无 |
-| `edgex_get_diagnostics` | 获取通道或设备诊断信息 | `channel_id`（可选）, `device_id`（可选） |
-| `edgex_analyze_protocol` | 分析工业协议特征（端口/名称匹配） | `protocol_hint`, `port`, `description` |
-| `edgex_get_protocol_help` | 获取协议接入帮助（地址格式/功能码/配置示例） | `protocol` |
+| `list_channels` | 列出所有采集通道及其状态 | 无 |
+| `list_devices` | 列出指定通道下的所有设备 | `channel_id` |
+| `get_system_info` | 获取网关系统信息（CPU/内存/协议支持） | 无 |
+| `analyze_protocol` | 分析工业协议特征（端口/名称匹配） | `protocol_hint`, `port`, `description` |
+| `get_protocol_help` | 获取协议接入帮助（地址格式/功能码/配置示例） | `protocol` |
+| `ean_read_points` | 统一读取点位实时值（跨协议） | `device_id`, `point_id`/`address`/`point_ids[]`/`addresses[]` |
+| `ean_list_points` | 统一列出设备点位（跨协议） | `device_id` |
+| `ean_scan_devices` | 统一扫描设备（跨协议） | `channel_id`, `network` |
+| `ean_ai_protocol_reverse` | AI 协议逆向（统一接口） | `payload` |
+| `ean_ai_doc_parse` | AI 文档解析（统一接口） | `payload` |
 
-#### 写操作工具（1 个，需人工确认）
+> **地址语义说明**：`ean_read_points` / `ean_write_points` 的地址参数接受 point_id（推荐）、寄存器地址、点位名称三种形式，系统自动解析。详见 §E1.1 地址语义统一说明。
 
-| 工具名 | 功能 | 参数 |
-|--------|------|------|
-| `edgex_write_point` | 向 R/W 点位写入控制值（需人工确认，不自动执行） | `channel_id`, `device_id`, `point_id`, `value` |
-
-#### 全功能 CRUD 工具（24 个，需用户激活全功能）
-
-**通道管理（4 个）**
+#### 写/管理操作工具（2 个，需全功能激活）
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_create_channel` | 创建南向采集通道 | `name`, `protocol`, `config` |
-| `edgex_delete_channel` | 删除通道（含设备和点位） | `channel_id` |
-| `edgex_start_channel` | 启动通道采集引擎 | `channel_id` |
-| `edgex_stop_channel` | 停止通道采集引擎 | `channel_id` |
+| `ean_write_points` | 统一向点位写入控制值（跨协议，write 权限） | `device_id`, `point_id`/`address`+`value`, 或 `writes[]` |
+| `ean_get_diagnostics` | 统一获取诊断信息（跨协议，admin 权限） | `channel_id`（可选）, `device_id`（可选） |
+
+#### 全功能 CRUD 工具（20 个，需用户激活全功能）
+
+**通道管理（5 个）**
+
+| 工具名 | 功能 | 参数 |
+|--------|------|------|
+| `create_channel` | 创建南向采集通道 | `name`, `protocol`, `config` |
+| `delete_channel` | 删除通道（含设备和点位） | `channel_id` |
+| `start_channel` | 启动通道采集引擎 | `channel_id` |
+| `stop_channel` | 停止通道采集引擎 | `channel_id` |
+| `restart_channel` | 重启通道采集引擎 | `channel_id` |
 
 **设备管理（4 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_create_device` | 在通道下创建设备 | `channel_id`, `name`, `config` |
-| `edgex_delete_device` | 删除设备（含点位） | `channel_id`, `device_id` |
-| `edgex_update_device` | 更新设备配置 | `channel_id`, `device_id` |
-| `edgex_enable_device` | 启用/禁用设备 | `channel_id`, `device_id`, `enable` |
+| `create_device` | 在通道下创建设备 | `channel_id`, `name`, `config` |
+| `delete_device` | 删除设备（含点位） | `channel_id`, `device_id` |
+| `update_device` | 更新设备配置 | `channel_id`, `device_id` |
+| `enable_device` | 启用/禁用设备 | `channel_id`, `device_id`, `enable` |
 
-**点位管理（5 个）**
+**点位管理（3 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_create_point` | 创建设备采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
-| `edgex_delete_point` | 删除指定点位 | `channel_id`, `device_id`, `point_id` |
-| `edgex_update_point` | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
-| `edgex_read_point_batch` | 批量读取多个点位实时值 | `channel_id`, `device_id`, `point_ids[]` |
-| `edgex_write_point_batch` | 批量写入多个点位值 | `channel_id`, `device_id`, `writes[]` |
+| `create_point` | 创建设备采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
+| `delete_point` | 删除指定点位 | `channel_id`, `device_id`, `point_id` |
+| `update_point` | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
 
 **边缘规则（3 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_create_edge_rule` | 创建边缘计算规则 | `name`, `type`, `condition`, `actions[]`, `sources[]` |
-| `edgex_delete_edge_rule` | 删除边缘计算规则 | `rule_id` |
-| `edgex_list_edge_rules` | 列出所有边缘规则 | 无 |
+| `create_edge_rule` | 创建边缘计算规则 | `name`, `type`, `condition`, `actions[]`, `sources[]` |
+| `delete_edge_rule` | 删除边缘计算规则 | `rule_id` |
+| `list_edge_rules` | 列出所有边缘规则 | 无 |
 
 **虚拟设备（2 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_create_virtual_device` | 创建虚拟设备（公式计算） | `virtual_device_id`, `channel_id`, `formula_points` |
-| `edgex_delete_virtual_device` | 删除虚拟设备 | `virtual_device_id` |
+| `create_virtual_device` | 创建虚拟设备（公式计算） | `virtual_device_id`, `channel_id`, `formula_points` |
+| `delete_virtual_device` | 删除虚拟设备 | `virtual_device_id` |
 
-**扩展工具（6 个）**
+**扩展工具（3 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
-| `edgex_restart_channel` | 重启通道采集引擎 | `channel_id` |
-| `edgex_get_channel_config` | 获取通道完整配置 | `channel_id` |
-| `edgex_get_point_history` | 获取点位历史数据 | `channel_id`, `device_id`, `point_id` |
-| `edgex_export_config` | 导出完整配置（json/yaml） | 无 |
+| `get_channel_config` | 获取通道完整配置 | `channel_id` |
+| `get_point_history` | 获取点位历史数据 | `channel_id`, `device_id`, `point_id` |
+| `export_config` | 导出完整配置（json/yaml） | 无 |
 
 ### 17.5 MCP 资源
 
@@ -1936,7 +1961,7 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 |------|------|------|
 | MCP 协议 | `internal/mcp/protocol.go` | JSON-RPC 2.0 类型定义 |
 | MCP 服务端 | `internal/mcp/server.go` | MCP Server 引擎（工具/资源/提示词注册） |
-| MCP 工具实现 | `internal/server/mcp_handler.go` | 33 个 MCP 工具的 Handler 实现 |
+| MCP 工具实现 | `internal/server/mcp_handler.go` | 32 个 MCP 工具的 Handler 实现（含 7 个 `ean_*` 统一跨协议工具） |
 | MCP 配置模型 | `internal/model/ai_copilot.go` | `McpEnabled`, `McpApiKey`, `McpFullAccess` |
 | MCP 激活管理 | `internal/server/ai_settings_handler.go` | `handleMcpActivate`, `handleMcpStatus` |
 | MCP 前端面板 | `ui/src/components/ai-assistant/AiMcpHelp.vue` | MCP 接入帮助页面 |
@@ -1954,7 +1979,7 @@ MCP 和 AI Agent 是 EdgeX 对外 AI 协同的**双通道**：
 │  ┌─────────────────────┐    ┌─────────────────────┐              │
 │  │  AI Agent（内部）    │    │  MCP Server（对外）   │              │
 │  │  §7 协议逆向引擎     │    │  §17 MCP 工具        │              │
-│  │  §8 协议知识库       │    │  33 个工具/6 资源    │              │
+│  │  §8 协议知识库       │    │  32 个工具/6 资源    │              │
 │  │  Scenario A/B       │    │  API Key 认证        │              │
 │  └────────┬────────────┘    └────────┬────────────┘              │
 │           │                          │                             │

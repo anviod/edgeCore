@@ -28,12 +28,12 @@ func TestCapabilityToToolAndRegister(t *testing.T) {
 	for _, tool := range tools {
 		names[tool.Name] = true
 	}
-	require.True(t, names["ean_modbus_tcp_read_holding_register"])
+	require.True(t, names["ean_modbus_tcp_read_point"])
 	require.True(t, names["ean_system_diagnostics"])
 
 	// tools/call via JSON-RPC path
 	params, _ := json.Marshal(map[string]any{
-		"name": "ean_modbus_tcp_read_holding_register",
+		"name": "ean_modbus_tcp_read_point",
 		"arguments": map[string]any{
 			"device_id": "d1",
 			"address":   "40001",
@@ -87,7 +87,7 @@ func TestUnifiedCapabilityTools(t *testing.T) {
 	require.True(t, names["ean_ai_doc_parse"], "missing ean_ai_doc_parse")
 
 	// Legacy protocol-specific tools should NOT exist
-	require.False(t, names["ean_modbus_tcp_read_holding_register"], "legacy tool should not exist in unified mode")
+	require.False(t, names["ean_modbus_tcp_read_point"], "legacy tool should not exist in unified mode")
 
 	// tools/call via JSON-RPC path for unified tool
 	params, _ := json.Marshal(map[string]any{
@@ -109,6 +109,6 @@ func TestUnifiedCapabilityTools(t *testing.T) {
 }
 
 func TestToolNameFromCapability(t *testing.T) {
-	require.Equal(t, "ean_modbus_tcp_write_register",
-		mcp.ToolNameFromCapability("modbus_tcp.write_register"))
+	require.Equal(t, "ean_modbus_tcp_write_point",
+		mcp.ToolNameFromCapability("modbus_tcp.write_point"))
 }

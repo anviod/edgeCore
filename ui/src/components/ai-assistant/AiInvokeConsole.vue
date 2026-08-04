@@ -143,8 +143,10 @@ onMounted(() => {
           </div>
           <div class="ai-invoke-opt">
             <label>优先级</label>
-            <a-select v-model="priority" size="small" style="width: 84px"
-              :options="[{label:'normal',value:'normal'},{label:'high',value:'high'},{label:'low',value:'low'}]" />
+            <a-select
+              v-model="priority" size="small" style="width: 84px"
+              :options="[{label:'normal',value:'normal'},{label:'high',value:'high'},{label:'low',value:'low'}]"
+            />
           </div>
           <div class="ai-invoke-opt">
             <label>重试</label>

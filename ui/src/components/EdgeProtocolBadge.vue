@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <span
     class="inline-flex items-center rounded-[2px] px-1.5 py-0.5 font-mono text-[10px] font-medium leading-none text-white"
     :class="bgColorClass"
@@ -7,14 +7,14 @@
   </span>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-const props = defineProps<{
-  protocol: 'modbus' | 'modbus-rtu' | 'opcua' | 'mqtt' | 'iec104' | 'bacnet' | string
-}>()
+const props = defineProps({
+  protocol: { type: String, default: 'modbus' },
+})
 
-const protocolMap: Record<string, { name: string; color: string }> = {
+const protocolMap = {
   modbus: { name: 'Modbus/TCP', color: 'bg-sky-500' },
   'modbus-rtu': { name: 'Modbus/RTU', color: 'bg-sky-600' },
   opcua: { name: 'OPC UA', color: 'bg-indigo-500' },

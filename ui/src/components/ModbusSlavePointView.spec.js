@@ -364,7 +364,7 @@ describe('ModbusSlavePointView', () => {
     expect(wrapper.html()).not.toMatch(/outline\s*:\s*none/i)
 
     const table = wrapper.getComponent('[data-testid="modbus-point-table"]')
-    expect(table.props('scroll')).toEqual({ x: 960 })
+    expect(table.props('scroll')).toEqual({ x: 1126 })
 
     const activeTab = wrapper.find('.arco-tabs-tab-active')
     expect(activeTab.exists()).toBe(true)
@@ -417,7 +417,7 @@ describe('ModbusSlavePointView', () => {
       points: [],
       loadError: '',
     })
-    expect(wrapper.text()).toContain('该寄存器类型暂无点位')
+    expect(wrapper.text()).toContain('该设备暂无点位配置')
     expect(wrapper.text()).not.toContain('清除全局筛选')
     expect(wrapper.find('[data-testid="modbus-point-table"]').exists()).toBe(false)
 
@@ -427,12 +427,13 @@ describe('ModbusSlavePointView', () => {
     ]
     await wrapper.setProps({
       allPoints,
-      points: [point('holding-1', 'holding', 0)],
-      filterKey: '["no-coil",[]]',
+      points: [],
+      filterKey: '["no-match",[]]',
       loadError: '',
     })
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('当前筛选条件下无匹配点位')
+    expect(wrapper.text()).not.toContain('该设备暂无点位配置')
     expect(wrapper.text()).not.toContain('该寄存器类型暂无点位')
     const clearBtn = wrapper.findAll('button').find((node) => node.text().includes('清除全局筛选'))
     expect(clearBtn).toBeTruthy()

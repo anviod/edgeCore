@@ -445,6 +445,11 @@ type EdgeOSMQTTConfig struct {
 	EANHeartbeatSec     int  `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
 	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
 	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
+
+	// Phase 4 (EX-P4): V1 命令面开关——已全面下线，默认 false（不订阅 edgex/cmd/*）；
+	// 命令统一 EAN Invoke（$edgeos/invoke/*）。V1 数据面/告警不受影响。
+	// V1 command plane switch (Phase 4): default false - V1 command plane fully retired; commands use EAN Invoke.
+	V1CommandEnabled bool `json:"v1_command_enabled" yaml:"v1_command_enabled"`
 }
 
 // EdgeOSNATSConfig defines configuration for edgeOS(NATS) northbound channel
@@ -475,6 +480,11 @@ type EdgeOSNATSConfig struct {
 	EANHeartbeatSec     int  `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
 	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
 	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
+
+	// Phase 4 (EX-P4): V1 命令面开关——已全面下线，默认 false（不订阅 edgex.cmd.*）；
+	// 命令统一 EAN Invoke（$edgeos/invoke/*）。V1 数据面/告警不受影响。
+	// V1 command plane switch (Phase 4): default false - V1 command plane fully retired; commands use EAN Invoke.
+	V1CommandEnabled bool `json:"v1_command_enabled" yaml:"v1_command_enabled"`
 }
 
 // BACnetServerConfig 北向 BACnet Server 配置，以从机模式运行，对外暴露点位数据

@@ -6,7 +6,7 @@ dist: ./dist
 before:
   hooks:
     - go mod tidy
-    - npm run build --prefix ./ui
+    - npm run build --prefix ./ui # npm run dev --prefix ./ui
 
 builds:
   - id: edgex
@@ -20,7 +20,7 @@ builds:
     ldflags: >
       -s -w
       -X github.com/anviod/edgex/internal/model.Version={{.Version}}
-      -X 'github.com/anviod/edgex/internal/model.BuildTime={{.Date}}'
+      -X github.com/anviod/edgex/internal/model.BuildTime={{.Date}}
       -X github.com/anviod/edgex/internal/model.CommitID={{.ShortCommit}}
     goos:
       - linux

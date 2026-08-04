@@ -1,4 +1,4 @@
-# EdgeX端 通信协议规范 (MQTT/NATS) — EAN 2.0
+﻿# EdgeX端 通信协议规范 (MQTT/NATS) — EAN 2.0
 
 > **文档版本**: V2.0  
 > **最后更新**: 2026-07-27  
@@ -211,7 +211,7 @@ Capability 是 EAN 2.0 协议唯一的能力模型。以后 MCP Tool、HTTP API�
 
 ```yaml
 capability:
-  id: "modbus_tcp.read_holding_register"   # 全局唯一标识
+  id: "modbus_tcp.read_point"   # 全局唯一标识
   agent_id: "edgex-node-001"               # 所属 Agent
   description: "读取 Modbus TCP 保持寄存器"
   category: "device"                       # device | ai | workflow | system
@@ -238,7 +238,7 @@ capability:
   "body": {
     "capabilities": [
       {
-        "id": "modbus_tcp.read_holding_register",
+        "id": "modbus_tcp.read_point",
         "agent_id": "edgex-node-001",
         "description": "读取 Modbus TCP 保持寄存器",
         "category": "device",
@@ -262,7 +262,7 @@ capability:
         "permission": "read"
       },
       {
-        "id": "modbus_tcp.write_register",
+        "id": "modbus_tcp.write_point",
         "agent_id": "edgex-node-001",
         "description": "写入 Modbus TCP 寄存器",
         "category": "device",
@@ -291,8 +291,8 @@ EdgeX Capability Runtime 中，Capability 由 Driver / Commands 自动生成，�
 {protocol_id}.{command_name}
 
 示例：
-  modbus_tcp.read_holding_register
-  modbus_tcp.write_register
+  modbus_tcp.read_point
+  modbus_tcp.write_point
   bacnet.read_property
   s7.read_db
   ai.protocol_reverse             # AI 能力
@@ -365,7 +365,7 @@ Discovery 查询 / 调度决策
     "agent_id": "edgex-node-001",
     "last_seen": 1776787200000,
     "capabilities_count": 15,
-    "capabilities": ["modbus_tcp.read_holding_register", "modbus_tcp.write_register", ...],
+    "capabilities": ["modbus_tcp.read_point", "modbus_tcp.write_point", ...],
     "status": "online",
     "version": "2.0.0"
   }
@@ -394,7 +394,7 @@ Discovery 查询 / 调度决策
   "body": {
     "invoke_id": "invoke-001",
     "target": "edgex-node-001",
-    "capability": "modbus_tcp.write_register",
+    "capability": "modbus_tcp.write_point",
     "arguments": {
       "device_id": "slave-1",
       "address": "40001",
@@ -570,7 +570,7 @@ EdgeX Capability Runtime → Execution Mapper → Driver
   "workflow_step": {
     "step_id": "step-001",
     "node_type": "action",
-    "capability": "modbus_tcp.read_holding_register",
+    "capability": "modbus_tcp.read_point",
     "target_agent": "edgex-node-001",
     "arguments": {
       "device_id": "slave-1",
@@ -809,7 +809,7 @@ func Dispatch(invoke InvokeRequest) {
 ### 2.5.1 新增 Capability → Driver Command 映射
 
 ```text
-Capability: modbus_tcp.read_holding_register
+Capability: modbus_tcp.read_point
     │
     ▼
 Execution Mapper 解析 arguments
@@ -834,7 +834,7 @@ ShadowCore 继续维护设备状态，同时支持按 Capability ID 查询：
 ```json
 {
   "capability_cache": {
-    "modbus_tcp.read_holding_register": {
+    "modbus_tcp.read_point": {
       "device_slave_1": {
         "last_result": [...],
         "last_updated": 1776787200000
@@ -855,7 +855,7 @@ Execution 优先读取 Shadow，减少 Driver 调用。
 当 Capability 执行导致设备状态变化时，自动发布 Event：
 
 ```text
-Capability: modbus_tcp.write_register
+Capability: modbus_tcp.write_point
     │
     ▼
 写入成功
@@ -958,7 +958,7 @@ SDK 面向 Capability 编程，而非面向 Driver 编程：
 // 调用 Capability（不直接调用 Driver）
 result, err := sdk.InvokeCapability(ctx, InvokeRequest{
     Target:     "edgex-node-001",
-    Capability: "modbus_tcp.read_holding_register",
+    Capability: "modbus_tcp.read_point",
     Arguments: map[string]interface{}{
         "device_id": "slave-1",
         "address":   "40001",

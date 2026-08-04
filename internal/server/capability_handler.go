@@ -317,6 +317,7 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 					"ean_enabled":         ch.EANEnabled,
 					"ean_heartbeat_sec":   ch.EANHeartbeatSec,
 					"ean_event_auto_publish": ch.EANEventAutoPublish,
+					"v1_command_enabled":  ch.V1CommandEnabled,
 				}
 			}
 		}
@@ -342,6 +343,7 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 					"ean_enabled":         ch.EANEnabled,
 					"ean_heartbeat_sec":   ch.EANHeartbeatSec,
 					"ean_event_auto_publish": ch.EANEventAutoPublish,
+					"v1_command_enabled":  ch.V1CommandEnabled,
 				}
 			}
 		}

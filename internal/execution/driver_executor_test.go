@@ -120,7 +120,7 @@ func TestDriverExecutorReadWriteViaMapper(t *testing.T) {
 	mapper := execution.NewCapabilityMapper(exec)
 
 	cap := capability.Capability{
-		ID:       "modbus_tcp.read_holding_register",
+		ID:       "modbus_tcp.read_point",
 		Category: capability.CategoryDevice,
 		Metadata: map[string]any{"protocol": "modbus-tcp", "driver_command": "ReadPoints"},
 	}
@@ -137,7 +137,7 @@ func TestDriverExecutorReadWriteViaMapper(t *testing.T) {
 	require.Len(t, sb.reads, 1)
 
 	writeCap := capability.Capability{
-		ID:       "modbus_tcp.write_register",
+		ID:       "modbus_tcp.write_point",
 		Category: capability.CategoryDevice,
 		Metadata: map[string]any{"protocol": "modbus-tcp", "driver_command": "WritePoint"},
 	}
@@ -202,7 +202,7 @@ func TestDispatcherInvokeStateMachineWithExecutor(t *testing.T) {
 	disp.SetMapper(execution.NewCapabilityMapper(execution.NewDriverExecutor(sb)))
 
 	resp := disp.Dispatch(context.Background(), capability.InvokeRequest{
-		Capability: "modbus_tcp.write_register",
+		Capability: "modbus_tcp.write_point",
 		Arguments: map[string]any{
 			"device_id": "dev1",
 			"address":   "p1",
@@ -213,7 +213,7 @@ func TestDispatcherInvokeStateMachineWithExecutor(t *testing.T) {
 	require.True(t, resp.Result.Success)
 
 	fail := disp.Dispatch(context.Background(), capability.InvokeRequest{
-		Capability: "modbus_tcp.write_register",
+		Capability: "modbus_tcp.write_point",
 		Arguments: map[string]any{
 			"device_id": "missing",
 			"address":   "p1",

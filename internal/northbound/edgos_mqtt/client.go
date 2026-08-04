@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync"
@@ -241,12 +242,18 @@ func (c *Client) UpdateConfig(cfg model.EdgeOSMQTTConfig) error {
 	c.configMu.Lock()
 	oldEANEnabled := c.config.EANEnabled
 	oldHeartbeat := c.config.EANHeartbeatSec
+	oldAutoPublish := c.config.EANEventAutoPublish
+	oldV1Cmd := c.config.V1CommandEnabled
+	oldDevices := c.config.Devices
 
 	needRestart := c.config.Broker != cfg.Broker ||
 		c.config.ClientID != cfg.ClientID ||
 		c.config.Username != cfg.Username ||
 		c.config.Password != cfg.Password ||
-		c.config.NodeID != cfg.NodeID
+		c.config.NodeID != cfg.NodeID ||
+		// Phase 4 (EX-P4): V1 命令面开关变化 → 全量重连以重新订阅/下线 V1 命令 Topic
+		// | V1 command plane switch change → full reconnect to (re)subscribe V1 command topics
+		oldV1Cmd != cfg.V1CommandEnabled
 
 	c.config = cfg
 	c.nodeID = cfg.NodeID
@@ -262,14 +269,23 @@ func (c *Client) UpdateConfig(cfg model.EdgeOSMQTTConfig) error {
 
 	// EAN 热更新：无需重连，仅检测 EAN 字段变化
 	// | EAN hot update: apply EAN field changes without reconnection
-	c.applyEANConfigChange(oldEANEnabled, cfg.EANEnabled, oldHeartbeat, cfg.EANHeartbeatSec)
+	c.applyEANConfigChange(oldEANEnabled, cfg.EANEnabled, oldHeartbeat, cfg.EANHeartbeatSec, oldAutoPublish, cfg.EANEventAutoPublish)
+
+	// 设备映射变化：重新上报设备清单（edgex/devices/report），确保 EdgeOS 设备列表同步。
+	// | Devices mapping changed: re-publish device inventory so EdgeOS device list stays in sync.
+	if !reflect.DeepEqual(oldDevices, cfg.Devices) && c.GetStatus() == StatusConnected {
+		zap.L().Info("Northbound Devices mapping changed; re-publishing device report",
+			zap.String("node_id", cfg.NodeID))
+		c.publishDeviceReport()
+	}
 	return nil
 }
 
 // applyEANConfigChange 处理 EAN 配置字段变化，无需重连北向通道。
 // | Handles EAN config field changes without reconnecting the northbound channel.
-// false→true: 启动 Runtime；true→false: 停止 Runtime；心跳变化: 重启 Runtime。
-func (c *Client) applyEANConfigChange(oldEnabled, newEnabled bool, oldHeartbeat, newHeartbeat int) {
+// false→true: 启动 Runtime；true→false: 停止 Runtime；心跳变化: 重启 Runtime；
+// EANEventAutoPublish 变化: 刷新 Shadow→Event publisher 列表。
+func (c *Client) applyEANConfigChange(oldEnabled, newEnabled bool, oldHeartbeat, newHeartbeat int, oldAutoPublish, newAutoPublish bool) {
 	if !oldEnabled && newEnabled {
 		// false → true：启动 EAN Runtime
 		if c.GetStatus() == StatusConnected {
@@ -305,6 +321,15 @@ func (c *Client) applyEANConfigChange(oldEnabled, newEnabled bool, oldHeartbeat,
 					zap.Int("new_sec", newHeartbeat))
 			}
 		}
+	}
+
+	// EANEventAutoPublish 变化：刷新 Shadow→Event publisher（EAN 仍启用时）
+	// | EANEventAutoPublish changed while EAN enabled: refresh Shadow→Event publishers
+	if newEnabled && oldAutoPublish != newAutoPublish {
+		c.notifyEANRuntimeChanged()
+		zap.L().Info("EAN event auto-publish toggled; Shadow→Event publishers refreshed",
+			zap.Bool("old", oldAutoPublish),
+			zap.Bool("new", newAutoPublish))
 	}
 }
 
@@ -425,7 +450,22 @@ func (c *Client) connectLoop() {
 func (c *Client) publishNodeOnline() {
 	c.configMu.RLock()
 	nodeID := c.config.NodeID
+	v1CmdEnabled := c.config.V1CommandEnabled
 	c.configMu.RUnlock()
+
+	// Phase 4 (EX-P4-02/03): V1 命令面开关——false 时不再发布 V1 节点注册/状态（EAN Discovery 已覆盖）。
+	// | V1 command plane switch: when false, skip V1 node register/status publish (EAN Discovery covers it).
+	if !v1CmdEnabled {
+		zap.L().Info("V1 command plane disabled; skipping V1 node registration publish",
+			zap.String("node_id", nodeID))
+		return
+	}
+
+	// Phase 4 (EX-P4-02): V1 节点注册/心跳上报标记 deprecated——EAN Discovery($edgeos/discovery/agent)
+	// + Heartbeat($edgeos/heartbeat/{agent}) 已完全替代；此处仅保留 V1 兼容，不再维护。
+	// | V1 node register/heartbeat marked DEPRECATED; superseded by EAN Discovery + Heartbeat.
+	zap.L().Warn("DEPRECATED: publishing V1 node registration (edgex/nodes/*); use EAN $edgeos/discovery/agent",
+		zap.String("node_id", nodeID))
 
 	// Publish node registration
 	regMessage := Message{
@@ -466,13 +506,30 @@ func (c *Client) publishNodeOnline() {
 }
 
 // subscribeToCommands subscribes to edgeOS command topics
+// Phase 4 (EX-P4-01/03): V1 command plane is DEPRECATED — subscriptions retained only
+// for backward compatibility; all command traffic must migrate to EAN Capability Invoke.
+// After the transition window passes, these subscriptions are removed (V1 command plane off).
 func (c *Client) subscribeToCommands() {
 	c.configMu.RLock()
 	nodeID := c.config.NodeID
+	v1CmdEnabled := c.config.V1CommandEnabled
 	c.configMu.RUnlock()
+
+	// Phase 4 (EX-P4-03): V1 命令面开关——false 时全面下线 V1 命令 Topic 订阅。
+	// | V1 command plane switch: when false, decommission V1 command topic subscriptions.
+	if !v1CmdEnabled {
+		zap.L().Info("V1 command plane disabled (V1CommandEnabled=false); skipping V1 command topic subscriptions",
+			zap.String("node_id", nodeID))
+		return
+	}
 
 	c.cmdMu.Lock()
 	defer c.cmdMu.Unlock()
+
+	// V1 命令面（edgex/cmd/*）Phase 4 标记 deprecated，仅保留兼容订阅，不再维护。
+	// | V1 command plane (edgex/cmd/*) marked DEPRECATED in Phase 4; retained only for compat.
+	zap.L().Warn("DEPRECATED: subscribing V1 command topics (edgex/cmd/*); migrate to EAN Capability Invoke",
+		zap.String("node_id", nodeID))
 
 	// Subscribe to device discovery command
 	discoverTopic := fmt.Sprintf("edgex/cmd/%s/discover", nodeID)
@@ -483,7 +540,8 @@ func (c *Client) subscribeToCommands() {
 		)
 	} else {
 		c.cmdSubscriptions[discoverTopic] = token
-		zap.L().Info("Subscribed to discover topic", zap.String("topic", discoverTopic))
+		zap.L().Warn("DEPRECATED: subscribed to V1 discover topic (retained for compat)",
+			zap.String("topic", discoverTopic))
 	}
 
 	// Subscribe to write commands for all devices
@@ -495,7 +553,8 @@ func (c *Client) subscribeToCommands() {
 		)
 	} else {
 		c.cmdSubscriptions[writeTopic] = token
-		zap.L().Info("Subscribed to write topic", zap.String("topic", writeTopic))
+		zap.L().Warn("DEPRECATED: subscribed to V1 write topic (retained for compat)",
+			zap.String("topic", writeTopic))
 	}
 
 	// Subscribe to task control commands
@@ -507,7 +566,8 @@ func (c *Client) subscribeToCommands() {
 		)
 	} else {
 		c.cmdSubscriptions[taskTopic] = token
-		zap.L().Info("Subscribed to task topic", zap.String("topic", taskTopic))
+		zap.L().Warn("DEPRECATED: subscribed to V1 task topic (retained for compat)",
+			zap.String("topic", taskTopic))
 	}
 
 	// Subscribe to global node register command (triggered by EdgeOS for proactive re-registration)
@@ -519,7 +579,8 @@ func (c *Client) subscribeToCommands() {
 		)
 	} else {
 		c.cmdSubscriptions[registerTopic] = token
-		zap.L().Info("Subscribed to register topic", zap.String("topic", registerTopic))
+		zap.L().Warn("DEPRECATED: subscribed to V1 node register topic (retained for compat)",
+			zap.String("topic", registerTopic))
 	}
 
 	// Subscribe to node registration response (EdgeOS responds to our registration request)
@@ -531,7 +592,8 @@ func (c *Client) subscribeToCommands() {
 		)
 	} else {
 		c.cmdSubscriptions[responseTopic] = token
-		zap.L().Info("Subscribed to response topic", zap.String("topic", responseTopic))
+		zap.L().Warn("DEPRECATED: subscribed to V1 node register-response topic (retained for compat)",
+			zap.String("topic", responseTopic))
 	}
 }
 
@@ -557,7 +619,7 @@ func (c *Client) handleDiscoverCommand(client mqtt.Client, msg mqtt.Message) {
 
 // handleWriteCommand handles write commands for devices
 func (c *Client) handleWriteCommand(client mqtt.Client, msg mqtt.Message) {
-	zap.L().Warn("DEPRECATED: V1 write command received, migrate to EAN *.write_register Capability Invoke",
+	zap.L().Warn("DEPRECATED: V1 write command received, migrate to EAN *.write_point Capability Invoke",
 		zap.String("topic", msg.Topic()))
 	var message Message
 	if err := json.Unmarshal(msg.Payload(), &message); err != nil {
@@ -967,6 +1029,13 @@ func (c *Client) publishDeviceReport() {
 	}
 }
 
+// PublishDeviceReport republishes the device inventory (edgex/devices/report) to EdgeOS.
+// Used when channels/devices are added/updated or the northbound Devices mapping changes,
+// so EdgeOS stays in sync without requiring a re-connect.
+func (c *Client) PublishDeviceReport() {
+	c.publishDeviceReport()
+}
+
 // sendCommandResponse sends a response to a command
 func (c *Client) sendCommandResponse(header MessageHeader, msgType string, success bool, message string, data interface{}, deviceID string) {
 	c.configMu.RLock()
@@ -1082,7 +1151,15 @@ func (c *Client) periodicPushLoop() {
 func (c *Client) heartbeatLoop() {
 	c.configMu.RLock()
 	intervalStr := c.config.HeartbeatInterval
+	v1CmdEnabled := c.config.V1CommandEnabled
 	c.configMu.RUnlock()
+
+	// Phase 4 (EX-P4-02/03): V1 命令面开关——false 时不再运行 V1 心跳循环（EAN Heartbeat 已覆盖）。
+	// | V1 command plane switch: when false, stop V1 heartbeat loop (EAN heartbeat covers it).
+	if !v1CmdEnabled {
+		c.logger.Info("V1 command plane disabled; V1 heartbeat loop skipped (EAN $edgeos/heartbeat/{agent} active)")
+		return
+	}
 
 	interval := 30 * time.Second
 	if intervalStr != "" {
@@ -1104,6 +1181,11 @@ func (c *Client) heartbeatLoop() {
 	c.logger.Info("Heartbeat loop started",
 		zap.Duration("interval", interval),
 	)
+
+	// Phase 4 (EX-P4-02): V1 心跳上报标记 deprecated——EAN $edgeos/heartbeat/{agent} 已替代。
+	// | V1 heartbeat publish marked DEPRECATED; superseded by EAN heartbeat.
+	c.logger.Warn("DEPRECATED: V1 heartbeat loop (edgex/heartbeat/{node}) retained for compat; use EAN $edgeos/heartbeat/{agent}",
+		zap.Duration("interval", interval))
 
 	for {
 		select {
@@ -1265,7 +1347,14 @@ func (c *Client) PublishHeartbeat(metrics map[string]any) {
 
 	c.configMu.RLock()
 	nodeID := c.nodeID
+	v1CmdEnabled := c.config.V1CommandEnabled
 	c.configMu.RUnlock()
+
+	// Phase 4 (EX-P4-02/03): V1 命令面开关——false 时不再发布 V1 心跳（EAN Heartbeat 已覆盖）。
+	// | V1 command plane switch: when false, skip V1 heartbeat publish (EAN heartbeat covers it).
+	if !v1CmdEnabled {
+		return
+	}
 
 	// Get current stats
 	stats := c.GetStats()

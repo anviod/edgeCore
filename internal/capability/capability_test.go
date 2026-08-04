@@ -25,8 +25,8 @@ func TestGenerateDefaultCapabilities(t *testing.T) {
 		ids[c.ID] = true
 		require.Equal(t, "edgex-node-001", c.AgentID)
 	}
-	require.True(t, ids["modbus_tcp.read_holding_register"])
-	require.True(t, ids["modbus_tcp.write_register"])
+	require.True(t, ids["modbus_tcp.read_point"])
+	require.True(t, ids["modbus_tcp.write_point"])
 	require.True(t, ids["system.diagnostics"])
 	require.True(t, ids["ai.protocol_reverse"])
 }
@@ -62,7 +62,7 @@ func TestRegistryAndDispatcher(t *testing.T) {
 
 	// Test legacy protocol-specific capability
 	resp := disp.Dispatch(context.Background(), capability.InvokeRequest{
-		Capability: "modbus_tcp.read_holding_register",
+		Capability: "modbus_tcp.read_point",
 		Arguments: map[string]any{
 			"device_id": "slave-1",
 			"address":   "40001",
@@ -145,7 +145,7 @@ func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {
 	req := capability.NewEnvelope("edgeos-planner", capability.MessageTypeInvokeCapability, capability.InvokeRequest{
 		InvokeID:   "invoke-test-1",
 		Target:     "edgex-node-001",
-		Capability: "modbus_tcp.write_register",
+		Capability: "modbus_tcp.write_point",
 		Arguments: map[string]any{
 			"device_id": "slave-1",
 			"address":   "40001",
@@ -210,7 +210,7 @@ func TestEventPublisher(t *testing.T) {
 func TestCapabilityMapper(t *testing.T) {
 	mapper := execution.NewCapabilityMapper(nil)
 	cap := capability.Capability{
-		ID:       "modbus_tcp.read_holding_register",
+		ID:       "modbus_tcp.read_point",
 		Category: capability.CategoryDevice,
 		Metadata: map[string]any{"protocol": "modbus-tcp", "driver_command": "ReadPoints"},
 	}

@@ -42,74 +42,74 @@
       <a-spin :loading="loading" class="list-detail-spin">
         <div class="table-container saas-table">
           <a-table
-          class="device-table"
-          :columns="tableColumns"
-          :data="devices"
-          :loading="loading"
-          :row-selection="rowSelection"
-          v-model:selected-keys="selected"
-          row-key="id"
-          size="small"
-          :pagination="{ showTotal: true, showPageSize: true }"
-        >
-          <template #enable="{ record }">
-            <span class="table-cell-semantic">
-              <a-switch
-                v-model="record.enable"
-                size="small"
-                @change="toggleDeviceStatus(record)"
-                :loading="record.statusLoading"
-              />
-            </span>
-          </template>
+            class="device-table"
+            :columns="tableColumns"
+            :data="devices"
+            :loading="loading"
+            :row-selection="rowSelection"
+            v-model:selected-keys="selected"
+            row-key="id"
+            size="small"
+            :pagination="{ showTotal: true, showPageSize: true }"
+          >
+            <template #enable="{ record }">
+              <span class="table-cell-semantic">
+                <a-switch
+                  v-model="record.enable"
+                  size="small"
+                  @change="toggleDeviceStatus(record)"
+                  :loading="record.statusLoading"
+                />
+              </span>
+            </template>
 
-          <template #name="{ record }">
-            <div class="device-name-cell">
-              <span class="main-name">{{ record.name }}</span>
-              <span class="sub-id">ID: {{ record.id }}</span>
-            </div>
-          </template>
+            <template #name="{ record }">
+              <div class="device-name-cell">
+                <span class="main-name">{{ record.name }}</span>
+                <span class="sub-id">ID: {{ record.id }}</span>
+              </div>
+            </template>
 
-          <template #interval="{ record }">
-            <span class="table-cell-semantic">
-              <a-tag size="small" bordered>
-                <IconClockCircle :size="12" style="margin-right: 4px" />
-                {{ record.interval }}
-              </a-tag>
-            </span>
-          </template>
+            <template #interval="{ record }">
+              <span class="table-cell-semantic">
+                <a-tag size="small" bordered>
+                  <IconClockCircle :size="12" style="margin-right: 4px" />
+                  {{ record.interval }}
+                </a-tag>
+              </span>
+            </template>
 
-          <template #state="{ record }">
-            <span class="table-cell-semantic">
-              <a-tag :color="getDeviceStateColor(record.state)" size="small">
-                {{ getDeviceStateText(record.state) }}
-              </a-tag>
-            </span>
-          </template>
+            <template #state="{ record }">
+              <span class="table-cell-semantic">
+                <a-tag :color="getDeviceStateColor(record.state)" size="small">
+                  {{ getDeviceStateText(record.state) }}
+                </a-tag>
+              </span>
+            </template>
 
-          <template #actions="{ record }">
-            <div class="table-ops">
-              <a-tooltip content="查看点位">
-                <a-button type="text" size="mini" @click="goToPoints(record)">
-                  <IconEye :size="14" />
-                </a-button>
-              </a-tooltip>
-              <a-tooltip content="规则链">
-                <a-button type="text" size="mini" @click="showRuleUsage(record)">
-                  <IconLink :size="14" />
-                </a-button>
-              </a-tooltip>
-              <a-tooltip content="历史数据">
-                <a-button type="text" size="mini" @click="openHistoryDialog(record)">
-                  <IconClockCircle :size="14" />
-                </a-button>
-              </a-tooltip>
-              <a-divider direction="vertical" />
-              <a-button type="text" size="mini" @click="openDialog(record)">编辑</a-button>
-              <a-button type="text" size="mini" status="danger" @click="confirmDelete(record)">删除</a-button>
-            </div>
-          </template>
-        </a-table>
+            <template #actions="{ record }">
+              <div class="table-ops">
+                <a-tooltip content="查看点位">
+                  <a-button type="text" size="mini" @click="goToPoints(record)">
+                    <IconEye :size="14" />
+                  </a-button>
+                </a-tooltip>
+                <a-tooltip content="规则链">
+                  <a-button type="text" size="mini" @click="showRuleUsage(record)">
+                    <IconLink :size="14" />
+                  </a-button>
+                </a-tooltip>
+                <a-tooltip content="历史数据">
+                  <a-button type="text" size="mini" @click="openHistoryDialog(record)">
+                    <IconClockCircle :size="14" />
+                  </a-button>
+                </a-tooltip>
+                <a-divider direction="vertical" />
+                <a-button type="text" size="mini" @click="openDialog(record)">编辑</a-button>
+                <a-button type="text" size="mini" status="danger" @click="confirmDelete(record)">删除</a-button>
+              </div>
+            </template>
+          </a-table>
         </div>
       </a-spin>
 
@@ -124,7 +124,8 @@
       :title="form.id && isEdit ? '编辑设备' : '新增设备'"
       width="760"
       modal-class="channel-config-modal"
-      @ok="saveDevice"
+      :ok-loading="saving"
+      @before-ok="saveDevice"
       @cancel="closeDialog"
     >
       <a-form :model="form" layout="vertical" class="channel-config-form flow-form form-controls-md">
@@ -310,27 +311,33 @@
             <a-row :gutter="16">
               <a-col :span="8">
                 <a-form-item field="autoPointsDatatype" label="数据类型">
-                  <a-select v-model="form.autoPointsDatatype" :options="[
-                    { label: 'int16', value: 'int16' },
-                    { label: 'uint16', value: 'uint16' },
-                    { label: 'int32', value: 'int32' },
-                    { label: 'float32', value: 'float32' }
-                  ]" />
+                  <a-select
+                    v-model="form.autoPointsDatatype" :options="[
+                      { label: 'int16', value: 'int16' },
+                      { label: 'uint16', value: 'uint16' },
+                      { label: 'int32', value: 'int32' },
+                      { label: 'float32', value: 'float32' }
+                    ]"
+                  />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
                 <a-form-item field="autoPointsReadWrite" label="读写">
-                  <a-select v-model="form.autoPointsReadWrite" :options="[
-                    { label: '只读 (R)', value: 'R' },
-                    { label: '读写 (RW)', value: 'RW' }
-                  ]" />
+                  <a-select
+                    v-model="form.autoPointsReadWrite" :options="[
+                      { label: '只读 (R)', value: 'R' },
+                      { label: '读写 (RW)', value: 'RW' }
+                    ]"
+                  />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
                 <a-form-item field="autoPointsRegisterType" label="寄存器类型">
-                  <a-select v-model="form.autoPointsRegisterType" :options="[
-                    { label: '保持寄存器 (0x03)', value: 'holding' }
-                  ]" />
+                  <a-select
+                    v-model="form.autoPointsRegisterType" :options="[
+                      { label: '保持寄存器 (0x03)', value: 'holding' }
+                    ]"
+                  />
                 </a-form-item>
               </a-col>
             </a-row>
@@ -374,30 +381,36 @@
           <a-row :gutter="16">
             <a-col :span="8">
               <a-form-item field="security_policy" label="安全策略">
-                <a-select v-model="form.config.security_policy" :options="[
-                  { label: 'None', value: 'None' },
-                  { label: 'Basic128Rsa15', value: 'Basic128Rsa15' },
-                  { label: 'Basic256', value: 'Basic256' },
-                  { label: 'Basic256Sha256', value: 'Basic256Sha256' }
-                ]" />
+                <a-select
+                  v-model="form.config.security_policy" :options="[
+                    { label: 'None', value: 'None' },
+                    { label: 'Basic128Rsa15', value: 'Basic128Rsa15' },
+                    { label: 'Basic256', value: 'Basic256' },
+                    { label: 'Basic256Sha256', value: 'Basic256Sha256' }
+                  ]"
+                />
               </a-form-item>
             </a-col>
             <a-col :span="8">
               <a-form-item field="security_mode" label="安全模式">
-                <a-select v-model="form.config.security_mode" :options="[
-                  { label: 'None', value: 'None' },
-                  { label: 'Sign', value: 'Sign' },
-                  { label: 'SignAndEncrypt', value: 'SignAndEncrypt' }
-                ]" />
+                <a-select
+                  v-model="form.config.security_mode" :options="[
+                    { label: 'None', value: 'None' },
+                    { label: 'Sign', value: 'Sign' },
+                    { label: 'SignAndEncrypt', value: 'SignAndEncrypt' }
+                  ]"
+                />
               </a-form-item>
             </a-col>
             <a-col :span="8">
               <a-form-item field="auth_method" label="认证方式">
-                <a-select v-model="form.config.auth_method" :options="[
-                  { label: 'Anonymous', value: 'Anonymous' },
-                  { label: 'UserName', value: 'UserName' },
-                  { label: 'Certificate', value: 'Certificate' }
-                ]" />
+                <a-select
+                  v-model="form.config.auth_method" :options="[
+                    { label: 'Anonymous', value: 'Anonymous' },
+                    { label: 'UserName', value: 'UserName' },
+                    { label: 'Certificate', value: 'Certificate' }
+                  ]"
+                />
               </a-form-item>
             </a-col>
           </a-row>
@@ -438,10 +451,12 @@
           <a-row :gutter="16">
             <a-col :span="8">
               <a-form-item field="storageStrategy" label="存储策略">
-                <a-select v-model="form.storageStrategy" :options="[
-                  { label: '实时 (每次更新)', value: 'realtime' },
-                  { label: '定时间隔 (全量快照)', value: 'interval' }
-                ]" />
+                <a-select
+                  v-model="form.storageStrategy" :options="[
+                    { label: '实时 (每次更新)', value: 'realtime' },
+                    { label: '定时间隔 (全量快照)', value: 'interval' }
+                  ]"
+                />
                 <template #extra>定时保存该设备全部点位快照</template>
               </a-form-item>
             </a-col>
@@ -463,7 +478,7 @@
         <a-divider orientation="left">高级配置</a-divider>
         
         <a-form-item field="configStr" label="JSON配置">
-          <a-textarea v-model="form.configStr" placeholder='{"key": "value"}' :auto-size="{ minRows: 5, maxRows: 10 }" />
+          <a-textarea v-model="form.configStr" placeholder="{&quot;key&quot;: &quot;value&quot;}" :auto-size="{ minRows: 5, maxRows: 10 }" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -572,7 +587,7 @@
 
     <HistoryModal v-model:visible="historyModalVisible" :device="historyDevice" />
 
-    <a-modal v-model:visible="deleteDialog" title="确认删除" @ok="executeDelete" @cancel="deleteDialog = false">
+    <a-modal v-model:visible="deleteDialog" title="确认删除" :ok-loading="deleting" @ok="executeDelete" @cancel="deleteDialog = false">
       <p>{{ itemToDelete ? '确定要删除该设备吗？' : `确定要删除选中的 ${selected.length} 个设备吗？` }}此操作无法撤销。</p>
     </a-modal>
 
@@ -597,7 +612,7 @@
     <a-modal v-model:visible="scanDialog" title="扫描设备" width="900px" @cancel="scanDialog = false" :mask-closable="false">
       <template #footer>
         <a-space>
-          <a-button @click="scanDialog = false" :disabled="isScanning">取消</a-button>
+          <a-button @click="scanDialog = false">取消</a-button>
           <a-button type="primary" :loading="isAddingDevices" :disabled="selectedScanDevices.length === 0" @click="addSelectedDevices">
             添加选定设备 ({{ selectedScanDevices.length }})
           </a-button>
@@ -624,7 +639,7 @@
           :data="scanResults" 
           :loading="isScanning" 
           :row-selection="{ type: 'checkbox', showCheckedAll: true, onlyCurrent: false }"
-          v-model:selectedKeys="selectedScanDevices"
+          v-model:selected-keys="selectedScanDevices"
           row-key="scan_row_key"
           size="small"
           :bordered="{ cell: true }"
@@ -716,6 +731,8 @@ const selected = ref([])
 const selectAll = ref(false)
 const dialog = ref(false)
 const deleteDialog = ref(false)
+const saving = ref(false)
+const deleting = ref(false)
 const isEdit = ref(false)
 const itemToDelete = ref(null)
 
@@ -1087,7 +1104,7 @@ const saveDevice = async () => {
     config = JSON.parse(form.value.configStr)
   } catch (e) {
     Message.error('配置参数必须是有效的JSON格式')
-    return
+    return false
   }
 
   if (channelProtocol.value === 'dlt645') {
@@ -1166,7 +1183,7 @@ const saveDevice = async () => {
   if (!isEdit.value) {
     payload.points = []
   }
-
+  saving.value = true
   try {
     const url = isEdit.value
       ? channelDeviceApiPath(channelId, form.value.id)
@@ -1182,6 +1199,7 @@ const saveDevice = async () => {
     if (isEdit.value && form.value.regeneratePoints && form.value.autoPointsEnabled) {
       const start = Number(form.value.autoPointsStart) || 0
       const end = Number(form.value.autoPointsEnd) || 0
+
       await request.post(channelDeviceApiPath(channelId, form.value.id, 'points', 'generate-registers'), {
         start: Math.min(start, end),
         end: Math.max(start, end),
@@ -1196,8 +1214,12 @@ const saveDevice = async () => {
     Message.success(isEdit.value ? '更新成功' : '创建成功')
     closeDialog()
     fetchDevices()
+    return true
   } catch (e) {
     Message.error(e.message)
+    return false
+  } finally {
+    saving.value = false
   }
 }
 
@@ -1212,6 +1234,8 @@ const confirmBatchDelete = () => {
 }
 
 const executeDelete = async () => {
+  if (deleting.value) return
+  deleting.value = true
   try {
     if (itemToDelete.value) {
       await request.delete(channelDeviceApiPath(channelId, itemToDelete.value.id))
@@ -1228,6 +1252,8 @@ const executeDelete = async () => {
     fetchDevices()
   } catch (e) {
     Message.error(e.message)
+  } finally {
+    deleting.value = false
   }
 }
 

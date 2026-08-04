@@ -781,6 +781,11 @@ func (s *Server) addChannel(c *fiber.Ctx) error {
 		}
 	}
 
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
+	}
+
 	return c.JSON(ch)
 }
 
@@ -809,6 +814,11 @@ func (s *Server) updateChannel(c *fiber.Ctx) error {
 		}
 	}
 
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
+	}
+
 	return c.JSON(ch)
 }
 
@@ -816,6 +826,10 @@ func (s *Server) removeChannel(c *fiber.Ctx) error {
 	id := c.Params("channelId")
 	if err := s.cm.RemoveChannel(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -1099,6 +1113,7 @@ func (s *Server) addDevice(c *fiber.Ctx) error {
 		}
 		if s.nbm != nil {
 			s.nbm.PublishPointsMetadata()
+			s.nbm.PublishDeviceReport()
 		}
 		summaries := make([]model.Device, len(created))
 		for i, d := range created {
@@ -1124,6 +1139,8 @@ func (s *Server) addDevice(c *fiber.Ctx) error {
 		// 触发点位元数据同步到 edgeOS
 		if s.nbm != nil {
 			s.nbm.PublishPointsMetadata()
+			// 触发设备清单重新上报（edgex/devices/report），确保 EdgeOS 设备列表更新
+			s.nbm.PublishDeviceReport()
 		}
 		return c.JSON(dev)
 
@@ -1156,6 +1173,8 @@ func (s *Server) updateDevice(c *fiber.Ctx) error {
 	// 触发点位元数据同步到 edgeOS
 	if s.nbm != nil {
 		s.nbm.PublishPointsMetadata()
+		// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+		s.nbm.PublishDeviceReport()
 	}
 	return c.JSON(dev)
 }
@@ -1169,6 +1188,10 @@ func (s *Server) removeDevice(c *fiber.Ctx) error {
 	}
 	if s.dsm != nil {
 		s.dsm.RemoveDevice(deviceId)
+	}
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -1187,6 +1210,10 @@ func (s *Server) removeDevices(c *fiber.Ctx) error {
 		for _, id := range ids {
 			s.dsm.RemoveDevice(id)
 		}
+	}
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -2111,6 +2138,10 @@ func (s *Server) updateEdgeOSMQTTConfig(c *fiber.Ctx) error {
 	if cfg.ID == "" {
 		cfg.ID = uuid.New().String()
 	}
+	// Phase 4 (EX-P4-03): V1 命令面全面下线——默认关闭 V1 命令 Topic 订阅；
+	// 命令统一走 EAN Invoke。显式 v1_command_enabled=true 可临时重开（仅调试用）。
+	// | Phase 4: V1 command plane fully retired — defaults off; commands use EAN Invoke exclusively.
+	cfg.V1CommandEnabled = false
 
 	warning, err := s.nbm.UpsertEdgeOSMQTTConfig(cfg)
 	if err != nil {
@@ -2201,6 +2232,10 @@ func (s *Server) updateEdgeOSNATSConfig(c *fiber.Ctx) error {
 	if cfg.ID == "" {
 		cfg.ID = uuid.New().String()
 	}
+	// Phase 4 (EX-P4-03): V1 命令面全面下线——默认关闭 V1 命令 Subject 订阅；
+	// 命令统一走 EAN Invoke。显式 v1_command_enabled=true 可临时重开（仅调试用）。
+	// | Phase 4: V1 command plane fully retired — defaults off; commands use EAN Invoke exclusively.
+	cfg.V1CommandEnabled = false
 
 	warning, err := s.nbm.UpsertEdgeOSNATSConfig(cfg)
 	if err != nil {

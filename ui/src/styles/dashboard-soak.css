@@ -90,6 +90,19 @@
   padding: var(--space-8) 0;
 }
 
+.soak-panel__error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--edgex-error);
+  font-size: 13px;
+}
+
 /* ── release gate hero ── */
 .soak-hero {
   display: flex;
@@ -117,6 +130,16 @@
 .soak-gate-summary.is-partial {
   border-color: rgba(245, 158, 11, 0.35);
   background: rgba(245, 158, 11, 0.06);
+}
+
+.soak-gate-summary.is-fail {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.soak-gate-summary.is-unknown {
+  border-color: var(--border);
+  background: var(--surface-1);
 }
 
 .soak-gate-summary__main {
@@ -239,9 +262,8 @@
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  line-height: 1.4;
 }
 
 /* ── metric cards ── */

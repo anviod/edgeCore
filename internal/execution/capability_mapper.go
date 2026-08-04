@@ -84,14 +84,20 @@ func (m *CapabilityMapper) MapAndExecute(ctx context.Context, req capability.Inv
 
 func inferDriverCommand(capabilityID string) string {
 	switch {
-	case strings.HasSuffix(capabilityID, ".read_holding_register"):
+	// 协议特定能力（中性命名，v2.26）：read_point/write_point/scan_devices/list_points
+	case strings.HasSuffix(capabilityID, ".read_point"):
 		return "ReadPoints"
-	case strings.HasSuffix(capabilityID, ".write_register"):
+	case strings.HasSuffix(capabilityID, ".write_point"):
 		return "WritePoint"
 	case strings.HasSuffix(capabilityID, ".scan_devices"):
 		return "ScanDevices"
 	case strings.HasSuffix(capabilityID, ".list_points"):
 		return "GetDevicePoints"
+	// 兼容旧命名（过渡期，v2.26 前生成的 capability 仍可调用）
+	case strings.HasSuffix(capabilityID, ".read_holding_register"):
+		return "ReadPoints"
+	case strings.HasSuffix(capabilityID, ".write_register"):
+		return "WritePoint"
 	case capabilityID == "system.diagnostics":
 		return "Diagnostics"
 	case capabilityID == "ai.protocol_reverse":

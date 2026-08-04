@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal
     :visible="visible"
     title="克隆其它设备点位"
@@ -8,7 +8,6 @@
     @update:visible="(val) => emit('update:visible', val)"
   >
     <a-space direction="vertical" :size="16" fill>
-      
       <!-- 条件区 -->
       <a-row :gutter="16">
         <a-col :span="8">
@@ -61,7 +60,6 @@
         v-if="!loading && tableData.length === 0"
         description="暂无数据"
       />
-
     </a-space>
   </a-modal>
 </template>

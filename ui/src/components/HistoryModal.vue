@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal
     v-model:visible="historyDialog"
     title="历史数据"
@@ -122,6 +122,13 @@
               {{ formatHistoryTime(record.ts) }}
             </span>
           </template>
+          <template #empty>
+            <a-empty :description="historyLoading ? '查询中...' : (historySearched ? '未查询到历史数据' : '请设置查询条件后点击「查询」')">
+              <template #image>
+                <icon-search :size="40" class="empty-icon-muted" />
+              </template>
+            </a-empty>
+          </template>
         </a-table>
       </div>
     </div>
@@ -131,7 +138,7 @@
 <script setup>
 import { ref, watch, computed, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
-import { IconFilter } from '@arco-design/web-vue/es/icon'
+import { IconFilter, IconSearch } from '@arco-design/web-vue/es/icon'
 import request from '@/utils/request'
 
 const MAX_HISTORY_LIMIT = 1000
@@ -150,6 +157,7 @@ const historyDialog = ref(false)
 const historyDevice = ref(null)
 const historyLoading = ref(false)
 const historyData = ref([])
+const historySearched = ref(false)
 const historyHeaders = ref([])
 const historyDateRange = ref([])
 const historyLimit = ref(MAX_HISTORY_LIMIT)
@@ -332,6 +340,7 @@ const fetchHistory = async () => {
   if (!historyDevice.value?.id) return
 
   historyLoading.value = true
+  historySearched.value = true
   historyData.value = []
   historyHeaders.value = []
   pagination.current = 1

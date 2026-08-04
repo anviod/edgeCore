@@ -1,847 +1,853 @@
-﻿<template>
-    <div class="page-shell page-shell--wide edge-compute-container edge-compute-page">
-        <div class="page-header">
-            <div>
-                <h2 class="page-title">边缘计算</h2>
-                <p class="page-subtitle">规则监控、管理与运行日志</p>
+<template>
+  <div class="page-shell page-shell--wide edge-compute-container edge-compute-page">
+    <div class="page-header">
+      <div>
+        <h2 class="page-title">边缘计算</h2>
+        <p class="page-subtitle">规则监控、管理与运行日志</p>
+      </div>
+    </div>
+
+    <a-tabs v-model:active-key="tab" type="rounded" size="small" class="main-tabs">
+      <a-tab-pane key="metrics" title="监控面板" />
+      <a-tab-pane key="rules" title="规则管理" />
+      <a-tab-pane key="templates" title="场景模版" />
+      <a-tab-pane key="status" title="记录与日志" />
+    </a-tabs>
+
+    <div class="edge-compute-body">
+      <template v-if="tab === 'metrics'">
+        <EdgeComputeMetrics />
+        <EdgeComputePageFooter
+          @switch-tab="(key) => tab = key"
+          @open-help="helpVisible = true"
+        />
+      </template>
+
+      <div v-if="tab === 'rules'" class="edge-compute-flow">
+        <section class="edge-compute-panel" aria-label="规则管理">
+          <div class="edge-compute-toolbar edge-compute-toolbar--view">
+            <div class="edge-compute-toolbar__left">
+              <a-space size="small">
+                <a-button type="primary" size="small" @click="openDialog">
+                  <template #icon><IconPlus /></template>
+                  添加规则
+                </a-button>
+                <a-button type="outline" size="small" @click="openJsonImport">
+                  <template #icon><IconUpload /></template>
+                  JSON导入
+                </a-button>
+                <a-button type="text" size="small" class="help-trigger-btn" @click="helpVisible = true">
+                  <template #icon><IconQuestionCircle /></template>
+                  帮助说明
+                </a-button>
+              </a-space>
+              <span v-if="rules.length > 0" class="edge-compute-panel-meta">{{ rules.length }} 条规则</span>
             </div>
-        </div>
-
-        <a-tabs v-model:active-key="tab" type="rounded" size="small" class="main-tabs">
-            <a-tab-pane key="metrics" title="监控面板" />
-            <a-tab-pane key="rules" title="规则管理" />
-            <a-tab-pane key="templates" title="场景模版" />
-            <a-tab-pane key="status" title="记录与日志" />
-        </a-tabs>
-
-        <div class="edge-compute-body">
-            <template v-if="tab === 'metrics'">
-                <EdgeComputeMetrics />
-                <EdgeComputePageFooter
-                    @switch-tab="(key) => tab = key"
-                    @open-help="helpVisible = true"
-                />
-            </template>
-
-            <div v-if="tab === 'rules'" class="edge-compute-flow">
-                <section class="edge-compute-panel" aria-label="规则管理">
-                <div class="edge-compute-toolbar edge-compute-toolbar--view">
-                    <div class="edge-compute-toolbar__left">
-                        <a-space size="small">
-                            <a-button type="primary" size="small" @click="openDialog">
-                                <template #icon><IconPlus /></template>
-                                添加规则
-                            </a-button>
-                            <a-button type="outline" size="small" @click="openJsonImport">
-                                <template #icon><IconUpload /></template>
-                                JSON导入
-                            </a-button>
-                            <a-button type="text" size="small" class="help-trigger-btn" @click="helpVisible = true">
-                                <template #icon><IconQuestionCircle /></template>
-                                帮助说明
-                            </a-button>
-                        </a-space>
-                        <span v-if="rules.length > 0" class="edge-compute-panel-meta">{{ rules.length }} 条规则</span>
-                    </div>
-                    <div class="edge-compute-toolbar__right">
-                        <a-radio-group v-model="rulesViewMode" type="button" size="small" class="edge-compute-view-toggle">
-                            <a-radio value="flow">流程视图</a-radio>
-                            <a-radio value="table">表格视图</a-radio>
-                        </a-radio-group>
-                    </div>
-                </div>
-                <div v-show="selectedRuleKeys.length > 0" class="edge-compute-toolbar edge-compute-toolbar--batch">
-                    <span class="selection-count">已选 {{ selectedRuleKeys.length }} 项</span>
-                    <a-divider direction="vertical" />
-                    <a-button size="small" type="outline" @click="handleBatchEnable(true)">批量启用</a-button>
-                    <a-button size="small" type="outline" @click="handleBatchEnable(false)">批量禁用</a-button>
-                    <a-button size="small" type="outline" status="danger" @click="handleBatchDelete">批量删除</a-button>
-                </div>
-                <div class="edge-compute-tertiary-block">
-                    <div v-if="rulesViewMode === 'flow'" class="rule-flow-list">
-                        <RuleFlowCard
-                            v-for="rule in rules"
-                            :key="rule.id"
-                            :rule="rule"
-                            :state="ruleStateMap[rule.id]"
-                            :selected="selectedRuleKeys.includes(rule.id)"
-                            :compact="true"
-                            @select="(checked) => toggleRuleSelection(rule.id, checked)"
-                        >
-                            <template #operations>
-                                <span class="table-ops">
-                                    <a-button
-                                        v-if="rule.type === 'window'"
-                                        type="text"
-                                        size="small"
-                                        @click="viewWindowData(rule.id, rule.name)"
-                                    >
-                                        窗口数据
-                                    </a-button>
-                                    <a-button type="text" size="small" @click="editRule(rule)">
-                                        <template #icon><IconEdit /></template>
-                                    </a-button>
-                                    <a-button type="text" size="small" status="danger" @click="deleteRule(rule)">
-                                        <template #icon><IconDelete /></template>
-                                    </a-button>
-                                </span>
-                            </template>
-                        </RuleFlowCard>
-                        <a-empty v-if="rules.length === 0" class="empty-wrap">
-                            <template #image><IconStorage :size="48" class="empty-icon-muted" /></template>
-                            <div class="empty-title">暂无规则</div>
-                            <div class="empty-desc">点击「添加规则」创建第一条边缘计算规则</div>
-                        </a-empty>
-                    </div>
-                    <div v-else class="table-container saas-table">
-                        <a-table
-                            :columns="ruleColumns"
-                            :data="rules"
-                            size="small"
-                            :bordered="false"
-                            :scroll="{ x: 960 }"
-                            :row-selection="{ type: 'checkbox', showCheckedAll: true }"
-                            v-model:selected-keys="selectedRuleKeys"
-                            row-key="id"
-                        >
-                            <template #operations="{ record }">
-                                <span class="table-ops">
-                                <a-button type="text" size="small" @click="editRule(record)">
-                                    <template #icon><IconEdit /></template>
-                                </a-button>
-                                <a-button type="text" size="small" status="danger" @click="deleteRule(record)">
-                                    <template #icon><IconDelete /></template>
-                                </a-button>
-                                </span>
-                            </template>
-                            <template #enable="{ record }">
-                                <span class="table-cell-semantic">
-                                <a-tag :color="record.enable ? 'success' : 'danger'" size="small">
-                                    {{ record.enable ? '启用' : '禁用' }}
-                                </a-tag>
-                                </span>
-                            </template>
-                            <template #type="{ record }">
-                                {{ formatRuleType(record.type) }}
-                            </template>
-                            <template #trigger_mode="{ record }">
-                                {{ formatTriggerMode(record.trigger_mode) }}
-                            </template>
-                        </a-table>
-                    </div>
-                </div>
-                </section>
+            <div class="edge-compute-toolbar__right">
+              <a-radio-group v-model="rulesViewMode" type="button" size="small" class="edge-compute-view-toggle">
+                <a-radio value="flow">流程视图</a-radio>
+                <a-radio value="table">表格视图</a-radio>
+              </a-radio-group>
             </div>
-
-            <EdgeSceneTemplates
-                v-if="tab === 'templates'"
-                @apply="applyRuleTemplate"
-            />
-
-            <div v-if="tab === 'status'" class="edge-compute-flow">
-                <section class="edge-compute-panel" aria-label="记录与日志">
-                <div class="edge-compute-toolbar edge-compute-toolbar--records">
-                    <div class="edge-compute-toolbar__left edge-compute-records-heading">
-                        <a-radio-group v-model="recordType" type="button" size="small" class="edge-compute-record-type-toggle">
-                            <a-radio value="events">错误事件</a-radio>
-                            <a-radio value="logs">错误日志</a-radio>
-                        </a-radio-group>
-                        <a-tooltip v-if="recordType === 'events'" content="仅记录公式匹配、执行、调度等异常事件；正常触发与校验不产生日志。">
-                            <IconInfoCircle class="edge-compute-records-info" />
-                        </a-tooltip>
-                        <span v-if="recordCount > 0" class="edge-compute-panel-meta">{{ recordCount }} 条</span>
-                    </div>
-                    <div class="edge-compute-toolbar__right">
-                    <a-space size="small">
-                        <a-badge :count="activeFilterCount" :dot="activeFilterCount > 0">
-                            <a-button type="outline" size="small" @click="filterVisible = true">
-                                <template #icon><IconFilter /></template>
-                                筛选
-                            </a-button>
-                        </a-badge>
-                        <a-button type="outline" size="small" @click="refreshRecords">
-                            <template #icon><IconRefresh /></template>
-                            刷新
-                        </a-button>
-                        <a-popconfirm
-                            content="确定清空所有边缘计算错误日志（错误事件、失败记录、分钟级错误日志）？规则与实时状态不会受影响。"
-                            @ok="clearEdgeLogs"
-                        >
-                            <a-button type="outline" status="danger" size="small">
-                                清空日志
-                            </a-button>
-                        </a-popconfirm>
-                        <a-button
-                            v-if="recordType === 'logs'"
-                            type="outline"
-                            size="small"
-                            @click="exportLogs"
-                            :disabled="logs.length === 0"
-                        >
-                            <template #icon><IconDownload /></template>
-                            导出 CSV
-                        </a-button>
-                    </a-space>
-                    </div>
-                </div>
-
-                <div v-if="activeFilterChips.length > 0" class="edge-compute-filter-chips">
-                    <a-tag
-                        v-for="chip in activeFilterChips"
-                        :key="chip.key"
-                        size="small"
-                        closable
-                        @close="removeFilterChip(chip.key)"
+          </div>
+          <div v-show="selectedRuleKeys.length > 0" class="edge-compute-toolbar edge-compute-toolbar--batch">
+            <span class="selection-count">已选 {{ selectedRuleKeys.length }} 项</span>
+            <a-divider direction="vertical" />
+            <a-button size="small" type="outline" @click="handleBatchEnable(true)">批量启用</a-button>
+            <a-button size="small" type="outline" @click="handleBatchEnable(false)">批量禁用</a-button>
+            <a-button size="small" type="outline" status="danger" @click="handleBatchDelete">批量删除</a-button>
+          </div>
+          <div class="edge-compute-tertiary-block">
+            <div v-if="rulesViewMode === 'flow'" class="rule-flow-list">
+              <RuleFlowCard
+                v-for="rule in rules"
+                :key="rule.id"
+                :rule="rule"
+                :state="ruleStateMap[rule.id]"
+                :selected="selectedRuleKeys.includes(rule.id)"
+                :compact="true"
+                @select="(checked) => toggleRuleSelection(rule.id, checked)"
+              >
+                <template #operations>
+                  <span class="table-ops">
+                    <a-button
+                      v-if="rule.type === 'window'"
+                      type="text"
+                      size="small"
+                      @click="viewWindowData(rule.id, rule.name)"
                     >
-                        {{ chip.label }}
-                    </a-tag>
-                    <a-button type="text" size="mini" @click="resetRecordFilters">清除筛选</a-button>
-                </div>
-
-                <template v-if="recordType === 'events'">
-                    <a-empty v-if="edgeEvents.length === 0" class="empty-wrap">
-                        <template #image><IconHistory :size="48" class="empty-icon-muted" /></template>
-                        <div class="empty-title">暂无错误事件</div>
-                        <div class="empty-desc">规则发生公式匹配、执行或调度异常时将在此显示</div>
-                    </a-empty>
-                    <div v-else class="edge-compute-tertiary-block">
-                    <div class="table-container saas-table edge-compute-records-table">
-                        <a-table
-                            :columns="eventColumns"
-                            :data="edgeEvents"
-                            size="small"
-                            :bordered="false"
-                            :pagination="{ pageSize: 20, showTotal: true }"
-                            row-key="id"
-                        >
-                            <template #status="{ record }">
-                                <a-tag :color="getEventStatusColor(record.status)" size="small">{{ record.status }}</a-tag>
-                            </template>
-                            <template #duration_ms="{ record }">
-                                {{ record.duration_ms != null ? `${record.duration_ms} ms` : '—' }}
-                            </template>
-                            <template #started_at="{ record }">
-                                {{ formatDate(record.started_at) }}
-                            </template>
-                            <template #actions="{ record }">
-                                <span class="single-line-cell" :title="formatEventActions(record.actions)">
-                                    {{ formatEventActions(record.actions) }}
-                                </span>
-                            </template>
-                            <template #error_message="{ record }">
-                                <span v-if="record.error_message" class="edge-compute-records-error">{{ record.error_message }}</span>
-                                <span v-else class="edge-compute-records-muted">—</span>
-                            </template>
-                        </a-table>
-                    </div>
-                    </div>
+                      窗口数据
+                    </a-button>
+                    <a-button type="text" size="small" @click="editRule(rule)">
+                      <template #icon><IconEdit /></template>
+                    </a-button>
+                    <a-button type="text" size="small" status="danger" @click="deleteRule(rule)">
+                      <template #icon><IconDelete /></template>
+                    </a-button>
+                  </span>
                 </template>
-
-                <template v-else>
-                    <a-empty v-if="logs.length === 0" class="empty-wrap">
-                        <template #image><IconClockCircle :size="48" class="empty-icon-muted" /></template>
-                        <div class="empty-title">暂无错误日志</div>
-                        <div class="empty-desc">规则运行出错后将按分钟汇总错误信息</div>
-                    </a-empty>
-                    <div v-else class="edge-compute-tertiary-block">
-                        <div class="table-container saas-table">
-                            <a-table
-                                :columns="logColumns"
-                                :data="logs"
-                                size="small"
-                                :bordered="false"
-                                :scroll="{ x: 1200 }"
-                                :pagination="{ pageSize: 20, showTotal: true }"
-                            >
-                                <template #error_type="{ record }">
-                                    <a-tag color="red" size="small">{{ formatErrorType(record.error_type) }}</a-tag>
-                                </template>
-                                <template #error_message="{ record }">
-                                    <span class="single-line-cell text-error" @click="showDetails('错误详情', record.error_message)" title="点击查看详情">
-                                        {{ record.error_message || '—' }}
-                                    </span>
-                                </template>
-                            </a-table>
-                        </div>
-                    </div>
-                </template>
-                </section>
+              </RuleFlowCard>
+              <a-empty v-if="rules.length === 0" class="empty-wrap">
+                <template #image><IconStorage :size="48" class="empty-icon-muted" /></template>
+                <div class="empty-title">暂无规则</div>
+                <div class="empty-desc">点击「添加规则」创建第一条边缘计算规则</div>
+              </a-empty>
             </div>
-        </div>
-
-        <!-- Window Data Dialog -->
-        <a-modal v-model:visible="windowDialog" title="窗口数据预览 ({{ currentWindowRuleName }})" width="600px">
-            <a-table
-                :columns="windowDataColumns"
-                :data="windowData"
+            <div v-else class="table-container saas-table">
+              <a-table
+                :columns="ruleColumns"
+                :data="rules"
                 size="small"
                 :bordered="false"
-            >
-                <template #ts="{ record }">
-                    {{ formatDate(record.ts) }}
-                </template>
-            </a-table>
-            <template #footer>
-                <a-button type="primary" @click="windowDialog = false">关闭</a-button>
-            </template>
-        </a-modal>
-
-        <!-- Details Dialog -->
-        <a-modal v-model:visible="detailsDialog" title="{{ detailTitle }}" width="800px">
-            <a-tabs v-model:active-key="detailsTab" class="mb-4">
-                <a-tab-pane key="text" title="文本/原始内容"></a-tab-pane>
-                <a-tab-pane key="hex" title="Hex 视图" :disabled="!decodedHex"></a-tab-pane>
-            </a-tabs>
-            
-            <div v-if="detailsTab === 'text'">
-                <div class="text-gray-500 mb-2">内容长度: {{ detailContent.length }}</div>
-                <a-textarea
-                    v-model="detailContent"
-                    readonly
-                    :auto-size="{ minRows: 5, maxRows: 15 }"
-                    style="font-family: monospace;"
-                />
-            </div>
-            
-            <div v-else-if="detailsTab === 'hex'">
-                <div class="text-gray-500 mb-2">Hex 视图 ({{ decodedBytes ? decodedBytes.length : 0 }} bytes)</div>
-                <a-textarea
-                    v-model="decodedHex"
-                    readonly
-                    :auto-size="{ minRows: 5, maxRows: 15 }"
-                    style="font-family: monospace;"
-                />
-            </div>
-
-            <a-alert v-if="detectedFile" type="info" class="mt-4">
-                <div class="d-flex justify-space-between align-items-center">
-                    <span>检测到文件格式: <strong>{{ detectedFile.name }} ({{ detectedFile.ext }})</strong></span>
-                    <a-button type="primary" size="small" @click="downloadDetectedFile">
-                        <template #icon><IconDownload /></template>
-                        下载文件
+                :scroll="{ x: 960 }"
+                :row-selection="{ type: 'checkbox', showCheckedAll: true }"
+                v-model:selected-keys="selectedRuleKeys"
+                row-key="id"
+              >
+                <template #operations="{ record }">
+                  <span class="table-ops">
+                    <a-button type="text" size="small" @click="editRule(record)">
+                      <template #icon><IconEdit /></template>
                     </a-button>
-                </div>
-            </a-alert>
-            <template #footer>
-                <a-button v-if="!decodedHex" @click="tryDecode">
-                    <template #icon><IconCode /></template>
-                    尝试 Base64 解码
+                    <a-button type="text" size="small" status="danger" @click="deleteRule(record)">
+                      <template #icon><IconDelete /></template>
+                    </a-button>
+                  </span>
+                </template>
+                <template #empty>
+                  <a-empty description="暂无规则">
+                    <template #image><IconStorage :size="48" class="empty-icon-muted" /></template>
+                    <div class="empty-title">暂无规则</div>
+                    <div class="empty-desc">点击「添加规则」创建第一条边缘计算规则</div>
+                  </a-empty>
+                </template>
+                <template #enable="{ record }">
+                  <span class="table-cell-semantic">
+                    <a-tag :color="record.enable ? 'success' : 'danger'" size="small">
+                      {{ record.enable ? '启用' : '禁用' }}
+                    </a-tag>
+                  </span>
+                </template>
+                <template #type="{ record }">
+                  {{ formatRuleType(record.type) }}
+                </template>
+                <template #trigger_mode="{ record }">
+                  {{ formatTriggerMode(record.trigger_mode) }}
+                </template>
+              </a-table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <EdgeSceneTemplates
+        v-if="tab === 'templates'"
+        @apply="applyRuleTemplate"
+      />
+
+      <div v-if="tab === 'status'" class="edge-compute-flow">
+        <section class="edge-compute-panel" aria-label="记录与日志">
+          <div class="edge-compute-toolbar edge-compute-toolbar--records">
+            <div class="edge-compute-toolbar__left edge-compute-records-heading">
+              <a-radio-group v-model="recordType" type="button" size="small" class="edge-compute-record-type-toggle">
+                <a-radio value="events">错误事件</a-radio>
+                <a-radio value="logs">错误日志</a-radio>
+              </a-radio-group>
+              <a-tooltip v-if="recordType === 'events'" content="仅记录公式匹配、执行、调度等异常事件；正常触发与校验不产生日志。">
+                <IconInfoCircle class="edge-compute-records-info" />
+              </a-tooltip>
+              <span v-if="recordCount > 0" class="edge-compute-panel-meta">{{ recordCount }} 条</span>
+            </div>
+            <div class="edge-compute-toolbar__right">
+              <a-space size="small">
+                <a-badge :count="activeFilterCount" :dot="activeFilterCount > 0">
+                  <a-button type="outline" size="small" @click="filterVisible = true">
+                    <template #icon><IconFilter /></template>
+                    筛选
+                  </a-button>
+                </a-badge>
+                <a-button type="outline" size="small" @click="refreshRecords">
+                  <template #icon><IconRefresh /></template>
+                  刷新
                 </a-button>
-                <a-button type="primary" @click="detailsDialog = false">关闭</a-button>
-            </template>
-        </a-modal>
+                <a-popconfirm
+                  content="确定清空所有边缘计算错误日志（错误事件、失败记录、分钟级错误日志）？规则与实时状态不会受影响。"
+                  @ok="clearEdgeLogs"
+                >
+                  <a-button type="outline" status="danger" size="small">
+                    清空日志
+                  </a-button>
+                </a-popconfirm>
+                <a-button
+                  v-if="recordType === 'logs'"
+                  type="outline"
+                  size="small"
+                  @click="exportLogs"
+                  :disabled="logs.length === 0"
+                >
+                  <template #icon><IconDownload /></template>
+                  导出 CSV
+                </a-button>
+              </a-space>
+            </div>
+          </div>
 
-        <!-- Rule Dialog -->
-        <a-modal v-model:visible="dialog" :title="editingRule ? '编辑规则' : '添加规则'" width="80%" modal-class="industrial-white-modal edge-compute-rule-modal">
-            <a-form ref="form" :model="currentRule" layout="vertical" class="industrial-form form-controls-md">
-                <div class="form-section">
-                    <div class="section-title">基础配置</div>
-                    <a-row :gutter="16">
-                        <a-col :span="16">
-                            <a-form-item field="name" label="规则名称" required>
-                                <a-input v-model="currentRule.name" placeholder="请输入规则名称" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="enable" label="启用状态">
-                                <a-switch v-model="currentRule.enable" type="round" />
-                            </a-form-item>
-                        </a-col>
-                    </a-row>
-                    <a-row :gutter="16">
-                        <a-col :span="6">
-                            <a-form-item field="type" label="规则类型">
-                                <a-select 
-                                    v-model="currentRule.type" 
-                                    class="rect-input"
-                                    :options="[
-                                        {label: 'Threshold (阈值触发)', value: 'threshold'},
-                                        {label: 'Calculation (计算公式)', value: 'calculation'},
-                                        {label: 'Window (时间/计数窗口)', value: 'window'},
-                                        {label: 'State (状态持续)', value: 'state'}
-                                    ]" 
-                                />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="6">
-                            <a-form-item field="priority" label="优先级">
-                                <a-input-number v-model="currentRule.priority" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="6">
-                            <a-form-item field="trigger_mode" label="触发模式">
-                                <a-select
-                                    v-model="currentRule.trigger_mode"
-                                    class="rect-input"
-                                    :options="[{label: '始终触发', value: 'always'}, {label: '仅状态改变时触发', value: 'on_change'}]"
-                                />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="6">
-                            <a-form-item field="check_interval" label="检查频率">
-                                <a-select
-                                    v-model="currentRule.check_interval"
-                                    class="rect-input"
-                                    :options="['1s', '5s', '10s', '30s', '1m']"
-                                />
-                            </a-form-item>
-                        </a-col>
-                    </a-row>
-                    <div class="form-hint">{{ getRuleTypeExplanation(currentRule.type) }}</div>
-                </div>
+          <div v-if="activeFilterChips.length > 0" class="edge-compute-filter-chips">
+            <a-tag
+              v-for="chip in activeFilterChips"
+              :key="chip.key"
+              size="small"
+              closable
+              @close="removeFilterChip(chip.key)"
+            >
+              {{ chip.label }}
+            </a-tag>
+            <a-button type="text" size="mini" @click="resetRecordFilters">清除筛选</a-button>
+          </div>
 
-                <div class="form-section">
-                    <div class="section-header-row">
-                        <div class="section-title">数据源 Sources</div>
-                        <div class="flex gap-2">
-                            <a-button type="outline" size="small" @click="detectInvalidSources">
-                                <template #icon><IconRefresh /></template>
-                                自动检测
-                            </a-button>
-                            <a-button type="outline" status="danger" size="small" @click="clearInvalidSources">
-                                <template #icon><IconDelete /></template>
-                                一键清除
-                            </a-button>
-                            <a-button type="primary" size="small" @click="addSource">
-                                <template #icon><IconPlus /></template>
-                                添加
-                            </a-button>
-                        </div>
-                    </div>
-                    <div class="form-hint form-hint--block">
-                        请为每个数据源设置别名（如 t1, t2），然后在触发条件中使用别名编写逻辑公式（例如：t1 > 20 || t2 > 30）。
-                    </div>
-                    <div v-for="(src, index) in currentRule.sources" :key="index" class="source-row">
-                        <div class="source-index">#{{ index + 1 }}</div>
-                        <a-row :gutter="12" class="flex-1">
-                            <a-col :span="24" :md="5">
-                                <a-select
-                                    v-model="src.channel_id"
-                                    :options="channels"
-                                    placeholder="通道"
-                                    class="rect-input"
-                                    @change="() => onSourceChannelChange(src)"
-                                />
-                            </a-col>
-                            <a-col :span="24" :md="5">
-                                <a-select
-                                    v-model="src.device_id"
-                                    :options="src._deviceList || []"
-                                    placeholder="设备"
-                                    class="rect-input"
-                                    :disabled="!src.channel_id"
-                                    @change="() => onSourceDeviceChange(src)"
-                                    @click="() => loadSourceDevices(src)"
-                                />
-                            </a-col>
-                            <a-col :span="24" :md="5">
-                                <a-select
-                                    v-model="src.point_id"
-                                    :options="src._pointList || []"
-                                    placeholder="点位"
-                                    class="rect-input"
-                                    :disabled="!src.device_id"
-                                    @click="() => loadSourcePoints(src)"
-                                />
-                            </a-col>
-                            <a-col :span="24" :md="7">
-                                <a-input 
-                                    v-model="src.alias" 
-                                    placeholder="t1"
-                                    class="rect-input w-full"
-                                />
-                            </a-col>
-                            <a-col :span="24" :md="2" class="flex items-center justify-end">
-                                <a-button type="text" status="danger" @click="removeSource(index)">
-                                    <IconDelete />
-                                </a-button>
-                            </a-col>
-                        </a-row>
-                    </div>
-                </div>
+          <template v-if="recordType === 'events'">
+            <a-empty v-if="edgeEvents.length === 0" class="empty-wrap">
+              <template #image><IconHistory :size="48" class="empty-icon-muted" /></template>
+              <div class="empty-title">暂无错误事件</div>
+              <div class="empty-desc">规则发生公式匹配、执行或调度异常时将在此显示</div>
+            </a-empty>
+            <div v-else class="edge-compute-tertiary-block">
+              <div class="table-container saas-table edge-compute-records-table">
+                <a-table
+                  :columns="eventColumns"
+                  :data="edgeEvents"
+                  size="small"
+                  :bordered="false"
+                  :pagination="{ pageSize: 20, showTotal: true }"
+                  row-key="id"
+                >
+                  <template #status="{ record }">
+                    <a-tag :color="getEventStatusColor(record.status)" size="small">{{ record.status }}</a-tag>
+                  </template>
+                  <template #duration_ms="{ record }">
+                    {{ record.duration_ms != null ? `${record.duration_ms} ms` : '—' }}
+                  </template>
+                  <template #started_at="{ record }">
+                    {{ formatDate(record.started_at) }}
+                  </template>
+                  <template #actions="{ record }">
+                    <span class="single-line-cell" :title="formatEventActions(record.actions)">
+                      {{ formatEventActions(record.actions) }}
+                    </span>
+                  </template>
+                  <template #error_message="{ record }">
+                    <span v-if="record.error_message" class="edge-compute-records-error">{{ record.error_message }}</span>
+                    <span v-else class="edge-compute-records-muted">—</span>
+                  </template>
+                </a-table>
+              </div>
+            </div>
+          </template>
 
-                <!-- 窗口配置 -->
-                <div v-if="currentRule.type === 'window'" class="form-section">
-                    <div class="section-title">窗口配置</div>
-                    <a-row :gutter="16">
-                        <a-col :span="8">
-                            <a-form-item field="window.type" label="窗口类型">
-                                <a-select v-model="currentRule.window.type" :options="['sliding', 'tumbling']" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="window.size" label="窗口大小">
-                                <a-input v-model="currentRule.window.size" placeholder="例如: 10s 或 100" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="window.aggr_func" label="聚合函数">
-                                <a-select v-model="currentRule.window.aggr_func" :options="['avg', 'min', 'max', 'sum', 'count', 'rate']" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                    </a-row>
-                </div>
+          <template v-else>
+            <a-empty v-if="logs.length === 0" class="empty-wrap">
+              <template #image><IconClockCircle :size="48" class="empty-icon-muted" /></template>
+              <div class="empty-title">暂无错误日志</div>
+              <div class="empty-desc">规则运行出错后将按分钟汇总错误信息</div>
+            </a-empty>
+            <div v-else class="edge-compute-tertiary-block">
+              <div class="table-container saas-table">
+                <a-table
+                  :columns="logColumns"
+                  :data="logs"
+                  size="small"
+                  :bordered="false"
+                  :scroll="{ x: 1200 }"
+                  :pagination="{ pageSize: 20, showTotal: true }"
+                >
+                  <template #error_type="{ record }">
+                    <a-tag color="red" size="small">{{ formatErrorType(record.error_type) }}</a-tag>
+                  </template>
+                  <template #error_message="{ record }">
+                    <span class="single-line-cell text-error" @click="showDetails('错误详情', record.error_message)" title="点击查看详情">
+                      {{ record.error_message || '—' }}
+                    </span>
+                  </template>
+                </a-table>
+              </div>
+            </div>
+          </template>
+        </section>
+      </div>
+    </div>
 
-                <!-- 状态维持 -->
-                <div v-if="currentRule.type === 'state' || currentRule.type === 'threshold'" class="form-section">
-                    <div class="section-title">状态维持</div>
-                    <a-row :gutter="16">
-                        <a-col :span="12">
-                            <a-form-item field="state.duration" label="持续时间 (Duration)">
-                                <a-input v-model="currentRule.state.duration" placeholder="例如: 10s" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="state.count" label="连续次数 (Count)">
-                                <a-input-number v-model="currentRule.state.count" class="rect-input" />
-                            </a-form-item>
-                        </a-col>
-                    </a-row>
-                </div>
+    <!-- Window Data Dialog -->
+    <a-modal v-model:visible="windowDialog" title="窗口数据预览 ({{ currentWindowRuleName }})" width="600px">
+      <a-table
+        :columns="windowDataColumns"
+        :data="windowData"
+        size="small"
+        :bordered="false"
+      >
+        <template #ts="{ record }">
+          {{ formatDate(record.ts) }}
+        </template>
+      </a-table>
+      <template #footer>
+        <a-button type="primary" @click="windowDialog = false">关闭</a-button>
+      </template>
+    </a-modal>
 
-                <!-- 规则逻辑 Logic -->
-                <div v-if="currentRule.type !== 'calculation'" class="form-section">
-                    <div class="section-header-row">
-                        <div class="section-title">规则逻辑 Logic</div>
-                        <a-button size="small" @click="openHelper(currentRule.condition, (v) => currentRule.condition = v)">
-                            公式助手
-                        </a-button>
-                    </div>
-                    <a-form-item label="表达式">
-                        <a-textarea
-                            v-model="currentRule.condition"
-                            placeholder="t1 > 50 && t2 < 80"
-                            :rows="3"
-                            class="code-input rect-input"
-                        />
-                        <template #extra>支持数据源别名（如 t1, t2）和逻辑运算符</template>
-                    </a-form-item>
-                </div>
+    <!-- Details Dialog -->
+    <a-modal v-model:visible="detailsDialog" :title="detailTitle" width="800px">
+      <a-tabs v-model:active-key="detailsTab" class="mb-4">
+        <a-tab-pane key="text" title="文本/原始内容"></a-tab-pane>
+        <a-tab-pane key="hex" title="Hex 视图" :disabled="!decodedHex"></a-tab-pane>
+      </a-tabs>
+            
+      <div v-if="detailsTab === 'text'">
+        <div class="text-gray-500 mb-2">内容长度: {{ detailContent.length }}</div>
+        <a-textarea
+          v-model="detailContent"
+          readonly
+          :auto-size="{ minRows: 5, maxRows: 15 }"
+          style="font-family: monospace;"
+        />
+      </div>
+            
+      <div v-else-if="detailsTab === 'hex'">
+        <div class="text-gray-500 mb-2">Hex 视图 ({{ decodedBytes ? decodedBytes.length : 0 }} bytes)</div>
+        <a-textarea
+          v-model="decodedHex"
+          readonly
+          :auto-size="{ minRows: 5, maxRows: 15 }"
+          style="font-family: monospace;"
+        />
+      </div>
 
-                <!-- 计算公式 -->
-                <div v-if="currentRule.type === 'calculation'" class="form-section">
-                    <div class="section-header-row">
-                        <div class="section-title">计算公式</div>
-                        <a-button size="small" @click="openHelper(currentRule.expression, (v) => currentRule.expression = v)">
-                            公式助手
-                        </a-button>
-                    </div>
-                    <a-form-item label="表达式">
-                        <a-textarea
-                            v-model="currentRule.expression"
-                            placeholder="value * 1.5 + 32"
-                            :rows="3"
-                            class="code-input rect-input"
-                        />
-                        <template #extra>支持数学运算符和函数（如 abs, sqrt, sin 等）</template>
-                    </a-form-item>
-                </div>
+      <a-alert v-if="detectedFile" type="info" class="mt-4">
+        <div class="d-flex justify-space-between align-items-center">
+          <span>检测到文件格式: <strong>{{ detectedFile.name }} ({{ detectedFile.ext }})</strong></span>
+          <a-button type="primary" size="small" @click="downloadDetectedFile">
+            <template #icon><IconDownload /></template>
+            下载文件
+          </a-button>
+        </div>
+      </a-alert>
+      <template #footer>
+        <a-button v-if="!decodedHex" @click="tryDecode">
+          <template #icon><IconCode /></template>
+          尝试 Base64 解码
+        </a-button>
+        <a-button type="primary" @click="detailsDialog = false">关闭</a-button>
+      </template>
+    </a-modal>
 
-                <!-- 动作 Actions -->
-                <div class="form-section">
-                    <div class="section-header-row">
-                        <div class="section-title">执行动作 (Action)</div>
-                        <div class="flex gap-2">
-                            <a-button type="outline" size="small" @click="detectInvalidActions">
-                                <template #icon><IconRefresh /></template>
-                                自动检测
-                            </a-button>
-                            <a-button type="outline" status="danger" size="small" @click="clearInvalidActions">
-                                <template #icon><IconDelete /></template>
-                                一键清除
-                            </a-button>
-                            <a-button type="primary" size="small" @click="addAction">
-                                <template #icon><IconPlus /></template>
-                                添加动作
-                            </a-button>
-                        </div>
-                    </div>
-                    <div v-if="!currentRule.actions || currentRule.actions.length === 0" class="empty-box">
-                        无动作
-                    </div>
-                    <div v-else class="actions-list">
-                        <div v-for="(action, index) in currentRule.actions" :key="index" class="action-row">
-                            <div class="action-index">STEP {{ index + 1 }}</div>
-                            <ActionEditor 
-                                class="flex-1"
-                                v-model="currentRule.actions[index]" 
-                                :channels="channels" 
-                                @remove="removeAction(index)" 
-                            />
-                        </div>
-                    </div>
-                </div>
-            </a-form>
-            <template #footer>
-                <a-button @click="dialog = false">取消</a-button>
-                <a-button type="primary" @click="saveRule">保存</a-button>
-            </template>
-        </a-modal>
+    <!-- Rule Dialog -->
+    <a-modal v-model:visible="dialog" :title="editingRule ? '编辑规则' : '添加规则'" width="80%" modal-class="industrial-white-modal edge-compute-rule-modal">
+      <a-form ref="form" :model="currentRule" layout="vertical" class="industrial-form form-controls-md">
+        <div class="form-section">
+          <div class="section-title">基础配置</div>
+          <a-row :gutter="16">
+            <a-col :span="16">
+              <a-form-item field="name" label="规则名称" required>
+                <a-input v-model="currentRule.name" placeholder="请输入规则名称" class="rect-input" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="enable" label="启用状态">
+                <a-switch v-model="currentRule.enable" type="round" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <a-row :gutter="16">
+            <a-col :span="6">
+              <a-form-item field="type" label="规则类型">
+                <a-select 
+                  v-model="currentRule.type" 
+                  class="rect-input"
+                  :options="[
+                    {label: 'Threshold (阈值触发)', value: 'threshold'},
+                    {label: 'Calculation (计算公式)', value: 'calculation'},
+                    {label: 'Window (时间/计数窗口)', value: 'window'},
+                    {label: 'State (状态持续)', value: 'state'}
+                  ]" 
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item field="priority" label="优先级">
+                <a-input-number v-model="currentRule.priority" class="rect-input" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item field="trigger_mode" label="触发模式">
+                <a-select
+                  v-model="currentRule.trigger_mode"
+                  class="rect-input"
+                  :options="[{label: '始终触发', value: 'always'}, {label: '仅状态改变时触发', value: 'on_change'}]"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="6">
+              <a-form-item field="check_interval" label="检查频率">
+                <a-select
+                  v-model="currentRule.check_interval"
+                  class="rect-input"
+                  :options="['1s', '5s', '10s', '30s', '1m']"
+                />
+              </a-form-item>
+            </a-col>
+          </a-row>
+          <div class="form-hint">{{ getRuleTypeExplanation(currentRule.type) }}</div>
+        </div>
 
-        <!-- JSON Import Dialog -->
-        <a-modal v-model:visible="jsonImportVisible" title="JSON 导入规则" width="700px" :ok-text="jsonImportPreview.length > 0 ? `导入 ${jsonImportPreview.length} 条规则` : '导入'" @ok="executeJsonImport" :ok-button-props="{ disabled: jsonImportPreview.length === 0 }">
-            <div class="json-import-area">
-                <div class="json-import-tabs">
-                    <a-radio-group v-model="jsonImportMode" type="button" size="small">
-                        <a-radio value="paste">粘贴 JSON</a-radio>
-                        <a-radio value="file">上传文件</a-radio>
-                    </a-radio-group>
-                </div>
+        <div class="form-section">
+          <div class="section-header-row">
+            <div class="section-title">数据源 Sources</div>
+            <div class="flex gap-2">
+              <a-button type="outline" size="small" @click="detectInvalidSources">
+                <template #icon><IconRefresh /></template>
+                自动检测
+              </a-button>
+              <a-button type="outline" status="danger" size="small" @click="clearInvalidSources">
+                <template #icon><IconDelete /></template>
+                一键清除
+              </a-button>
+              <a-button type="primary" size="small" @click="addSource">
+                <template #icon><IconPlus /></template>
+                添加
+              </a-button>
+            </div>
+          </div>
+          <div class="form-hint form-hint--block">
+            请为每个数据源设置别名（如 t1, t2），然后在触发条件中使用别名编写逻辑公式（例如：t1 > 20 || t2 > 30）。
+          </div>
+          <div v-for="(src, index) in currentRule.sources" :key="index" class="source-row">
+            <div class="source-index">#{{ index + 1 }}</div>
+            <a-row :gutter="12" class="flex-1">
+              <a-col :span="24" :md="5">
+                <a-select
+                  v-model="src.channel_id"
+                  :options="channels"
+                  placeholder="通道"
+                  class="rect-input"
+                  @change="() => onSourceChannelChange(src)"
+                />
+              </a-col>
+              <a-col :span="24" :md="5">
+                <a-select
+                  v-model="src.device_id"
+                  :options="src._deviceList || []"
+                  placeholder="设备"
+                  class="rect-input"
+                  :disabled="!src.channel_id"
+                  @change="() => onSourceDeviceChange(src)"
+                  @click="() => loadSourceDevices(src)"
+                />
+              </a-col>
+              <a-col :span="24" :md="5">
+                <a-select
+                  v-model="src.point_id"
+                  :options="src._pointList || []"
+                  placeholder="点位"
+                  class="rect-input"
+                  :disabled="!src.device_id"
+                  @click="() => loadSourcePoints(src)"
+                />
+              </a-col>
+              <a-col :span="24" :md="7">
+                <a-input 
+                  v-model="src.alias" 
+                  placeholder="t1"
+                  class="rect-input w-full"
+                />
+              </a-col>
+              <a-col :span="24" :md="2" class="flex items-center justify-end">
+                <a-button type="text" status="danger" @click="removeSource(index)">
+                  <IconDelete />
+                </a-button>
+              </a-col>
+            </a-row>
+          </div>
+        </div>
 
-                <div v-if="jsonImportMode === 'paste'" class="mt-3">
-                    <a-textarea
-                        v-model="jsonImportContent"
-                        placeholder='粘贴 JSON 规则内容，支持单条规则或规则数组。例如：
+        <!-- 窗口配置 -->
+        <div v-if="currentRule.type === 'window'" class="form-section">
+          <div class="section-title">窗口配置</div>
+          <a-row :gutter="16">
+            <a-col :span="8">
+              <a-form-item field="window.type" label="窗口类型">
+                <a-select v-model="currentRule.window.type" :options="['sliding', 'tumbling']" class="rect-input" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="window.size" label="窗口大小">
+                <a-input v-model="currentRule.window.size" placeholder="例如: 10s 或 100" class="rect-input" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item field="window.aggr_func" label="聚合函数">
+                <a-select v-model="currentRule.window.aggr_func" :options="['avg', 'min', 'max', 'sum', 'count', 'rate']" class="rect-input" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </div>
+
+        <!-- 状态维持 -->
+        <div v-if="currentRule.type === 'state' || currentRule.type === 'threshold'" class="form-section">
+          <div class="section-title">状态维持</div>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item field="state.duration" label="持续时间 (Duration)">
+                <a-input v-model="currentRule.state.duration" placeholder="例如: 10s" class="rect-input" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item field="state.count" label="连续次数 (Count)">
+                <a-input-number v-model="currentRule.state.count" class="rect-input" />
+              </a-form-item>
+            </a-col>
+          </a-row>
+        </div>
+
+        <!-- 规则逻辑 Logic -->
+        <div v-if="currentRule.type !== 'calculation'" class="form-section">
+          <div class="section-header-row">
+            <div class="section-title">规则逻辑 Logic</div>
+            <a-button size="small" @click="openHelper(currentRule.condition, (v) => currentRule.condition = v)">
+              公式助手
+            </a-button>
+          </div>
+          <a-form-item label="表达式">
+            <a-textarea
+              v-model="currentRule.condition"
+              placeholder="t1 > 50 && t2 < 80"
+              :rows="3"
+              class="code-input rect-input"
+            />
+            <template #extra>支持数据源别名（如 t1, t2）和逻辑运算符</template>
+          </a-form-item>
+        </div>
+
+        <!-- 计算公式 -->
+        <div v-if="currentRule.type === 'calculation'" class="form-section">
+          <div class="section-header-row">
+            <div class="section-title">计算公式</div>
+            <a-button size="small" @click="openHelper(currentRule.expression, (v) => currentRule.expression = v)">
+              公式助手
+            </a-button>
+          </div>
+          <a-form-item label="表达式">
+            <a-textarea
+              v-model="currentRule.expression"
+              placeholder="value * 1.5 + 32"
+              :rows="3"
+              class="code-input rect-input"
+            />
+            <template #extra>支持数学运算符和函数（如 abs, sqrt, sin 等）</template>
+          </a-form-item>
+        </div>
+
+        <!-- 动作 Actions -->
+        <div class="form-section">
+          <div class="section-header-row">
+            <div class="section-title">执行动作 (Action)</div>
+            <div class="flex gap-2">
+              <a-button type="outline" size="small" @click="detectInvalidActions">
+                <template #icon><IconRefresh /></template>
+                自动检测
+              </a-button>
+              <a-button type="outline" status="danger" size="small" @click="clearInvalidActions">
+                <template #icon><IconDelete /></template>
+                一键清除
+              </a-button>
+              <a-button type="primary" size="small" @click="addAction">
+                <template #icon><IconPlus /></template>
+                添加动作
+              </a-button>
+            </div>
+          </div>
+          <div v-if="!currentRule.actions || currentRule.actions.length === 0" class="empty-box">
+            无动作
+          </div>
+          <div v-else class="actions-list">
+            <div v-for="(action, index) in currentRule.actions" :key="index" class="action-row">
+              <div class="action-index">STEP {{ index + 1 }}</div>
+              <ActionEditor 
+                class="flex-1"
+                v-model="currentRule.actions[index]" 
+                :channels="channels" 
+                @remove="removeAction(index)" 
+              />
+            </div>
+          </div>
+        </div>
+      </a-form>
+      <template #footer>
+        <a-button @click="dialog = false">取消</a-button>
+        <a-button type="primary" :loading="ruleSaving" @click="saveRule">保存</a-button>
+      </template>
+    </a-modal>
+
+    <!-- JSON Import Dialog -->
+    <a-modal v-model:visible="jsonImportVisible" title="JSON 导入规则" width="700px" :ok-text="jsonImportPreview.length > 0 ? `导入 ${jsonImportPreview.length} 条规则` : '导入'" :ok-loading="jsonImporting" @ok="executeJsonImport" :ok-button-props="{ disabled: jsonImportPreview.length === 0 }">
+      <div class="json-import-area">
+        <div class="json-import-tabs">
+          <a-radio-group v-model="jsonImportMode" type="button" size="small">
+            <a-radio value="paste">粘贴 JSON</a-radio>
+            <a-radio value="file">上传文件</a-radio>
+          </a-radio-group>
+        </div>
+
+        <div v-if="jsonImportMode === 'paste'" class="mt-3">
+          <a-textarea
+            v-model="jsonImportContent"
+            placeholder="粘贴 JSON 规则内容，支持单条规则或规则数组。例如：
 [
   {
-    "name": "温度报警",
-    "type": "threshold",
-    "enable": true,
-    "priority": 0,
-    "trigger_mode": "always",
-    "check_interval": "10s",
-    "sources": [{"channel_id": "...", "device_id": "...", "point_id": "...", "alias": "t1"}],
-    "condition": "t1 > 80",
-    "actions": [{"type": "mqtt", "topic": "alarm", "payload": "温度过高"}]
+    &quot;name&quot;: &quot;温度报警&quot;,
+    &quot;type&quot;: &quot;threshold&quot;,
+    &quot;enable&quot;: true,
+    &quot;priority&quot;: 0,
+    &quot;trigger_mode&quot;: &quot;always&quot;,
+    &quot;check_interval&quot;: &quot;10s&quot;,
+    &quot;sources&quot;: [{&quot;channel_id&quot;: &quot;...&quot;, &quot;device_id&quot;: &quot;...&quot;, &quot;point_id&quot;: &quot;...&quot;, &quot;alias&quot;: &quot;t1&quot;}],
+    &quot;condition&quot;: &quot;t1 > 80&quot;,
+    &quot;actions&quot;: [{&quot;type&quot;: &quot;mqtt&quot;, &quot;topic&quot;: &quot;alarm&quot;, &quot;payload&quot;: &quot;温度过高&quot;}]
   }
-]'
-                        :rows="12"
-                        class="code-input rect-input"
-                        @input="onJsonInputChange"
-                    />
-                </div>
+]"
+            :rows="12"
+            class="code-input rect-input"
+            @input="onJsonInputChange"
+          />
+        </div>
 
-                <div v-else class="mt-3">
-                    <div class="json-upload-area" @dragover.prevent @drop.prevent="handleJsonFileDrop">
-                        <a-upload
-                            :auto-upload="false"
-                            :show-file-list="false"
-                            accept=".json"
-                            @change="handleJsonFileSelect"
-                            draggable
-                        >
-                            <template #upload-button>
-                                <div class="json-upload-trigger">
-                                    <IconUpload :size="32" class="json-upload-icon" />
-                                    <div class="json-upload-text">点击或拖拽 JSON 文件到此处</div>
-                                    <div class="json-upload-hint">支持 .json 文件，单条规则或规则数组</div>
-                                </div>
-                            </template>
-                        </a-upload>
-                        <div v-if="jsonFileName" class="json-upload-file-info">
-                            <IconFile class="json-file-icon" />
-                            <span>{{ jsonFileName }}</span>
-                            <a-button type="text" size="mini" status="danger" @click="clearJsonFile">移除</a-button>
-                        </div>
-                    </div>
+        <div v-else class="mt-3">
+          <div class="json-upload-area" @dragover.prevent @drop.prevent="handleJsonFileDrop">
+            <a-upload
+              :auto-upload="false"
+              :show-file-list="false"
+              accept=".json"
+              @change="handleJsonFileSelect"
+              draggable
+            >
+              <template #upload-button>
+                <div class="json-upload-trigger">
+                  <IconUpload :size="32" class="json-upload-icon" />
+                  <div class="json-upload-text">点击或拖拽 JSON 文件到此处</div>
+                  <div class="json-upload-hint">支持 .json 文件，单条规则或规则数组</div>
                 </div>
-
-                <div v-if="jsonImportError" class="mt-3">
-                    <a-alert type="error" :title="jsonImportError" closable @close="jsonImportError = ''" />
-                </div>
-
-                <div v-if="jsonImportPreview.length > 0" class="mt-4">
-                    <div class="json-import-preview-header">
-                        <span class="json-import-preview-title">预览 ({{ jsonImportPreview.length }} 条规则)</span>
-                        <a-button type="text" size="small" @click="clearJsonImport">清空</a-button>
-                    </div>
-                    <div class="json-import-preview-list">
-                        <div v-for="(rule, index) in jsonImportPreview" :key="index" class="json-import-preview-item">
-                            <span class="json-import-preview-index">#{{ index + 1 }}</span>
-                            <span class="json-import-preview-name">{{ rule.name || '(未命名)' }}</span>
-                            <a-tag :color="getRuleTypeTagColor(rule.type)" size="small">{{ formatRuleType(rule.type) }}</a-tag>
-                            <a-tag :color="rule.enable !== false ? 'green' : 'red'" size="small">{{ rule.enable !== false ? '启用' : '禁用' }}</a-tag>
-                            <span class="json-import-preview-source">{{ rule.sources?.length || 0 }} 个数据源</span>
-                            <span class="json-import-preview-action">{{ rule.actions?.length || 0 }} 个动作</span>
-                        </div>
-                    </div>
-                </div>
+              </template>
+            </a-upload>
+            <div v-if="jsonFileName" class="json-upload-file-info">
+              <IconFile class="json-file-icon" />
+              <span>{{ jsonFileName }}</span>
+              <a-button type="text" size="mini" status="danger" @click="clearJsonFile">移除</a-button>
             </div>
-        </a-modal>
+          </div>
+        </div>
 
-        <EdgeComputeHelpDrawer v-model:visible="helpVisible" />
+        <div v-if="jsonImportError" class="mt-3">
+          <a-alert type="error" :title="jsonImportError" closable @close="jsonImportError = ''" />
+        </div>
 
-        <EdgeRecordFilterModal
-            v-model:visible="filterVisible"
-            :mode="recordType"
-            :filters="currentRecordFilters"
-            :rules="rules"
-            @apply="applyRecordFilters"
+        <div v-if="jsonImportPreview.length > 0" class="mt-4">
+          <div class="json-import-preview-header">
+            <span class="json-import-preview-title">预览 ({{ jsonImportPreview.length }} 条规则)</span>
+            <a-button type="text" size="small" @click="clearJsonImport">清空</a-button>
+          </div>
+          <div class="json-import-preview-list">
+            <div v-for="(rule, index) in jsonImportPreview" :key="index" class="json-import-preview-item">
+              <span class="json-import-preview-index">#{{ index + 1 }}</span>
+              <span class="json-import-preview-name">{{ rule.name || '(未命名)' }}</span>
+              <a-tag :color="getRuleTypeTagColor(rule.type)" size="small">{{ formatRuleType(rule.type) }}</a-tag>
+              <a-tag :color="rule.enable !== false ? 'green' : 'red'" size="small">{{ rule.enable !== false ? '启用' : '禁用' }}</a-tag>
+              <span class="json-import-preview-source">{{ rule.sources?.length || 0 }} 个数据源</span>
+              <span class="json-import-preview-action">{{ rule.actions?.length || 0 }} 个动作</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </a-modal>
+
+    <EdgeComputeHelpDrawer v-model:visible="helpVisible" />
+
+    <EdgeRecordFilterModal
+      v-model:visible="filterVisible"
+      :mode="recordType"
+      :filters="currentRecordFilters"
+      :rules="rules"
+      @apply="applyRecordFilters"
+    />
+
+    <!-- Expression Helper Dialog -->
+    <a-modal v-model:visible="helperDialog" title="表达式转换助手" width="600px">
+      <div class="pt-4">
+        <div class="text-gray-500 mb-2">输入标准表达式 (例如: v & 64, v | 1, ~v):</div>
+        <div class="text-gray-500 text-sm mb-4">提示: 系统已直接支持 v.N 语法 (如 v.4) 及 v.bit.N 语法 (如 v.bit.4) 读取第N位，无需转换。</div>
+        <a-textarea
+          v-model="helperInput"
+          placeholder="标准表达式 (Standard Syntax)"
+          :rows="3"
+          :auto-size="{ minRows: 3, maxRows: 6 }"
         />
-
-                <!-- Expression Helper Dialog -->
-                <a-modal v-model:visible="helperDialog" title="表达式转换助手" width="600px">
-                    <div class="pt-4">
-                        <div class="text-gray-500 mb-2">输入标准表达式 (例如: v & 64, v | 1, ~v):</div>
-                        <div class="text-gray-500 text-sm mb-4">提示: 系统已直接支持 v.N 语法 (如 v.4) 及 v.bit.N 语法 (如 v.bit.4) 读取第N位，无需转换。</div>
-                        <a-textarea
-                            v-model="helperInput"
-                            placeholder="标准表达式 (Standard Syntax)"
-                            :rows="3"
-                            :auto-size="{ minRows: 3, maxRows: 6 }"
-                        />
                         
-                        <div class="d-flex justify-center my-4 gap-4">
-                            <a-button type="text" @click="docsDialog = true">
-                                <template #icon><IconBook /></template>
-                                查看函数文档 (View Docs)
-                            </a-button>
-                            <a-button type="secondary" @click="convertHelper">
-                                <template #icon><IconArrowDown /></template>
-                                转换 (Convert)
-                            </a-button>
-                        </div>
+        <div class="d-flex justify-center my-4 gap-4">
+          <a-button type="text" @click="docsDialog = true">
+            <template #icon><IconBook /></template>
+            查看函数文档 (View Docs)
+          </a-button>
+          <a-button type="secondary" @click="convertHelper">
+            <template #icon><IconArrowDown /></template>
+            转换 (Convert)
+          </a-button>
+        </div>
                         
-                        <div class="text-gray-500 mb-2">转换结果 (Function Syntax):</div>
-                        <a-textarea
-                            v-model="helperOutput"
-                            placeholder="函数表达式 (Result)"
-                            :rows="3"
-                            :auto-size="{ minRows: 3, maxRows: 6 }"
-                            readonly
-                            :disabled="true"
-                        />
-                    </div>
-                    <template #footer>
-                        <a-button @click="helperDialog = false">关闭</a-button>
-                        <a-button type="primary" @click="applyHelper" :disabled="!helperOutput">应用并填入</a-button>
-                    </template>
-                </a-modal>
-                <!-- Expression Docs Dialog -->
-                <a-modal v-model:visible="docsDialog" title="表达式函数参考文档 (Expression Reference)" width="950px" :scrollable="true" class="expression-docs-dialog">
-                    <div class="expression-docs-content" style="max-height: 650px; overflow-y: auto;">
-                        
-                        <a-alert type="info" class="mb-6 p-4">
-                            <div class="font-medium text-lg mb-2">基本变量</div>
-                            <div class="mb-1"><code class="text-blue-600">value</code> 或 <code class="text-blue-600">v</code> : 当前触发点位的值 (The current point value).</div>
-                            <div><code class="text-blue-600">t1</code>, <code class="text-blue-600">t2</code> ... : 数据源别名 (Source aliases defined in rule).</div>
-                        </a-alert>
+        <div class="text-gray-500 mb-2">转换结果 (Function Syntax):</div>
+        <a-textarea
+          v-model="helperOutput"
+          placeholder="函数表达式 (Result)"
+          :rows="3"
+          :auto-size="{ minRows: 3, maxRows: 6 }"
+          readonly
+          :disabled="true"
+        />
+      </div>
+      <template #footer>
+        <a-button @click="helperDialog = false">关闭</a-button>
+        <a-button type="primary" @click="applyHelper" :disabled="!helperOutput">应用并填入</a-button>
+      </template>
+    </a-modal>
+    <!-- Expression Docs Dialog -->
+    <a-modal v-model:visible="docsDialog" title="表达式函数参考文档 (Expression Reference)" width="950px" :scrollable="true" class="expression-docs-dialog">
+      <div class="expression-docs-content" style="max-height: 650px; overflow-y: auto;">
+        <a-alert type="info" class="mb-6 p-4">
+          <div class="font-medium text-lg mb-2">基本变量</div>
+          <div class="mb-1"><code class="text-blue-600">value</code> 或 <code class="text-blue-600">v</code> : 当前触发点位的值 (The current point value).</div>
+          <div><code class="text-blue-600">t1</code>, <code class="text-blue-600">t2</code> ... : 数据源别名 (Source aliases defined in rule).</div>
+        </a-alert>
 
-                        <div class="function-category mb-8">
-                            <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
-                                <div class="text-xl font-semibold text-gray-800">1. 位操作函数 (Bitwise Operations)</div>
-                            </div>
-                            <a-table 
-                                :columns="docsColumns" 
-                                :data="bitwiseFunctions" 
-                                size="small" 
-                                :bordered="false" 
-                                class="function-table"
-                            >
-                                <template #function="{ record }">
-                                    <span v-html="record.function"></span>
-                                </template>
-                                <template #description="{ record }">
-                                    <span v-html="record.description"></span>
-                                </template>
-                                <template #example="{ record }">
-                                    <div class="example-cell">
-                                        <span v-html="record.example"></span>
-                                        <a-button 
-                                            type="text" 
-                                            size="small" 
-                                            class="copy-button" 
-                                            @click="copyExample(record.example)"
-                                            title="复制示例"
-                                        >
-                                            复制
-                                        </a-button>
-                                    </div>
-                                </template>
-                            </a-table>
-                        </div>
-
-                        <div class="function-category mb-8">
-                            <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
-                                <div class="text-xl font-semibold text-gray-800">2. 数学函数 (Mathematical Functions)</div>
-                            </div>
-                            <a-table 
-                                :columns="docsColumns" 
-                                :data="mathFunctions" 
-                                size="small" 
-                                :bordered="false" 
-                                class="function-table"
-                            >
-                                <template #function="{ record }">
-                                    <span v-html="record.function"></span>
-                                </template>
-                                <template #description="{ record }">
-                                    <span v-html="record.description"></span>
-                                </template>
-                                <template #example="{ record }">
-                                    <div class="example-cell">
-                                        <span v-html="record.example"></span>
-                                        <a-button 
-                                            type="text" 
-                                            size="small" 
-                                            class="copy-button" 
-                                            @click="copyExample(record.example)"
-                                            title="复制示例"
-                                        >
-                                            复制
-                                        </a-button>
-                                    </div>
-                                </template>
-                            </a-table>
-                        </div>
-
-                        <div class="function-category mb-8">
-                            <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
-                                <div class="text-xl font-semibold text-gray-800">3. 逻辑函数 (Logical Functions)</div>
-                            </div>
-                            <a-table 
-                                :columns="docsColumns" 
-                                :data="logicalFunctions" 
-                                size="small" 
-                                :bordered="false" 
-                                class="function-table"
-                            >
-                                <template #function="{ record }">
-                                    <span v-html="record.function"></span>
-                                </template>
-                                <template #description="{ record }">
-                                    <span v-html="record.description"></span>
-                                </template>
-                                <template #example="{ record }">
-                                    <div class="example-cell">
-                                        <span v-html="record.example"></span>
-                                        <a-button 
-                                            type="text" 
-                                            size="small" 
-                                            class="copy-button" 
-                                            @click="copyExample(record.example)"
-                                            title="复制示例"
-                                        >
-                                            复制
-                                        </a-button>
-                                    </div>
-                                </template>
-                            </a-table>
-                        </div>
-                    </div>
-                    <template #footer>
-                        <a-button type="primary" @click="docsDialog = false" class="w-24">关闭</a-button>
-                    </template>
-                </a-modal>
-
-        <a-modal
-            v-model:visible="deleteDialog.visible"
-            title="确认删除"
-            ok-text="确认删除"
-            cancel-text="取消"
-            :ok-button-props="{ status: 'danger' }"
-            @ok="executeDeleteRule"
-            @cancel="deleteDialog.visible = false"
-        >
-            <template v-if="deleteDialog.isBatch">
-                确定要批量删除选中的 <span class="text-red-500 font-bold">{{ deleteDialog.batchCount }}</span> 条规则吗？
+        <div class="function-category mb-8">
+          <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
+            <div class="text-xl font-semibold text-gray-800">1. 位操作函数 (Bitwise Operations)</div>
+          </div>
+          <a-table 
+            :columns="docsColumns" 
+            :data="bitwiseFunctions" 
+            size="small" 
+            :bordered="false" 
+            class="function-table"
+          >
+            <template #function="{ record }">
+              <span v-html="record.function"></span>
             </template>
-            <template v-else>
-                确定要删除规则 <span class="text-red-500 font-bold">{{ deleteDialog.rule?.name || deleteDialog.rule?.id }}</span> 吗？
+            <template #description="{ record }">
+              <span v-html="record.description"></span>
             </template>
-            <div class="mt-2 text-gray-400 text-sm">此操作不可撤销。</div>
-        </a-modal>
-    </div>
+            <template #example="{ record }">
+              <div class="example-cell">
+                <span v-html="record.example"></span>
+                <a-button 
+                  type="text" 
+                  size="small" 
+                  class="copy-button" 
+                  @click="copyExample(record.example)"
+                  title="复制示例"
+                >
+                  复制
+                </a-button>
+              </div>
+            </template>
+          </a-table>
+        </div>
+
+        <div class="function-category mb-8">
+          <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
+            <div class="text-xl font-semibold text-gray-800">2. 数学函数 (Mathematical Functions)</div>
+          </div>
+          <a-table 
+            :columns="docsColumns" 
+            :data="mathFunctions" 
+            size="small" 
+            :bordered="false" 
+            class="function-table"
+          >
+            <template #function="{ record }">
+              <span v-html="record.function"></span>
+            </template>
+            <template #description="{ record }">
+              <span v-html="record.description"></span>
+            </template>
+            <template #example="{ record }">
+              <div class="example-cell">
+                <span v-html="record.example"></span>
+                <a-button 
+                  type="text" 
+                  size="small" 
+                  class="copy-button" 
+                  @click="copyExample(record.example)"
+                  title="复制示例"
+                >
+                  复制
+                </a-button>
+              </div>
+            </template>
+          </a-table>
+        </div>
+
+        <div class="function-category mb-8">
+          <div class="category-header mb-4 pb-2 border-b-2 border-gray-200">
+            <div class="text-xl font-semibold text-gray-800">3. 逻辑函数 (Logical Functions)</div>
+          </div>
+          <a-table 
+            :columns="docsColumns" 
+            :data="logicalFunctions" 
+            size="small" 
+            :bordered="false" 
+            class="function-table"
+          >
+            <template #function="{ record }">
+              <span v-html="record.function"></span>
+            </template>
+            <template #description="{ record }">
+              <span v-html="record.description"></span>
+            </template>
+            <template #example="{ record }">
+              <div class="example-cell">
+                <span v-html="record.example"></span>
+                <a-button 
+                  type="text" 
+                  size="small" 
+                  class="copy-button" 
+                  @click="copyExample(record.example)"
+                  title="复制示例"
+                >
+                  复制
+                </a-button>
+              </div>
+            </template>
+          </a-table>
+        </div>
+      </div>
+      <template #footer>
+        <a-button type="primary" @click="docsDialog = false" class="w-24">关闭</a-button>
+      </template>
+    </a-modal>
+
+    <a-modal
+      v-model:visible="deleteDialog.visible"
+      title="确认删除"
+      ok-text="确认删除"
+      cancel-text="取消"
+      :ok-button-props="{ status: 'danger', loading: deleteDialog.loading }"
+      @ok="executeDeleteRule"
+      @cancel="deleteDialog.visible = false"
+    >
+      <template v-if="deleteDialog.isBatch">
+        确定要批量删除选中的 <span class="text-red-500 font-bold">{{ deleteDialog.batchCount }}</span> 条规则吗？
+      </template>
+      <template v-else>
+        确定要删除规则 <span class="text-red-500 font-bold">{{ deleteDialog.rule?.name || deleteDialog.rule?.id }}</span> 吗？
+      </template>
+      <div class="mt-2 text-gray-400 text-sm">此操作不可撤销。</div>
+    </a-modal>
+  </div>
 </template>
 
 <script setup>
@@ -956,7 +962,7 @@ const logicalFunctions = [
   { function: '<code>lt(a, b)</code>', description: '小于', example: '<code>lt(v, 50)</code>' },
   { function: '<code>le(a, b)</code>', description: '小于等于', example: '<code>le(v, 50)</code>' }
 ]
-import { ref, reactive, computed, watch, watchEffect, onMounted, provide } from 'vue'
+import { ref, reactive, computed, watch, onMounted, provide } from 'vue'
 import { useRoute } from 'vue-router'
 import request from '@/utils/request'
 import { showMessage } from '@/composables/useGlobalState'
@@ -1112,13 +1118,6 @@ const httpOptions = computed(() => {
 // Provide only UI data
 provide('mqttOptions', mqttOptions)
 provide('httpOptions', httpOptions)
-
-// Debug
-watchEffect(() => {
-    console.log('northboundConfig:', northboundConfig.value)
-    console.log('mqttOptions:', mqttOptions.value)
-    console.log('httpOptions:', httpOptions.value)
-})
 
 const selectedRuleKeys = ref([]) // 批量选择存储
 
@@ -1667,7 +1666,8 @@ const deleteDialog = reactive({
     visible: false,
     isBatch: false,
     rule: null,
-    batchCount: 0
+    batchCount: 0,
+    loading: false
 })
 
 const deleteRule = (rule) => {
@@ -1684,6 +1684,8 @@ const handleBatchDelete = () => {
 }
 
 const executeDeleteRule = async () => {
+    if (deleteDialog.loading) return
+    deleteDialog.loading = true
     try {
         if (deleteDialog.isBatch) {
             await Promise.all(selectedRuleKeys.value.map(id => request.delete(`/api/edge/rules/${id}`)))
@@ -1691,21 +1693,31 @@ const executeDeleteRule = async () => {
             showMessage('批量删除成功', 'success')
         } else if (deleteDialog.rule) {
             await request.delete(`/api/edge/rules/${deleteDialog.rule.id}`)
+            showMessage(`规则「${deleteDialog.rule.name || deleteDialog.rule.id}」已删除`, 'success')
         }
         deleteDialog.visible = false
         fetchRules()
     } catch (e) {
         showMessage('删除失败: ' + (e.message || e), 'error')
+    } finally {
+        deleteDialog.loading = false
     }
 }
 
+const ruleSaving = ref(false)
+
 const saveRule = async () => {
+    if (ruleSaving.value) return
+    ruleSaving.value = true
     try {
         await request.post('/api/edge/rules', currentRule)
         dialog.value = false
         fetchRules()
+        showMessage('规则保存成功', 'success')
     } catch (e) {
         showMessage('保存失败: ' + e.message, 'error')
+    } finally {
+        ruleSaving.value = false
     }
 }
 
@@ -1840,11 +1852,15 @@ const clearJsonFile = () => {
 }
 
 // 执行批量导入
+const jsonImporting = ref(false)
+
 const executeJsonImport = async () => {
+    if (jsonImporting.value) return
     if (jsonImportPreview.value.length === 0) {
         showMessage('没有可导入的规则', 'warning')
         return
     }
+    jsonImporting.value = true
 
     let successCount = 0
     let failCount = 0
@@ -1881,6 +1897,7 @@ const executeJsonImport = async () => {
         showMessage(`导入完成: ${successCount} 条成功, ${failCount} 条失败`, 'warning')
     }
 
+    jsonImporting.value = false
     jsonImportVisible.value = false
     fetchRules()
 }

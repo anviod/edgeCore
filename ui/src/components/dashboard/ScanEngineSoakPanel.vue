@@ -41,6 +41,11 @@
       <a-spin tip="加载 SLA 监控..." />
     </div>
 
+    <div v-else-if="fetchError && !hasData" class="soak-panel__error">
+      <span>{{ fetchError }}</span>
+      <a-button size="mini" @click="retryFetch">重试</a-button>
+    </div>
+
     <template v-else>
       <div class="soak-scan-classes soak-card">
         <div class="soak-scan-classes__header">
@@ -190,7 +195,6 @@
           </div>
         </div>
       </div>
-
     </template>
 
     <ScanEngineSoakHelpDrawer v-model:visible="helpVisible" :focus-section="helpFocusSection" />
@@ -211,6 +215,7 @@ defineProps({
 
 const loading = ref(true)
 const hasData = ref(false)
+const fetchError = ref('')
 const helpVisible = ref(false)
 const helpFocusSection = ref('')
 
@@ -238,15 +243,17 @@ const passCount = computed(() => releaseGateItems.value.filter(i => i.passed).le
 const failCount = computed(() => releaseGateItems.value.filter(i => !i.passed).length)
 
 const gateSummaryClass = computed(() => {
-  if (releaseGate.value.all_passed) return 'is-pass'
+  if (releaseGate.value.all_passed === true) return 'is-pass'
   if (releaseGate.value.partial_failed) return 'is-partial'
-  return 'is-pass'
+  if (!hasData.value) return 'is-unknown'
+  return 'is-fail'
 })
 
 const gateSummaryText = computed(() => {
-  if (releaseGate.value.all_passed) return '全部达标'
+  if (releaseGate.value.all_passed === true) return '全部达标'
   if (releaseGate.value.partial_failed) return '部分未达标'
-  return '全部达标'
+  if (!hasData.value) return '数据未知'
+  return '未达标'
 })
 
 const trendCards = computed(() => {
@@ -331,10 +338,20 @@ const formatScanClassPeriod = (label) => {
   return `${rounded.toFixed(2)}${unit}`
 }
 
+const retryFetch = () => {
+  fetchError.value = ''
+  loading.value = true
+  fetchSoak()
+}
+
 const fetchSoak = async () => {
   try {
     const data = await request.get('/api/diagnostics/soak')
-    if (!data) return
+    if (!data) {
+      fetchError.value = '暂无监控数据'
+      return
+    }
+    fetchError.value = ''
     runtimeStartTime.value = data.runtime?.start_time || null
     updateUptimeDisplay()
     releaseGate.value = data.release_gate || {}
@@ -345,6 +362,7 @@ const fetchSoak = async () => {
     hasData.value = true
   } catch (e) {
     console.error(e)
+    fetchError.value = '监控数据加载失败'
   } finally {
     loading.value = false
   }

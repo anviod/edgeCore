@@ -67,16 +67,16 @@ onUnmounted(() => {
       <div class="ai-event-toolbar__left">
         <a-button size="mini" :type="paused ? 'outline' : 'text'" @click="togglePause">
           <template v-if="paused">
-            <svg viewBox="0 0 12 12" fill="currentColor" style="width:10px;height:10px;margin-right:3px"><path d="M3 2v8L10 6z"/></svg>
+            <svg viewBox="0 0 12 12" fill="currentColor" style="width:10px;height:10px;margin-right:3px"><path d="M3 2v8L10 6z" /></svg>
             继续
           </template>
           <template v-else>
-            <svg viewBox="0 0 12 12" fill="currentColor" style="width:10px;height:10px;margin-right:3px"><rect x="3" y="2" width="2.5" height="8" rx="0.5"/><rect x="6.5" y="2" width="2.5" height="8" rx="0.5"/></svg>
+            <svg viewBox="0 0 12 12" fill="currentColor" style="width:10px;height:10px;margin-right:3px"><rect x="3" y="2" width="2.5" height="8" rx="0.5" /><rect x="6.5" y="2" width="2.5" height="8" rx="0.5" /></svg>
             暂停
           </template>
         </a-button>
         <a-button size="mini" type="text" @click="clearEvents">
-          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="width:10px;height:10px;margin-right:3px"><path d="M2.5 3.5h7M5 1.5h2M4.5 3.5v6.5M7.5 3.5v6.5M3 3.5l.5 7a1 1 0 0 0 1 .9h3a1 1 0 0 0 1-.9l.5-7"/></svg>
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="width:10px;height:10px;margin-right:3px"><path d="M2.5 3.5h7M5 1.5h2M4.5 3.5v6.5M7.5 3.5v6.5M3 3.5l.5 7a1 1 0 0 0 1 .9h3a1 1 0 0 0 1-.9l.5-7" /></svg>
           清除
         </a-button>
       </div>

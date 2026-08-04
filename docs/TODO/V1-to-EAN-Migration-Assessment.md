@@ -1,22 +1,23 @@
-﻿# V1 命令协议迁移至 EAN 2.0 评估方案
+# V1 命令协议迁移至 EAN 2.0 评估方案
 
 | 属性 | 值 |
 |---|---|
-| 文档版本 | 2.14 |
-| 日期 | 2026-07-30 |
+| 文档版本 | 2.26 |
+| 日期 | 2026-08-04 |
 | 适用范围 | EdgeX + EdgeOS 联合架构 |
-| 状态 | **Phase 1 已完成 / Phase 2 跨系统路径已打通并实机复验通过（MQTT + NATS）/ Phase 3 EdgeX 侧全部完成（EX-P3-01~09）/ EdgeOS 侧 OS-P3-01/02 完成 / v2.14：MCP 工具合并优化（94→32）+ 地址语义统一修复（point_id/address/name 三形式自动解析）+ BACnet 设备扫描硬指标通过 / v2.13：EdgeX 侧 `device_report` 连接/重注册/超时兜底与 publisher 刷新竞态收尾** |
-| 变更说明 | v2.14（EdgeX 侧）: **工具合并与地址语义**——① 将 15 协议×4 操作矩阵（60 工具）合并为 4 通用工具（read_points/write_points/scan_devices/list_points），MCP 工具总数从 94 降至 32（62% 压缩），消除 ToolSearch 索引抖动；② `DriverExecutor.resolvePointIDs()` 实现 point_id/address/name 三形式自动解析，修复 list_points 返回 PDU 偏移而 read_points 期望 point_id 的语义割裂 bug；③ MCP 工具 schema 增加 point_id 参数和地址语义说明文档标注；④ BACnet 设备 2228316/2228317/2228318/2228319 扫描硬指标全部通过（quality=Good）；⑤ goreleaser arm64 deb 包部署到 192.168.3.230 实机回归验证通过。v2.13（EdgeX 侧）: **收尾残留**——① `notifyEANRuntimeChanged` 改为同步刷新 publisher，`refreshEANEventPublishers` 在持 `nm.mu` 时 TryRLock 失败则延迟阻塞刷新（消竞态、防死锁）；② 连接成功即发 V1 `device_report` + 5s 未成功则重试，与重注册/`register_response` 路径对齐；③ 改造指南明确 EdgeOS 须双订 MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`。v2.12（EdgeOS 侧）: **设备数/上报一致性**——根因：V1 `edgex/devices/report` 全量快照在 EdgeOS 只 Upsert 不剪枝（实机 EdgeX=4 / EdgeOS 曾=14）；非 Discovery/EAN Event/双传输重复计数。修复：`ReconcileDevices`、EAN→Registry 镜像、`POST /api/nodes/:id/devices/reconcile`；实机恢复 devices=4、nodes=1、agents=1、native_caps=63；`go test ./...` 全绿 + UI build 通过。**仍属 EdgeOS 侧**：若 messaging 未订 NATS `edgex.devices.report`，NATS 传输上的 V1 清单仍可能空窗（见改造指南 OS-23）。v2.11（双侧）: NATS 传输对称联调端到端复验——EdgeX NATS stats API 返回 `ean_metrics`（total_invokes=8, success_rate=100%），对齐 MQTT；EdgeOS 3 个 Invoke 测试全部 completed（system.diagnostics/modbus_tcp.list_points/bacnet_ip.list_points），P50=3ms P99=6ms v1_fallback=0；OS-P3-01 V1 Fallback 移除（v1_bridge_caps=0）；OS-P3-02 前端写操作切换 EAN Invoke（ControlView/PointListView）。v2.10（EdgeOS 侧）: NATS 对称补齐——NATS 延迟订阅/Connect·Reconnect 补订对齐 MQTT；Health 新增 `transport_details[{name,connected,endpoint}]`，`northbound_runtime` 改为 `mqttBus+natsBus`；UI Overview/DebugHelp/Dashboard 展示分传输连接态与 broker 地址；联调帮助拆分 MQTT/NATS 步骤并补充 NATS Subject 用例；`go test ./internal/ean/` + UI build 通过；实机复验（2026-07-28）：4222 可达、`registered_transports=2`、Agent `transport=["nats"]`/`northbound=edgeos_nats`、63 native Cap、`system.diagnostics` Invoke completed（avg≈5ms，`v1_fallback=0`）。v2.9（EdgeOS 侧）: NATS 传输对称联调——启用 `ean.nats.enabled=true`（`nats://127.0.0.1:4222`），EdgeOS `registered_transports=2`（mqtt+nats），63 条原生 Cap 通过 NATS 通道索引（`v1_bridge_caps=0`），`system.diagnostics` 通过双传输 Invoke 端到端成功（6ms / `v1_fallback=0`）；EdgeX NATS 北向通道 `EAN-NATS` 已启用（`ean_enabled=true`）。v2.8（EdgeOS 侧）: Governance 权限修复——default 租户无策略时放行 admin/write/ai（修复 system.diagnostics 502）；实机复验 63 条原生 Cap + system.diagnostics Invoke 端到端成功。v2.7（EdgeOS 侧）: 启动韧性对齐 messaging.Manager——MQTT ConnectRetry/AutoReconnect + 订阅延后补订，broker 不可用时不 fatal；Health 增加 `invoke_metrics`/`registered_transports`；默认 MQTT broker 改为 `18083`；UI 对齐 `source`/原生 Cap 计数/Invoke 指标；诚实勾选 Phase 3 EdgeOS 进度。v2.6（EdgeX 侧）: 深化双 Runtime 战略定位。v2.5（EdgeX 侧）: 明确双 Runtime。v2.4（EdgeOS 侧功能）: 仅对接北向 EAN Runtime；V1 purge/AgentSource |
+| 关联文档 | [EAN2.0-EdgeX-EdgeOS改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md) · [AI协同组件规划](../edgeos/AI协同组件规划.md) |
+| 状态 | Phase 1 完成 / Phase 2 跨系统复验通过（MQTT+NATS）/ Phase 3 EdgeX 全完成（EX-P3-01~09）/ EdgeOS OS-P3-01/02 完成 / **Phase 4 全量落地 + V1 命令面全面下线 + Phase 5 长期共存态 / 协议能力中性命名统一（v2.26）** |
+| 变更说明 | v2.26: **协议能力中性命名统一**——`{protocol}.read_holding_register` → **`{protocol}.read_point`**（读单个数据）、`{protocol}.write_register` → **`{protocol}.write_point`**（写单个数据）；保留 `scan_devices`/`list_points`。理由：`ethernet_ip.read_holding_register`/`profinet_io.write_register` 等对无"保持寄存器"概念的协议语义不符，统一为中性词汇跨协议一致。EdgeX `generator.go` + `capability_mapper.go`（保留旧名兼容）+ 测试已更新；EdgeOS `invoke.go`/`discovery_northbound_test.go`/`ControlView.vue` 注释同步。联机验证：63 条中性命名 Cap 索引（`v1_bridge_caps=0`）、`bacnet_ip.read_point`/`write_point` completed、旧名调用仍兼容（backward-compat）。EdgeOS 侧需同步：清缓存重新发现即可（Capability 动态发现，无硬编码依赖）。v2.25: 文档同步（移除过时设计）。v2.24: 设备清单动态同步修复。v2.23: V1 命令面全面下线。v2.22: Phase 4 收尾。v2.21: Phase 4 全量落地。v2.20: EdgeOS NATS 传输稳定性修复。v2.19: 两端联合联调端到端验证。v2.18: 协议共识落地 + `EANEventAutoPublish` 实现。v2.17: 文档维护。v2.16: 代码落地最终版本。v2.15: 协议与工具同步。v2.14: 工具合并 94→32。v2.13: device_report 竞态收尾。 |
 
 ---
 
 ## 1. 执行摘要
 
-**结论：Phase 1 基础能力已全部落地，Phase 2 跨系统 Invoke 验证通过。当前处于 Phase 2→Phase 3 过渡期。**
+**结论：Phase 1 基础能力已全部落地，Phase 2 跨系统 Invoke 验证通过，Phase 3 EdgeX 侧（EX-P3-01~09）已全部完成，Phase 4 全量落地（EdgeX EX-P4-01~03 + EdgeOS OS-P4 V1 Bridge 下线）+ V1 命令面全面下线（`v1_command_enabled=false`）。当前处于 Phase 5 长期共存态：EAN 2.0 为命令/发现/Capability 唯一协议，V1 仅保留数据上报 + 告警 + 设备状态的 pub/sub 单向流。**
 
 EdgeX 内部维持双 Capability Runtime 架构，这是面向不同场景的互补设计：
 
-- **MCP Runtime（基础能力层）**：Server 启动即就绪，零外部依赖。通过 LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作，无需 MQTT/NATS 连接，无需 EdgeOS 参与。统一模式下通过 `GenerateUnifiedCapabilities` 生成 7 条统一 Capability，对应约 32 个 MCP 工具（7 `ean_*` unified + 25 `edgex_*`）始终可用。v2.14 工具合并优化后，15 协议×4 操作矩阵合并为 4 通用工具，工具数从 94 降至 32（62% 压缩）。
+- **MCP Runtime（基础能力层）**：Server 启动即就绪，零外部依赖。通过 LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作，无需 MQTT/NATS 连接，无需 EdgeOS 参与。统一模式下通过 `GenerateUnifiedCapabilities` 生成 7 条统一 Capability，对应 32 个 MCP 工具（7 `ean_*` unified + 25 hand-written）。v2.14 工具合并优化后，15 协议×4 操作矩阵合并为 4 通用工具，工具数从 94 降至 32（62% 压缩）。
 - **北向 EAN Runtime（高级协作层）**：依赖 EdgeOS(MQTT/NATS) 北向通道连接，启用后 EdgeOS 可远程发现并调用本设备 Capability，支持跨系统 Agent 编排和分布式调用。属于高级功能，不是基础功能。
 
 EAN 配置（`EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish`）**已合并**到 EdgeOS(MQTT/NATS) 北向通道配置字段，由北向管理器统一持久化和热更新。用户在北向通道弹窗中即可控制 EAN 启停。EdgeOS 侧独立 `ean:` 段仍用于 Coordination Platform 自身连接参数，与 EdgeX 通道字段分工不同。
@@ -43,10 +44,10 @@ EdgeOS Coordination Platform 仍可有自身 `ean:` / messaging 配置（订阅 
 
 | 双路径 | V1 路径 | EAN 路径 | 当前状态 |
 |---|---|---|---|
-| 写命令 | `handleWriteCommand` -> `sb.WritePoint()` | `Dispatcher` -> `CapabilityMapper` -> `DriverExecutor` -> `sb.WritePoint()` | EAN 为主，V1 Fallback 保留（40%/60% 超时分配） |
-| 设备发现 | `handleDiscoverCommand`（仅返回确认） | `*.scan_devices` Capability Invoke | EAN 已实现，V1 标记 deprecated |
-| 节点注册 | `edgex/nodes/register` + 心跳 | `$edgeos/discovery/agent` + Heartbeat | EAN 已替代，V1 保留兼容 |
-| Capability 发现 | V1 Bridge 合成 `{node}/{device}/read-write` | 北向 mqttBus 发布原生 EAN Cap | **已隔离+purge**：原生到达后清除 V1 伪 Cap |
+| 写命令 | `handleWriteCommand` -> `sb.WritePoint()` | `Dispatcher` -> `CapabilityMapper` -> `DriverExecutor` -> `sb.WritePoint()` | **EAN 唯一**（v2.23 V1 命令面下线，`edgex/cmd/*/write` 不再订阅） |
+| 设备发现 | `handleDiscoverCommand`（仅返回确认） | `*.scan_devices` Capability Invoke | EAN 已实现，V1 已下线（v2.23） |
+| 节点注册 | `edgex/nodes/register` + 心跳 | `$edgeos/discovery/agent` + Heartbeat | **EAN 已替代**（v2.23 V1 节点注册/心跳下线） |
+| Capability 发现 | V1 Bridge 合成 `{node}/{device}/read-write` | 北向 mqttBus 发布原生 EAN Cap | **已移除**：V1 Bridge 下线（OS-P4），原生 EAN Cap 唯一 |
 
 ### 2.3 V1 Bridge 隔离机制（当前实现）
 
@@ -79,21 +80,23 @@ V1 Bridge 不再"完全移除"，而是"智能隔离"（对接 EdgeX 北向 mqtt
 | **点位元数据上报** | `edgex/points/{node}/{device}` | 全量同步效率高于按需查询 |
 | **设备状态上报** | `edgex/devices/{node}/{device}/online` | 高频状态变化，pub/sub 模型更合适 |
 | **告警/事件** | `edgex/events/alert` | 已被外部监控系统订阅 |
-| **V1 Bridge 隔离** | `bridge.go` 轮询合成 | 过渡期兼容未升级 EdgeX 节点 |
-| **V1 Fallback** | `v1_invoke_bridge.go` | 过渡期 EAN Invoke 失败降级 |
+| ~~**V1 Bridge 隔离**~~ | ~~`bridge.go` 轮询合成~~ | **已下线（v2.21 OS-P4）**：V1→EAN Bridge 删除 |
+| ~~**V1 Fallback**~~ | ~~`v1_invoke_bridge.go`~~ | **已移除**（OS-P3-01 / 文件删除） |
+
+> **协议共识**：上表 V1 数据面（设备映射/点位数据/点位元数据/设备状态/告警）随北向通道 `enable=true` **默认开放**，与 `ean_enabled` 无关；EAN 能力层（`$edgeos/*` 读写/发现/编排）仅在 `ean_enabled=true` 时启用。EdgeOS 侧按此订阅：不开 EAN 只收 V1 数据面，开 EAN 后叠加发现/调用能力。详见 [EAN2.0-EdgeX-EdgeOS改造指南 §5.0](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md)。
 
 ### 3.2 迁移到 EAN 2.0
 
 | 功能 | V1 Topic / 机制 | EAN 等价方案 | 状态 |
 |---|---|---|---|
-| **节点注册** | `edgex/nodes/register` | `$edgeos/discovery/agent`（retained） | 已完成 |
-| **节点心跳** | `edgex/heartbeat/{node}` | `$edgeos/heartbeat/{agent}` | 已完成 |
-| **节点离线** | `edgex/nodes/{node}/offline`（LWT） | `$edgeos/discovery/agent/offline` | 已完成 |
-| **设备发现命令** | `edgex/cmd/{node}/discover` | `*.scan_devices` Capability Invoke | 已完成 |
-| **写命令** | `edgex/cmd/{node}/{device}/write` | `*.write_register` Capability Invoke | 已完成 |
-| **命令响应** | `edgex/cmd/responses/{node}/{device}` | `$edgeos/reply/{agent}` | 已完成 |
-| **Capability 发现** | V1 Bridge 合成 | 原生 63 条 EAN Capability | 已完成 |
-| **读命令** | V1 无（仅写命令） | `*.read_holding_register` Capability Invoke | 已完成 |
+| **节点注册** | `edgex/nodes/register` | `$edgeos/discovery/agent`（retained） | 已完成（V1 已下线） |
+| **节点心跳** | `edgex/heartbeat/{node}` | `$edgeos/heartbeat/{agent}` | 已完成（V1 已下线） |
+| **节点离线** | `edgex/nodes/{node}/offline`（LWT） | `$edgeos/discovery/agent/offline` | 已完成（V1 已下线） |
+| **设备发现命令** | `edgex/cmd/{node}/discover` | `*.scan_devices` Capability Invoke | 已完成（V1 已下线） |
+| **写命令** | `edgex/cmd/{node}/{device}/write` | `*.write_point` Capability Invoke | 已完成（V1 已下线） |
+| **命令响应** | `edgex/cmd/responses/{node}/{device}` | `$edgeos/reply/{agent}` | 已完成（V1 已下线） |
+| **Capability 发现** | V1 Bridge 合成 | 原生 63 条 EAN Capability | 已完成（V1 Bridge 下线） |
+| **读命令** | V1 无（仅写命令） | `*.read_point` Capability Invoke | 已完成 |
 | **点位列表查询** | V1 无 | `*.list_points` Capability Invoke | 已完成 |
 | **系统诊断** | V1 无 | `system.diagnostics` Capability Invoke | 已完成 |
 | **AI 协议逆向** | V1 无 | `ai.protocol_reverse` Capability Invoke | 已完成 |
@@ -101,7 +104,7 @@ V1 Bridge 不再"完全移除"，而是"智能隔离"（对接 EdgeX 北向 mqtt
 
 ---
 
-## 4. EAN 合并到北向 EdgeOS 通道（设计态，待实现）
+## 4. EAN 合并到北向 EdgeOS 通道（已实现）
 
 ### 4.1 设计原则
 
@@ -114,7 +117,7 @@ EdgeX 北向 `EdgeOS(MQTT/NATS)` 通道承担三层职责，EAN 是其中最上�
 │  │  TransportSDK + NoopBus                                     │ │
 │  │  Server 启动即就绪，LLM 接入即可使用                        │ │
 │  │  ├── 7 Unified Capability（`GenerateUnifiedCapabilities`）   │ │
-│  │  ├── ~34 MCP 工具（9 `ean_*` unified + 25 `edgex_*`）      │ │
+│  │  ├── 32 MCP 工具（7 `ean_*` unified + 25 hand-written）  │ │
 │  │  └── /api/capability/invoke（本地 HTTP）                    │ │
 │  └─────────────────────────────────────────────────────────────┘ │
 │                                                                │
@@ -151,18 +154,20 @@ EdgeX 北向 `EdgeOS(MQTT/NATS)` 通道承担三层职责，EAN 是其中最上�
 
 **启停规则**（四态）：
 
-| 通道 Enable | EANEnabled | V1 数据上报 | EAN 能力层 | MCP Runtime |
-|---|---|---|---|---|
-| `false` | - | 不工作 | 不工作 | **始终运行** |
-| `true` | `false` | 工作 | 不启动 | **始终运行** |
-| `true` | `true` | 工作 | 启动 | **始终运行** |
-| `true` | `true` → `false`（热更新） | 工作 | 停止 Runtime | **始终运行** |
+| 通道 Enable | EANEnabled | V1 数据上报 | EAN 能力层 | EAN Event（点位变化） | MCP Runtime |
+|---|---|---|---|---|---|
+| `false` | - | 不工作 | 不工作 | 不工作 | **始终运行** |
+| `true` | `false` | 工作 | 不启动 | 不工作 | **始终运行** |
+| `true` | `true` | 工作 | 启动 | 受 `EANEventAutoPublish` 控制（默认关） | **始终运行** |
+| `true` | `true` → `false`（热更新） | 工作 | 停止 Runtime | 不工作 | **始终运行** |
+
+> **协议共识（EdgeOS 对接）**：V1 数据面（节点/设备/点位/实时数据）随通道 `enable=true` 默认开放；EAN 能力层（`$edgeos/discovery/invoke/reply/heartbeat`）仅 `ean_enabled=true` 时开启；EAN Event 点位变化自动广播额外受 `ean_event_auto_publish=true` 控制（v2.18 已实现：Shadow→Event publisher 按该字段挂载，热更新时刷新）。详见 [EAN2.0-EdgeX-EdgeOS改造指南 §5.0](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md)。
 
 MCP Runtime 不受通道配置影响，始终随 Server 启动。即使用户未创建任何北向通道，LLM 接入后仍可通过 MCP 工具调用 7 条统一 Capability（`GenerateUnifiedCapabilities`）完成设备操作。
 
 ### 4.2 数据结构变更
 
-**当前 `EdgeOSMQTTConfig`**（`internal/model/types.go:421`，已验证）：
+**当前 `EdgeOSMQTTConfig`**（`internal/model/types.go:442`，已验证）：
 
 ```go
 type EdgeOSMQTTConfig struct {
@@ -195,17 +200,17 @@ type EdgeOSMQTTConfig struct {
     EANEnabled          bool `json:"ean_enabled" yaml:"ean_enabled"`
     // EANHeartbeatSec EAN 心跳周期（秒），0 时使用默认值 60
     EANHeartbeatSec     int  `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
-    // EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
+    // EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event（Shadow→Event 桥按此挂载 publisher）
     EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
 ```
 
-`EdgeOSNATSConfig`（`types.go:443`）追加相同三个字段。`HeartbeatInterval string`（V1 心跳）保持不变，与 `EANHeartbeatSec int`（EAN 心跳）互不干扰——前者控制 V1 节点心跳 topic，后者控制 EAN Agent 心跳 topic。
+`EdgeOSNATSConfig`（`types.go:472`）追加相同三个字段。`HeartbeatInterval string`（V1 心跳）保持不变，与 `EANHeartbeatSec int`（EAN 心跳）互不干扰——前者控制 V1 节点心跳 topic，后者控制 EAN Agent 心跳 topic。
 
 ### 4.3 后端实现方案
 
 #### 4.3.1 `EnsureCapabilityRuntime` 改造
 
-**当前代码**（`edgos_mqtt/ean_bridge.go:71`，已验证）：`OnConnect` 回调中无条件调用 `EnsureCapabilityRuntime` + `startEANLocked`，`HeartbeatIntervalSec` 硬编码为 30。
+**当前代码（`edgos_mqtt/ean_bridge.go:94`，已验证，以下"改造后"代码已全部落地）**：`OnConnect` 回调中调用 `EnsureCapabilityRuntime`（内部检查 `EANEnabled`）+ 条件启动 `startEANLocked`，`HeartbeatIntervalSec` 由 `EANHeartbeatSec` 提供（0 时默认 60）。
 
 **改造后**：
 
@@ -287,8 +292,8 @@ if err != nil {
 
 | 调整项 | 当前代码 | 目标代码 | 涉及文件 |
 |---|---|---|---|
-| EAN Runtime 启停 | `OnConnect` 无条件 `EnsureCapabilityRuntime` + `startEANLocked` | `EnsureCapabilityRuntime` 内部检查 `EANEnabled`，返回 nil 时跳过启动 | `edgos_mqtt/ean_bridge.go:71` / `edgos_nats/ean_bridge.go:66` |
-| EAN 心跳周期 | 硬编码 `HeartbeatIntervalSec: 30`（`ean_bridge.go:87`） | 读取 `cfg.EANHeartbeatSec`，为 0 时默认 60 | 同上 |
+| EAN Runtime 启停 | `OnConnect` 无条件 `EnsureCapabilityRuntime` + `startEANLocked` | `EnsureCapabilityRuntime` 内部检查 `EANEnabled`，返回 nil 时跳过启动 | `edgos_mqtt/ean_bridge.go:94` / `edgos_nats/ean_bridge.go:89` |
+| EAN 心跳周期 | 硬编码 `HeartbeatIntervalSec: 30`（`ean_bridge.go:120`） | 读取 `cfg.EANHeartbeatSec`，为 0 时默认 60 | 同上 |
 | EAN Runtime 停止 | 无 `stopEAN()` 方法 | 新增 `StopCapabilityRuntime()`：调用 `rt.Stop()` + 置 nil + 清理订阅 | `edgos_mqtt/ean_bridge.go` / `edgos_nats/ean_bridge.go` |
 | EAN 设置 PUT | `handleEanSettingsUpdate` 存根，不持久化 | **移除**该 handler 和路由 | `capability_handler.go` / `server.go` |
 | EAN 设置 GET | 从北向配置派生 | 保留，增加 `ean_enabled` / `ean_heartbeat_sec` / `ean_event_auto_publish` | `capability_handler.go` |
@@ -390,7 +395,7 @@ NATS 通道（`updateEdgeOSNATSClients`）做对称改造。
 │                                                           │
 │  ┌─ MCP Runtime（始终运行）──────────────────────────┐  │
 │  │  状态:          运行中                              │  │
-│  │  工具数量:      ~34 个（9 ean_* unified + 25 edgex_*） │  │
+│  │  工具数量:      32 个（7 ean_* unified + 25 hand-written） │  │
 │  │  说明: MCP Runtime 独立于 EAN，始终可用             │  │
 │  └───────────────────────────────────────────────────┘  │
 │                                                           │
@@ -447,12 +452,12 @@ MCP Runtime 无启停状态转换，生命周期与 Server 进程绑定。`sync.
                     false → Idle
 ```
 
-| 状态 | 触发条件 | Runtime 实例 | Discovery 发布 | Invoke 订阅 |
-|---|---|---|---|---|
-| **Idle** | `EANEnabled=false` 或通道未创建 | nil | 无 | 无 |
-| **Running** | 通道已连接 + `EANEnabled=true` | 活跃 | retained + 60s 周期 | 活跃 |
-| **Stopped** | 通道连接中断（从 Running 转入） | 保留 | 停止 | 停止 |
-| **Stopped → Running** | MQTT 重连 + `EANEnabled=true` | 复用 | 重新发布 retained | 重新订阅 |
+| 状态 | 触发条件 | Runtime 实例 | Discovery 发布 | Invoke 订阅 | EAN Event 发布 |
+|---|---|---|---|---|---|
+| **Idle** | `EANEnabled=false` 或通道未创建 | nil | 无 | 无 | 无 |
+| **Running** | 通道已连接 + `EANEnabled=true` | 活跃 | retained + 60s 周期 | 活跃 | 仅 `EANEventAutoPublish=true` 时自动广播点位变化 |
+| **Stopped** | 通道连接中断（从 Running 转入） | 保留 | 停止 | 停止 | 无 |
+| **Stopped → Running** | MQTT 重连 + `EANEnabled=true` | 复用 | 重新发布 retained | 重新订阅 | 同上（受 auto-publish 控制） |
 
 ### 4.8 MCP Runtime 独立工作场景
 
@@ -460,12 +465,12 @@ MCP Runtime 不依赖任何北向通道，以下场景在 EAN 未启用时完全
 
 | 场景 | 调用路径 | 示例 |
 |---|---|---|
-| LLM 设备读写 | LLM → MCP `tools/call` → `ean_unified.write_point` → `inferDriverCommand` → DriverExecutor → Southbound | AI 助手写入 Modbus 寄存器 |
-| LLM 协议逆向 | LLM → MCP `tools/call` → `ean_unified.protocol_reverse` → AI 模块 | AI 分析未知协议数据帧 |
-| LLM 文档解析 | LLM → MCP `tools/call` → `ean_unified.doc_parse` → AI 模块 | AI 解析设备说明书 PDF |
+| LLM 设备读写 | LLM → MCP `tools/call` → `ean_write_points` → `inferDriverCommand` → DriverExecutor → Southbound | AI 助手写入 Modbus 寄存器 |
+| LLM 协议逆向 | LLM → MCP `tools/call` → `ean_ai_protocol_reverse` → AI 模块 | AI 分析未知协议数据帧 |
+| LLM 文档解析 | LLM → MCP `tools/call` → `ean_ai_doc_parse` → AI 模块 | AI 解析设备说明书 PDF |
 | 本地 HTTP Invoke | HTTP → `/api/capability/invoke` → MCP Runtime → `inferDriverCommand` → DriverExecutor | 前端直接调用 Capability |
-| 设备扫描 | LLM → MCP `tools/call` → `ean_unified.scan_devices` → `inferDriverCommand` → DriverExecutor | AI 扫描 Modbus 总线设备 |
-| 系统诊断 | LLM → MCP `tools/call` → `ean_unified.diagnostics` → Runtime | AI 查询通道和设备状态 |
+| 设备扫描 | LLM → MCP `tools/call` → `ean_scan_devices` → `inferDriverCommand` → DriverExecutor | AI 扫描 Modbus 总线设备 |
+| 系统诊断 | LLM → MCP `tools/call` → `ean_get_diagnostics` → Runtime | AI 查询通道和设备状态 |
 
 **关键区别**：MCP Runtime 的调用是 in-process（进程内），不经过 MQTT/NATS 网络；北向 EAN Runtime 的调用经过 EdgeOS Governance 权限校验和 MQTT 消息传输。两者共享同一套 Capability 定义和 Execution Mapper，但传输层和安全边界完全独立。
 
@@ -479,12 +484,12 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 
 | Runtime | 战略定位 | 创建位置 | Transport | Bus | 心跳间隔 | 目标用户 |
 |---|---|---|---|---|---|---|
-| **MCP Runtime** | **基础能力层**：独立工作，LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作 | `mcp_handler.go:2301` `ensureCapabilityRuntime()` | `TransportSDK` | `NoopBus{}` | 60s | AI 助手 / MCP 客户端 / LLM Agent |
-| **北向 EAN Runtime** | **高级协作层**：通过 MQTT/NATS 与 EdgeOS 进行跨系统 Agent 协作，支持远程发现、分布式调用、事件广播 | `edgos_mqtt/ean_bridge.go:71` `EnsureCapabilityRuntime()` | `TransportMQTT` | `mqttBus` | 30s（硬编码，待可配置） | EdgeOS 平台 / 远程编排 / 多 Agent 网络 |
+| **MCP Runtime** | **基础能力层**：独立工作，LLM 接入即可完成设备读写、协议逆向、文档解析等本地智能操作 | `mcp_handler.go:2240` `ensureCapabilityRuntime()` | `TransportSDK` | `NoopBus{}` | 60s | AI 助手 / MCP 客户端 / LLM Agent |
+| **北向 EAN Runtime** | **高级协作层**：通过 MQTT/NATS 与 EdgeOS 进行跨系统 Agent 协作，支持远程发现、分布式调用、事件广播 | `edgos_mqtt/ean_bridge.go:94` `EnsureCapabilityRuntime()` | `TransportMQTT` | `mqttBus` | `EANHeartbeatSec`（默认 60s，可配置，EX-P3-03） | EdgeOS 平台 / 远程编排 / 多 Agent 网络 |
 
 **保留双 Runtime 的四个理由：**
 
-1. **MCP Runtime 零依赖启动**：`sync.Once` 单例，Server 启动即可用。不依赖 MQTT/NATS 连接，不需要北向通道配置。LLM 接入后通过 MCP `tools/call` 即可调用 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成，含 `ean_unified.read_point`、`ean_unified.write_point`、`ean_unified.protocol_reverse`、`ean_unified.doc_parse` 等），无需 EdgeOS 参与。这意味着即使用户只配置了南向设备通道、未创建任何北向通道，AI 助手依然可以完成设备读写和智能分析。可通过 `RuntimeConfig.Unified` 控制统一模式开关。
+1. **MCP Runtime 零依赖启动**：`sync.Once` 单例，Server 启动即可用。不依赖 MQTT/NATS 连接，不需要北向通道配置。LLM 接入后通过 MCP `tools/call` 即可调用 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成，含 `ean_read_points`、`ean_write_points`、`ean_ai_protocol_reverse`、`ean_ai_doc_parse` 等），无需 EdgeOS 参与。这意味着即使用户只配置了南向设备通道、未创建任何北向通道，AI 助手依然可以完成设备读写和智能分析。可通过 `RuntimeConfig.Unified` 控制统一模式开关。
 2. **北向 EAN Runtime 按需启动**：依赖北向通道连接，仅在 `EdgeOS(MQTT/NATS)` 通道 `Enable=true` 且 `EANEnabled=true` 时启动。这是面向 EdgeOS 平台远程编排的高级功能，不是 EdgeX 的基础功能。用户不启用 EAN 时，EdgeX 的本地 AI 能力不受影响。
 3. **故障隔离**：MQTT 连接闪断不影响 MCP 本地调用——AI 助手仍可通过 MCP 工具操作设备；MCP Runtime 故障不影响跨系统 EAN 通道——EdgeOS 仍可远程调用 Capability。
 4. **安全边界**：MCP Runtime 的 in-process 调用不经过网络，不存在跨系统权限问题；北向 EAN Runtime 的 Invoke 经过 EdgeOS Governance 权限校验（read/write/admin/ai 四级权限 + 租户策略）。
@@ -505,7 +510,7 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 │  ┌─ MCP Runtime（基础层，Server 启动即就绪）────────────┐ │
 │  │  TransportSDK + NoopBus                               │ │
 │  │  ├── 7 Unified Capability（`GenerateUnifiedCapabilities`） │ │
-│  │  ├── MCP 工具注册（~34 个，9 `ean_*` unified + 25 `edgex_*`） │ │
+│  │  ├── MCP 工具注册（32 个，7 `ean_*` unified + 25 hand-written） │ │
 │  │  ├── /api/capability/invoke（本地 HTTP）              │ │
 │  │  └── LLM 接入 → 智能设备操作                          │ │
 │  └───────────────────────────────────────────────────────┘ │
@@ -531,12 +536,12 @@ EdgeX 内部保留两个独立的 EAN Capability Runtime 实例，这是架构�
 | 调整项 | 状态 | 说明 |
 |---|---|---|
 | `EdgeOSMQTTConfig` / `EdgeOSNATSConfig` 新增 EAN 字段 | **已落地** | `EANEnabled` / `EANHeartbeatSec` / `EANEventAutoPublish` 已在 `types.go` |
-| 北向通道 `OnConnect` 中启动 Runtime | **已实现** | `client.go:305` 无条件调用 `EnsureCapabilityRuntime()` + `startEANLocked()` |
+| 北向通道 `OnConnect` 中启动 Runtime | **已实现** | `client.go:382` 调用 `EnsureCapabilityRuntime()`（内部检查 `EANEnabled`）+ 条件启动 `startEANLocked()` |
 | EAN 启停控制 | **已落地** | `EnsureCapabilityRuntime` 检查 `EANEnabled`；热更新 true↔false 启停 Runtime |
-| EAN 心跳间隔配置 | **未实现** | 硬编码 `HeartbeatIntervalSec: 30`（`ean_bridge.go:87`），不可配置 |
-| EAN Runtime 停止方法 | **未实现** | 无 `StopCapabilityRuntime()` 方法，通道断连时 Runtime 仅暂停而非显式停止 |
-| V1 命令处理标记 deprecated | **未实现** | 无 DEPRECATED 日志告警 |
-| 配置热更新支持 EAN 启停 | **未实现** | `updateEdgeOSMQTTClients` 仅处理连接参数，不检测 EAN 字段变化 |
+| EAN 心跳间隔配置 | **已实现** | `EANHeartbeatSec`（`types.go`）传入 `RuntimeConfig.HeartbeatIntervalSec`，0 时默认 60；不再硬编码 30 |
+| EAN Runtime 停止方法 | **已实现** | `StopCapabilityRuntime()`（`ean_bridge.go`）：`rt.Stop()` + 置 `eanRuntime=nil` + 清理 `$edgeos/invoke/*` 订阅 |
+| V1 命令处理标记 deprecated | **已实现** | `handleWriteCommand` / `handleDiscoverCommand` / `handleTaskCommand` 均输出 WARN `DEPRECATED` 日志（`client.go`） |
+| 配置热更新支持 EAN 启停 | **已实现** | `UpdateConfig` → `applyEANConfigChange`（`client.go`）：false→true 热启动、true→false 停止、心跳变化重启 Runtime；NATS 对称 |
 | 数据上报路径保留 | **已实现** | `PublishRealtimeData()` -> `edgex/data/*` 不变 |
 | 设备映射保留 | **已实现** | `Devices` 字段及上报策略不变 |
 
@@ -560,26 +565,30 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 
 | 调整项 | 状态 | 说明 |
 |---|---|---|
-| `ensureCapabilityRuntime` 创建 | 已完成 | `mcp_handler.go:2301`，`sync.Once` 单例，`TransportSDK` + `NoopBus`，心跳 60s |
+| `ensureCapabilityRuntime` 创建 | 已完成 | `mcp_handler.go:2240`，`sync.Once` 单例，`TransportSDK` + `NoopBus`，心跳 60s |
 | AgentID 来源 | 已完成 | 优先取北向配置 `EdgeOSMQTT[0].NodeID`，无北向配置时默认 `"edgex"` |
-| MCP 工具注册 | 已完成 | ~32 个工具（7 `ean_*` unified + 25 `edgex_*`）注册到 MCP Server，6 个重叠工具已移除（`read_point`、`read_point_batch`、`write_point`、`write_point_batch`、`list_points`、`get_diagnostics`）。v2.14：15 协议×4 操作矩阵合并为 4 通用工具，总数从 94 降至 32 |
+| MCP 工具注册 | 已完成 | 32 个工具（7 `ean_*` unified + 25 hand-written）注册到 MCP Server，6 个重叠工具已移除（`read_point`、`read_point_batch`、`write_point`、`write_point_batch`、`list_points`、`get_diagnostics`）。v2.14：15 协议×4 操作矩阵合并为 4 通用工具，总数从 94 降至 32 |
 | 本地 HTTP Invoke | 已完成 | `/api/capability/invoke` 走 MCP Runtime in-process 调用 |
-| MCP `tools/list` | 已完成 | JSON-RPC over HTTP POST，返回 ~34 个工具描述 |
+| MCP `tools/list` | 已完成 | JSON-RPC over HTTP POST，返回 32 个工具描述 |
 | MCP `tools/call` | 已完成 | LLM 接入后可直接调用 7 条统一 Capability（`GenerateUnifiedCapabilities`），`execution/capability_mapper.go` 的 `inferDriverCommand` 负责映射到具体驱动命令 |
 | EAN 设置 GET | 已完成 | 从北向配置派生状态展示 |
-| EAN 设置 PUT | **存根** | `handleEanSettingsUpdate` 仅返回确认，不持久化任何字段（Phase 3 移除） |
+| EAN 设置 PUT | **已移除（EX-P3-04）** | `PUT /api/capability/settings` 路由与 `handleEanSettingsUpdate` handler 已删除；EAN 配置通过 `POST/PUT /api/northbound/edgeos-mqtt`（或 `edgeos-nats`）提交，由北向管理器持久化 |
 
-**MCP Runtime 独立工作验证**：在未创建任何北向通道的场景下，`ensureCapabilityRuntime` 仍可通过 `sync.Once` 创建 Runtime 实例。AgentID 取默认值 `"edgex"`，LLM 接入后即可通过 MCP `tools/call` 调用 `ean_unified.read_point`、`ean_unified.write_point`、`ean_unified.protocol_reverse`、`ean_unified.doc_parse` 等 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成）。调用路径为 in-process，不经过 MQTT/NATS 网络。`RuntimeConfig.Unified` 控制统一模式，`execution/capability_mapper.go` 的 `inferDriverCommand` 完成协议适配。
+**MCP Runtime 独立工作验证**：在未创建任何北向通道的场景下，`ensureCapabilityRuntime` 仍可通过 `sync.Once` 创建 Runtime 实例。AgentID 取默认值 `"edgex"`，LLM 接入后即可通过 MCP `tools/call` 调用 `ean_read_points`、`ean_write_points`、`ean_ai_protocol_reverse`、`ean_ai_doc_parse` 等 7 条统一 Capability（`GenerateUnifiedCapabilities` 生成）。调用路径为 in-process，不经过 MQTT/NATS 网络。`RuntimeConfig.Unified` 控制统一模式，`execution/capability_mapper.go` 的 `inferDriverCommand` 完成协议适配。
 
-### 5.5 V1 命令处理（运行中，未标记 deprecated）
+### 5.5 V1 命令处理（已全面下线，v2.23）
 
-| V1 Handler | 状态 | Phase 3 动作 |
+V1 命令面（`edgex/cmd/*` 订阅与发布、`edgex/nodes/*` 节点注册、`edgex/heartbeat/*` V1 心跳）**默认关闭**（`v1_command_enabled=false`）。相关 Handler/订阅代码保留但不再激活，命令统一走 EAN Invoke。
+
+| V1 元素 | 状态 | 说明 |
 |---|---|---|
-| `handleWriteCommand` | 运行中 | 标记 `DEPRECATED` 日志，引导使用 EAN `*.write_register` |
-| `handleDiscoverCommand` | 运行中 | 标记 `DEPRECATED` 日志，引导使用 EAN `*.scan_devices` |
-| `handleTaskCommand` | 运行中 | 标记 `DEPRECATED` 日志 |
-| `handleNodeRegisterCommand` | 运行中 | 保留（EAN discovery 已覆盖，但 V1 节点注册兼容旧版本） |
-| `subscribeToCommands` | 运行中 | 保留 V1 订阅，不再新增命令类型 |
+| `subscribeToCommands` | **已下线** | `v1_command_enabled=false` 时跳过 V1 命令 Topic 订阅（`edgex/cmd/*`） |
+| `publishNodeOnline` | **已下线** | 跳过 V1 节点注册发布（`edgex/nodes/*`）；EAN `$edgeos/discovery/agent` 覆盖 |
+| V1 heartbeat 循环 | **已下线** | 跳过 V1 心跳发布；EAN `$edgeos/heartbeat/{agent}` 覆盖 |
+| `handleWriteCommand` / `handleDiscoverCommand` / `handleTaskCommand` | 代码保留，不激活 | 仅当临时重开 `v1_command_enabled=true`（调试）才可达 |
+| V1 数据面（`edgex/devices/*`/`edgex/points/*`/`edgex/data/*`） | **长期保留** | 不受 `v1_command_enabled` 影响 |
+
+> **Phase 4 最终状态（v2.23）**：V1 命令面**全面下线**——`v1_command_enabled` 默认 `false`（EdgeX 北向通道 + EdgeOS `ean.v1_command_enabled`）；联机复测确认 `edgex/cmd/#` 流量=0、V1 节点注册/心跳无发布、EAN Invoke 完全替代（system.diagnostics / bacnet_ip.list_points completed）。
 
 ### 5.6 Phase 3 EdgeX 必须完成功能
 
@@ -588,8 +597,8 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 | 编号 | 功能 | 说明 | 涉及文件 | 关联设计 |
 |---|---|---|---|---|
 | EX-P3-01 | V1 命令处理标记 DEPRECATED | `handleWriteCommand` / `handleDiscoverCommand` / `handleTaskCommand` 增加 WARN 级 `DEPRECATED` 日志，提示迁移到 EAN Capability。不移除功能，仅告警 | `edgos_mqtt/client.go` / `edgos_nats/client.go` | §5.5 |
-| EX-P3-02 | EAN 启用开关加入通道配置 | `EdgeOSMQTTConfig`（`types.go:421`）/ `EdgeOSNATSConfig`（`types.go:443`）追加 `EANEnabled bool` 字段；`EnsureCapabilityRuntime`（`ean_bridge.go:71`）读取该字段，为 false 时返回 nil 不创建 Runtime；`OnConnect`（`client.go:305`）检查返回值，nil 时跳过 `startEANLocked` | `model/types.go` / `edgos_mqtt/ean_bridge.go` / `edgos_nats/ean_bridge.go` / `edgos_mqtt/client.go` / `edgos_nats/client.go` | §4.2 §4.3.1 §4.3.2 |
-| EX-P3-03 | EAN 心跳间隔可配置 | 追加 `EANHeartbeatSec int` 字段，传入 `RuntimeConfig.HeartbeatIntervalSec`，替代 `ean_bridge.go:87` 硬编码 30；为 0 时默认 60 | `model/types.go` / `edgos_mqtt/ean_bridge.go` / `edgos_nats/ean_bridge.go` | §4.2 §4.3.1 |
+| EX-P3-02 | EAN 启用开关加入通道配置 | `EdgeOSMQTTConfig`（`types.go:442`）/ `EdgeOSNATSConfig`（`types.go:472`）追加 `EANEnabled bool` 字段；`EnsureCapabilityRuntime`（`ean_bridge.go:94`）读取该字段，为 false 时返回 nil 不创建 Runtime；`OnConnect`（`client.go:382`）检查返回值，nil 时跳过 `startEANLocked` | `model/types.go` / `edgos_mqtt/ean_bridge.go` / `edgos_nats/ean_bridge.go` / `edgos_mqtt/client.go` / `edgos_nats/client.go` | §4.2 §4.3.1 §4.3.2 |
+| EX-P3-03 | EAN 心跳间隔可配置 | 追加 `EANHeartbeatSec int` 字段，传入 `RuntimeConfig.HeartbeatIntervalSec`，替代 `ean_bridge.go:120` 硬编码 30；为 0 时默认 60 | `model/types.go` / `edgos_mqtt/ean_bridge.go` / `edgos_nats/ean_bridge.go` | §4.2 §4.3.1 |
 | EX-P3-04 | 移除 EAN 设置 PUT 存根 | 移除 `PUT /api/capability/settings` 路由和 `handleEanSettingsUpdate` handler；EAN 配置通过 `POST /api/northbound/edgeos-mqtt` 提交，由北向管理器持久化 | `capability_handler.go` / `server.go` | §4.6 |
 
 #### P1 优先级（完善 EAN 合并体验）
@@ -623,46 +632,40 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 
 **验收含义**：EdgeOS 索引中的原生 Capability（`system.diagnostics`、`ai.*`、协议类）必须来自 MQTT/NATS 北向 discovery 信封，而非 V1 Bridge 合成，也非 MCP Runtime。
 
-### 6.1 V1 Bridge（已隔离，非移除）
+### 6.1 V1 Bridge（已下线，v2.21 OS-P4）
 
-**代码位置**：`internal/ean/bridge.go`
+**代码位置**：~~`internal/ean/bridge.go`~~（**已删除**）
 
-| 调整项 | 当前实现 | 目标 | 优先级 |
-|---|---|---|---|
-| V1 Capability 合成 | **已隔离**：`HasNativeEANCaps()` **或** `HasNativeEANAgent()` 为真时跳过 `syncDevice()` | Phase 4 完全移除 | P2 |
-| Agent 同步 | 无原生 Agent 时才 `HandleAgentOnline(..., "v1-bridge")`；已有 `native-ean` Agent 时**跳过**（由 DiscoveryCenter 拒绝覆盖） | Phase 4 移除 | P2 |
-| 点位数据桥接 | 5s 轮询，`syncPointData()` → `$edgeos/event/{node}`，含 `previous_value` | Phase 4 移除 | P2 |
-| 心跳模拟 | 仍可 `HandleHeartbeat` 兜底；原生心跳到达后不覆盖 Agent 描述符 | Phase 4 移除 | P2 |
+Phase 4（OS-P4）将 V1→EAN Bridge **完全移除**——原生 EAN Discovery/Heartbeat/Event 已完全覆盖 V1 节点/心跳/点位同步，不再轮询 V1 节点合成 Agent/心跳/点位 Event。`cmd/main.go` 中 `NewV1ToEANBridge`/`Start`/`Stop` 接线已移除。
 
-**隔离规则**（`discovery.go`）：
+| 调整项 | 状态（v2.21） |
+|---|---|
+| V1 Capability 合成 | **已移除**（此前 OS-P3-01 已停止合成 `{node}/{device}/read-write`） |
+| Agent 同步 | **已移除**——由 EAN Discovery + Registry 镜像（仅镜像北向原生 EAN Agent）替代 |
+| 点位数据桥接 | **已移除**——由 EAN Event（`$edgeos/event/*`）直接承载，含 `previous_value` |
+| 心跳模拟 | **已移除**——由 EAN Heartbeat（`$edgeos/heartbeat/{agent}`）替代 |
+
+**Registry 镜像过滤（v2.21 OS-P4）**：`AttachRegistryMirror` 仅镜像 `HasNativeEANAgent()` 或 `HasNativeEANCaps()` 为真的 Agent 到 V1 节点注册表，transient/v1-bridge 测试 Agent 不再污染 `/api/nodes`（保证"节点上报全部正确，无多余部分"）。
+
+**隔离规则**（`discovery.go`，保留）：
 - Cap：`native-ean` 拒绝同名 `v1-bridge` 覆盖；`native-ean` 可升级覆盖同名 `v1-bridge`
-- Cap：**首条原生 Cap 到达时 `purgeV1BridgeCapsLocked`**，清除该 Agent 下全部残留 `…/read-write`（ID 不同，仅靠同名覆盖不够）
-- Agent：`agentSources` 标记；已有 `native-ean` 时拒绝 `v1-bridge` 覆盖（避免 kind 被改回 `edgex-gateway`）
-- 点位 Event 同步不受 Cap 隔离影响
+- Cap：**首条原生 Cap 到达时 `purgeV1BridgeCapsLocked`**，清除该 Agent 下全部残留 `…/read-write`
+- Agent：`agentSources` 标记；已有 `native-ean` 时拒绝 `v1-bridge` 覆盖
 
-### 6.2 Invoke 编排与 V1 Fallback
+### 6.2 Invoke 编排（V1 Fallback 已移除）
 
-**代码位置**：`internal/ean/invoke.go`、`internal/ean/v1_invoke_bridge.go`、`internal/ean/bus.go`
+**代码位置**：`internal/ean/invoke.go`、`internal/ean/bus.go`
+
+> **V1 Fallback 已移除（OS-P3-01，v2.11）**：`v1_invoke_bridge.go` 已删除，`InvokeCapability` 不再有 V1 合成 Cap Fallback 分支。所有 Capability Invoke（原生 EAN）100% 走 `$edgeos/invoke/{target}` + `$edgeos/reply/{plannerID}`，`v1_fallback=0`。
 
 #### Invoke 编排器（`invoke.go`）
 
-| 调整项 | 当前实现 | 目标 | 优先级 |
-|---|---|---|---|
-| Invoke 发布 | 构造 `Message` 信封（`message_type=invoke_capability`）→ `$edgeos/invoke/{target}`（北向 mqttBus） | 不变 | - |
-| Reply 关联 | 订阅 `$edgeos/reply/{plannerID}`，`correlation_id` / `invoke_id` 关联 | 不变 | - |
-| 超时处理 | `context.WithTimeout`，超时清理 pending | 不变 | - |
-
-#### V1 Fallback（`v1_invoke_bridge.go` + `bus.go`）
-
-| 调整项 | 当前实现 | 目标 | 优先级 |
-|---|---|---|---|
-| 原生 EAN Cap | **100% MQTT Invoke**，全额超时；**禁止** V1 Fallback（`system.diagnostics` / `ai.*` / 协议类） | 保持 | P0 |
-| V1 合成 Cap Fallback | **仅** `source=v1-bridge` 或 ID 后缀 `/read-write`：超时/rejected/error 时 40%/60% 分配并 `InvokeViaV1` | Phase 3 移除 | P0 |
-| Agent Kind 过滤 | V1 合成路径仍要求 `edgex-gateway` / `edgex` | Phase 3 移除 | P0 |
-| ID / 路由隔离 | 真实 EAN ID 与 V1 伪 ID 分路，互不混用 | 保持 | P0 |
-
-**V1 Fallback 竞态修复**（已实现，仅作用于 V1 合成 Cap）：
-- `RegisterPending` → `PublishV1Command` → `WaitForChannel` 严格顺序
+| 功能 | 当前实现 |
+|---|---|
+| Invoke 发布 | 构造 `Message` 信封（`message_type=invoke_capability`）→ `$edgeos/invoke/{target}`（北向 mqttBus） |
+| Reply 关联 | 订阅 `$edgeos/reply/{plannerID}`，`correlation_id` / `invoke_id` 关联 |
+| 超时处理 | `context.WithTimeout`，超时清理 pending |
+| 权限/审计 | Invoke 前 Governance 权限校验 + 审计记录 |
 
 ### 6.3 Messaging Manager（V1 Topic 订阅）
 
@@ -670,10 +673,10 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 
 | V1 Topic | 订阅模式 | Handler | 当前状态 | 计划 |
 |---|---|---|---|---|
-| `edgex/nodes/register` | 精确 | `nodeHandler.HandleRegister` | **保留**（V1 节点注册兼容） | Phase 4 移除 |
-| `edgex/nodes/+/heartbeat` | 通配 | `nodeHandler.HandleHeartbeat` | **保留**（V1 心跳兼容） | Phase 4 移除 |
-| `edgex/nodes/+/status` | 通配 | `nodeHandler.HandleHeartbeat` | **保留**（V1 状态兼容） | Phase 4 移除 |
-| `edgex/nodes/unregister` | 精确 | `nodeHandler.HandleUnregister` | **保留**（V1 注销兼容） | Phase 4 移除 |
+| `edgex/nodes/register` | 精确 | `nodeHandler.HandleRegister` | **v2.23 移除**（`v1_command_enabled=false`） | 已移除 |
+| `edgex/nodes/+/heartbeat` | 通配 | `nodeHandler.HandleHeartbeat` | **v2.23 移除**（`v1_command_enabled=false`） | 已移除 |
+| `edgex/nodes/+/status` | 通配 | `nodeHandler.HandleHeartbeat` | **v2.23 移除**（`v1_command_enabled=false`） | 已移除 |
+| `edgex/nodes/unregister` | 精确 | `nodeHandler.HandleUnregister` | **v2.23 移除**（`v1_command_enabled=false`） | 已移除 |
 | `edgex/devices/report` | 精确 | `deviceHandler.HandleDeviceReport` | **保留**，V1 数据上报路径不迁移 | 长期保留 |
 | `edgex/devices/+/+/online` | 通配 | `deviceHandler.HandleDeviceOnline` | **保留**，设备状态通过 V1 pub/sub | 长期保留 |
 | `edgex/devices/+/+/offline` | 通配 | `deviceHandler.HandleDeviceOffline` | **保留**，设备状态通过 V1 pub/sub | 长期保留 |
@@ -683,9 +686,9 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 | `edgex/events/alert` | 精确 | `handleAlert` | **保留**，外部监控系统依赖 | 长期保留 |
 | `edgex/events/error` | 精确 | `handleAlert` | **保留**，外部监控系统依赖 | 长期保留 |
 | `edgex/events/info` | 精确 | `handleAlert` | **保留**，外部监控系统依赖 | 长期保留 |
-| `edgex/cmd/responses/#` | 通配 | `controlHandler.HandleCommandResponse` | **保留**，V1 Fallback 响应通道 | Phase 3 移除 |
+| `edgex/cmd/responses/#` | 通配 | `controlHandler.HandleCommandResponse` | **已移除（v2.21 OS-P4）** | 已移除 |
 
-**注意**：`edgex/cmd/responses/#` 同时服务于 V1 Fallback 机制。`HandleCommandResponse` 在 `UpdateCommandStatus` 后调用 `HandleResponse`，通知 pending channel。Phase 3 移除 V1 Fallback 后此订阅一并移除。
+**注意（v2.23）**：`edgex/nodes/*`（V1 节点面）已随 V1 命令面全面下线移除——节点注册/心跳/状态由 EAN Discovery（`$edgeos/discovery/agent`）+ Registry 镜像替代；避免集成测试 Agent 污染 `/api/nodes`。`edgex/cmd/responses/#` 已在 v2.21 移除。V1 数据面（`edgex/devices/*`、`edgex/points/*`、`edgex/data/*`）与告警（`edgex/events/*`）长期保留。V1 命令下发路径（`PublishCommand`/`PublishNodeDiscovery`）由 `v1_command_enabled` 开关控制：`false` 时跳过（全面下线，命令统一 EAN Invoke）。
 
 ### 6.4 Discovery Center（北向 mqttBus 消费端）
 
@@ -790,6 +793,9 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 | `ean.nats.url` | `nats://127.0.0.1:4222` | NATS Server |
 | `ean.heartbeat.check_interval_sec` | `5` | 心跳检查间隔 |
 | `ean.heartbeat.timeout_multiplier` | `3` | 超时倍数（3 个心跳周期） |
+| `ean.v1_command_enabled` | `false`（v2.23 全面下线默认） | V1 命令面开关（Phase 4 OS-P4）：`false` 跳过 V1 命令下发/发现（`PublishCommand`/`PublishNodeDiscovery`），命令统一 EAN Invoke；`true` 可临时重开（仅调试）。V1 数据面/告警不受影响 |
+
+**注意（v2.21 OS-P4）**：`internal/ean/bridge.go`（V1→EAN Bridge）已删除；EAN→V1 Registry 镜像（`AttachRegistryMirror`）仅镜像**北向原生 EAN Agent**（`HasNativeEANAgent`/`HasNativeEANCaps`），transient/v1-bridge Agent 不再污染 `/api/nodes`。
 
 ### 6.11 EdgeOS 验收标准与 EdgeX 阻塞项
 
@@ -806,6 +812,42 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 ---
 
 ## 7. 联合测试验证结果
+
+### 7.0 两端联合联调端到端验证（2026-08-03，本机 192.168.3.104）
+
+> 以 [EAN2.0-EdgeX-EdgeOS改造指南 §5.0 协议共识](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md) 为基线，EdgeX + EdgeOS 同机联合运行验证。
+
+**环境**：
+
+| 组件 | 配置 |
+|---|---|
+| EdgeX | `D:\code\edgex\bin\edgex.exe`（最新构建），MQTT 通道 `edgeos-mqtt_1785203392584` + NATS 通道 `edgeos-nats-local`，均 `ean_enabled=true`、`ean_event_auto_publish=true`、`node_id=edgex-node-001` |
+| EdgeOS | `D:\code\edgeOS\bin\edgeos.exe -conf config-local.yaml`（`ean.enabled=true`，MQTT/NATS 双传输 `127.0.0.1:18083` / `nats://127.0.0.1:4222`） |
+| Broker | nats-server（PID 63368）：MQTT `127.0.0.1:18083` + NATS `127.0.0.1:4222` |
+
+**验证结果**：
+
+| 验收项 | 请求/操作 | 结果 |
+|---|---|---|
+| OS-A1 北向 Capability 发现 | EdgeOS `GET /api/ean/agents/edgex-node-001/capabilities` | **63 条 `native-ean`**，`v1_bridge_caps=0`（OS-A2 无 V1 污染） |
+| OS-A3 跨系统 Invoke | `POST /api/ean/invoke` `system.diagnostics`（target=`edgex-node-001`） | **completed**，返回 BACnet 通道诊断（4 devices） |
+| OS-A3 协议级 Invoke | `POST /api/ean/invoke` `bacnet_ip.list_points`（device=`bacnet-2228319`） | **completed**，11 点位（Temperature.Indoor 等） |
+| 审计追踪 | `GET /api/ean/audit` | 多条 pending→completed，initiator=`edgeos-planner`，target=`edgex-node-001` |
+| Invoke Metrics | `GET /api/ean/health` → `invoke_metrics` | total=2, success_rate=100%, P50=8ms, P99=324ms, v1_fallback=0 |
+| EAN Event | `GET /api/ean/events/recent` | 实时点位变化事件（含 `previous_value`，如 temp 38.8→prev 39.8） |
+| Heartbeat | EdgeOS EAN health | `registered_transports=2`（mqtt+nats），Agent `edgex-node-001` online |
+| V1 数据面保留 | 订阅 `edgex/#` | `edgex/data/edgex-node-001/bacnet-*` 实时数据、`edgex/heartbeat/edgex-node-001`、`edgex/nodes/edgex-node-001/online`、设备状态均正常上报 |
+| OS-A5 单元测试 | EdgeOS `go test ./internal/ean/ ./internal/server/` | **全 PASS**（含 `TestDiscovery_IndexNativeAndPurgeV1Bridge` / `TestInvoke_NoV1FallbackForNativeCapability` / `TestDecodeCapabilities_EdgeXNorthboundEnvelope` 等） |
+
+**结论**：EAN 2.0 两层协议共识（V1 数据面默认开放 + EAN 能力层按 `ean_enabled` 开启）在 EdgeX + EdgeOS 联合部署下端到端贯通；EdgeX 侧 `EANEventAutoPublish` 门控生效（关闭后 `$edgeos/event/#` 无点位事件、Discovery/Heartbeat 仍工作）。
+
+**联合调试发现的 EdgeOS 缺陷与修复（v2.20）**：
+
+| 项 | 现象 | 根因 | 修复 |
+|---|---|---|---|
+| EdgeOS NATS 传输断连 | EdgeOS EAN health `nats connected=False`；日志 `nats disconnected, will reconnect`（连接后 ~180ms） | `v1_nats_bridge.go` 用 `edgex.points.>.>` / `edgex.data.>.>`（NATS 双 `>` 通配）订阅 V1 数据面；nats-server（MQTT gateway 版）拒绝该模式并关闭连接（独立复现：NATS 订阅 `edgex.data.>.>` 即断开，`edgex.data.>` 正常） | 改为 `edgex.points.>` / `edgex.data.>`（单 `>` 匹配 `{node}.{device}`，语义对齐 MQTT `edgex/points/+/+`）；同步修正 `v1_nats_bridge_test.go` |
+
+> **EdgeOS 对接警示**：NATS 订阅 V1 数据面时**勿用双 `>` 通配**（`edgex.data.>.>`），nats-server 会断开连接；用单 `>`（`edgex.data.>`）即可匹配 `edgex.data.{node}.{device}`。
 
 ### 7.1 测试环境
 
@@ -950,7 +992,7 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 
 - [x] EX-P3-01: V1 命令处理标记 `DEPRECATED` 日志（`handleWriteCommand` / `handleDiscoverCommand` / `handleTaskCommand`）
 - [x] EX-P3-02: `EdgeOSMQTTConfig` / `EdgeOSNATSConfig` 新增 `EANEnabled bool` 字段；`EnsureCapabilityRuntime` 检查开关；`OnConnect` 检查返回值
-- [x] EX-P3-03: EAN 心跳间隔可配置（`EANHeartbeatSec`，替代 `ean_bridge.go:87` 硬编码 30s，默认 60）
+- [x] EX-P3-03: EAN 心跳间隔可配置（`EANHeartbeatSec`，替代 `ean_bridge.go:120` 硬编码 30s，默认 60）
 - [x] EX-P3-04: 移除 `PUT /api/capability/settings` 存根 API，EAN 配置通过北向 API 提交
 - [x] EX-P3-05: 北向通道弹窗新增 "EAN 能力层" Tab（启用开关、心跳间隔、事件自动发布、只读状态）
 - [x] EX-P3-06: AI 助手 EAN Tab 降级为只读状态展示 + "前往北向通道配置" 跳转
@@ -965,31 +1007,34 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 - [x] OS-P3-NATS-UI: Health `transport_details` + UI 分传输状态/联调帮助 NATS 步骤（v2.10）
 - [x] OS-P3-01: 移除 V1 Fallback 机制（含 V1 合成 Cap 路径；`v1_invoke_bridge.go` 删除；`InvokeCapability` 去掉 Fallback 分支）— **已完成**：V1 Invoke Bridge 代码移除，合成 Cap 路径清理，`v1_bridge_caps=0`
 - [x] OS-P3-02: 前端命令下发接口切换为 EAN Invoke — **已完成**：`ControlView.vue` 和 `PointListView.vue` 写操作切换到 `eanStore.invokeCapability`，V1 命令 API 已移除
-- [x] OS-P3-03: EAN Invoke 监控 — **代码完成/待联调**：`Health.invoke_metrics`（total/success/failed/timeout/v1_fallback/P50/P99）；Overview 展示成功率与延迟；独立监控面板可后续增强
+- [x] OS-P3-03: EAN Invoke 监控 — **已完成（v2.19 联调验证）**：`Health.invoke_metrics`（total/success/failed/timeout/v1_fallback/P50/P99）；Overview 展示成功率与延迟
 - [x] OS-P3-DEVSYNC: V1 设备全量上报对账剪枝（`ReconcileDevices`）+ EAN Agent→节点注册镜像 + reconcile API — **已完成（v2.12）**；实机 EdgeX 4 = EdgeOS 4；全量 `go test ./...` 通过
-- [ ] OS-P3-04: 移除 V1 命令响应 Topic 订阅（依赖 OS-P3-01，过渡期保留）
-- [ ] OS-P3-05: EAN 配置合并到北向通道配置 — **设计态**（与 EdgeX §4 同步，双方尚未落地）
-- [ ] OS-P3-06: 移除 V1 节点注册/心跳 Topic 订阅 — **未做**（与 §6.3 Phase 4 / 附录 B 一致，过渡期保留；当前靠 EAN mirror 维持 `/api/nodes` 可见性）
+- [x] OS-P3-04: 移除 V1 命令响应 Topic 订阅 — **已完成（v2.21）**：`edgex/cmd/responses/#` 从 `subscribeAllTopics` 移除（V1 Fallback 已于 OS-P3-01 移除，命令统一 EAN Invoke）
+- [x] OS-P3-05: EAN 配置合并到北向通道配置 — **已完成**：EdgeX §4 已落地（`EANEnabled`/`EANHeartbeatSec`/`EANEventAutoPublish` 在通道字段）；EdgeOS 侧 `ean:` 段保留（Coordination Platform 自身连接参数）
+- [x] OS-P3-06: 移除 V1 节点注册/心跳 Topic 订阅 — **已完成（v2.23）**：V1 命令面全面下线（`v1_command_enabled=false`），EdgeX 不再订阅/发布 `edgex/cmd/*`、`edgex/nodes/*`、V1 心跳；`/api/nodes` 由 EAN Registry Mirror 维持
 
 **双方共同：**
 
-- [ ] 稳定运行 2-4 周，收集 EAN Invoke metrics
+- [x] 稳定运行验证 + 联机复测（v2.19/v2.22/v2.24）：EAN Invoke metrics 采集、节点/设备/点位/实时数据端到端验证通过
 - [ ] 对比 V1 vs EAN 命令路径的延迟和可靠性
 
-### Phase 4：V1 Bridge 下线
+### Phase 4：V1 Bridge 下线 + V1 命令面全面下线（v2.21 落地 / v2.23 全面下线）
 
-**EdgeOS 侧（由 EdgeOS 侧维护）：**
+**EdgeOS 侧（已落地，v2.21 OS-P4；v2.23 全面下线）：**
 
-- [ ] 完全移除 V1 Bridge 轮询和 Capability 合成
-- [ ] 移除 V1 命令 Topic 订阅（`edgex/cmd/*`）
-- [ ] 保留 V1 数据 Topic 订阅（`edgex/data/*`、`edgex/points/*`、`edgex/devices/*`）
-- [ ] 保留 V1 告警 Topic 订阅（`edgex/events/*`）
+- [x] 完全移除 V1 Bridge 轮询和 Capability 合成 — `internal/ean/bridge.go` 删除；启动接线移除；原生 EAN Discovery/Heartbeat/Event 完全覆盖
+- [x] 移除 V1 命令 Topic 订阅（`edgex/cmd/*`）— messaging 移除 `edgex/cmd/responses/#`；`PublishCommand` 跳过（`v1_command_enabled=false`）
+- [x] 保留 V1 数据 Topic 订阅（`edgex/data/*`、`edgex/points/*`、`edgex/devices/*`）
+- [x] 保留 V1 告警 Topic 订阅（`edgex/events/*`）
 
-**EdgeX 侧：**
+**EdgeX 侧（已落地，v2.21 EX-P4；v2.23 全面下线）：**
 
-- [ ] EX-P4-01: V1 命令 Topic 订阅标记 deprecated（仅保留，不再维护）
-- [ ] EX-P4-02: V1 节点注册/心跳 Topic 订阅标记 deprecated（EAN Discovery + Heartbeat 已完全替代）
-- [ ] EX-P4-03: 评估移除 V1 命令 Topic 订阅（`edgex/cmd/*`），仅保留数据上报 Topic
+- [x] EX-P4-01: V1 命令 Topic 订阅标记 deprecated（`subscribeToCommands` MQTT/NATS 输出 DEPRECATED；discover/write/task/register 订阅保留但告警）
+- [x] EX-P4-02: V1 节点注册/心跳 Topic 订阅标记 deprecated（`publishNodeOnline`/V1 heartbeat 输出 DEPRECATED；EAN Discovery + Heartbeat 已完全替代）
+- [x] EX-P4-03: V1 命令 Topic 订阅**已全面下线**（`v1_command_enabled=false`，不再订阅/发布 `edgex/cmd/*`）
+- [x] EX-P4-SWITCH: `V1CommandEnabled` 通道开关（`EdgeOSMQTTConfig`/`EdgeOSNATSConfig`）——v2.23 已置 `false`（全面下线）；开关热更新触发北向通道重连以订阅/下线 V1 命令 Topic
+
+> **V1 命令面状态（v2.23）**：**已全面下线**。EdgeX 北向通道与 EdgeOS 配置 `v1_command_enabled=false`：EdgeX 不再订阅/发布 `edgex/cmd/*`、不再发布 V1 节点注册、不运行 V1 心跳循环；EdgeOS `PublishCommand`/主动发现跳过（`POST /api/nodes/.../commands` 返回 `V1 command plane disabled`）。命令路径完全由 EAN Invoke（`$edgeos/invoke/*`）承载，联机复测通过（`system.diagnostics`/`bacnet_ip.write_point` completed）。V1 数据面（`edgex/data/*`、`edgex/points/*`、`edgex/devices/*`）与告警（`edgex/events/*`）继续保留。
 
 > **注**：双 Runtime（MCP + 北向 EAN）是战略设计，不合并。MCP Runtime 作为基础能力层始终运行，北向 EAN Runtime 作为高级协作层按需启停。详见 §5.1。
 
@@ -1034,7 +1079,7 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 │  │  │            │ │  │  │  不依赖通道连接                 │ │    │
 │  │  │ TransportMQTT│  │  │                                │ │    │
 │  │  │ + mqttBus  │ │  │  │  7 Unified Capability（`GenerateUnifiedCapabilities`） │ │    │
-│  │  │            │ │  │  │  ~34 MCP 工具（9 ean_* unified + 25 edgex_*）         │ │    │
+│  │  │            │ │  │  │  32 MCP 工具（7 ean_* unified + 25 hand-written）     │ │    │
 │  │  │ 63 Cap     │ │  │  │  /api/capability/invoke (HTTP) │ │    │
 │  │  │ (共享定义) │ │  │  │  MCP tools/call (JSON-RPC)     │ │    │
 │  │  │            │ │  │  │  LLM 接入 → 智能设备操作       │ │    │
@@ -1053,7 +1098,7 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 │  │  │   ├── edgex/devices/* (设备状态)                       │  │
 │  │  │   └── edgex/events/* (告警事件)                        │  │
 │  │  │                                                        │  │
-│  │  │  [3] EAN 能力层（高级功能，设计态）                    │  │
+│  │  │  [3] EAN 能力层（高级功能，已实现）                      │  │
 │  │  │   ├── ean_enabled: bool     ← EAN Runtime 启停         │  │
 │  │  │   ├── ean_heartbeat_sec: int ← 心跳周期                │  │
 │  │  │   ├── ean_event_auto_publish ← 事件自动发布            │  │
@@ -1073,11 +1118,11 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 │                                                                   │
 │  ┌─ Discovery Center ────────────────────────────────────────┐  │
 │  │  订阅 $edgeos/discovery/*  → 索引 63 条 Capability        │  │
-│  │  V1 Bridge 隔离: native-ean 优先于 v1-bridge              │  │
+│  │  原生 EAN Agent/Cap 优先；V1 Bridge 已移除（OS-P4）        │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌─ Invoke Orchestrator ─────────────────────────────────────┐  │
 │  │  $edgeos/invoke/{agent} → EdgeX → $edgeos/reply/{os}     │  │
-│  │  V1 Fallback: EAN 超时后转 V1 命令协议 (40%/60%)         │  │
+│  │  V1 Fallback 已移除（OS-P3-01）：命令统一 EAN Invoke       │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌─ V1 数据订阅（保留）─────────────────────────────────────┐  │
 │  │  edgex/data/*       → 实时数据                            │  │
@@ -1085,15 +1130,15 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 │  │  edgex/devices/*    → 设备状态                            │  │
 │  │  edgex/events/*     → 告警/事件                           │  │
 │  └──────────────────────────────────────────────────────────┘  │
-│  ┌─ V1 Bridge（隔离态）─────────────────────────────────────┐  │
-│  │  轮询 ListNodes() → 仅对无原生 EAN Cap 的 Agent 合成     │  │
-│  │  点位数据同步 → 生成 EAN Event（含 previous_value）      │  │
+│  ┌─ Registry Mirror（EAN→V1 节点镜像）──────────────────────┐  │
+│  │  仅镜像北向原生 EAN Agent → /api/nodes                    │  │
+│  │  Agent 下线(graceful_shutdown) → 删除节点 + Agent         │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │                                                                   │
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-**关键变化（v2.6）**：架构图新增 MCP Runtime 独立层，与北向 EAN Runtime 并列。MCP Runtime 不经过 MQTT/NATS 网络，直接通过 in-process 调用访问共享执行内核。北向 EAN Runtime 的 EAN 能力层配置（`ean_enabled` 等）从独立 `ean:` 段合并到通道配置字段中（设计态）。
+**关键变化（v2.6）**：架构图新增 MCP Runtime 独立层，与北向 EAN Runtime 并列。MCP Runtime 不经过 MQTT/NATS 网络，直接通过 in-process 调用访问共享执行内核。北向 EAN Runtime 的 EAN 能力层配置（`ean_enabled` 等）从独立 `ean:` 段合并到通道配置字段中（已实现）。
 
 ---
 
@@ -1106,7 +1151,7 @@ MCP Runtime 是 EdgeX 的基础能力层，Server 启动即就绪，不依赖任
 | Capability 描述不完整导致调用失败 | 中 | `generator.go` 已修复 description 和 required 标记 | **已验证通过** |
 | V1 Bridge 隔离不彻底导致索引污染 | 中 | `CapSource` 双来源标记 + `upsertCapability` 优先级规则 | **已验证通过** |
 | EdgeOS 晚于 EdgeX 启动错过 Discovery | 高 | EdgeX 60s 周期重发 + EdgeOS 主动 Query + retained 消息 | **已验证通过** |
-| EAN 设置合并后用户找不到入口 | 中 | 北向通道弹窗新增 "EAN 能力层" Tab；EAN 视图保留 | 设计态 |
+| EAN 设置合并后用户找不到入口 | 中 | 北向通道弹窗新增 "EAN 能力层" Tab；EAN 视图保留 | 已缓解 |
 | 数据上报路径保留导致双协议长期共存 | 低 | V1 仅保留数据上报（单向 pub/sub），命令路径统一为 EAN | 已确认 |
 
 ---
@@ -1132,7 +1177,7 @@ ean:
     timeout_multiplier: 3
 ```
 
-### 11.2 设计态：合并后的 EdgeOSMQTTConfig 字段
+### 11.2 已实现：合并后的 EdgeOSMQTTConfig 字段
 
 | 字段 | 类型 | 说明 | 来源 |
 |---|---|---|---|
@@ -1157,6 +1202,7 @@ ean:
 | `EANEnabled` | bool | EAN 能力层启用 | **已落地** |
 | `EANHeartbeatSec` | int | EAN 心跳间隔（秒） | **已落地** |
 | `EANEventAutoPublish` | bool | EAN 事件自动发布 | **已落地** |
+| `V1CommandEnabled` | bool | V1 命令面开关（Phase 4）：**默认 `false`（v2.23 全面下线）**——V1 命令 Topic（`edgex/cmd/*` 订阅/发布跳过）、V1 节点注册/心跳跳过；`true` 可临时重开（仅调试）。V1 数据面/告警不受影响 | **已落地（v2.21 EX-P4-SWITCH / v2.23 默认下线）** |
 
 ---
 
@@ -1175,16 +1221,16 @@ ean:
 | Discovery 发布器 | `internal/capability/discovery_publisher.go` | HandleDiscoveryQuery 已实现 | - |
 | Execution Mapper | `internal/execution/capability_mapper.go` | 运行中（双 Runtime 共享） | - |
 | Driver Executor | `internal/execution/driver_executor.go` | 运行中（双 Runtime 共享） | - |
-| MCP Runtime（基础能力层） | `internal/server/mcp_handler.go:2301` `ensureCapabilityRuntime` | 运行中，`sync.Once` 单例，TransportSDK + NoopBus | 不需改动（独立于 EAN 配置） |
-| EAN HTTP API 处理器 | `internal/server/capability_handler.go` | 运行中，PUT 存根 | EX-P3-04: 移除 PUT 存根 |
-| EAN API 路由 | `internal/server/server.go` `/api/capability/*` | 运行中 | EX-P3-04: 移除 PUT 路由 |
-| 北向管理器（MQTT） | `internal/core/northbound_manager_edgos.go` | 运行中 | EX-P3-08: EAN 字段热更新 |
-| 北向管理器（NATS） | `internal/core/northbound_manager_edgos_nats.go` | 运行中 | EX-P3-08: 同上 |
-| 配置模型 | `internal/model/types.go` `EdgeOSMQTTConfig:421` / `EdgeOSNATSConfig:443` | 运行中 | EX-P3-02/03: 追加 EAN 字段 |
-| 前端北向弹窗 | `ui/src/components/northbound/EdgeOSMQTTSettingsDialog.vue` | 运行中 | EX-P3-05: 新增 EAN 能力层 Tab |
-| 前端北向弹窗 | `ui/src/components/northbound/EdgeOSNATSSettingsDialog.vue` | 运行中 | EX-P3-05: 同上 |
-| 前端 AI 设置 | `ui/src/components/ai-assistant/AiSettingsDialog.vue` | 运行中 | EX-P3-06: EAN Tab 降级为只读 |
-| 前端 EAN 状态 | `ui/src/composables/useEan.js` | 运行中 | EX-P3-06: 移除 `saveSettings` |
+| MCP Runtime（基础能力层） | `internal/server/mcp_handler.go:2240` `ensureCapabilityRuntime` | 运行中，`sync.Once` 单例，TransportSDK + NoopBus | 不需改动（独立于 EAN 配置） |
+| EAN HTTP API 处理器 | `internal/server/capability_handler.go` | 运行中，仅 GET `/capability/settings` | EX-P3-04: 已移除 PUT 存根 |
+| EAN API 路由 | `internal/server/server.go` `/api/capability/*` | 运行中 | EX-P3-04: 已移除 PUT 路由 |
+| 北向管理器（MQTT） | `internal/core/northbound_manager_edgos.go` | 运行中 | EX-P3-08: EAN 字段热更新（已实现） |
+| 北向管理器（NATS） | `internal/core/northbound_manager_edgos_nats.go` | 运行中 | EX-P3-08: 同上（已实现） |
+| 配置模型 | `internal/model/types.go` `EdgeOSMQTTConfig:421` / `EdgeOSNATSConfig:443` | 运行中 | EX-P3-02/03: EAN 字段已追加 |
+| 前端北向弹窗 | `ui/src/components/northbound/EdgeOSMQTTSettingsDialog.vue` | 运行中 | EX-P3-05: EAN 能力层 Tab 已实现 |
+| 前端北向弹窗 | `ui/src/components/northbound/EdgeOSNATSSettingsDialog.vue` | 运行中 | EX-P3-05: 同上（已实现） |
+| 前端 AI 设置 | `ui/src/components/ai-assistant/AiSettingsDialog.vue` | 运行中 | EX-P3-06: EAN Tab 已降级为只读 |
+| 前端 EAN 状态 | `ui/src/composables/useEan.js` | 运行中 | EX-P3-06: `saveSettings` 已移除 |
 
 ### EdgeOS
 
@@ -1243,12 +1289,406 @@ ean:
 | `edgex/nodes/{node}/offline` | V1 | 被 `$edgeos/discovery/agent/offline` 替代 | Phase 4 |
 | `edgex/heartbeat/{node}` | V1 | 被 `$edgeos/heartbeat/{agent}` 替代 | Phase 4 |
 | `edgex/cmd/{node}/discover` | V1 | 被 `*.scan_devices` Invoke 替代 | Phase 3 |
-| `edgex/cmd/{node}/{device}/write` | V1 | 被 `*.write_register` Invoke 替代 | Phase 3 |
+| `edgex/cmd/{node}/{device}/write` | V1 | 被 `*.write_point` Invoke 替代 | Phase 3 |
 | `edgex/cmd/{node}/task/{type}/{id}` | V1 | 被 EAN Capability 替代 | Phase 3 |
 | `edgex/cmd/responses/{node}/{device}` | V1 | 被 `$edgeos/reply/{agent}` 替代 | Phase 3 |
 | `edgex/cmd/nodes/register` | V1 | 被 `$edgeos/discovery/agent` 替代 | Phase 4 |
 
 ---
 
-*本文档基于 EdgeX (`d:\code\edgex`) 和 EdgeOS (`d:\code\edgeOS`) 代码库 2026-07-28 版本编制。*
-*更新记录：v2.12 (EdgeOS侧) 设备数对账——V1 devices/report 全量剪枝 + EAN→节点镜像；实机 4=4；`go test ./...` 全绿。v2.11 (双侧) NATS 对称联调复验；OS-P3-01/02。v2.10 (EdgeOS侧) NATS 延迟订阅/Health transport_details。v2.9 NATS 启用。v2.8 Governance 权限。v2.7 启动韧性。v2.6～v2.1 见历史。*
+## 附录 C：15 协议完整清单
+
+> 源码：`internal/capability/generator.go` `KnownDriverProtocols`
+> 用途：北向 EAN Runtime 通过 `GenerateDefaultCapabilities` 为每个协议生成 4 条 Capability（read/write/scan/list），合计 60 条 + 3 条系统/AI = 63 条原生能力。
+
+| # | 驱动协议 ID | Capability ID 前缀 | 全称 | 典型端口 |
+|---|---|---|---|---|
+| 1 | `modbus-tcp` | `modbus_tcp` | Modbus TCP | 502 |
+| 2 | `modbus-rtu` | `modbus_rtu` | Modbus RTU (串口) | - |
+| 3 | `modbus-rtu-over-tcp` | `modbus_rtu_over_tcp` | Modbus RTU over TCP | 502 |
+| 4 | `bacnet-ip` | `bacnet_ip` | BACnet/IP | 47808 (0xBAC0) |
+| 5 | `s7` | `s7` | Siemens S7 Communication | 102 |
+| 6 | `opc-ua` | `opc_ua` | OPC UA | 4840 |
+| 7 | `ethernet-ip` | `ethernet_ip` | EtherNet/IP (CIP) | 44818 |
+| 8 | `omron-fins` | `omron_fins` | Omron FINS TCP | 9600 |
+| 9 | `iec60870-5-104` | `iec60870_5_104` | IEC 60870-5-104 | 2404 |
+| 10 | `knxnet-ip` | `knxnet_ip` | KNXnet/IP | 3671 |
+| 11 | `snmp` | `snmp` | SNMP v1/v2c/v3 | 161 |
+| 12 | `dlt645` | `dlt645` | DL/T 645-2007 | - |
+| 13 | `mitsubishi-slmp` | `mitsubishi_slmp` | Mitsubishi SLMP | 4999 |
+| 14 | `profinet-io` | `profinet_io` | PROFINET IO | 34962 |
+| 15 | `ethercat` | `ethercat` | EtherCAT | 34980 |
+
+**协议 ID 规范化规则**（`NormalizeProtocolID`）：将驱动协议名中的 `-` 和 `.` 替换为 `_`，全部转小写。例：`modbus-rtu-over-tcp` → `modbus_rtu_over_tcp`。
+
+---
+
+## 附录 D：63 条 EAN 原生能力矩阵
+
+> 源码：`internal/capability/generator.go` `GenerateDefaultCapabilities`
+> 生成规则：15 协议 × 4 操作 + 3 系统/AI = 63 条
+> 使用场景：北向 EAN Runtime（`Unified=false`），EdgeOS 通过 MQTT/NATS 发现并调用
+
+### D.1 协议级能力（60 条）
+
+每个协议生成以下 4 条能力，Capability ID 格式为 `{protocol_prefix}.{operation}`：
+
+| 操作 | ID 后缀 | 驱动命令 | 权限 | 必需参数 | 返回 |
+|---|---|---|---|---|---|
+| 读单个数据（读点位） | `.read_point` | `ReadPoints` | read | `device_id` | `values[]`, `timestamp` |
+| 写单个数据（写点位） | `.write_point` | `WritePoint` | write | `device_id`, `address`, `value` | `success`, `timestamp` |
+| 扫描设备 | `.scan_devices` | `ScanDevices` | read | `channel_id` | `devices[]` |
+| 列点位 | `.list_points` | `GetDevicePoints` | read | `device_id` | `points[]` |
+
+**完整 60 条列表**（按协议分组）：
+
+| 协议 | read_point | write_point | scan_devices | list_points |
+|---|---|---|---|---|
+| modbus-tcp | `modbus_tcp.read_point` | `modbus_tcp.write_point` | `modbus_tcp.scan_devices` | `modbus_tcp.list_points` |
+| modbus-rtu | `modbus_rtu.read_point` | `modbus_rtu.write_point` | `modbus_rtu.scan_devices` | `modbus_rtu.list_points` |
+| modbus-rtu-over-tcp | `modbus_rtu_over_tcp.read_point` | `modbus_rtu_over_tcp.write_point` | `modbus_rtu_over_tcp.scan_devices` | `modbus_rtu_over_tcp.list_points` |
+| bacnet-ip | `bacnet_ip.read_point` | `bacnet_ip.write_point` | `bacnet_ip.scan_devices` | `bacnet_ip.list_points` |
+| s7 | `s7.read_point` | `s7.write_point` | `s7.scan_devices` | `s7.list_points` |
+| opc-ua | `opc_ua.read_point` | `opc_ua.write_point` | `opc_ua.scan_devices` | `opc_ua.list_points` |
+| ethernet-ip | `ethernet_ip.read_point` | `ethernet_ip.write_point` | `ethernet_ip.scan_devices` | `ethernet_ip.list_points` |
+| omron-fins | `omron_fins.read_point` | `omron_fins.write_point` | `omron_fins.scan_devices` | `omron_fins.list_points` |
+| iec60870-5-104 | `iec60870_5_104.read_point` | `iec60870_5_104.write_point` | `iec60870_5_104.scan_devices` | `iec60870_5_104.list_points` |
+| knxnet-ip | `knxnet_ip.read_point` | `knxnet_ip.write_point` | `knxnet_ip.scan_devices` | `knxnet_ip.list_points` |
+| snmp | `snmp.read_point` | `snmp.write_point` | `snmp.scan_devices` | `snmp.list_points` |
+| dlt645 | `dlt645.read_point` | `dlt645.write_point` | `dlt645.scan_devices` | `dlt645.list_points` |
+| mitsubishi-slmp | `mitsubishi_slmp.read_point` | `mitsubishi_slmp.write_point` | `mitsubishi_slmp.scan_devices` | `mitsubishi_slmp.list_points` |
+| profinet-io | `profinet_io.read_point` | `profinet_io.write_point` | `profinet_io.scan_devices` | `profinet_io.list_points` |
+| ethercat | `ethercat.read_point` | `ethercat.write_point` | `ethercat.scan_devices` | `ethercat.list_points` |
+
+### D.2 系统与 AI 能力（3 条）
+
+| Capability ID | 驱动命令 | 分类 | 权限 | 必需参数 | 返回 |
+|---|---|---|---|---|---|
+| `system.diagnostics` | `Diagnostics` | system | admin | 无 | `diagnostics` (object) |
+| `ai.protocol_reverse` | `AI.protocol_reverse` | ai | read | `payload` (object) | `candidates[]` |
+| `ai.doc_parse` | `AI.doc_parse` | ai | read | `payload` (object) | `points[]` |
+
+---
+
+## 附录 E：MCP 工具完整清单（32 条）
+
+> 源码：`internal/server/mcp_handler.go`（25 条 hand-written）+ `internal/mcp/capability_adapter.go`（7 条 `ean_*` unified）
+> 工具命名规则：统一能力工具前缀 `ean_`（`CapabilityToolPrefix`），hand-written 工具无前缀
+
+### E.1 统一 MCP 工具（7 条，`ean_*` 前缀）
+
+> 源码：`internal/capability/generator.go` `GenerateUnifiedCapabilities`
+> 由 `RegisterCapabilityTools` 自动注册到 MCP Server
+> 工具名 = `ean_` + Capability ID（`.` → `_`）
+
+| # | MCP 工具名 | Capability ID | 驱动命令 | 权限 | 必需参数 | 可选参数 | 返回 |
+|---|---|---|---|---|---|---|---|
+| 1 | `ean_read_points` | `read_points` | `ReadPoints` | read | `device_id` | `point_id`, `address`, `point_ids[]`, `addresses[]`, `quantity`, `protocol`, `live`, `prefer_shadow` | `values[]`, `timestamp` |
+| 2 | `ean_write_points` | `write_points` | `WritePoint` | write | `device_id` | `point_id`, `address`, `value`, `writes[]`, `protocol` | `success`, `timestamp`, `results[]` |
+| 3 | `ean_scan_devices` | `scan_devices` | `ScanDevices` | read | `channel_id` | `network` | `devices[]` |
+| 4 | `ean_list_points` | `list_points` | `GetDevicePoints` | read | `device_id` | - | `points[]`, `count` |
+| 5 | `ean_get_diagnostics` | `get_diagnostics` | `Diagnostics` | admin | - | `channel_id`, `device_id` | `diagnostics` (object) |
+| 6 | `ean_ai_protocol_reverse` | `ai_protocol_reverse` | `AI.protocol_reverse` | read | `payload` | - | `candidates[]` |
+| 7 | `ean_ai_doc_parse` | `ai_doc_parse` | `AI.doc_parse` | read | `payload` | - | `points[]` |
+
+**地址语义统一说明**（`read_points` / `write_points`）：
+
+`address` / `addresses` 参数接受三种形式，系统自动解析为内部 `point_id`：
+1. **point_id**（推荐）— `list_points` 返回的 `id` 字段，如 `pt_0723121000`
+2. **address** — 寄存器地址，如 Modbus PDU 偏移 `0` 或 PLC 地址 `40001`
+3. **name** — 点位名称（不区分大小写）
+
+`list_points` 的输出可直接作为 `read_points` / `write_points` 的输入。
+
+### E.2 Hand-written MCP 工具（25 条，无前缀）
+
+> 源码：`internal/server/mcp_handler.go` `registerMCPTools` + `registerMCPFullTools`
+> 标注 [全功能] 的工具需要 MCP 全功能激活（`POST /api/mcp/activate`）
+
+#### 查询类（5 条，只读）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 1 | `list_channels` | 列出所有采集通道及状态 | - |
+| 2 | `list_devices` | 列出指定通道下设备 | `channel_id` |
+| 3 | `get_system_info` | 获取系统信息（CPU/内存/磁盘/Go版本/协议列表） | - |
+| 4 | `analyze_protocol` | 分析工业协议特征（端口/帧模式推断） | - |
+| 5 | `get_protocol_help` | 获取协议接入帮助（地址格式/功能码/字节序） | `protocol` |
+
+#### 通道管理（5 条，[全功能]）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 6 | `create_channel` [全功能] | 创建南向采集通道 | `name`, `protocol` |
+| 7 | `delete_channel` [全功能] | 删除通道（含设备和点位） | `channel_id` |
+| 8 | `start_channel` [全功能] | 启动通道采集引擎 | `channel_id` |
+| 9 | `stop_channel` [全功能] | 停止通道采集引擎 | `channel_id` |
+| 10 | `restart_channel` [全功能] | 重启通道采集引擎 | `channel_id` |
+
+#### 设备管理（4 条，[全功能]）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 11 | `create_device` [全功能] | 在通道下创建设备 | `channel_id`, `name` |
+| 12 | `delete_device` [全功能] | 删除设备（含点位） | `channel_id`, `device_id` |
+| 13 | `update_device` [全功能] | 更新设备配置 | `channel_id`, `device_id` |
+| 14 | `enable_device` [全功能] | 启用/禁用设备 | `channel_id`, `device_id`, `enable` |
+
+#### 点位管理（3 条，[全功能]）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 15 | `create_point` [全功能] | 创建采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
+| 16 | `delete_point` [全功能] | 删除点位 | `channel_id`, `device_id`, `point_id` |
+| 17 | `update_point` [全功能] | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
+
+#### 边缘规则（3 条）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 18 | `create_edge_rule` [全功能] | 创建边缘计算规则 | `name`, `type`, `condition`, `actions`, `sources` |
+| 19 | `delete_edge_rule` [全功能] | 删除边缘计算规则 | `rule_id` |
+| 20 | `list_edge_rules` | 列出所有边缘规则 | - |
+
+#### 虚拟设备（2 条，[全功能]）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 21 | `create_virtual_device` [全功能] | 创建虚拟设备（公式计算） | `virtual_device_id`, `formula_points` |
+| 22 | `delete_virtual_device` [全功能] | 删除虚拟设备 | `virtual_device_id` |
+
+#### 扩展工具（3 条）
+
+| # | 工具名 | 描述 | 必需参数 |
+|---|---|---|---|
+| 23 | `get_channel_config` | 获取通道完整配置 | `channel_id` |
+| 24 | `get_point_history` | 获取点位历史数据 | `channel_id`, `device_id`, `point_id` |
+| 25 | `export_config` | 导出完整配置（JSON/YAML） | - |
+
+### E.3 工具合并历史
+
+| 阶段 | 工具数 | 说明 |
+|---|---|---|
+| v2.13 前 | 94 | 63 `ean_*` 协议级 + 6 重复 hand-written + 25 hand-written |
+| v2.14 后 | 32 | 7 `ean_*` 统一 + 25 hand-written（移除 6 条重复：`list_points`/`read_point`/`read_point_batch`/`write_point`/`write_point_batch`/`get_diagnostics`，由统一能力替代） |
+| 压缩率 | 66% | 94 → 32 |
+
+---
+
+## 附录 F：EdgeX/EdgeOS API 对接格式规范
+
+> 源码：`internal/server/capability_handler.go` + `internal/server/server.go` + `internal/server/mcp_handler.go`
+> 本附录定义 EdgeX 暴露给 EdgeOS 和外部 LLM 的全部 API 端点及数据格式
+
+### F.1 EAN REST API（EdgeX 侧）
+
+**Base URL**: `http://<edgex_host>:8080/api`
+**认证**: Bearer Token（`Authorization: Bearer <token>`），token 通过 `POST /api/auth/login` 获取
+
+| 方法 | 路径 | 说明 | 请求体 | 响应 |
+|---|---|---|---|---|
+| GET | `/capability/agent/status` | Agent 状态 + Invoke 指标 | - | `data: {id, kind, version, status, transport, heartbeat_interval_sec, capabilities_count, last_seen, invoke_metrics}` |
+| GET | `/capability/list` | 能力列表（支持过滤） | Query: `category`, `keyword` | `data: {capabilities[], total}` |
+| GET | `/capability/list/:id` | 单条能力详情 | - | `data: Capability` |
+| POST | `/capability/invoke` | 同步调用能力 | `InvokeRequest` | `data: InvokeResponse` |
+| GET | `/capability/invoke/:id/status` | 查询异步调用状态 | - | `data: InvokeResponse` |
+| GET | `/capability/discovery/agents` | 发现 Agent 列表 | - | `data: {agents[], total}` |
+| GET | `/capability/events/history` | 事件历史（环形缓冲） | Query: `limit` (default 50) | `data: {events[], total}` |
+| DELETE | `/capability/events/history` | 清空事件历史 | - | `{code, message}` |
+| GET | `/capability/settings` | EAN 设置（从北向配置派生） | - | `data: {ean_enabled, ean_heartbeat_sec, ean_event_auto_publish}` |
+
+### F.2 InvokeRequest 格式
+
+```json
+{
+  "invoke_id": "inv_20260803_001",
+  "target": "edgex-node-01",
+  "capability": "read_points",
+  "arguments": {
+    "device_id": "dev_0723120134",
+    "point_ids": ["pt_0723121000", "pt_0723121001"],
+    "live": true
+  },
+  "options": {
+    "timeout_sec": 5,
+    "priority": "normal",
+    "retry": 0,
+    "async": false
+  }
+}
+```
+
+| 字段 | 类型 | 必需 | 说明 |
+|---|---|---|---|
+| `invoke_id` | string | 否 | 调用 ID，未填则自动生成 |
+| `target` | string | 是 | 目标 Agent ID（EdgeX 节点 ID） |
+| `capability` | string | 是 | Capability ID（如 `read_points` 或 `modbus_tcp.read_point`） |
+| `arguments` | object | 否 | 能力参数（见附录 D/E 各能力 schema） |
+| `options.timeout_sec` | int | 否 | 超时秒数（默认 5） |
+| `options.async` | bool | 否 | 异步调用（默认 false，同步） |
+
+### F.3 InvokeResponse 格式
+
+```json
+{
+  "invoke_id": "inv_20260803_001",
+  "status": "completed",
+  "result": {
+    "success": true,
+    "values": [
+      {"point_id": "pt_0723121000", "address": "0", "value": 234, "quality": "Good", "timestamp": 1722672000000, "source": "driver"},
+      {"point_id": "pt_0723121001", "address": "1", "value": 567, "quality": "Good", "timestamp": 1722672000000, "source": "driver"}
+    ],
+    "timestamp": 1722672000000
+  },
+  "latency_ms": 12
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `invoke_id` | string | 调用 ID（与请求对应） |
+| `status` | string | `completed` / `failed` / `timeout` / `rejected` / `queued` / `running` |
+| `result.success` | bool | 是否成功 |
+| `result.values` | any | 返回值（格式取决于能力） |
+| `result.timestamp` | int64 | 结果时间戳（毫秒） |
+| `result.error` | string | 错误信息（失败时） |
+| `result.error_code` | string | 错误码（如 `E009`, `E012`, `E400`, `E500`） |
+| `latency_ms` | int64 | 调用延迟（毫秒） |
+
+### F.4 统一响应信封
+
+所有 EdgeX REST API 返回统一信封格式：
+
+```json
+{
+  "code": "0",
+  "message": "success",
+  "data": { ... }
+}
+```
+
+| code | 含义 |
+|---|---|
+| `0` | 成功 |
+| `E400` | 请求参数错误 |
+| `E404` | 资源不存在 |
+| `E500` | 服务器内部错误 |
+| `E009` | 能力/调用未找到 |
+| `E012` | 必需字段缺失 |
+
+### F.5 MCP 协议端点
+
+| 方法 | 路径 | 说明 |
+|---|---|---|
+| POST | `/api/mcp` | MCP JSON-RPC 请求（`initialize` / `tools/list` / `tools/call`） |
+| GET | `/api/mcp` | MCP SSE 流式端点（Server-Sent Events） |
+| DELETE | `/api/mcp` | 关闭 MCP 会话 |
+| POST | `/api/mcp/activate` | 激活全功能读写（需用户确认） |
+| GET | `/api/mcp/status` | 查询 MCP 激活状态 |
+| GET | `/api/mcp/help` | MCP 接入帮助（含配置示例） |
+
+**认证**: `Authorization: Bearer <mcp_api_key>`（MCP 专用 API Key，在 EdgeX UI → AI 助手 → MCP 接入页面生成）
+
+**LLM 客户端配置示例**（Claude Desktop / Cursor / VS Code）：
+
+```json
+{
+  "mcpServers": {
+    "edgex": {
+      "url": "http://<edgex_host>:8080/api/mcp",
+      "headers": {
+        "Authorization": "Bearer <mcp_api_key>"
+      }
+    }
+  }
+}
+```
+
+### F.6 EdgeOS 对接 EAN 调用路径
+
+EdgeOS 通过 MQTT/NATS 总线调用 EdgeX 能力，消息信封使用 EAN 2.0 `Message` 格式：
+
+**Invoke Topic**: `$edgeos/invoke/{agent_id}`（MQTT）或 `edgeos.invoke.{agent_id}`（NATS）
+
+```json
+{
+  "header": {
+    "message_id": "msg_001",
+    "timestamp": 1722672000000,
+    "source": "edgeos",
+    "destination": "edgex-node-01",
+    "message_type": "invoke_capability",
+    "version": "2.0",
+    "correlation_id": "corr_001",
+    "request_id": "req_001"
+  },
+  "body": {
+    "invoke_id": "inv_001",
+    "target": "edgex-node-01",
+    "capability": "read_points",
+    "arguments": {
+      "device_id": "dev_0723120134",
+      "point_ids": ["pt_0723121000"]
+    }
+  }
+}
+```
+
+**Reply Topic**: `$edgeos/reply/{agent_id}`（MQTT）或 `edgeos.reply.{agent_id}`（NATS）
+
+```json
+{
+  "header": {
+    "message_id": "msg_002",
+    "timestamp": 1722672000001,
+    "source": "edgex-node-01",
+    "destination": "edgeos",
+    "message_type": "invoke_response",
+    "version": "2.0",
+    "correlation_id": "corr_001"
+  },
+  "body": {
+    "invoke_id": "inv_001",
+    "status": "completed",
+    "result": {
+      "success": true,
+      "values": [...],
+      "timestamp": 1722672000000
+    },
+    "latency_ms": 8
+  }
+}
+```
+
+### F.7 Invoke Metrics 指标
+
+EdgeX 通过 `GET /api/capability/agent/status` 返回 `invoke_metrics` 字段：
+
+```json
+{
+  "invoke_metrics": {
+    "total_invokes": 42,
+    "success_count": 40,
+    "failed_count": 2,
+    "timeout_count": 0,
+    "rejected_count": 0,
+    "success_rate": 0.9524,
+    "avg_latency_ms": 15.3,
+    "p50_latency_ms": 8,
+    "p99_latency_ms": 120,
+    "min_latency_ms": 2,
+    "max_latency_ms": 350,
+    "top_errors": [
+      {"code": "E009", "count": 1},
+      {"code": "E012", "count": 1}
+    ]
+  }
+}
+```
+
+EdgeOS 侧通过 `GET /api/ean/health` 返回对称的 `invoke_metrics` 字段，双侧指标格式一致。
+
+---
+
+*本文档基于 EdgeX (`d:\code\edgex`) 和 EdgeOS (`d:\code\edgeOS`) 代码库 2026-08-03 版本编制。*

@@ -19,7 +19,7 @@ type RuntimeConfig struct {
 	Protocols            []string // driver protocols to auto-register; empty = KnownDriverProtocols
 	Metadata             map[string]any
 	Endpoint             *AgentEndpoint
-	// Unified generates 9 consolidated capabilities instead of 63 protocol-specific ones.
+	// Unified generates 7 consolidated capabilities instead of 63 protocol-specific ones.
 	// Used by MCP Runtime to reduce LLM tool count. Northbound EAN Runtime uses false (default).
 	Unified bool
 }

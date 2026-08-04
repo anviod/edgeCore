@@ -10,11 +10,11 @@ import (
 )
 
 // CapabilityToolPrefix namespaces auto-generated EAN tools so they do not collide
-// with hand-written edgex_* JSON-RPC tools.
+// with hand-written JSON-RPC tools (list_channels, create_device, etc.).
 const CapabilityToolPrefix = "ean_"
 
 // ToolNameFromCapability converts a Capability ID to an MCP tool name.
-// Example: modbus_tcp.read_holding_register → ean_modbus_tcp_read_holding_register
+// Example: modbus_tcp.read_point → ean_modbus_tcp_read_point
 func ToolNameFromCapability(capabilityID string) string {
 	return CapabilityToolPrefix + strings.ReplaceAll(capabilityID, ".", "_")
 }

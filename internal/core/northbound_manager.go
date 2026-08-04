@@ -461,6 +461,25 @@ func (nm *NorthboundManager) PublishPointsMetadata() {
 	}
 }
 
+// PublishDeviceReport republishes the device inventory (edgex/devices/report) to all
+// edgeOS clients. Called when channels/devices are added/updated or the northbound
+// Devices mapping changes, so EdgeOS's device list stays in sync without re-connecting.
+func (nm *NorthboundManager) PublishDeviceReport() {
+	nm.mu.RLock()
+	defer nm.mu.RUnlock()
+
+	for _, client := range nm.edgeOSMQTTClients {
+		go func(c *edgos_mqtt.Client) {
+			c.PublishDeviceReport()
+		}(client)
+	}
+	for _, client := range nm.edgeOSNATSClients {
+		go func(c *edgos_nats.Client) {
+			c.PublishDeviceReport()
+		}(client)
+	}
+}
+
 // PublishPointsSync publishes all point current values for a device to all edgeOS clients
 func (nm *NorthboundManager) PublishPointsSync(channelID, deviceID string) {
 	nm.mu.RLock()

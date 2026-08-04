@@ -8,75 +8,87 @@
       <div class="header-actions channel-header-actions">
         <a-space size="small">
           <a-radio-group v-model="viewMode" type="button" size="small">
-            <a-radio value="card">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-              </svg>
-            </a-radio>
-            <a-radio value="list">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
-              </svg>
-            </a-radio>
+            <a-tooltip content="卡片视图">
+              <a-radio value="card">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                </svg>
+              </a-radio>
+            </a-tooltip>
+            <a-tooltip content="列表视图">
+              <a-radio value="list">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6" />
+                  <line x1="8" y1="12" x2="21" y2="12" />
+                  <line x1="8" y1="18" x2="21" y2="18" />
+                  <line x1="3" y1="6" x2="3.01" y2="6" />
+                  <line x1="3" y1="12" x2="3.01" y2="12" />
+                  <line x1="3" y1="18" x2="3.01" y2="18" />
+                </svg>
+              </a-radio>
+            </a-tooltip>
           </a-radio-group>
         </a-space>
         <a-space size="small" wrap>
-            <a-button v-if="selectionMode && selectedChannels.length > 0" status="warning" size="small" @click="openBatchConfig">
+          <a-dropdown v-if="selectionMode && selectedChannels.length > 0" @select="onBatchConfigSelect" :trigger="['click']">
+            <a-button status="warning" size="small" :loading="batchConfigLoading">
               <template #icon>
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="3"/>
-                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                  <circle cx="12" cy="12" r="3" />
+                  <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
                 </svg>
               </template>批量配置
+              <template #icon-arrow-right><icon-down :size="12" /></template>
             </a-button>
-            <a-button :type="selectionMode ? 'secondary' : 'outline'" size="small" @click="toggleSelectionMode">
-              <template #icon>
-                <svg v-if="selectionMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-                <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                  <polyline points="9 11 12 14 22 4"/>
-                </svg>
-              </template>
-              {{ selectionMode ? '取消选择' : '批量操作' }}
-            </a-button>
-            <a-button type="outline" size="small" :loading="loading" @click="fetchChannels">
-              <template #icon>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <polyline points="1 20 1 14 7 14"/>
-                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
-                </svg>
-              </template>刷新
-            </a-button>
-            <a-button type="primary" size="small" @click="openAddDialog">
-              <template #icon>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="12" y1="5" x2="12" y2="19"/>
-                  <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-              </template>添加通道
-            </a-button>
-            <a-button type="text" size="small" class="help-trigger-btn" @click="openChannelHelp">
-              <template #icon>
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
-                  <line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>
-              </template>
-              帮助说明
-            </a-button>
+            <template #content>
+              <a-doption value="enable"><icon-check-circle :size="14" /> 批量启用</a-doption>
+              <a-doption value="disable"><icon-minus-circle :size="14" /> 批量禁用</a-doption>
+              <a-doption value="delete" status="danger"><icon-delete :size="14" /> 批量删除</a-doption>
+            </template>
+          </a-dropdown>
+          <a-button :type="selectionMode ? 'secondary' : 'outline'" size="small" @click="toggleSelectionMode">
+            <template #icon>
+              <svg v-if="selectionMode" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+              <svg v-else viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <polyline points="9 11 12 14 22 4" />
+              </svg>
+            </template>
+            {{ selectionMode ? '取消选择' : '批量操作' }}
+          </a-button>
+          <a-button type="outline" size="small" :loading="loading" @click="fetchChannels">
+            <template #icon>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+              </svg>
+            </template>刷新
+          </a-button>
+          <a-button type="primary" size="small" @click="openAddDialog">
+            <template #icon>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </template>添加通道
+          </a-button>
+          <a-button type="text" size="small" class="help-trigger-btn" @click="openChannelHelp">
+            <template #icon>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </template>
+            帮助说明
+          </a-button>
         </a-space>
       </div>
     </div>
@@ -87,7 +99,7 @@
           <div class="empty-content">
             <icon-apps :size="48" style="margin-bottom: 12px;" />
             <p>暂无采集通道配置</p>
-            <button class="btn-primary" @click="openAddDialog">添加通道</button>
+            <a-button type="primary" @click="openAddDialog">添加通道</a-button>
           </div>
         </div>
 
@@ -111,199 +123,199 @@
                   <div
                     v-for="item in zone.items"
                     :key="item.id"
-                  class="channel-card"
-                  :class="[getProtocolClass(item.protocol), { 'is-selected': isSelected(item.id) }]"
-                  @click="handleCardClick(item)"
-                >
-                  <div class="channel-card-inner">
-                    <div class="channel-card-top">
-                      <div class="channel-identity">
-                        <div class="channel-icon" :class="getProtocolClass(item.protocol)">
-                          <icon-link v-if="['bacnet-ip', 'modbus-rtu', 'modbus-tcp', 'modbus-rtu-over-tcp'].includes(item.protocol)" :size="16" />
-                          <icon-tool v-else-if="item.protocol === 'opc-ua'" :size="16" />
-                          <icon-settings v-else-if="item.protocol === 's7'" :size="16" />
-                          <icon-link v-else :size="16" />
-                        </div>
-                        <div class="channel-info">
-                          <div class="channel-name">{{ item.name }}</div>
-                          <div class="channel-meta">
-                            <span class="protocol-tag">{{ formatProtocolTag(item.protocol) }}</span>
-                            <span
-                              class="channel-status-chip"
-                              :class="item.enable ? 'is-enabled' : 'is-disabled'"
-                            >
-                              <span class="status-dot"></span>
-                              {{ item.enableText }}
-                            </span>
+                    class="channel-card"
+                    :class="[getProtocolClass(item.protocol), { 'is-selected': isSelected(item.id) }]"
+                    @click="handleCardClick(item)"
+                  >
+                    <div class="channel-card-inner">
+                      <div class="channel-card-top">
+                        <div class="channel-identity">
+                          <div class="channel-icon" :class="getProtocolClass(item.protocol)">
+                            <icon-link v-if="['bacnet-ip', 'modbus-rtu', 'modbus-tcp', 'modbus-rtu-over-tcp'].includes(item.protocol)" :size="16" />
+                            <icon-tool v-else-if="item.protocol === 'opc-ua'" :size="16" />
+                            <icon-settings v-else-if="item.protocol === 's7'" :size="16" />
+                            <icon-link v-else :size="16" />
+                          </div>
+                          <div class="channel-info">
+                            <div class="channel-name">{{ item.name }}</div>
+                            <div class="channel-meta">
+                              <span class="protocol-tag">{{ formatProtocolTag(item.protocol) }}</span>
+                              <span
+                                class="channel-status-chip"
+                                :class="item.enable ? 'is-enabled' : 'is-disabled'"
+                              >
+                                <span class="status-dot"></span>
+                                {{ item.enableText }}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <span
-                        v-if="item.metrics"
-                        class="quality-score"
-                        :class="getQualityClass(item.qualityScore)"
-                        :title="`通信质量 ${item.qualityScore ?? '-'}`"
-                      >
-                        {{ item.qualityScore ?? '-' }}
-                      </span>
-                    </div>
-
-                    <div class="channel-kpi-grid">
-                      <div class="channel-kpi">
-                        <span class="channel-kpi-label">设备</span>
-                        <span class="channel-kpi-value">{{ item.deviceCount || 0 }}</span>
-                      </div>
-                      <div class="channel-kpi">
-                        <span class="channel-kpi-label">状态</span>
                         <span
-                          class="channel-kpi-value"
-                          :class="item.runtimeArcoStatus === 'success' ? 'online' : (item.runtimeArcoStatus === 'danger' ? 'offline' : '')"
+                          v-if="item.metrics"
+                          class="quality-score"
+                          :class="getQualityClass(item.qualityScore)"
+                          :title="`通信质量 ${item.qualityScore ?? '-'}`"
                         >
-                          {{ formatCardRuntimeText(item.runtimeText) }}
+                          {{ item.qualityScore ?? '-' }}
                         </span>
                       </div>
-                      <div class="channel-kpi">
-                        <span class="channel-kpi-label">成功率</span>
-                        <span class="channel-kpi-value" :class="getSuccessRateClass(item.successRate)">
-                          {{ formatPercent(item.successRate) }}
-                        </span>
+
+                      <div class="channel-kpi-grid">
+                        <div class="channel-kpi">
+                          <span class="channel-kpi-label">设备</span>
+                          <span class="channel-kpi-value">{{ item.deviceCount || 0 }}</span>
+                        </div>
+                        <div class="channel-kpi">
+                          <span class="channel-kpi-label">状态</span>
+                          <span
+                            class="channel-kpi-value"
+                            :class="item.runtimeArcoStatus === 'success' ? 'online' : (item.runtimeArcoStatus === 'danger' ? 'offline' : '')"
+                          >
+                            {{ formatCardRuntimeText(item.runtimeText) }}
+                          </span>
+                        </div>
+                        <div class="channel-kpi">
+                          <span class="channel-kpi-label">成功率</span>
+                          <span class="channel-kpi-value" :class="getSuccessRateClass(item.successRate)">
+                            {{ formatPercent(item.successRate) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div v-if="item.metrics" class="channel-metrics">
+                        <div class="metrics-header">
+                          <span class="metrics-label">通信质量</span>
+                          <span class="metrics-rtt">RTT {{ formatDuration(item.metrics.avgRtt) }}</span>
+                        </div>
+                        <div class="quality-bar-container">
+                          <div class="quality-bar" :class="getQualityBarClass(item.qualityScore)" :style="{ width: (item.qualityScore || 0) + '%' }"></div>
+                        </div>
+                      </div>
+
+                      <div class="channel-card-footer" @click.stop>
+                        <div class="channel-card-actions">
+                          <a-tooltip content="监控指标">
+                            <a-button type="text" size="mini" @click.stop="openMetricsDialog(item)">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="18" y1="20" x2="18" y2="10" />
+                                <line x1="12" y1="20" x2="12" y2="4" />
+                                <line x1="6" y1="20" x2="6" y2="14" />
+                              </svg>
+                            </a-button>
+                          </a-tooltip>
+                          <a-tooltip content="编辑">
+                            <a-button type="text" size="mini" @click.stop="openEditDialog(item)">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
+                              </svg>
+                            </a-button>
+                          </a-tooltip>
+                          <a-tooltip v-if="item.protocol === 'bacnet-ip'" content="扫描设备">
+                            <a-button type="text" size="mini" @click.stop="scanChannel(item)">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2a10 10 0 1010 10 10 10 0 00-10-10z" />
+                                <path d="M12 6v6l4 2" />
+                              </svg>
+                            </a-button>
+                          </a-tooltip>
+                          <a-tooltip content="删除">
+                            <a-button type="text" size="mini" status="danger" @click.stop="deleteChannel(item)">
+                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                              </svg>
+                            </a-button>
+                          </a-tooltip>
+                        </div>
                       </div>
                     </div>
+                  </div>
 
-                    <div v-if="item.metrics" class="channel-metrics">
-                      <div class="metrics-header">
-                        <span class="metrics-label">通信质量</span>
-                        <span class="metrics-rtt">RTT {{ formatDuration(item.metrics.avgRtt) }}</span>
-                      </div>
-                      <div class="quality-bar-container">
-                        <div class="quality-bar" :class="getQualityBarClass(item.qualityScore)" :style="{ width: (item.qualityScore || 0) + '%' }"></div>
-                      </div>
-                    </div>
+                  <div v-if="zone.items.length === 0" class="channel-list-zone-empty">
+                    暂无{{ zone.title }}通道
+                  </div>
+                </div>
 
-                    <div class="channel-card-footer" @click.stop>
-                      <div class="channel-card-actions">
-                        <a-tooltip content="监控指标">
-                          <a-button type="text" size="mini" @click.stop="openMetricsDialog(item)">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                              <line x1="18" y1="20" x2="18" y2="10"/>
-                              <line x1="12" y1="20" x2="12" y2="4"/>
-                              <line x1="6" y1="20" x2="6" y2="14"/>
+                <div v-else-if="zone.items.length > 0" class="table-container saas-table">
+                  <a-table
+                    :columns="tableColumns"
+                    :data="zone.items"
+                    :row-selection="selectionMode ? rowSelection : undefined"
+                    row-key="id"
+                    size="small"
+                    :bordered="false"
+                    :scroll="{ x: 960 }"
+                    :pagination="false"
+                  >
+                    <template #name="{ record }">
+                      <a-link @click="goToDevices(record)" icon>{{ record.name }}</a-link>
+                    </template>
+
+                    <template #enable="{ record }">
+                      <span class="table-cell-semantic">
+                        <a-tag :color="record.enableColor" size="small" bordered>{{ record.enableText }}</a-tag>
+                      </span>
+                    </template>
+
+                    <template #runtime="{ record }">
+                      <span class="table-cell-semantic">
+                        <a-badge :status="record.runtimeArcoStatus" :text="record.runtimeText" />
+                      </span>
+                    </template>
+
+                    <template #deviceCount="{ record }">
+                      <a-tooltip :content="`${record.deviceCount} 台设备`">
+                        <span class="table-cell-count">{{ record.deviceCount }}</span>
+                      </a-tooltip>
+                    </template>
+
+                    <template #actions="{ record }">
+                      <span class="table-ops">
+                        <a-tooltip content="监控">
+                          <a-button type="text" size="mini" @click="openMetricsDialog(record)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                              <line x1="18" y1="20" x2="18" y2="10" />
+                              <line x1="12" y1="20" x2="12" y2="4" />
+                              <line x1="6" y1="20" x2="6" y2="14" />
                             </svg>
                           </a-button>
                         </a-tooltip>
                         <a-tooltip content="编辑">
-                          <a-button type="text" size="mini" @click.stop="openEditDialog(item)">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                          <a-button type="text" size="mini" @click="openEditDialog(record)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" />
                             </svg>
                           </a-button>
                         </a-tooltip>
-                        <a-tooltip v-if="item.protocol === 'bacnet-ip'" content="扫描设备">
-                          <a-button type="text" size="mini" @click.stop="scanChannel(item)">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                              <path d="M12 2a10 10 0 1010 10 10 10 0 00-10-10z"/>
-                              <path d="M12 6v6l4 2"/>
+                        <a-tooltip v-if="record.protocol === 'bacnet-ip'" content="扫描">
+                          <a-button type="text" size="mini" @click="scanChannel(record)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                              <path d="M12 2a10 10 0 1010 10 10 10 0 00-10-10z" />
+                              <path d="M12 6v6l4 2" />
                             </svg>
                           </a-button>
                         </a-tooltip>
                         <a-tooltip content="删除">
-                          <a-button type="text" size="mini" status="danger" @click.stop="deleteChannel(item)">
-                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                              <polyline points="3 6 5 6 21 6"/>
-                              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                          <a-button type="text" size="mini" status="danger" @click="deleteChannel(record)">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
                             </svg>
                           </a-button>
                         </a-tooltip>
-                      </div>
-                    </div>
-                  </div>
+                      </span>
+                    </template>
+                  </a-table>
                 </div>
 
-                <div v-if="zone.items.length === 0" class="channel-list-zone-empty">
+                <div v-else class="channel-list-zone-empty">
                   暂无{{ zone.title }}通道
                 </div>
               </div>
-
-              <div v-else-if="zone.items.length > 0" class="table-container saas-table">
-                <a-table
-                  :columns="tableColumns"
-                  :data="zone.items"
-                  :row-selection="selectionMode ? rowSelection : undefined"
-                  row-key="id"
-                  size="small"
-                  :bordered="false"
-                  :scroll="{ x: 960 }"
-                  :pagination="false"
-                >
-          <template #name="{ record }">
-            <a-link @click="goToDevices(record)" icon>{{ record.name }}</a-link>
-          </template>
-
-          <template #enable="{ record }">
-            <span class="table-cell-semantic">
-              <a-tag :color="record.enableColor" size="small" bordered>{{ record.enableText }}</a-tag>
-            </span>
-          </template>
-
-          <template #runtime="{ record }">
-            <span class="table-cell-semantic">
-              <a-badge :status="record.runtimeArcoStatus" :text="record.runtimeText" />
-            </span>
-          </template>
-
-          <template #deviceCount="{ record }">
-            <a-tooltip :content="`${record.deviceCount} 台设备`">
-              <span class="table-cell-count">{{ record.deviceCount }}</span>
-            </a-tooltip>
-          </template>
-
-          <template #actions="{ record }">
-            <span class="table-ops">
-              <a-tooltip content="监控">
-                <a-button type="text" size="mini" @click="openMetricsDialog(record)">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="20" x2="18" y2="10"/>
-                    <line x1="12" y1="20" x2="12" y2="4"/>
-                    <line x1="6" y1="20" x2="6" y2="14"/>
-                  </svg>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip content="编辑">
-                <a-button type="text" size="mini" @click="openEditDialog(record)">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
-                    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                  </svg>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip v-if="record.protocol === 'bacnet-ip'" content="扫描">
-                <a-button type="text" size="mini" @click="scanChannel(record)">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2a10 10 0 1010 10 10 10 0 00-10-10z"/>
-                    <path d="M12 6v6l4 2"/>
-                  </svg>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip content="删除">
-                <a-button type="text" size="mini" status="danger" @click="deleteChannel(record)">
-                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"/>
-                    <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-                  </svg>
-                </a-button>
-              </a-tooltip>
-            </span>
-          </template>
-                </a-table>
-              </div>
-
-              <div v-else class="channel-list-zone-empty">
-                暂无{{ zone.title }}通道
-              </div>
             </div>
-          </div>
-        </section>
+          </section>
         </template>
       </a-spin>
     </div>
@@ -322,9 +334,9 @@
             <template #append v-if="!dialog.isEdit">
               <a-button @click="generateId">
                 <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"/>
-                  <polyline points="1 20 1 14 7 14"/>
-                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+                  <polyline points="23 4 23 10 17 10" />
+                  <polyline points="1 20 1 14 7 14" />
+                  <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
                 </svg>
               </a-button>
             </template>
@@ -349,7 +361,7 @@
             <a-button type="outline" size="mini" :disabled="!dialog.form.protocol" @click="fillDefaultConfig">
               <template #icon>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/>
+                  <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
                 </svg>
               </template>
               填充默认参数
@@ -369,40 +381,40 @@
           <div class="advanced-block">
             <div class="modal-section__title modal-section__title--sub">高级配置</div>
             <a-row :gutter="[24, 16]" class="field-grid">
-            <a-col :span="12">
-              <a-form-item field="config.max_retries" label="最大重试次数">
-                <a-input-number v-model="dialog.form.config.max_retries" :min="0" :max="10" placeholder="3" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item field="config.retry_interval" label="重试间隔 (ms)">
-                <a-input-number v-model="dialog.form.config.retry_interval" :min="10" :max="1000" placeholder="100" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item field="config.instruction_interval" label="指令间隔 (ms)">
-                <a-input-number v-model="dialog.form.config.instruction_interval" :min="1" :max="100" placeholder="10" />
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item field="config.start_address" label="起始地址">
-                <a-select v-model="dialog.form.config.start_address" placeholder="默认 1 (40001)">
-                  <a-option :value="0">0 (40000)</a-option>
-                  <a-option :value="1">1 (40001)</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-            <a-col :span="12">
-              <a-form-item field="config.byte_order_4" label="4字节字节序">
-                <a-select v-model="dialog.form.config.byte_order_4" placeholder="默认 ABCD (Big Endian)">
-                  <a-option value="ABCD">ABCD</a-option>
-                  <a-option value="CDAB">CDAB</a-option>
-                  <a-option value="BADC">BADC</a-option>
-                  <a-option value="DCBA">DCBA</a-option>
-                </a-select>
-              </a-form-item>
-            </a-col>
-          </a-row>
+              <a-col :span="12">
+                <a-form-item field="config.max_retries" label="最大重试次数">
+                  <a-input-number v-model="dialog.form.config.max_retries" :min="0" :max="10" placeholder="3" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item field="config.retry_interval" label="重试间隔 (ms)">
+                  <a-input-number v-model="dialog.form.config.retry_interval" :min="10" :max="1000" placeholder="100" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item field="config.instruction_interval" label="指令间隔 (ms)">
+                  <a-input-number v-model="dialog.form.config.instruction_interval" :min="1" :max="100" placeholder="10" />
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item field="config.start_address" label="起始地址">
+                  <a-select v-model="dialog.form.config.start_address" placeholder="默认 1 (40001)">
+                    <a-option :value="0">0 (40000)</a-option>
+                    <a-option :value="1">1 (40001)</a-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item field="config.byte_order_4" label="4字节字节序">
+                  <a-select v-model="dialog.form.config.byte_order_4" placeholder="默认 ABCD (Big Endian)">
+                    <a-option value="ABCD">ABCD</a-option>
+                    <a-option value="CDAB">CDAB</a-option>
+                    <a-option value="BADC">BADC</a-option>
+                    <a-option value="DCBA">DCBA</a-option>
+                  </a-select>
+                </a-form-item>
+              </a-col>
+            </a-row>
           </div>
         </div>
 
@@ -543,15 +555,15 @@
           </a-row>
           <div class="advanced-block">
             <div class="modal-section__title modal-section__title--sub">加密参数 (可选)</div>
-          <a-form-item field="config.key" label="密钥">
-            <a-input v-model="dialog.form.config.key" type="password" />
-          </a-form-item>
-          <a-form-item field="config.cert" label="证书路径">
-            <a-input v-model="dialog.form.config.cert" />
-          </a-form-item>
-          <a-form-item field="config.ca" label="CA证书路径">
-            <a-input v-model="dialog.form.config.ca" />
-          </a-form-item>
+            <a-form-item field="config.key" label="密钥">
+              <a-input v-model="dialog.form.config.key" type="password" />
+            </a-form-item>
+            <a-form-item field="config.cert" label="证书路径">
+              <a-input v-model="dialog.form.config.cert" />
+            </a-form-item>
+            <a-form-item field="config.ca" label="CA证书路径">
+              <a-input v-model="dialog.form.config.ca" />
+            </a-form-item>
           </div>
         </div>
 
@@ -1178,50 +1190,7 @@
             </template>
           </a-form-item>
         </div>
-
       </a-form>
-    </a-modal>
-
-    <!-- Smart Probe Help Modal -->
-    <a-modal
-      v-model:visible="smartProbeHelpDialog.show"
-      title="智能地址探测帮助"
-      :width="1000"
-      :footer="false"
-      unmount-on-close
-    >
-      <div class="smart-probe-help">
-        <div class="help-section">
-          <h3>什么是智能地址探测？</h3>
-          <p>智能地址探测是一种自动扫描和识别Modbus设备有效寄存器地址的功能，它能够：</p>
-          <ul>
-            <li>自动扫描设备的有效寄存器地址范围</li>
-            <li>检测设备的MTU（最大传输单元）大小</li>
-            <li>优化寄存器分组策略，提高读取效率</li>
-            <li>减少手动配置错误，提高系统稳定性</li>
-          </ul>
-        </div>
-        <div class="help-section">
-          <h3>工作原理</h3>
-          <div class="principle-section">
-            <h4>1. 分层扫描策略</h4>
-            <p>系统采用分层扫描算法，从粗到细逐步定位有效地址：</p>
-            <ul>
-              <li><strong>第一层：</strong>按1000地址为间隔进行快速扫描</li>
-              <li><strong>第二层：</strong>对包含有效地址的区间按100地址间隔扫描</li>
-              <li><strong>第三层：</strong>对包含有效地址的区间按10地址间隔扫描</li>
-              <li><strong>第四层：</strong>对包含有效地址的区间进行逐地址扫描</li>
-            </ul>
-            <h4>2. MTU检测</h4>
-            <p>系统会自动检测设备的最大传输单元大小，以确定单次可读取的最大寄存器数量，从而优化读取效率。</p>
-            <h4>3. 分组优化</h4>
-            <p>扫描完成后，系统会对连续的有效寄存器地址进行分组，生成最优的读取指令序列，减少通信次数。</p>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <a-button type="primary" @click="smartProbeHelpDialog.show = false">关闭</a-button>
-      </div>
     </a-modal>
 
     <!-- Channel Metrics Modal -->
@@ -1268,6 +1237,20 @@
       <p>确定要删除通道 <strong>{{ deleteDialog.channel?.name }}</strong> 吗？</p>
       <p class="text-secondary">此操作不可撤销。</p>
     </a-modal>
+
+    <a-modal
+      v-model:visible="batchDeleteDialog.visible"
+      title="批量删除通道"
+      ok-text="确认删除"
+      cancel-text="取消"
+      :ok-loading="batchDeleteDialog.loading"
+      :ok-button-props="{ status: 'danger' }"
+      @ok="executeBatchDelete"
+      @cancel="batchDeleteDialog.visible = false"
+    >
+      <p>确定要删除选中的 <strong>{{ selectedChannels.length }}</strong> 个通道吗？</p>
+      <p class="text-secondary">此操作不可撤销。</p>
+    </a-modal>
   </div>
 </template>
 
@@ -1282,7 +1265,8 @@ import ChannelProtocolHelpDrawer from '@/components/channel-help/ChannelProtocol
 import ChannelMetricsPanel from '@/components/channel/ChannelMetricsPanel.vue'
 import { computeQualityScore, runtimeFromQualityScore } from '@/utils/channelMetrics'
 import {
-  IconApps, IconLink, IconSettings, IconTool, IconArrowRight
+  IconApps, IconLink, IconSettings, IconTool, IconArrowRight,
+  IconDown, IconCheckCircle, IconMinusCircle, IconDelete
 } from '@arco-design/web-vue/es/icon'
 
 const router = useRouter()
@@ -1304,10 +1288,6 @@ const dialog = reactive({
     config: {},
     devices: []
   }
-})
-
-const smartProbeHelpDialog = reactive({
-  show: false
 })
 
 const metricsDialog = reactive({
@@ -1346,7 +1326,7 @@ const protocols = [
 
 const tableColumns = [
   { title: '通道名称', slotName: 'name', width: 200 },
-  { title: '协议类型', dataIndex: 'protocol', width: 140, customRender: ({ record }) => formatProtocolTag(record?.protocol) },
+  { title: '协议类型', dataIndex: 'protocol', width: 140, render: ({ record }) => formatProtocolTag(record?.protocol) },
   { title: '启用状态', slotName: 'enable', width: 108 },
   { title: '运行状态', slotName: 'runtime', width: 120 },
   { title: '关联设备', slotName: 'deviceCount', width: 72, align: 'center' },
@@ -1481,7 +1461,7 @@ const openAddDialog = () => {
 
 const openEditDialog = (channel) => {
   dialog.isEdit = true
-  dialog.form = JSON.parse(JSON.stringify(channel))
+  dialog.form = { ...JSON.parse(JSON.stringify(channel)), config: { ...(channel.config || {}) } }
   dialog.show = true
 }
 
@@ -1591,9 +1571,51 @@ const scanChannel = (channel) => {
   router.push(`/channels/${channel.id}/devices`)
 }
 
-const openBatchConfig = () => {
-  // 实现批量配置功能
-  console.log('Open batch config for channels:', selectedChannels.value)
+const batchConfigLoading = ref(false)
+
+const onBatchConfigSelect = async (key) => {
+  if (key === 'enable' || key === 'disable') {
+    const enable = key === 'enable'
+    batchConfigLoading.value = true
+    try {
+      await Promise.all(selectedChannels.value.map(id => request.put(`/api/channels/${id}`, { enable })))
+      Message.success(`已批量${enable ? '启用' : '禁用'} ${selectedChannels.value.length} 个通道`)
+      selectedChannels.value = []
+      if (selectionMode.value) toggleSelectionMode()
+      await fetchChannels()
+    } catch (e) {
+      Message.error('批量更新失败: ' + e.message)
+    } finally {
+      batchConfigLoading.value = false
+    }
+  } else if (key === 'delete') {
+    batchDeleteDialog.visible = true
+  }
+}
+
+const batchDeleteDialog = reactive({
+  visible: false,
+  loading: false
+})
+
+const executeBatchDelete = async () => {
+  if (batchDeleteDialog.loading) return
+  batchDeleteDialog.loading = true
+  try {
+    await Promise.all(selectedChannels.value.map(id => request({
+      url: `/api/channels/${id}`,
+      method: 'delete'
+    })))
+    Message.success(`已删除 ${selectedChannels.value.length} 个通道`)
+    selectedChannels.value = []
+    batchDeleteDialog.visible = false
+    if (selectionMode.value) toggleSelectionMode()
+    await fetchChannels()
+  } catch (e) {
+    Message.error('批量删除失败: ' + e.message)
+  } finally {
+    batchDeleteDialog.loading = false
+  }
 }
 
 const getRuntimeColor = (state) => {

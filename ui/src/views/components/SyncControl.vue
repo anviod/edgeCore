@@ -36,9 +36,9 @@
           <template #title>
             <div class="card-title-flex">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-                <circle cx="12" cy="9" r="3"/>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 15s1.5-2 4-2 4 2 4 2" />
+                <circle cx="12" cy="9" r="3" />
               </svg>
               <span>网络发现</span>
             </div>
@@ -68,9 +68,9 @@
           <template #title>
             <div class="card-title-flex">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="12" y1="20" x2="12" y2="10"/>
-                <line x1="18" y1="20" x2="18" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="16"/>
+                <line x1="12" y1="20" x2="12" y2="10" />
+                <line x1="18" y1="20" x2="18" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="16" />
               </svg>
               <span>发现的节点</span>
             </div>
@@ -113,9 +113,9 @@
           <template #title>
             <div class="card-title-flex">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20V10"/>
-                <path d="M18 20V4"/>
-                <path d="M6 20v-6"/>
+                <path d="M12 20V10" />
+                <path d="M18 20V4" />
+                <path d="M6 20v-6" />
               </svg>
               <span>远程节点同步还原</span>
             </div>
@@ -213,8 +213,8 @@
                 <div class="sync-mode-card" @click="selectSyncMode('push')">
                   <div class="mode-icon push-icon">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="22" y1="2" x2="11" y2="13"/>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+                      <line x1="22" y1="2" x2="11" y2="13" />
+                      <polygon points="22 2 15 22 11 13 2 9 22 2" />
                     </svg>
                   </div>
                   <div class="mode-info">
@@ -226,9 +226,9 @@
                 <div class="sync-mode-card" @click="selectSyncMode('pull')">
                   <div class="mode-icon pull-icon">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-                      <polyline points="7 10 12 15 17 10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
                   </div>
                   <div class="mode-info">
@@ -295,9 +295,9 @@
                 <template #title>
                   <span class="metric-icon">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                      <line x1="12" y1="20" x2="12" y2="10"/>
-                      <line x1="18" y1="20" x2="18" y2="4"/>
-                      <line x1="6" y1="20" x2="6" y2="16"/>
+                      <line x1="12" y1="20" x2="12" y2="10" />
+                      <line x1="18" y1="20" x2="18" y2="4" />
+                      <line x1="6" y1="20" x2="6" y2="16" />
                     </svg>
                   </span>
                   <span>已连接节点</span>
@@ -308,9 +308,9 @@
                 <template #title>
                   <span class="metric-icon">
                     <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <circle cx="12" cy="12" r="6"/>
-                      <circle cx="12" cy="12" r="2"/>
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="6" />
+                      <circle cx="12" cy="12" r="2" />
                     </svg>
                   </span>
                   <span>平均延迟</span>
@@ -373,16 +373,16 @@
         <div class="progress-header">
           <div class="progress-icon" :class="syncProgress.status">
             <svg v-if="syncProgress.status === 'running'" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" class="spin-icon">
-              <circle cx="12" cy="12" r="10"/>
-              <polyline points="12 6 12 12 16 14"/>
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
             </svg>
             <svg v-else-if="syncProgress.status === 'success'" viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"/>
+              <polyline points="20 6 9 17 4 12" />
             </svg>
             <svg v-else viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
           </div>
           <div class="progress-title">{{ syncProgress.title }}</div>

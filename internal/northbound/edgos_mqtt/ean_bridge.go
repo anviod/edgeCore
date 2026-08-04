@@ -138,6 +138,15 @@ func (c *Client) CapabilityRuntime() *capability.Runtime {
 	return c.eanRuntime
 }
 
+// EANEventAutoPublishEnabled reports whether the EAN capability layer should
+// auto-publish point-change events over $edgeos/event/*. Used by the
+// Shadow→Event bridge to gate EAN event publishing independent of the runtime.
+func (c *Client) EANEventAutoPublishEnabled() bool {
+	c.configMu.RLock()
+	defer c.configMu.RUnlock()
+	return c.config.EANEnabled && c.config.EANEventAutoPublish
+}
+
 func (c *Client) startEANLocked(ctx context.Context) {
 	c.eanMu.RLock()
 	rt := c.eanRuntime

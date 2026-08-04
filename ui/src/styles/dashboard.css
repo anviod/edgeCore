@@ -128,6 +128,33 @@
   letter-spacing: 0.04em;
 }
 
+/* informational (non-percentage) stat — goroutines etc. */
+.stat-progress--idle {
+  width: 100%;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--edgex-info) 0,
+    var(--edgex-info) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  opacity: 0.35;
+}
+
+/* dashboard load error banner */
+.dashboard-error-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(220, 38, 38, 0.06);
+  color: var(--edgex-error);
+  font-size: 13px;
+}
+
+
 /* ── tertiary: blends with page shell (channels / northbound / edge) ── */
 .dashboard-zone--tertiary {
   gap: var(--space-8);

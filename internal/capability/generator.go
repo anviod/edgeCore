@@ -43,19 +43,19 @@ func GenerateProtocolCapabilities(agentID, protocol string) []Capability {
 	prefix := NormalizeProtocolID(protocol)
 	caps := []Capability{
 		{
-			ID:      prefix + ".read_holding_register",
+			ID:      prefix + ".read_point",
 			AgentID: agentID,
-			Description: "读取设备保持寄存器/点位值 | Read device holding registers/point values. " +
+			Description: "读取单个/多个点位数据（中性命名，跨协议统一） | Read single/multiple point data (neutral, unified across protocols). " +
 				"参数 Params: device_id(string, required 必需-设备ID或通道标识), " +
-				"address(string, optional 可选-单个寄存器地址), " +
-				"addresses(array[string], optional 可选-多个寄存器地址数组), " +
+				"address(string, optional 可选-单个点位标识/地址), " +
+				"addresses(array[string], optional 可选-多个点位标识/地址数组), " +
 				"quantity(integer, default=1 默认读取数量). " +
 				"返回 Returns: values(array 点位值数组), timestamp(integer 时间戳)",
 			Category: CategoryDevice,
 			InputSchema: objectSchema(map[string]any{
 				"device_id": map[string]any{"type": "string", "description": "设备ID或通道标识 | Device ID or channel identifier"},
-				"address":   map[string]any{"type": "string", "description": "单个寄存器地址 | Single register address"},
-				"addresses": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "多个寄存器地址数组 | Array of register addresses"},
+				"address":   map[string]any{"type": "string", "description": "单个点位标识/地址 | Single point id/address"},
+				"addresses": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "多个点位标识/地址数组 | Array of point ids/addresses"},
 				"quantity":  map[string]any{"type": "integer", "default": 1, "description": "读取数量，默认1 | Read quantity, default 1"},
 			}, []string{"device_id"}),
 			OutputSchema: objectSchema(map[string]any{
@@ -70,18 +70,20 @@ func GenerateProtocolCapabilities(agentID, protocol string) []Capability {
 			},
 		},
 		{
-			ID:      prefix + ".write_register",
+			ID:      prefix + ".write_point",
 			AgentID: agentID,
-			Description: "写入单个寄存器/点位值 | Write a single register/point value. " +
+			Description: "写入单个/多个点位数据（中性命名，跨协议统一） | Write single/multiple point data (neutral, unified across protocols). " +
 				"参数 Params: device_id(string, required 必需-设备ID), " +
-				"address(string, required 必需-寄存器地址), " +
-				"value(number, required 必需-写入值). " +
+				"address(string, required 必需-点位标识/地址), " +
+				"value(number, required 必需-写入值), " +
+				"writes(array[object], optional 可选-批量写入：[{address,value}]). " +
 				"返回 Returns: success(boolean 是否成功), timestamp(integer 时间戳)",
 			Category: CategoryDevice,
 			InputSchema: objectSchema(map[string]any{
 				"device_id": map[string]any{"type": "string", "description": "设备ID | Device ID"},
-				"address":   map[string]any{"type": "string", "description": "寄存器地址 | Register address"},
+				"address":   map[string]any{"type": "string", "description": "点位标识/地址 | Point id/address"},
 				"value":     map[string]any{"type": "number", "description": "写入值 | Value to write"},
+				"writes":    map[string]any{"type": "array", "description": "批量写入：[{address,value}] | Batch write entries"},
 			}, []string{"device_id", "address", "value"}),
 			OutputSchema: objectSchema(map[string]any{
 				"success":   map[string]any{"type": "boolean", "description": "是否写入成功 | Whether write succeeded"},
@@ -216,9 +218,9 @@ func GenerateDefaultCapabilities(agentID string, protocols []string) []Capabilit
 	return out
 }
 
-// GenerateUnifiedCapabilities builds a consolidated MCP tool set (9 tools).
-// Replaces the 63 protocol-specific capabilities with 7 unified operations
-// plus 2 AI capabilities, reducing MCP tool count from 63 to 9.
+// GenerateUnifiedCapabilities builds a consolidated MCP tool set (7 tools).
+// Replaces the 63 protocol-specific capabilities with 5 unified device operations
+// plus 2 AI capabilities, reducing MCP tool count from 63 to 7.
 // Used by MCP Runtime for LLM tool calling.
 func GenerateUnifiedCapabilities(agentID string) []Capability {
 	return []Capability{

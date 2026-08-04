@@ -40,9 +40,9 @@
         <div class="sync-tree-card config-tree">
           <div class="tree-header-text">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/>
-              <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-              <line x1="12" y1="22.08" x2="12" y2="12"/>
+              <path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
             {{ selectedNode?.name || '选择节点' }}
           </div>
@@ -60,12 +60,12 @@
                     stroke-width="2"
                     :class="{ rotated: expandedNodes.includes('root') }"
                   >
-                    <polyline points="5 9 12 15 19 9"/>
+                    <polyline points="5 9 12 15 19 9" />
                   </svg>
                   <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-                    <circle cx="12" cy="9" r="3"/>
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M8 15s1.5-2 4-2 4 2 4 2" />
+                    <circle cx="12" cy="9" r="3" />
                   </svg>
                   <span>{{ selectedNode.name }}</span>
                   <span class="node-status-badge" :class="selectedNode.status">
@@ -87,13 +87,13 @@
                         stroke-width="2"
                         :class="{ rotated: expandedNodes.includes('channels') }"
                       >
-                        <polyline points="5 9 12 15 19 9"/>
+                        <polyline points="5 9 12 15 19 9" />
                       </svg>
                       <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="7" height="7"/>
-                        <rect x="14" y="3" width="7" height="7"/>
-                        <rect x="14" y="14" width="7" height="7"/>
-                        <rect x="3" y="14" width="7" height="7"/>
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <rect x="3" y="14" width="7" height="7" />
                       </svg>
                       <span>通道</span>
                       <span class="count-badge">{{ treeData.channels?.length || 0 }}</span>
@@ -123,14 +123,14 @@
                             :class="{ rotated: expandedNodes.includes('channel-' + channel.id) }"
                             @click.stop="loadChannelDevices(channel)"
                           >
-                            <polyline points="5 9 12 15 19 9"/>
+                            <polyline points="5 9 12 15 19 9" />
                           </svg>
                           <span v-else class="spacer"></span>
                           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"/>
-                            <rect x="14" y="3" width="7" height="7"/>
-                            <rect x="14" y="14" width="7" height="7"/>
-                            <rect x="3" y="14" width="7" height="7"/>
+                            <rect x="3" y="3" width="7" height="7" />
+                            <rect x="14" y="3" width="7" height="7" />
+                            <rect x="14" y="14" width="7" height="7" />
+                            <rect x="3" y="14" width="7" height="7" />
                           </svg>
                           <span class="item-name">{{ channel.name }}</span>
                           <span v-if="channel.hasDiff" class="diff-badge">差异</span>
@@ -161,13 +161,13 @@
                                 :class="{ rotated: expandedNodes.includes('device-' + device.id) }"
                                 @click.stop="loadDevicePoints(device, channel)"
                               >
-                                <polyline points="5 9 12 15 19 9"/>
+                                <polyline points="5 9 12 15 19 9" />
                               </svg>
                               <span v-else class="spacer"></span>
                               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-                                <rect x="2" y="3" width="20" height="14" rx="2"/>
-                                <line x1="8" y1="21" x2="16" y2="21"/>
-                                <line x1="12" y1="17" x2="12" y2="21"/>
+                                <rect x="2" y="3" width="20" height="14" rx="2" />
+                                <line x1="8" y1="21" x2="16" y2="21" />
+                                <line x1="12" y1="17" x2="12" y2="21" />
                               </svg>
                               <span class="item-name">{{ device.name }}</span>
                               <span v-if="device.hasDiff" class="diff-badge">差异</span>
@@ -188,13 +188,13 @@
                                 @click="selectTreeItem('point', point, device, channel)"
                               >
                                 <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
-                                  <circle cx="12" cy="12" r="3"/>
+                                  <circle cx="12" cy="12" r="3" />
                                 </svg>
                                 <span class="item-name">{{ point.name }}</span>
                                 <span class="point-address">{{ point.address }}</span>
                                 <span v-if="point.hasDiff" class="diff-badge">差异</span>
                                 <span v-if="point.status === 'warning'" class="warning-badge">
-                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                                 </span>
                               </div>
                             </div>
@@ -203,15 +203,13 @@
                       </div>
                     </div>
                   </div>
-
-                  
                 </div>
               </div>
             </div>
             <div v-else class="empty-tree">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12 6 12 12 16 14"/>
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
               </svg>
               <p>请选择一个节点</p>
             </div>
@@ -283,9 +281,9 @@
           <div class="overview-header">
             <div class="node-icon">
               <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-                <circle cx="12" cy="9" r="3"/>
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 15s1.5-2 4-2 4 2 4 2" />
+                <circle cx="12" cy="9" r="3" />
               </svg>
             </div>
             <div class="node-info">
@@ -340,8 +338,8 @@
         </div>
         <div v-else class="empty-detail">
           <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
+            <circle cx="12" cy="12" r="10" />
+            <polyline points="12 6 12 12 16 14" />
           </svg>
           <p>选择左侧配置项查看详情</p>
         </div>

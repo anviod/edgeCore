@@ -40,14 +40,16 @@ const handleTestInvoke = (cap) => {
         :class="{ 'ai-ean-subtab--active': subTab === tab.id }"
         @click="subTab = tab.id"
       >
-        <span class="ai-ean-subtab__icon" v-html="
-          tab.icon === 'pulse' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M1.5 8h2l1.5-5 3 12 2-7 1.5 3h3\'/></svg>' :
-          tab.icon === 'grid' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\'><rect x=\'2\' y=\'2\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'9\' y=\'2\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'2\' y=\'9\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'9\' y=\'9\' width=\'5\' height=\'5\' rx=\'1\'/></svg>' :
-          tab.icon === 'play' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linejoin=\'round\'><path d=\'M3 2.5v11l9.5-5.5z\'/></svg>' :
-          tab.icon === 'bell' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M3 6.5a5 5 0 0 1 10 0v3l1.5 2H1.5l1.5-2z\'/><path d=\'M6 13.5a2 2 0 0 0 4 0\'/></svg>' :
-          tab.icon === 'network' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><circle cx=\'8\' cy=\'3\' r=\'2\'/><circle cx=\'3\' cy=\'13\' r=\'2\'/><circle cx=\'13\' cy=\'13\' r=\'2\'/><path d=\'M8 5v3M8 8L4.5 11M8 8l3.5 3\'/></svg>' :
-          '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M3 2.5h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z\'/><path d=\'M9 2.5V5.5h3.5M5 8.5h6M5 11h4\'/></svg>'
-        "></span>
+        <span
+          class="ai-ean-subtab__icon" v-html="
+            tab.icon === 'pulse' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M1.5 8h2l1.5-5 3 12 2-7 1.5 3h3\'/></svg>' :
+            tab.icon === 'grid' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\'><rect x=\'2\' y=\'2\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'9\' y=\'2\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'2\' y=\'9\' width=\'5\' height=\'5\' rx=\'1\'/><rect x=\'9\' y=\'9\' width=\'5\' height=\'5\' rx=\'1\'/></svg>' :
+            tab.icon === 'play' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linejoin=\'round\'><path d=\'M3 2.5v11l9.5-5.5z\'/></svg>' :
+            tab.icon === 'bell' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M3 6.5a5 5 0 0 1 10 0v3l1.5 2H1.5l1.5-2z\'/><path d=\'M6 13.5a2 2 0 0 0 4 0\'/></svg>' :
+            tab.icon === 'network' ? '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><circle cx=\'8\' cy=\'3\' r=\'2\'/><circle cx=\'3\' cy=\'13\' r=\'2\'/><circle cx=\'13\' cy=\'13\' r=\'2\'/><path d=\'M8 5v3M8 8L4.5 11M8 8l3.5 3\'/></svg>' :
+            '<svg viewBox=\'0 0 16 16\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'1.5\' stroke-linecap=\'round\' stroke-linejoin=\'round\'><path d=\'M3 2.5h7l3 3v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1z\'/><path d=\'M9 2.5V5.5h3.5M5 8.5h6M5 11h4\'/></svg>'
+          "
+        ></span>
         <span class="ai-ean-subtab__label">{{ tab.label }}</span>
         <span
           v-if="tab.badge"

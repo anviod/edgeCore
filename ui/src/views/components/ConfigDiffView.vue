@@ -16,7 +16,7 @@
           </a-select>
           
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" class="swap-icon">
-            <polyline points="9 18 15 12 9 6"/>
+            <polyline points="9 18 15 12 9 6" />
           </svg>
           
           <a-select 
@@ -33,12 +33,12 @@
           <a-button type="primary" @click="compareConfigs">
             <template #icon>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M9 18h6"/>
-                <path d="M12 15h-2v4h2v-4z"/>
-                <path d="M5 9h14"/>
-                <path d="M12 6h-2v4h2V6z"/>
-                <path d="M5 2h14"/>
-                <path d="M12 -1h-2v4h2V-1z"/>
+                <path d="M9 18h6" />
+                <path d="M12 15h-2v4h2v-4z" />
+                <path d="M5 9h14" />
+                <path d="M12 6h-2v4h2V6z" />
+                <path d="M5 2h14" />
+                <path d="M12 -1h-2v4h2V-1z" />
               </svg>
             </template>
             对比
@@ -113,7 +113,7 @@
             
             <div class="diff-arrow">
               <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 5v14M5 12l7 7 7-7"/>
+                <path d="M12 5v14M5 12l7 7 7-7" />
               </svg>
             </div>
             
@@ -127,7 +127,7 @@
             <a-button type="primary" size="small" @click="syncConfig(diff)">
               <template #icon>
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/>
+                  <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
                 </svg>
               </template>
               同步
@@ -141,10 +141,10 @@
     <div v-else class="empty-state">
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 18h6"/>
-          <path d="M12 15h-2v4h2v-4z"/>
-          <path d="M5 9h14"/>
-          <path d="M12 6h-2v4h2V6z"/>
+          <path d="M9 18h6" />
+          <path d="M12 15h-2v4h2v-4z" />
+          <path d="M5 9h14" />
+          <path d="M12 6h-2v4h2V6z" />
         </svg>
       </div>
       <div class="empty-title">选择节点开始对比</div>

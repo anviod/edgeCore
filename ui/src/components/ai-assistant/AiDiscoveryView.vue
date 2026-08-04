@@ -27,7 +27,7 @@ onMounted(() => {
     <div class="ai-disc-header">
       <span class="title">Agent 发现</span>
       <a-button size="mini" type="text" @click="fetchDiscoveredAgents()">
-        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;margin-right:3px"><path d="M2 6a4 4 0 0 1 7-2.5M10 6a4 4 0 0 1-7 2.5"/><path d="M8.5 1.5v2h-2M3.5 10.5v-2h2"/></svg>
+        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;margin-right:3px"><path d="M2 6a4 4 0 0 1 7-2.5M10 6a4 4 0 0 1-7 2.5" /><path d="M8.5 1.5v2h-2M3.5 10.5v-2h2" /></svg>
         刷新
       </a-button>
     </div>

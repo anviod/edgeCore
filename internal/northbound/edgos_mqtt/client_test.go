@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/anviod/edgex/internal/model"
 )
 
 // TestNodeRegisterCommandMessageParsing tests parsing of node register command messages
@@ -1657,5 +1659,35 @@ func TestHeartbeatStatusStrings(t *testing.T) {
 			t.Errorf("Expected status '%s', got '%s' for status %d", expected, statusStr, status)
 		}
 		t.Logf("Status %d mapped to '%s'", status, statusStr)
+	}
+}
+
+// TestEANEventAutoPublishEnabled verifies the EANEventAutoPublish gating helper
+// returns true only when both EANEnabled and EANEventAutoPublish are set.
+func TestEANEventAutoPublishEnabled(t *testing.T) {
+	cases := []struct {
+		name        string
+		enabled     bool
+		autoPublish bool
+		want        bool
+	}{
+		{"both off", false, false, false},
+		{"ean on auto off", true, false, false},
+		{"ean off auto on", false, true, false},
+		{"both on", true, true, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Client{}
+			c.configMu.Lock()
+			c.config = model.EdgeOSMQTTConfig{
+				EANEnabled:          tc.enabled,
+				EANEventAutoPublish: tc.autoPublish,
+			}
+			c.configMu.Unlock()
+			if got := c.EANEventAutoPublishEnabled(); got != tc.want {
+				t.Errorf("EANEventAutoPublishEnabled() = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }

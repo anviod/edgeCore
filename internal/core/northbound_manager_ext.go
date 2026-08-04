@@ -192,11 +192,17 @@ func (nm *NorthboundManager) applyEANEventPublishersLocked() {
 	}
 	pubs := make([]*capability.EventPublisher, 0, len(mqttClients)+len(natsClients))
 	for _, c := range mqttClients {
+		if !c.EANEventAutoPublishEnabled() {
+			continue
+		}
 		if rt := c.CapabilityRuntime(); rt != nil {
 			pubs = append(pubs, rt.Events())
 		}
 	}
 	for _, c := range natsClients {
+		if !c.EANEventAutoPublishEnabled() {
+			continue
+		}
 		if rt := c.CapabilityRuntime(); rt != nil {
 			pubs = append(pubs, rt.Events())
 		}

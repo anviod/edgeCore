@@ -1,10 +1,8 @@
-﻿<template>
+<template>
   <v-card class="glass-card" :class="{ 'metrics-card': true, 'expanded': showDetails }">
     <v-card-text class="pa-4">
-
       <!-- 顶部：大仪表 + 状态信息 -->
       <div class="d-flex align-center mb-4">
-
         <!-- 🔵 大圆形质量仪表 -->
         <div class="quality-score-wrapper mr-6">
           <v-progress-circular
@@ -37,7 +35,6 @@
 
         <!-- 右侧状态信息 -->
         <div class="flex-grow-1">
-
           <div class="d-flex align-center mb-2">
             <v-chip
               size="small"
@@ -139,7 +136,6 @@
           </div>
         </v-col>
       </v-row>
-
     </v-card-text>
   </v-card>
 </template>
@@ -291,7 +287,7 @@ const getNetworkConnectionText = () => {
   }
   
   // 获取本地和远程地址信息，确保没有undefined
-  const info = networkInfo
+  const info = networkInfo.value
   const localIp = info.localIp || '-'
   const localPort = info.localPort || '-'
   const remoteIp = info.remoteIp || '-'

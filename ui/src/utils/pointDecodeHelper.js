@@ -160,7 +160,7 @@ export const applyFormula = (raw, expr, scale, offset) => {
         return result
     }
     try {
-        // eslint-disable-next-line no-new-func
+         
         const fn = new Function('v', `return ${formula}`)
         return fn(result)
     } catch (e) {

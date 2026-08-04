@@ -2253,7 +2253,7 @@ func (s *Server) ensureCapabilityRuntime() *capability.Runtime {
 			AgentVersion:         capability.RuntimeVersion,
 			Transport:            capability.TransportSDK,
 			HeartbeatIntervalSec: 60,
-			Unified:              true, // MCP Runtime uses 9 unified capabilities (not 63 protocol-specific)
+			Unified:              true, // MCP Runtime uses 7 unified capabilities (not 63 protocol-specific)
 			Metadata: map[string]any{
 				"northbound": "mcp",
 			},

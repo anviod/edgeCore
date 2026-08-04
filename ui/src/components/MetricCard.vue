@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="border border-slate-200 bg-white p-4">
     <div class="flex items-center justify-between">
       <span class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ label }}</span>
@@ -43,17 +43,17 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import StatusIndicator from './StatusIndicator.vue'
 
-withDefaults(defineProps<{
-  label: string
-  value: string | number
-  unit: string
-  trend?: number
-  status?: 'running' | 'standby' | 'fault' | 'unknown'
-  showStatus?: boolean
-}>(), {
+withDefaults(defineProps({
+  label: { type: String, required: true },
+  value: { type: [String, Number], required: true },
+  unit: { type: String, required: true },
+  trend: { type: Number, default: 0 },
+  status: { type: String, default: 'unknown' },
+  showStatus: { type: Boolean, default: false }
+}), {
   trend: 0,
   status: 'unknown',
   showStatus: false

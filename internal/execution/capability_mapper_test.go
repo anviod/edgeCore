@@ -12,7 +12,7 @@ import (
 func TestCapabilityMapperMapAndExecuteWithoutExecutor(t *testing.T) {
 	mapper := execution.NewCapabilityMapper(nil)
 	cap := capability.Capability{
-		ID:       "s7.read_holding_register",
+		ID:       "s7.read_point",
 		Category: capability.CategoryDevice,
 		Metadata: map[string]any{"protocol": "s7"},
 	}
