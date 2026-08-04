@@ -1,0 +1,219 @@
+/*
+ * EdgeX v3.0 — Vue Transition classes
+ * 配合 <Transition name="..."> 使用的全局过渡类
+ */
+
+/* ── fade ── */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* ── fade-up ── */
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-decelerate),
+    transform var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.fade-up-enter-from,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(var(--motion-translate-md));
+}
+
+/* ── fade-down ── */
+.fade-down-enter-active,
+.fade-down-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-decelerate),
+    transform var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.fade-down-enter-from,
+.fade-down-leave-to {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--motion-translate-md)));
+}
+
+/* ── fade-left / 右侧进入（常用于返回/前进） ── */
+.fade-left-enter-active,
+.fade-left-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.fade-left-enter-from {
+  opacity: 0;
+  transform: translateX(var(--motion-translate-md));
+}
+
+.fade-left-leave-to {
+  opacity: 0;
+  transform: translateX(calc(-1 * var(--motion-translate-md)));
+}
+
+/* ── fade-right / 左侧进入 ── */
+.fade-right-enter-active,
+.fade-right-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.fade-right-enter-from {
+  opacity: 0;
+  transform: translateX(calc(-1 * var(--motion-translate-md)));
+}
+
+.fade-right-leave-to {
+  opacity: 0;
+  transform: translateX(var(--motion-translate-md));
+}
+
+/* ── scale ── */
+.scale-enter-active,
+.scale-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.scale-enter-from,
+.scale-leave-to {
+  opacity: 0;
+  transform: scale(var(--motion-scale-md));
+}
+
+/* ── scale-soft ── */
+.scale-soft-enter-active,
+.scale-soft-leave-active {
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.scale-soft-enter-from,
+.scale-soft-leave-to {
+  opacity: 0;
+  transform: scale(var(--motion-scale-sm));
+}
+
+/* ── slide-y ── */
+.slide-y-enter-active,
+.slide-y-leave-active {
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-decelerate);
+}
+
+.slide-y-enter-from,
+.slide-y-leave-to {
+  opacity: 0;
+  transform: translateY(var(--motion-translate-sm));
+}
+
+/* ── slide-x ── */
+.slide-x-enter-active,
+.slide-x-leave-active {
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-decelerate);
+}
+
+.slide-x-enter-from,
+.slide-x-leave-to {
+  opacity: 0;
+  transform: translateX(var(--motion-translate-sm));
+}
+
+/* ── list-stagger ── */
+.list-stagger-enter-active,
+.list-stagger-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-decelerate),
+    transform var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.list-stagger-enter-from,
+.list-stagger-leave-to {
+  opacity: 0;
+  transform: translateY(var(--motion-translate-sm));
+}
+
+.list-stagger-move {
+  transition: transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+/* 列表项按索引自动错开，需要在父级添加 .stagger-list 并为子项设置 --i */
+.stagger-list > *:nth-child(1) { transition-delay: calc(var(--motion-stagger-base) * 0); }
+.stagger-list > *:nth-child(2) { transition-delay: calc(var(--motion-stagger-base) * 1); }
+.stagger-list > *:nth-child(3) { transition-delay: calc(var(--motion-stagger-base) * 2); }
+.stagger-list > *:nth-child(4) { transition-delay: calc(var(--motion-stagger-base) * 3); }
+.stagger-list > *:nth-child(5) { transition-delay: calc(var(--motion-stagger-base) * 4); }
+.stagger-list > *:nth-child(6) { transition-delay: calc(var(--motion-stagger-base) * 5); }
+.stagger-list > *:nth-child(7) { transition-delay: calc(var(--motion-stagger-base) * 6); }
+.stagger-list > *:nth-child(8) { transition-delay: calc(var(--motion-stagger-base) * 7); }
+.stagger-list > *:nth-child(9) { transition-delay: calc(var(--motion-stagger-base) * 8); }
+.stagger-list > *:nth-child(10) { transition-delay: calc(var(--motion-stagger-base) * 9); }
+.stagger-list > *:nth-child(n+11) { transition-delay: calc(var(--motion-stagger-base) * 10); }
+
+/* ── hierarchy expand/collapse ── */
+.hierarchy-enter-active,
+.hierarchy-leave-active {
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    max-height var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-standard);
+  overflow: hidden;
+}
+
+.hierarchy-enter-from,
+.hierarchy-leave-to {
+  opacity: 0;
+  max-height: 0;
+  transform: translateY(-8px);
+}
+
+/* ── page route transitions ── */
+.page-slide-enter-active,
+.page-slide-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.page-slide-enter-from {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.page-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+/* ── back route transitions ── */
+.page-back-enter-active,
+.page-back-leave-active {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.page-back-enter-from {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.page-back-leave-to {
+  opacity: 0;
+  transform: translateX(20px);
+}

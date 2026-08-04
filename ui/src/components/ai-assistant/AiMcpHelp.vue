@@ -68,63 +68,95 @@
 
     <!-- MCP 工具清单 -->
     <div class="ai-workbench-section">
-      <h3 class="ai-workbench-section__title">MCP 工具清单 ({{ toolList.length }} 个)</h3>
+      <div class="ai-mcp-section-head">
+        <h3 class="ai-workbench-section__title">MCP 工具清单 ({{ toolList.length }} 个)</h3>
+        <span class="ai-mcp-section-hint">按权限分组，点击标题折叠</span>
+      </div>
 
       <!-- 只读工具 -->
-      <div class="ai-mcp-tool-category">
-        <span class="ai-mcp-tool-category__label">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-          只读查询（无需全功能激活）
-        </span>
-      </div>
-      <div class="ai-mcp-tools-list">
-        <div
-          v-for="tool in readTools"
-          :key="tool.name"
-          class="ai-mcp-tool-card"
-        >
-          <div class="ai-mcp-tool-card__head">
-            <code class="ai-mcp-tool-card__name">{{ tool.name }}</code>
+      <div class="ai-mcp-foldable" :class="{ 'ai-mcp-foldable--open': expandedReadTools }">
+        <button class="ai-mcp-foldable__head" @click="toggleReadTools">
+          <span class="ai-mcp-tool-category__label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+            只读查询（{{ readTools.length }} 个）
+          </span>
+          <span class="ai-mcp-foldable__chevron">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5L6 7.5L9 4.5" /></svg>
+          </span>
+        </button>
+        <transition name="ai-mcp-fold">
+          <div v-show="expandedReadTools" class="ai-mcp-foldable__body">
+            <div class="ai-mcp-tools-list">
+              <div
+                v-for="tool in readTools"
+                :key="tool.name"
+                class="ai-mcp-tool-card"
+              >
+                <div class="ai-mcp-tool-card__head">
+                  <code class="ai-mcp-tool-card__name">{{ tool.name }}</code>
+                </div>
+                <p class="ai-mcp-tool-card__desc">{{ tool.desc }}</p>
+              </div>
+            </div>
           </div>
-          <p class="ai-mcp-tool-card__desc">{{ tool.desc }}</p>
-        </div>
+        </transition>
       </div>
 
       <!-- 全功能工具 -->
-      <div class="ai-mcp-tool-category">
-        <span class="ai-mcp-tool-category__label">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
-          全功能 CRUD（需激活全功能）
-        </span>
-      </div>
-      <div class="ai-mcp-tools-list">
-        <div
-          v-for="tool in writeTools"
-          :key="tool.name"
-          class="ai-mcp-tool-card"
-          :class="{ 'ai-mcp-tool-card--locked': !mcpFullAccess }"
-        >
-          <div class="ai-mcp-tool-card__head">
-            <code class="ai-mcp-tool-card__name">{{ tool.name }}</code>
-            <span v-if="!mcpFullAccess" class="ai-mcp-tool-card__badge ai-mcp-tool-card__badge--locked">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-            </span>
+      <div class="ai-mcp-foldable" :class="{ 'ai-mcp-foldable--open': expandedWriteTools }">
+        <button class="ai-mcp-foldable__head" @click="toggleWriteTools">
+          <span class="ai-mcp-tool-category__label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+            全功能 CRUD（{{ writeTools.length }} 个）
+          </span>
+          <span class="ai-mcp-foldable__chevron">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5L6 7.5L9 4.5" /></svg>
+          </span>
+        </button>
+        <transition name="ai-mcp-fold">
+          <div v-show="expandedWriteTools" class="ai-mcp-foldable__body">
+            <div class="ai-mcp-tools-list">
+              <div
+                v-for="tool in writeTools"
+                :key="tool.name"
+                class="ai-mcp-tool-card"
+                :class="{ 'ai-mcp-tool-card--locked': !mcpFullAccess }"
+              >
+                <div class="ai-mcp-tool-card__head">
+                  <code class="ai-mcp-tool-card__name">{{ tool.name }}</code>
+                  <span v-if="!mcpFullAccess" class="ai-mcp-tool-card__badge ai-mcp-tool-card__badge--locked">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                  </span>
+                </div>
+                <p class="ai-mcp-tool-card__desc">{{ tool.desc }}</p>
+              </div>
+            </div>
           </div>
-          <p class="ai-mcp-tool-card__desc">{{ tool.desc }}</p>
-        </div>
+        </transition>
       </div>
     </div>
 
     <!-- 安全说明 -->
     <div class="ai-workbench-section">
-      <h3 class="ai-workbench-section__title">安全说明</h3>
-      <ul class="ai-mcp-security">
-        <li>全功能 CRUD 操作（创建/删除/写入）需要用户在 UI 中确认激活</li>
-        <li>所有操作通过 MCP API Key 认证（<code>Authorization: Bearer &lt;key&gt;</code> 或 <code>X-MCP-API-Key</code>）</li>
-        <li>MCP API Key 独立于系统 JWT，可随时更换</li>
-        <li>敏感配置信息（API Key、密码）已脱敏处理</li>
-        <li>MCP 端点仅在内网暴露，建议配合防火墙规则使用</li>
-      </ul>
+      <div class="ai-mcp-foldable" :class="{ 'ai-mcp-foldable--open': expandedSecurity }">
+        <button class="ai-mcp-foldable__head ai-mcp-foldable__head--title" @click="toggleSecurity">
+          <h3 class="ai-workbench-section__title" style="margin: 0;">安全说明</h3>
+          <span class="ai-mcp-foldable__chevron">
+            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5L6 7.5L9 4.5" /></svg>
+          </span>
+        </button>
+        <transition name="ai-mcp-fold">
+          <div v-show="expandedSecurity" class="ai-mcp-foldable__body">
+            <ul class="ai-mcp-security">
+              <li>全功能 CRUD 操作（创建/删除/写入）需要用户在 UI 中确认激活</li>
+              <li>所有操作通过 MCP API Key 认证（<code>Authorization: Bearer &lt;key&gt;</code> 或 <code>X-MCP-API-Key</code>）</li>
+              <li>MCP API Key 独立于系统 JWT，可随时更换</li>
+              <li>敏感配置信息（API Key、密码）已脱敏处理</li>
+              <li>MCP 端点仅在内网暴露，建议配合防火墙规则使用</li>
+            </ul>
+          </div>
+        </transition>
+      </div>
     </div>
 
     <div class="ai-mcp-footer">
@@ -140,7 +172,7 @@
     <a-drawer
       v-model:visible="docsVisible"
       title="MCP 接入完整文档"
-      :width="860"
+      :width="980"
       :footer="false"
       unmount-on-close
       render-to-body
@@ -168,6 +200,14 @@ const mcpApiKeySet = ref(false)
 // 文档抽屉
 const docsVisible = ref(false)
 const docsHtml = ref('')
+
+// 折叠面板状态
+const expandedReadTools = ref(true)
+const expandedWriteTools = ref(false)
+const expandedSecurity = ref(true)
+const toggleReadTools = () => { expandedReadTools.value = !expandedReadTools.value }
+const toggleWriteTools = () => { expandedWriteTools.value = !expandedWriteTools.value }
+const toggleSecurity = () => { expandedSecurity.value = !expandedSecurity.value }
 
 // 客户端列表
 const clients = [
@@ -300,6 +340,58 @@ async function openMCPDocs() {
   }
 }
 
+function summarizeText(text, maxLen) {
+  if (!text) return ''
+  if (text.length <= maxLen) return text
+  const stopChars = ['。', '！', '？', '. ', '\n']
+  for (const ch of stopChars) {
+    const idx = text.indexOf(ch, Math.min(maxLen * 0.6, maxLen - 20))
+    if (idx > 0 && idx < maxLen) return text.slice(0, idx + ch.length)
+  }
+  return text.slice(0, maxLen) + '...'
+}
+
+function renderToolCard(t) {
+  const full = esc(t.description || '')
+  const summary = esc(summarizeText(t.description || '', 120))
+  const hasLongDesc = (t.description || '').length > 120
+
+  let paramsHtml = ''
+  if (Array.isArray(t.parameters) && t.parameters.length) {
+    const items = t.parameters.map(p => {
+      const req = p.required ? '<span class="ai-mcp-docs-tool-required">*</span>' : ''
+      const type = p.type ? `<code class="ai-mcp-docs-tool-type">${esc(p.type)}</code>` : ''
+      const def = p.default !== undefined ? ` <span class="ai-mcp-docs-tool-default">默认 ${esc(String(p.default))}</span>` : ''
+      return `<li><div class="ai-mcp-docs-tool-param__name">${esc(p.name)}${req} ${type}${def}</div><div class="ai-mcp-docs-tool-param__desc">${esc(p.description || '')}</div></li>`
+    }).join('')
+    paramsHtml = `<div class="ai-mcp-docs-tool-section"><h5>参数</h5><ul class="ai-mcp-docs-tool-list">${items}</ul></div>`
+  }
+
+  let returnsHtml = ''
+  const ret = t.returns || t.return
+  if (ret) {
+    const retText = typeof ret === 'string' ? ret : JSON.stringify(ret, null, 2)
+    returnsHtml = `<div class="ai-mcp-docs-tool-section"><h5>返回</h5><pre class="ai-mcp-docs-tool-returns"><code>${esc(retText)}</code></pre></div>`
+  }
+
+  if (!hasLongDesc && !paramsHtml && !returnsHtml) {
+    return `<div class="ai-mcp-docs-tool-card"><code class="ai-mcp-docs-tool-card__name">${esc(t.name)}</code><p class="ai-mcp-docs-tool-card__desc">${full}</p></div>`
+  }
+
+  return `<details class="ai-mcp-docs-tool-card">
+    <summary>
+      <code class="ai-mcp-docs-tool-card__name">${esc(t.name)}</code>
+      <span class="ai-mcp-docs-tool-summary">${summary}</span>
+      <span class="ai-mcp-docs-tool-toggle"><span class="show-when-closed">展开</span><span class="show-when-open">收起</span></span>
+    </summary>
+    <div class="ai-mcp-docs-tool-body">
+      <p class="ai-mcp-docs-tool-card__desc">${full.replace(/\n/g, '<br>')}</p>
+      ${paramsHtml}
+      ${returnsHtml}
+    </div>
+  </details>`
+}
+
 function renderHelpDoc(data) {
   if (!data) return '<p class="ai-mcp-docs-error">无数据</p>'
 
@@ -403,12 +495,7 @@ function renderHelpDoc(data) {
       <span class="ai-mcp-docs-subtitle__hint">无需全功能激活，默认可用</span>
     </h4>`
     html += `<div class="ai-mcp-docs-tool-grid">`
-    for (const t of readTools) {
-      html += `<div class="ai-mcp-docs-tool-card">
-        <code class="ai-mcp-docs-tool-card__name">${esc(t.name)}</code>
-        <p class="ai-mcp-docs-tool-card__desc">${esc(t.description)}</p>
-      </div>`
-    }
+    for (const t of readTools) html += renderToolCard(t)
     html += `</div>`
 
     // 全功能工具
@@ -417,12 +504,7 @@ function renderHelpDoc(data) {
       <span class="ai-mcp-docs-subtitle__hint">需激活全功能读写</span>
     </h4>`
     html += `<div class="ai-mcp-docs-tool-grid">`
-    for (const t of writeTools) {
-      html += `<div class="ai-mcp-docs-tool-card">
-        <code class="ai-mcp-docs-tool-card__name">${esc(t.name)}</code>
-        <p class="ai-mcp-docs-tool-card__desc">${esc(t.description)}</p>
-      </div>`
-    }
+    for (const t of writeTools) html += renderToolCard(t)
     html += `</div>`
     html += `</section>`
   }

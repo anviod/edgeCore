@@ -367,7 +367,7 @@ const toggleCase = (idx) => {
 .ai-dg {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
   padding-bottom: 8px;
 }
 
@@ -375,7 +375,7 @@ const toggleCase = (idx) => {
 .ai-dg-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 14px;
 }
 .ai-dg-section__head {
   display: flex;
@@ -422,7 +422,8 @@ const toggleCase = (idx) => {
   align-items: flex-start;
   overflow-x: auto;
   scrollbar-width: none;
-  padding: 4px 2px 6px;
+  padding: 8px 4px 10px;
+  margin: 0 -4px;
 }
 .ai-dg-steps::-webkit-scrollbar { display: none; }
 
@@ -430,18 +431,22 @@ const toggleCase = (idx) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   flex-shrink: 0;
-  width: 56px;
+  width: 68px;
   border: none;
   background: transparent;
   cursor: pointer;
-  padding: 0;
+  padding: 4px 2px;
+  border-radius: 8px;
   transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
 }
+.ai-dg-step:hover {
+  background: var(--ai-glass-bg-subtle, rgba(0, 0, 0, 0.02));
+}
 .ai-dg-step__num {
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -454,14 +459,16 @@ const toggleCase = (idx) => {
   transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .ai-dg-step__label {
-  font-size: 9.5px;
+  font-size: 10px;
   color: var(--ai-text-faint, var(--text-tertiary));
   text-align: center;
-  line-height: 1.2;
-  max-width: 56px;
+  line-height: 1.35;
+  max-width: 64px;
+  max-height: 2.7em;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   transition: color 200ms;
 }
 .ai-dg-step:hover .ai-dg-step__num {
@@ -506,8 +513,8 @@ const toggleCase = (idx) => {
 /* ── 详情卡片 ── */
 .ai-dg-detail {
   border: 1px solid var(--ai-glass-border, var(--border));
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: 14px;
+  padding: 18px 20px;
   background: var(--ai-glass-bg-card, var(--bg));
   backdrop-filter: blur(20px);
   box-shadow:
@@ -518,10 +525,10 @@ const toggleCase = (idx) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .ai-dg-detail__title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--ai-text, var(--text-primary));
   margin: 0;
@@ -530,81 +537,87 @@ const toggleCase = (idx) => {
   font-size: 10px;
   color: var(--primary);
   background: color-mix(in srgb, var(--primary) 8%, transparent);
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   font-weight: 600;
   border: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
 }
 .ai-dg-detail__desc {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--ai-text-muted, var(--text-secondary));
-  margin: 4px 0 10px;
-  line-height: 1.5;
+  margin: 6px 0 14px;
+  line-height: 1.6;
 }
 
 /* ── checklist ── */
 .ai-dg-checklist {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: var(--ai-glass-bg-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--ai-glass-border-subtle, var(--border));
+  border-radius: 10px;
 }
 .ai-dg-checklist__item {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
+  padding: 3px 0;
 }
 .ai-dg-checklist__dot {
-  width: 5px;
-  height: 5px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--primary);
   margin-top: 7px;
   flex-shrink: 0;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .ai-dg-checklist__text {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--ai-text-muted, var(--text-secondary));
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 /* ── API / 期望 code ── */
 .ai-dg-codes {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
 }
 .ai-dg-code {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 10px 12px;
+  background: var(--ai-glass-bg-subtle, rgba(0, 0, 0, 0.02));
+  border: 1px solid var(--ai-glass-border-subtle, var(--border));
+  border-radius: 8px;
 }
 .ai-dg-code__label {
-  font-size: 10px;
+  font-size: 9.5px;
   color: var(--ai-text-faint, var(--text-tertiary));
-  min-width: 32px;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   font-weight: 700;
   flex-shrink: 0;
 }
 .ai-dg-code__value {
-  font-size: 11px;
+  font-size: 11.5px;
   font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
   color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 6%, transparent);
-  padding: 3px 8px;
-  border-radius: 5px;
-  border: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+  background: transparent;
+  padding: 0;
+  border: none;
   word-break: break-all;
   line-height: 1.5;
 }
 .ai-dg-code__value--expected {
   color: #10b981;
-  background: color-mix(in srgb, #10b981 6%, transparent);
-  border-color: color-mix(in srgb, #10b981 12%, transparent);
 }
 
 /* ── 原生导航按钮 ── */

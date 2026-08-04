@@ -1,0 +1,330 @@
+/*
+ * EdgeX v3.0 — Global page & component motion polish
+ * 覆盖所有页面和通用组件的基础动效，实现全量组件动效落地
+ */
+
+/* ── 所有页面 shell 入场 ── */
+.page-shell,
+.page-container,
+.list-detail-page,
+.settings-page,
+.install-page,
+.login-page {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+/* ── 页面区块 stagger ── */
+.page-shell > section,
+.page-shell > .section,
+.page-container > section,
+.page-container > .section,
+.page-shell > .arco-card,
+.page-container > .arco-card {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.page-shell > section:nth-child(1),
+.page-container > section:nth-child(1) { animation-delay: 0ms; }
+.page-shell > section:nth-child(2),
+.page-container > section:nth-child(2) { animation-delay: 50ms; }
+.page-shell > section:nth-child(3),
+.page-container > section:nth-child(3) { animation-delay: 100ms; }
+.page-shell > section:nth-child(4),
+.page-container > section:nth-child(4) { animation-delay: 150ms; }
+.page-shell > section:nth-child(5),
+.page-container > section:nth-child(5) { animation-delay: 200ms; }
+.page-shell > section:nth-child(n+6),
+.page-container > section:nth-child(n+6) { animation-delay: 250ms; }
+
+/* ── 通用卡片/面板 hover & entrance ── */
+.arco-card,
+.settings-card,
+.scanner-panel,
+.editor-panel,
+.nb-channel-card,
+.cluster-node,
+.ai-mcp-tool-card,
+.ai-help-card,
+.ai-dg-case,
+.ai-dg-faq-item,
+.rule-flow-card,
+.edge-compute-footer-card,
+.metric-card,
+.device-metric-card,
+.vs-device-card,
+.northbound-card,
+.edge-compute-card,
+.channel-card,
+.stat-card {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-card:hover,
+.settings-card:hover,
+.scanner-panel:hover,
+.editor-panel:hover,
+.nb-channel-card:hover,
+.cluster-node:hover,
+.ai-mcp-tool-card:hover,
+.ai-help-card:hover,
+.ai-dg-case:hover,
+.ai-dg-faq-item:hover,
+.rule-flow-card:hover,
+.edge-compute-footer-card:hover,
+.metric-card:hover,
+.device-metric-card:hover,
+.vs-device-card:hover,
+.northbound-card:hover,
+.edge-compute-card:hover,
+.channel-card:hover,
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── 所有表格行 hover ── */
+.arco-table-tbody .arco-table-tr {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-table-tbody .arco-table-tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── 所有表单输入框 focus ── */
+.arco-input-wrapper,
+.arco-input,
+.arco-textarea,
+.arco-input-password,
+.arco-select-view,
+.arco-input-number,
+.arco-picker,
+.arco-timepicker {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard) !important;
+}
+
+.arco-input-wrapper:hover,
+.arco-input:hover,
+.arco-textarea:hover,
+.arco-select-view:hover,
+.arco-input-number:hover,
+.arco-picker:hover {
+  transform: translateY(-1px);
+}
+
+.arco-input-wrapper.arco-input-focus,
+.arco-input:focus,
+.arco-textarea:focus,
+.arco-select-view.arco-select-view-focus,
+.arco-input-number.arco-input-focus,
+.arco-picker.arco-picker-focus {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12) !important;
+}
+
+/* ── 所有按钮点击反馈 ── */
+.arco-btn,
+.arco-button,
+button[class*="btn"] {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard) !important;
+}
+
+.arco-btn:active,
+.arco-button:active,
+button[class*="btn"]:active {
+  transform: scale(0.97);
+}
+
+/* ── 标签页切换 ── */
+.arco-tabs-nav-ink {
+  transition:
+    left var(--motion-duration-normal) var(--motion-ease-bounce),
+    width var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.arco-tabs-content {
+  animation: fade-in var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── 折叠面板 ── */
+.arco-collapse-item-content {
+  transition:
+    height var(--motion-duration-normal) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-collapse-item-icon-right {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.arco-collapse-item-active .arco-collapse-item-icon-right {
+  transform: rotate(180deg);
+}
+
+/* ── 开关/复选框/单选框 ── */
+.arco-switch-dot {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.arco-checkbox-icon,
+.arco-radio-icon {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.arco-checkbox:hover .arco-checkbox-icon,
+.arco-radio:hover .arco-radio-icon {
+  transform: scale(1.05);
+}
+
+/* ── 空状态 ── */
+.arco-empty {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* ── Alert / Message ── */
+.arco-alert,
+.arco-message {
+  animation: slide-in-down var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* ── 加载骨架 ── */
+.loading-shimmer,
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-1) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+}
+
+/* ── 返回按钮 ── */
+.list-back-btn,
+.back-btn,
+.back-button {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.list-back-btn:hover,
+.back-btn:hover,
+.back-button:hover {
+  transform: translateX(-3px);
+}
+
+/* ── 表格操作列按钮 ── */
+.table-ops,
+.actions-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.table-ops .arco-btn,
+.actions-container .arco-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.table-ops .arco-btn:hover,
+.actions-container .arco-btn:hover {
+  transform: scale(1.08);
+  background: var(--surface-2);
+}
+
+/* 文字按钮时保持紧凑 */
+.table-ops .arco-btn:not(:has(.arco-icon-only)),
+.actions-container .arco-btn:not(:has(.arco-icon-only)) {
+  width: auto;
+  height: auto;
+  padding: 4px 8px;
+}
+
+/* ── 抽屉进入 ── */
+.arco-drawer {
+  animation: drawer-slide-in var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* ── 模态框进入 ── */
+.arco-modal {
+  animation: modal-scale-in var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* ── 下拉菜单 ── */
+.arco-dropdown-menu,
+.arco-select-dropdown {
+  animation: scale-soft-in var(--motion-duration-fast) var(--motion-ease-decelerate);
+  transform-origin: top center;
+}
+
+/* ── 提示/通知 ── */
+.arco-message,
+.arco-notification {
+  animation: toast-slide-in-right var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* ── 状态指示器 ── */
+.status-indicator,
+.status-dot,
+.ai-mcp-status__dot--online {
+  animation: status-breathe 2.4s var(--motion-ease-standard) infinite;
+}
+
+/* ── 面包屑 ── */
+.breadcrumb-item,
+.arco-breadcrumb-item {
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── 分页 ── */
+.arco-pagination-item,
+.arco-pagination-jumper-input {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── 徽章/标签 ── */
+.arco-tag,
+.arco-badge-status-text {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-tag:hover {
+  transform: translateY(-1px);
+}

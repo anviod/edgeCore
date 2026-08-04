@@ -1,0 +1,12 @@
+/*
+ * EdgeX v3.0 — Global animations entry
+ * 统一引入所有动效样式；在 main.js 中于业务样式之前引入
+ */
+
+@import './variables.css';
+@import './keyframes.css';
+@import './transitions.css';
+@import './interactions.css';
+@import './hierarchy.css';
+@import './arco-motion.css';
+@import './page-components.css';

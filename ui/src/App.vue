@@ -56,8 +56,11 @@
           <span v-if="commitID" class="version-commit">{{ commitID }}</span>
         </div>
         <button class="collapse-btn" @click="drawerRail = !drawerRail">
-          <icon-arrow-left v-if="!drawerRail" :size="14" />
-          <icon-arrow-right v-else :size="14" />
+          <icon-arrow-left
+            class="collapse-icon"
+            :class="{ 'is-collapsed': drawerRail }"
+            :size="14"
+          />
           <span v-if="!drawerRail">收起</span>
         </button>
       </div>
@@ -110,7 +113,7 @@
     <main class="main-content" :class="{ 'has-sidebar': !isLoginPage, 'is-collapsed': drawerRail }">
       <div v-if="!isLoginPage" class="page-container">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition :name="transitionName" mode="out-in">
             <component v-if="Component" :is="Component" :key="$route.fullPath" />
           </transition>
         </router-view>
@@ -152,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { globalState, showMessage } from './composables/useGlobalState'
 import { userStore } from '@/stores/user'
@@ -173,6 +176,21 @@ const router = useRouter()
 const drawerRail = ref(false)
 const snackbar = globalState.snackbar
 const user = userStore()
+const previousLevel = ref(1)
+
+const transitionName = computed(() => {
+  const toLevel = route.meta?.level ?? 1
+  if (toLevel > previousLevel.value) return 'page-slide'
+  if (toLevel < previousLevel.value) return 'page-back'
+  return 'fade'
+})
+
+watch(
+  () => route.path,
+  () => {
+    previousLevel.value = route.meta?.level ?? 1
+  }
+)
 const changePwdRef = ref(null)
 const restartModalVisible = ref(false)
 const isDarkTheme = ref(false)
@@ -295,3 +313,64 @@ const confirmRestart = () => {
   })
 }
 </script>
+
+<style scoped>
+.industrial-sidebar,
+.industrial-header,
+.main-content {
+  will-change: width, left, margin-left;
+}
+
+.collapse-icon {
+  transition: transform var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.collapse-icon.is-collapsed {
+  transform: rotate(180deg);
+}
+
+.ai-assistant-trigger {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.ai-assistant-trigger:hover {
+  transform: translateY(-1px);
+}
+
+.ai-assistant-trigger.mcp-glow {
+  animation: pulse-glow 2s var(--motion-ease-standard) infinite;
+}
+
+.dropdown-menu {
+  animation: scale-soft-in var(--motion-duration-fast) var(--motion-ease-decelerate);
+  transform-origin: top right;
+}
+
+.dropdown-item {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.dropdown-icon {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.dropdown-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.user-avatar {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.user-menu:hover .user-avatar {
+  transform: scale(1.05);
+}
+</style>
+

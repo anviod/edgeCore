@@ -579,3 +579,70 @@
 .dark-theme .help-doc-arch__node--out {
   background: rgba(245, 158, 11, 0.12);
 }
+
+/* ── help drawer motion polish ── */
+.help-drawer .help-doc,
+.help-drawer .help-doc__sections {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.help-drawer .help-doc-section {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.help-drawer .help-doc-section:nth-child(1) { animation-delay: 40ms; }
+.help-drawer .help-doc-section:nth-child(2) { animation-delay: 90ms; }
+.help-drawer .help-doc-section:nth-child(3) { animation-delay: 140ms; }
+.help-drawer .help-doc-section:nth-child(4) { animation-delay: 190ms; }
+.help-drawer .help-doc-section:nth-child(5) { animation-delay: 240ms; }
+.help-drawer .help-doc-section:nth-child(n+6) { animation-delay: 290ms; }
+
+.help-doc-card,
+.help-doc-faq,
+.help-doc-arch,
+.help-doc-legend,
+.help-doc-table-wrap {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.help-doc-card:hover,
+.help-doc-faq:hover,
+.help-doc-arch:hover,
+.help-doc-legend:hover,
+.help-doc-table-wrap:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.help-drawer .help-doc-faq .arco-collapse-item-icon-right {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.help-drawer .help-doc-faq .arco-collapse-item-active .arco-collapse-item-icon-right {
+  transform: rotate(180deg);
+}
+
+.help-doc-row {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.help-doc-row:hover {
+  background: var(--surface-1);
+}
+
+.help-trigger-btn {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard) !important;
+}
+
+.help-trigger-btn:hover {
+  transform: translateY(-1px);
+  background-color: color-mix(in srgb, var(--primary) 8%, transparent);
+}

@@ -1,0 +1,216 @@
+/*
+ * EdgeX v3.0 — Micro-interactions
+ * 按钮、卡片、表单、提示、确认的交互反馈动效（全局覆盖，不改动业务组件）
+ */
+
+/* ── buttons ── */
+.arco-btn,
+.arco-button,
+button[class*="btn"],
+.collapse-btn,
+.nav-item {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-btn:active,
+.arco-button:active,
+button[class*="btn"]:active,
+.collapse-btn:active {
+  transform: scale(0.97);
+}
+
+.arco-btn-primary:hover,
+.arco-button[type="primary"]:hover {
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+}
+
+/* 按钮焦点光环 */
+.arco-btn:focus-visible,
+.arco-button:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.25);
+}
+
+/* ── cards / panels ── */
+.settings-card,
+.scanner-panel,
+.editor-panel,
+.nb-channel-card,
+.cluster-node,
+.metric-card,
+.device-metric-card,
+.arco-card {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.settings-card:hover,
+.scanner-panel:hover,
+.editor-panel:hover,
+.nb-channel-card:hover,
+.cluster-node:hover,
+.metric-card:hover,
+.device-metric-card:hover,
+.arco-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── table rows ── */
+.arco-table-tbody .arco-table-tr {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-table-tbody .arco-table-tr:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  z-index: 1;
+  position: relative;
+}
+
+/* ── form inputs ── */
+.arco-input-wrapper,
+.arco-input,
+.arco-textarea,
+.arco-input-password,
+.arco-select-view,
+.arco-input-number,
+.arco-picker,
+.arco-timepicker {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard) !important;
+}
+
+.arco-input-wrapper:hover,
+.arco-input:hover,
+.arco-textarea:hover,
+.arco-select-view:hover,
+.arco-input-number:hover,
+.arco-picker:hover {
+  transform: translateY(-1px);
+}
+
+.arco-input-wrapper.arco-input-focus,
+.arco-input:focus,
+.arco-textarea:focus,
+.arco-select-view.arco-select-view-focus,
+.arco-input-number.arco-input-focus,
+.arco-picker.arco-picker-focus {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12) !important;
+}
+
+/* ── select dropdown options ── */
+.arco-select-option {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    padding-left var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-select-option:hover {
+  padding-left: calc(var(--space-3) + 2px);
+}
+
+/* ── nav items ── */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, rgba(14, 165, 233, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transform: scale(0.5);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+  pointer-events: none;
+}
+
+.nav-item:hover::after {
+  opacity: 1;
+  transform: scale(1.5);
+}
+
+/* ── badges / status dots ── */
+.status-indicator,
+.status-dot {
+  animation: status-breathe 2.4s var(--motion-ease-standard) infinite;
+}
+
+.status-indicator.offline,
+.status-dot.offline {
+  animation: none;
+}
+
+/* ── ripple effect utility ── */
+.ripple-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple-effect::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.3) 10%, transparent 10.01%);
+  background-repeat: no-repeat;
+  background-position: 50%;
+  transform: scale(10, 10);
+  opacity: 0;
+  transition: transform 0.5s, opacity 0.5s;
+}
+
+.ripple-effect:active::after {
+  transform: scale(0, 0);
+  opacity: 0.3;
+  transition: 0s;
+}
+
+/* ── loading skeletons ── */
+.skeleton,
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 25%,
+    var(--surface-1) 50%,
+    var(--surface-2) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── back button pulse ── */
+.back-button:hover .nav-icon,
+.back-btn:hover .arco-icon {
+  animation: bounce-subtle 0.6s var(--motion-ease-bounce);
+}
+
+/* ── confirm / danger action warning pulse ── */
+.arco-btn-status-danger:hover,
+.arco-button-status-danger:hover {
+  animation: pulse-soft 1.2s var(--motion-ease-standard) infinite;
+}

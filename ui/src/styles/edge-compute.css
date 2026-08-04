@@ -1543,3 +1543,149 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── edge compute motion polish ── */
+.edge-compute-page.page-shell {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.edge-compute-zone {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.edge-compute-zone:nth-child(1) { animation-delay: 0ms; }
+.edge-compute-zone:nth-child(2) { animation-delay: 60ms; }
+.edge-compute-zone:nth-child(3) { animation-delay: 120ms; }
+.edge-compute-zone:nth-child(n+4) { animation-delay: 180ms; }
+
+.rule-flow-card,
+.edge-compute-footer-card,
+.edge-compute-metric-card,
+.edge-compute-stat-card {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.rule-flow-list .rule-flow-card:nth-child(1) { animation-delay: 40ms; }
+.rule-flow-list .rule-flow-card:nth-child(2) { animation-delay: 90ms; }
+.rule-flow-list .rule-flow-card:nth-child(3) { animation-delay: 140ms; }
+.rule-flow-list .rule-flow-card:nth-child(4) { animation-delay: 190ms; }
+.rule-flow-list .rule-flow-card:nth-child(5) { animation-delay: 240ms; }
+.rule-flow-list .rule-flow-card:nth-child(n+6) { animation-delay: 290ms; }
+
+.edge-compute-footer-grid .edge-compute-footer-card:nth-child(1) { animation-delay: 60ms; }
+.edge-compute-footer-grid .edge-compute-footer-card:nth-child(2) { animation-delay: 120ms; }
+.edge-compute-footer-grid .edge-compute-footer-card:nth-child(3) { animation-delay: 180ms; }
+.edge-compute-footer-grid .edge-compute-footer-card:nth-child(n+4) { animation-delay: 240ms; }
+
+.edge-compute-stats-row .edge-compute-stat-card:nth-child(1) { animation-delay: 40ms; }
+.edge-compute-stats-row .edge-compute-stat-card:nth-child(2) { animation-delay: 90ms; }
+.edge-compute-stats-row .edge-compute-stat-card:nth-child(3) { animation-delay: 140ms; }
+.edge-compute-stats-row .edge-compute-stat-card:nth-child(4) { animation-delay: 190ms; }
+
+.rule-flow-card {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.rule-flow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.rule-flow-node {
+  opacity: 0;
+  animation: scale-in var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.rule-flow-step:nth-child(1) .rule-flow-node { animation-delay: 80ms; }
+.rule-flow-step:nth-child(2) .rule-flow-node { animation-delay: 160ms; }
+.rule-flow-step:nth-child(3) .rule-flow-node { animation-delay: 240ms; }
+.rule-flow-step:nth-child(4) .rule-flow-node { animation-delay: 320ms; }
+.rule-flow-step:nth-child(5) .rule-flow-node { animation-delay: 400ms; }
+.rule-flow-step:nth-child(n+6) .rule-flow-node { animation-delay: 480ms; }
+
+.rule-flow-node--active,
+.rule-flow-node--pending {
+  animation: pulse-glow 2s var(--motion-ease-standard) infinite;
+}
+
+.rule-flow-connector {
+  opacity: 0;
+  animation: fade-in var(--motion-duration-fast) var(--motion-ease-standard) forwards;
+}
+
+.rule-flow-step:nth-child(1) .rule-flow-connector { animation-delay: 120ms; }
+.rule-flow-step:nth-child(2) .rule-flow-connector { animation-delay: 200ms; }
+.rule-flow-step:nth-child(3) .rule-flow-connector { animation-delay: 280ms; }
+.rule-flow-step:nth-child(n+4) .rule-flow-connector { animation-delay: 360ms; }
+
+.rule-flow-connector--active {
+  animation: fade-in 1s var(--motion-ease-standard) infinite alternate;
+}
+
+.edge-compute-metric-card {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.edge-compute-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+/* 批量工具条 slide-down */
+.edge-compute-toolbar--batch {
+  animation: slide-in-down var(--motion-duration-normal) var(--motion-ease-decelerate);
+  transform-origin: top center;
+}
+
+/* 筛选标签 */
+.edge-compute-filter-chips {
+  animation: fade-in-up var(--motion-duration-fast) var(--motion-ease-decelerate);
+}
+
+.edge-compute-filter-chips .arco-tag {
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.edge-compute-filter-chips .arco-tag:hover {
+  transform: translateY(-1px);
+}
+
+/* 视图切换 radio */
+.edge-compute-view-toggle .arco-radio-button {
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.edge-compute-record-type-toggle .arco-radio-button {
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* 记录错误消息 expandable */
+.edge-compute-records-error {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.edge-compute-records-table .arco-table-tr:hover .edge-compute-records-error {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* 空状态 */
+.edge-compute-page .empty-wrap {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+
