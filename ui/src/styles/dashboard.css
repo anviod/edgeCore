@@ -262,9 +262,14 @@
   height: auto;
 }
 
-.dashboard-tertiary-block--edge > .section {
+.dashboard-tertiary-row > .dashboard-tertiary-block--edge {
+  justify-content: center;
+}
+
+.dashboard-tertiary-row > .dashboard-tertiary-block--edge > .section {
   flex: none;
   justify-content: center;
+  min-height: 0;
 }
 
 .dashboard-tertiary-block--edge .edge-stats {
