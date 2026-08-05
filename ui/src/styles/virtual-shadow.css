@@ -1711,3 +1711,69 @@
   background: var(--surface) !important;
   border-top-color: var(--border) !important;
 }
+
+/* ── virtual shadow motion polish ── */
+.virtual-shadow-page {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.virtual-shadow-page .vs-device-card,
+.virtual-shadow-page .empty-card {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.vs-devices-grid .vs-device-card:nth-child(1) { animation-delay: 40ms; }
+.vs-devices-grid .vs-device-card:nth-child(2) { animation-delay: 90ms; }
+.vs-devices-grid .vs-device-card:nth-child(3) { animation-delay: 140ms; }
+.vs-devices-grid .vs-device-card:nth-child(4) { animation-delay: 190ms; }
+.vs-devices-grid .vs-device-card:nth-child(5) { animation-delay: 240ms; }
+.vs-devices-grid .vs-device-card:nth-child(6) { animation-delay: 290ms; }
+.vs-devices-grid .vs-device-card:nth-child(n+7) { animation-delay: 340ms; }
+
+.virtual-shadow-page .vs-device-card {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.virtual-shadow-page .vs-device-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.virtual-shadow-page .vs-device-points-preview {
+  transition: border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.virtual-shadow-page .vs-device-card-actions .arco-btn {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.virtual-shadow-page .vs-device-card-actions .arco-btn:hover {
+  transform: scale(1.08);
+}
+
+.virtual-shadow-page .expand-point-row {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.virtual-shadow-page .expand-point-row:hover {
+  background: var(--surface-1);
+}
+
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
+.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(n+5) { animation-delay: 190ms; }

@@ -1902,3 +1902,90 @@
     max-width: none;
   }
 }
+
+/* ── node sync motion polish ── */
+.node-sync-page.page-shell {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.node-sync-page .sync-flow-card,
+.node-sync-page .sync-status-bar {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+.node-sync-body > .sync-flow-card:nth-child(1),
+.node-sync-body > .sync-control-container > .sync-flow-card:nth-child(1) { animation-delay: 0ms; }
+.node-sync-body > .sync-flow-card:nth-child(2),
+.node-sync-body > .sync-control-container > .sync-flow-card:nth-child(2) { animation-delay: 60ms; }
+.node-sync-body > .sync-flow-card:nth-child(3),
+.node-sync-body > .sync-control-container > .sync-flow-card:nth-child(3) { animation-delay: 120ms; }
+.node-sync-body > .sync-flow-card:nth-child(n+4),
+.node-sync-body > .sync-control-container > .sync-flow-card:nth-child(n+4) { animation-delay: 180ms; }
+
+.node-sync-page .sync-flow-card.arco-card {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.node-sync-page .sync-flow-card.arco-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.node-sync-page .node-item,
+.node-sync-page .discovered-node-item {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.node-sync-page .node-item:hover,
+.node-sync-page .discovered-node-item:hover {
+  transform: translateX(3px);
+}
+
+.node-sync-page .node-item:nth-child(1),
+.node-sync-page .discovered-node-item:nth-child(1) { animation-delay: 30ms; }
+.node-sync-page .node-item:nth-child(2),
+.node-sync-page .discovered-node-item:nth-child(2) { animation-delay: 70ms; }
+.node-sync-page .node-item:nth-child(3),
+.node-sync-page .discovered-node-item:nth-child(3) { animation-delay: 110ms; }
+.node-sync-page .node-item:nth-child(4),
+.node-sync-page .discovered-node-item:nth-child(4) { animation-delay: 150ms; }
+.node-sync-page .node-item:nth-child(n+5),
+.node-sync-page .discovered-node-item:nth-child(n+5) { animation-delay: 190ms; }
+
+.node-sync-page .sync-status-dot--online {
+  animation: status-breathe 2.4s var(--motion-ease-standard) infinite;
+}
+
+.node-sync-page .sync-meta-chip {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.node-sync-page .sync-meta-chip:hover {
+  background: var(--surface-1);
+}
+
+.node-sync-page .timeline-content {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.node-sync-page .arco-timeline-item:hover .timeline-content {
+  background: var(--surface-1);
+}
+
+.node-sync-page .metric-card {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.node-sync-page .metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}

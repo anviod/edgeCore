@@ -1097,3 +1097,86 @@
   gap: var(--space-2);
   margin-left: auto;
 }
+
+/* ── log viewer motion polish ── */
+.log-viewer-page.page-shell {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.log-viewer-page .log-toolbar {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.log-viewer-page .log-toolbar-buttons .arco-btn,
+.log-viewer-page .log-toolbar-select {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-toolbar-buttons .arco-btn:active {
+  transform: scale(0.95);
+}
+
+.log-viewer-page .log-terminal {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-terminal:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.log-viewer-page .log-line {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-line:hover {
+  transform: translateX(2px);
+}
+
+.log-viewer-page .log-line.is-selected {
+  transform: translateX(2px);
+}
+
+.log-viewer-page .log-pinned-panel {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.log-viewer-page .log-pinned-entry {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-pinned-entry:hover {
+  background: rgba(14, 165, 233, 0.05);
+}
+
+.log-viewer-page .log-level {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.log-viewer-page .log-line:hover .log-level {
+  transform: scale(1.08);
+}
+
+/* 新日志高亮闪烁 */
+.log-viewer-page .log-line.is-new {
+  animation: log-new-flash 1.2s var(--motion-ease-decelerate);
+}
+
+@keyframes log-new-flash {
+  0% { background: rgba(14, 165, 233, 0.18); }
+  100% { background: transparent; }
+}
+
+.log-detail-modal .arco-modal-body {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
