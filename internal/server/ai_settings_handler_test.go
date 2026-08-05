@@ -22,8 +22,8 @@ func TestGetAiSettings_Default(t *testing.T) {
 	assert.Equal(t, "0", body["code"])
 	data, ok := body["data"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "local", data["deployment_mode"])
-	assert.Equal(t, "edgex-local", data["provider"])
+	assert.Equal(t, "remote", data["deployment_mode"])
+	assert.Equal(t, "edgex-center", data["provider"])
 }
 
 func TestPutAiSettings_RemoteMode(t *testing.T) {
