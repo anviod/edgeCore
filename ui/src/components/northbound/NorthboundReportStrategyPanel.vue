@@ -1,8 +1,12 @@
 <template>
   <div v-if="deviceKind === 'real'" class="nb-report-strategy-panel">
     <div class="table-header table-header--strategy">
-      <span class="table-header__hint">启用设备默认周期上报 {{ defaultInterval }}</span>
+      <div class="table-header__hint">
+        <span>启用设备默认周期上报 {{ defaultInterval }}</span>
+        <span class="nb-strategy-hint">周期上报＝全量上报 · 变化上报＝增量上报</span>
+      </div>
       <div class="table-header__actions">
+        <a-button type="outline" size="small" @click="batchEnableDevices('real')">批量启用</a-button>
         <a-input
           v-model="batchInterval"
           size="small"
@@ -11,7 +15,16 @@
           @press-enter="batchSetInterval('real')"
         />
         <a-button type="outline" size="small" @click="batchSetInterval('real')">批量设置周期</a-button>
-        <a-button type="outline" size="small" @click="autoFillDevices('real')">全部启用 ({{ defaultInterval }})</a-button>
+        <a-dropdown trigger="click" @select="(key) => batchSetStrategy('real', key)">
+          <a-button type="outline" size="small">
+            批量上报模式
+            <template #icon><icon-down :size="12" /></template>
+          </a-button>
+          <template #content>
+            <a-doption value="periodic">周期上报（全量）</a-doption>
+            <a-doption value="change">变化上报（增量）</a-doption>
+          </template>
+        </a-dropdown>
       </div>
     </div>
     <div class="table-container saas-table nb-device-table">
@@ -19,6 +32,7 @@
         row-key="id"
         :columns="realDeviceColumns"
         :data="realDeviceTableData"
+        :row-selection="realRowSelection"
         size="small"
         :bordered="false"
         :pagination="false"
@@ -57,6 +71,7 @@
             class="mono-text strategy-interval-input"
             @change="updateRealDeviceInterval(record)"
           />
+          <span v-else class="strategy-interval-dash">—</span>
         </template>
       </a-table>
     </div>
@@ -64,8 +79,12 @@
 
   <div v-else class="nb-report-strategy-panel">
     <div class="table-header table-header--strategy">
-      <span class="table-header__hint">启用虚拟影子设备默认周期上报 {{ defaultInterval }}</span>
+      <div class="table-header__hint">
+        <span>启用虚拟影子设备默认周期上报 {{ defaultInterval }}</span>
+        <span class="nb-strategy-hint">周期上报＝全量上报 · 变化上报＝增量上报</span>
+      </div>
       <div class="table-header__actions">
+        <a-button type="outline" size="small" @click="batchEnableDevices('virtual')">批量启用</a-button>
         <a-input
           v-model="virtualBatchInterval"
           size="small"
@@ -74,7 +93,16 @@
           @press-enter="batchSetInterval('virtual')"
         />
         <a-button type="outline" size="small" @click="batchSetInterval('virtual')">批量设置周期</a-button>
-        <a-button type="outline" size="small" @click="autoFillDevices('virtual')">全部启用 ({{ defaultInterval }})</a-button>
+        <a-dropdown trigger="click" @select="(key) => batchSetStrategy('virtual', key)">
+          <a-button type="outline" size="small">
+            批量上报模式
+            <template #icon><icon-down :size="12" /></template>
+          </a-button>
+          <template #content>
+            <a-doption value="periodic">周期上报（全量）</a-doption>
+            <a-doption value="change">变化上报（增量）</a-doption>
+          </template>
+        </a-dropdown>
       </div>
     </div>
     <div class="table-container saas-table nb-device-table">
@@ -82,6 +110,7 @@
         row-key="id"
         :columns="virtualDeviceColumns"
         :data="virtualDeviceTableData"
+        :row-selection="virtualRowSelection"
         size="small"
         :bordered="false"
         :pagination="false"
@@ -128,6 +157,7 @@
             class="mono-text strategy-interval-input"
             @change="updateVirtualDeviceInterval(record)"
           />
+          <span v-else class="strategy-interval-dash">—</span>
         </template>
       </a-table>
     </div>
@@ -135,7 +165,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { IconDown } from '@arco-design/web-vue/es/icon'
 import { showMessage } from '@/composables/useGlobalState'
 import { listVirtualShadows } from '@/api/virtualShadow'
 import {
@@ -158,6 +189,26 @@ const realDeviceTableData = ref([])
 const virtualDeviceTableData = ref([])
 const batchInterval = ref(props.defaultInterval)
 const virtualBatchInterval = ref(props.defaultInterval)
+
+const realSelectedKeys = ref([])
+const virtualSelectedKeys = ref([])
+
+// Arco 受控选择：selectedRowKeys + onChange（与项目内其余批量选择一致）
+const realRowSelection = computed(() => ({
+  type: 'checkbox',
+  showCheckedAll: true,
+  onlyCurrent: false,
+  selectedRowKeys: realSelectedKeys.value,
+  onChange: (keys) => { realSelectedKeys.value = keys }
+}))
+
+const virtualRowSelection = computed(() => ({
+  type: 'checkbox',
+  showCheckedAll: true,
+  onlyCurrent: false,
+  selectedRowKeys: virtualSelectedKeys.value,
+  onChange: (keys) => { virtualSelectedKeys.value = keys }
+}))
 
 const realDeviceColumns = [
   { title: '设备', dataIndex: 'name', width: 180, ellipsis: true, tooltip: true },
@@ -208,6 +259,8 @@ const buildVirtualDeviceTable = async () => {
 const rebuildTables = async () => {
   batchInterval.value = props.defaultInterval
   virtualBatchInterval.value = props.defaultInterval
+  realSelectedKeys.value = []
+  virtualSelectedKeys.value = []
   buildRealDeviceTable()
   await buildVirtualDeviceTable()
 }
@@ -327,6 +380,37 @@ const updateVirtualDeviceInterval = (record) => {
   syncVirtualRecordToForm(record)
 }
 
+const getSelectedRows = (kind) => {
+  const isVirtual = kind === 'virtual'
+  const keys = isVirtual ? virtualSelectedKeys.value : realSelectedKeys.value
+  const rows = isVirtual ? virtualDeviceTableData.value : realDeviceTableData.value
+  return rows.filter(record => keys.includes(record.id))
+}
+
+const batchEnableDevices = (kind) => {
+  const isVirtual = kind === 'virtual'
+  const rows = getSelectedRows(kind)
+  if (!rows.length) {
+    showMessage('没有勾选设备，请先勾选要启用的设备', 'warning')
+    return
+  }
+  let count = 0
+  rows.forEach(record => {
+    if (isVirtual && !record.enable) return
+    record._enable = true
+    record._strategy = 'periodic'
+    record._interval = record._interval || props.defaultInterval
+    if (isVirtual) syncVirtualRecordToForm(record)
+    else syncRealRecordToForm(record)
+    count++
+  })
+  if (!count) {
+    showMessage('所选设备无法启用（虚拟设备配置为禁用）', 'warning')
+    return
+  }
+  showMessage(`已启用 ${count} 个设备，周期 ${props.defaultInterval}`, 'success')
+}
+
 const batchSetInterval = (kind) => {
   const isVirtual = kind === 'virtual'
   const interval = ((isVirtual ? virtualBatchInterval.value : batchInterval.value) || props.defaultInterval).trim()
@@ -334,10 +418,16 @@ const batchSetInterval = (kind) => {
     showMessage('请输入上报周期', 'warning')
     return
   }
-  const rows = isVirtual ? virtualDeviceTableData.value : realDeviceTableData.value
+  const rows = getSelectedRows(kind)
+  if (!rows.length) {
+    showMessage('没有勾选设备，请先勾选要设置周期的设备', 'warning')
+    return
+  }
   let count = 0
   rows.forEach(record => {
-    if (!record._enable || (isVirtual && !record.enable)) return
+    if (isVirtual && !record.enable) return
+    // 联动：设置周期时自动启用并切到周期上报
+    record._enable = true
     record._strategy = 'periodic'
     record._interval = interval
     if (isVirtual) syncVirtualRecordToForm(record)
@@ -345,24 +435,44 @@ const batchSetInterval = (kind) => {
     count++
   })
   if (count === 0) {
-    showMessage('请先启用至少一个设备', 'warning')
+    showMessage('所选设备无法设置周期（虚拟设备配置为禁用）', 'warning')
     return
   }
-  showMessage(`已为 ${count} 个设备设置周期 ${interval}`, 'success')
+  showMessage(`已为 ${count} 个设备启用并设置周期 ${interval}`, 'success')
 }
 
-const autoFillDevices = (kind) => {
+// 批量上报模式：联动生效 —— 自动启用所选设备，切换模式并应用批量周期
+const batchSetStrategy = (kind, strategy) => {
   const isVirtual = kind === 'virtual'
-  const rows = isVirtual ? virtualDeviceTableData.value : realDeviceTableData.value
+  const rows = getSelectedRows(kind)
+  if (!rows.length) {
+    showMessage('没有勾选设备，请先勾选要设置上报模式的设备', 'warning')
+    return
+  }
+  const isPeriodic = strategy === 'periodic'
+  const intervalInput = ((isVirtual ? virtualBatchInterval.value : batchInterval.value) || props.defaultInterval).trim()
+  const applyInterval = intervalInput || props.defaultInterval
+  let count = 0
   rows.forEach(record => {
     if (isVirtual && !record.enable) return
+    // 联动：切换模式时自动启用所选设备
     record._enable = true
-    record._strategy = 'periodic'
-    record._interval = props.defaultInterval
+    record._strategy = strategy
+    if (isPeriodic) {
+      record._interval = applyInterval
+    }
     if (isVirtual) syncVirtualRecordToForm(record)
     else syncRealRecordToForm(record)
+    count++
   })
-  showMessage(`已启用全部${isVirtual ? '虚拟' : ''}设备，周期 ${props.defaultInterval}`, 'success')
+  if (count === 0) {
+    showMessage('所选设备无法设置上报模式（虚拟设备配置为禁用）', 'warning')
+    return
+  }
+  showMessage(
+    `已为 ${count} 个设备设置为${isPeriodic ? `周期上报（全量），周期 ${applyInterval}` : '变化上报（增量）'}`,
+    'success'
+  )
 }
 
 defineExpose({ rebuildTables })

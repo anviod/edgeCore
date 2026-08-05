@@ -369,6 +369,15 @@
   width: 100%;
 }
 
+.northbound-settings-modal .strategy-interval-dash {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding-left: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .industrial-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -404,6 +413,14 @@
   font-size: 12px;
   color: var(--text-tertiary);
   min-width: 140px;
+}
+
+.nb-strategy-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  opacity: 0.85;
 }
 
 .table-header__actions {

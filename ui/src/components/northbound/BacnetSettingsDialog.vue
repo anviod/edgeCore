@@ -29,6 +29,28 @@
               </a-form-item>
             </a-col>
           </a-row>
+          <a-row :gutter="16">
+            <a-col :span="16">
+              <a-form-item
+                label="通道 ID"
+                extra="仅允许英文字母、数字、下划线或横线，禁止空格；点击「生成」一键生成"
+              >
+                <a-input
+                  v-model="form.id"
+                  placeholder="bacnet_xxx"
+                  class="mono-text"
+                  @input="onChannelIdInput"
+                >
+                  <template #suffix>
+                    <a-button type="text" size="mini" @click="generateChannelId">
+                      <template #icon><icon-refresh /></template>生成
+                    </a-button>
+                  </template>
+                </a-input>
+              </a-form-item>
+            </a-col>
+            <a-col :span="8" />
+          </a-row>
 
           <div class="nb-form-section">
             <div class="nb-form-section__title">网络配置</div>
@@ -186,19 +208,22 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { IconPlus, IconCheck, IconSync } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconCheck, IconSync, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { showMessage } from '@/composables/useGlobalState'
 import request from '@/utils/request'
 import {
   closeNorthboundSettingsDialog,
   extractNorthboundSaveWarning,
+  generateNorthboundID,
   northboundSaveRequestConfig,
   notifyNorthboundSaveError,
   notifyNorthboundSaveSuccess,
   notifyNorthboundValidationError,
   resolveNorthboundSaveError,
-  validateNorthboundChannelName
+  sanitizeNorthboundID,
+  validateNorthboundChannelName,
+  validateNorthboundID
 } from '@/utils/northboundSave'
 import { buildNorthboundVirtualDeviceRows, syncNorthboundVirtualDevicesFromRows } from '@/utils/southboundDevices'
 import { listVirtualShadows } from '@/api/virtualShadow'
@@ -248,6 +273,7 @@ watch(() => props.visible, async (val) => {
     } else {
       form.value = {
         enable: true,
+        id: generateNorthboundID('bacnet'),
         name: 'New BACnet Server',
         interface: '',
         ip: '',
@@ -344,7 +370,7 @@ const syncPointMapping = async () => {
   syncing.value = true
   try {
     await request.post(
-      `/api/northbound/bacnet_server/${form.value.id}/sync`,
+      `/api/northbound/bacnet_server/${encodeURIComponent(form.value.id)}/sync`,
       null,
       northboundSaveRequestConfig
     )
@@ -356,6 +382,16 @@ const syncPointMapping = async () => {
   }
 }
 
+// 一键生成合法通道 ID（仅英文字母/数字/下划线/横线）
+const generateChannelId = () => {
+  form.value.id = generateNorthboundID('bacnet')
+}
+
+// 输入通道 ID 时即时清洗，禁止空格等非法字符
+const onChannelIdInput = (value) => {
+  form.value.id = sanitizeNorthboundID(value)
+}
+
 const saveSettings = async () => {
   if (!form.value.name?.trim()) {
     notifyNorthboundValidationError('请填写通道名称')
@@ -364,6 +400,13 @@ const saveSettings = async () => {
   }
   if (!form.value.port) {
     notifyNorthboundValidationError('请填写端口号')
+    activeTab.value = 'basic'
+    return
+  }
+
+  const idError = validateNorthboundID(form.value.id)
+  if (idError) {
+    notifyNorthboundValidationError(idError)
     activeTab.value = 'basic'
     return
   }

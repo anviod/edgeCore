@@ -320,7 +320,7 @@ const executeDeleteProtocol = async () => {
   deleteDialog.loading = true
 
   try {
-    await request.delete(`/api/northbound/${type}/${id}`, northboundSaveRequestConfig)
+    await request.delete(`/api/northbound/${type}/${encodeURIComponent(id)}`, northboundSaveRequestConfig)
     Message.success('北向通道已删除')
     deleteDialog.visible = false
     fetchConfig()
@@ -342,7 +342,7 @@ const syncOpcuaServer = async (item) => {
   })
 
   try {
-    await request.post(`/api/northbound/opcua/${item.id}/sync`, null, northboundSaveRequestConfig)
+    await request.post(`/api/northbound/opcua/${encodeURIComponent(item.id)}/sync`, null, northboundSaveRequestConfig)
     closeArcoLoading(stopMessage)
     stopMessage = null
     Message.success('点位映射已同步，读写权限已更新')
@@ -375,7 +375,7 @@ const syncBACnetServer = async (item) => {
   })
 
   try {
-    await request.post(`/api/northbound/bacnet_server/${item.id}/sync`, null, northboundSaveRequestConfig)
+    await request.post(`/api/northbound/bacnet_server/${encodeURIComponent(item.id)}/sync`, null, northboundSaveRequestConfig)
     closeArcoLoading(stopMessage)
     stopMessage = null
     Message.success('BACnet 点位映射已同步')

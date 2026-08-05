@@ -155,6 +155,12 @@
   border-radius: var(--radius-xl) !important;
   box-shadow: var(--shadow-md) !important;
   overflow: hidden;
+  max-width: calc(100vw - 48px) !important;
+}
+
+/* 抽屉同样约束宽度，避免在窄视口下被 wrapper overflow-x:hidden 裁剪 */
+.arco-drawer {
+  max-width: calc(100vw - 24px) !important;
 }
 
 .arco-modal-header {
@@ -170,6 +176,45 @@
 .arco-modal-footer {
   border-top: 1px solid var(--border);
   padding: var(--space-4) var(--space-6);
+}
+
+/*
+ * ── Modal / Drawer mask & wrapper — full-viewport coverage ──
+ * Root cause: Arco's useOverflow hook sets body.style.width = offsetWidth - scrollbarWidth
+ * when a modal/drawer opens. The mask & wrapper default to position:absolute within
+ * .arco-modal-container (position:fixed). If any ancestor creates a containing block
+ * for fixed elements (transform / filter / backdrop-filter / will-change:transform),
+ * the container detaches from the viewport and the mask no longer covers the right edge,
+ * producing a visible gap + clipped box-shadow on the right side of every modal.
+ *
+ * Fix: force mask & wrapper to position:fixed anchored to the viewport with explicit
+ * 100vw / 100vh dimensions. Constrain wrapper overflow to vertical-only so a near-
+ * full-viewport modal never triggers a horizontal scrollbar that shifts the dialog
+ * left and clips its right-edge shadow.
+ *   — 弹窗遮罩全视口覆盖修复 / Full-viewport mask coverage fix
+ */
+.arco-modal-mask,
+.arco-drawer-mask {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.arco-modal-wrapper,
+.arco-drawer-wrapper {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
 }
 
 /* ── tabs ── */

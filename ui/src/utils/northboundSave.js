@@ -36,6 +36,32 @@ export function notifyNorthboundValidationError(message) {
   Message.warning(message)
 }
 
+/** 通道 ID 合法字符集：英文字母、数字、下划线、横线（禁止空格等其它字符） */
+export const NORTHBOUND_ID_PATTERN = /^[A-Za-z0-9_-]+$/
+
+/** 一键生成合法通道 ID（前缀 + 时间戳，如 bacnet_1785909123456） */
+export function generateNorthboundID(prefix = 'nb') {
+  return `${prefix}_${Date.now()}`
+}
+
+/** 清洗输入，仅保留英文字母、数字、下划线、横线 */
+export function sanitizeNorthboundID(value) {
+  return (value || '').replace(/[^A-Za-z0-9_-]/g, '')
+}
+
+/**
+ * 校验通道 ID 格式。
+ * @returns {string|null} 错误消息，通过时返回 null
+ */
+export function validateNorthboundID(id) {
+  const trimmed = (id || '').trim()
+  if (!trimmed) return null
+  if (!NORTHBOUND_ID_PATTERN.test(trimmed)) {
+    return '通道 ID 只能包含英文字母、数字、下划线或横线，且不能包含空格'
+  }
+  return null
+}
+
 /** 收集所有北向通道 { id, name }，用于名称唯一性校验 */
 export function collectNorthboundChannels(config = {}) {
   const channels = []

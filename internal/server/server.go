@@ -9,6 +9,7 @@ import (
 	"io"
 	"log"
 	"math/rand/v2"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -1933,13 +1934,24 @@ func (s *Server) updateBACnetServerConfig(c *fiber.Ctx) error {
 	return c.JSON(northboundConfigJSON(savedCfg, warning))
 }
 
+// pathParamID 返回 URL 解码后的路由参数。Fiber 不会自动解码路径参数，
+// ID 含空格等字符时（如 "New BACnet Server"）会以 %20 编码到达，
+// 直接使用会导致配置查找失败。
+func pathParamID(c *fiber.Ctx, key string) string {
+	raw := c.Params(key)
+	if decoded, err := url.PathUnescape(raw); err == nil {
+		return decoded
+	}
+	return raw
+}
+
 // deleteBACnetServerConfig 删除 BACnet Server 配置
 // DELETE /api/northbound/bacnet_server/:id
 func (s *Server) deleteBACnetServerConfig(c *fiber.Ctx) error {
 	if s.nbm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "Northbound manager not initialized"})
 	}
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	if err := s.nbm.DeleteBACnetServerConfig(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -1949,7 +1961,7 @@ func (s *Server) deleteBACnetServerConfig(c *fiber.Ctx) error {
 // syncBACnetServer 同步 BACnet Server 地址空间（热更新）
 // POST /api/northbound/bacnet_server/:id/sync
 func (s *Server) syncBACnetServer(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	if id == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "server id is required"})
 	}
@@ -1965,7 +1977,7 @@ func (s *Server) syncBACnetServer(c *fiber.Ctx) error {
 // getBACnetServerStats 获取 BACnet Server 运行统计
 // GET /api/northbound/bacnet_server/:id/stats
 func (s *Server) getBACnetServerStats(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	stats, err := s.nbm.GetBACnetServerStats(id)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
@@ -1976,7 +1988,7 @@ func (s *Server) getBACnetServerStats(c *fiber.Ctx) error {
 // getBACnetServerWriteHistory 获取 BACnet Server 写入历史
 // GET /api/northbound/bacnet_server/:id/write-history?limit=100
 func (s *Server) getBACnetServerWriteHistory(c *fiber.Ctx) error {
-	serverID := c.Params("id")
+	serverID := pathParamID(c, "id")
 	limit := c.QueryInt("limit", 100)
 
 	history, err := s.nbm.GetBACnetServerWriteHistory(serverID, limit)
