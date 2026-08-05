@@ -263,9 +263,9 @@
 .system-settings-page .system-maintenance-card .maintenance-card .arco-card-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-6) !important;
-  min-height: 180px;
+  gap: var(--space-4);
+  padding: var(--space-5) !important;
+  min-height: 150px;
 }
 
 .system-settings-page .system-maintenance-card .card-icon {
