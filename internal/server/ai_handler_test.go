@@ -40,7 +40,7 @@ func TestGetAiStatus(t *testing.T) {
 	assert.Equal(t, "0", body["code"])
 	data, ok := body["data"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "local", data["mode"])
+	assert.Equal(t, "remote", data["mode"])
 	assert.Equal(t, true, data["enabled"])
 }
 

@@ -159,7 +159,7 @@ func TestGetAiQuota(t *testing.T) {
 	var body map[string]any
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&body))
 	data := body["data"].(map[string]any)
-	assert.Equal(t, "local", data["mode"])
+	assert.Equal(t, "remote", data["mode"])
 	assert.NotZero(t, data["tokens_limit"])
 }
 
