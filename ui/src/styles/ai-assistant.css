@@ -1662,6 +1662,33 @@
 
 .ai-message--user {
   flex-direction: row-reverse;
+  animation-name: ai-message-user-in;
+}
+
+@keyframes ai-message-user-in {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ai-message--assistant {
+  animation-name: ai-message-assistant-in;
+}
+
+@keyframes ai-message-assistant-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .ai-message__avatar {
@@ -1793,6 +1820,15 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.ai-suggestion-chip {
+  animation: ai-hint-in var(--ai-transition-smooth) backwards;
+}
+
+.ai-suggestion-chip:nth-child(1) { animation-delay: 0ms; }
+.ai-suggestion-chip:nth-child(2) { animation-delay: 60ms; }
+.ai-suggestion-chip:nth-child(3) { animation-delay: 120ms; }
+.ai-suggestion-chip:nth-child(4) { animation-delay: 180ms; }
 
 /* ── 16. 高级输入控制台 (ChatGPT Desktop Input Core) ── */
 .ai-chat-input__box {

@@ -62,12 +62,14 @@ const handleTestInvoke = (cap) => {
       </button>
     </nav>
     <div class="ai-ean-content">
-      <AiEanAgentStatus v-if="subTab === 'status'" />
-      <AiCapabilityList v-else-if="subTab === 'capability'" @test-invoke="handleTestInvoke" />
-      <AiInvokeConsole v-else-if="subTab === 'invoke'" :preset-capability="presetCapability" />
-      <AiEventMonitor v-else-if="subTab === 'event'" />
-      <AiDiscoveryView v-else-if="subTab === 'discovery'" />
-      <AiEanDebugGuide v-else-if="subTab === 'debug'" />
+      <Transition name="fade-up" mode="out-in">
+        <AiEanAgentStatus v-if="subTab === 'status'" :key="'status'" />
+        <AiCapabilityList v-else-if="subTab === 'capability'" :key="'capability'" @test-invoke="handleTestInvoke" />
+        <AiInvokeConsole v-else-if="subTab === 'invoke'" :key="'invoke'" :preset-capability="presetCapability" />
+        <AiEventMonitor v-else-if="subTab === 'event'" :key="'event'" />
+        <AiDiscoveryView v-else-if="subTab === 'discovery'" :key="'discovery'" />
+        <AiEanDebugGuide v-else-if="subTab === 'debug'" :key="'debug'" />
+      </Transition>
     </div>
   </div>
 </template>
@@ -77,13 +79,13 @@ const handleTestInvoke = (cap) => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 10px;
+  gap: 12px;
 }
 
 /* ── 子标签导航 ── */
 .ai-ean-subtabs {
   display: flex;
-  gap: 2px;
+  gap: 6px;
   padding: 2px;
   border-bottom: 1px solid var(--ai-glass-border-subtle, var(--border));
   overflow-x: auto;

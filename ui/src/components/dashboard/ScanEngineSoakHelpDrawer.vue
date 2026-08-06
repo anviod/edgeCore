@@ -1,7 +1,7 @@
 <template>
   <a-drawer
     :visible="visible"
-    :width="640"
+    :width="760"
     :footer="false"
     unmount-on-close
     class="help-drawer soak-help-drawer"

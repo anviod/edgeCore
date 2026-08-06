@@ -483,3 +483,59 @@
     flex-wrap: wrap;
   }
 }
+
+/* ── install wizard motion polish ── */
+.install-wrapper {
+  opacity: 0;
+  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
+}
+
+.install-wrapper .step {
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .step.active .step-number {
+  animation: scale-in var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.install-wrapper .step-divider {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .install-body {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .config-form,
+.install-wrapper .form-group {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .form-input,
+.install-wrapper .arco-input-wrapper {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .form-input:hover,
+.install-wrapper .arco-input-wrapper:hover {
+  transform: translateY(-1px);
+}
+
+.install-wrapper .password-rules {
+  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .install-progress-bar-wrap {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .install-progress-fill {
+  transition: width var(--motion-duration-slower) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .install-complete-countdown .countdown {
+  animation: status-breathe 1.5s var(--motion-ease-standard) infinite;
+}

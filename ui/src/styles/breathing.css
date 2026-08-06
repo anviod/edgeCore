@@ -1,0 +1,147 @@
+/*
+ * EdgeX v3.0 — Breathing spacing refinement
+ * 平衡「元素间呼吸感」与「避免大面积留白」
+ * 需在 main.js 最后引入以覆盖既有间距
+ */
+
+/* ── 操作列 / 按钮组：拉开呼吸间隙 ── */
+.table-ops,
+.actions-container,
+.channel-card-actions,
+.vs-device-card-actions,
+.rule-flow-card__ops,
+.node-sync-page .node-actions,
+.log-toolbar-buttons,
+.edge-compute-toolbar__right,
+.edge-compute-toolbar__left {
+  gap: 6px !important;
+}
+
+.table-ops .arco-btn,
+.actions-container .arco-btn,
+.channel-card-actions .arco-btn,
+.vs-device-card-actions .arco-btn {
+  margin: 0 2px;
+}
+
+/* ── 图标按钮悬停呼吸 ── */
+.table-ops .arco-btn:hover,
+.actions-container .arco-btn:hover {
+  transform: scale(1.06);
+}
+
+/* ── 工具栏工具组：适度加大 ── */
+.toolbar,
+.table-toolbar,
+.log-toolbar,
+.edge-compute-toolbar,
+.point-list-toolbar {
+  row-gap: var(--space-3) !important;
+}
+
+/* ── 表格单元格：垂直呼吸，避免文字贴边 ── */
+.arco-table-td,
+.arco-table-th .arco-table-cell {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+/* ── 卡片内部元素：呼吸间隙统一 ── */
+.channel-card-inner,
+.vs-device-card,
+.northbound-card,
+.edge-compute-card,
+.nb-channel-card,
+.metric-card,
+.stat-card {
+  row-gap: var(--space-4);
+}
+
+/* ── 表单字段：label 与控件保持间隙 ── */
+.arco-form-item-label-col {
+  padding-bottom: 8px;
+}
+
+/* ── 标签 / 徽章组：拉开 ── */
+.section-status,
+.channel-meta,
+.channel-list-page .channel-meta,
+.sync-status-bar__meta,
+.arco-tag + .arco-tag,
+.arco-tag + .arco-btn {
+  gap: var(--space-2) !important;
+}
+
+/* ═══════════════════════════════════════
+   收紧大面积留白（空状态 / 大段空白）
+   ═══════════════════════════════════════ */
+.empty-wrap {
+  padding: 56px 0;
+}
+
+.empty-card {
+  padding: var(--space-8) var(--space-5) !important;
+}
+
+.channel-list-zone-empty,
+.virtual-shadow-page .empty-card {
+  padding: var(--space-8) var(--space-5) !important;
+}
+
+.dashboard-page .empty-card,
+.edge-compute-page .empty-wrap,
+.northbound-page .empty-wrap {
+  padding: 48px 0;
+}
+
+/* ── 详情空行 / 占位：紧凑 ── */
+.loading-wrap {
+  padding: 48px 0;
+}
+
+/* ═══════════════════════════════════════
+   页面区块间距：收窄过大的 section gap
+   ═══════════════════════════════════════ */
+.page-shell {
+  gap: var(--space-6);
+}
+
+.list-detail-page,
+.list-detail-body {
+  gap: var(--space-5);
+}
+
+/* ── section 标题与内容：平衡 20px ── */
+.section {
+  gap: var(--space-5);
+}
+
+/* ── 弹窗 body：内边距适度 ── */
+.arco-modal-body {
+  padding: var(--space-5) !important;
+}
+
+/* ── 表格与工具条之间 ── */
+.table-container > .table-toolbar,
+.table-container > .toolbar {
+  padding: var(--space-3) 0;
+}
+
+/* ── 分页：与表格呼吸 ── */
+.arco-table-pagination {
+  padding-top: var(--space-4) !important;
+}
+
+/* ── 内容块之间的均匀呼吸 ── */
+.channel-list-body,
+.northbound-body,
+.edge-compute-body {
+  gap: var(--space-5);
+}
+
+/* ── AI 面板内容：适度间距 ── */
+.ai-panel__body,
+.ai-split__workspace-content,
+.ai-split__chat {
+  padding: var(--space-3);
+}
