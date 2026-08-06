@@ -42,12 +42,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  transition: all var(--transition-fast);
-}
-
-.virtual-shadow-page .vs-device-card:hover {
-  border-color: rgba(14, 165, 233, 0.2);
-  transform: translateY(-1px);
 }
 
 .vs-device-card-header {
@@ -1713,24 +1707,7 @@
 }
 
 /* ── virtual shadow motion polish ── */
-.virtual-shadow-page {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
-
-.virtual-shadow-page .vs-device-card,
-.virtual-shadow-page .empty-card {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.vs-devices-grid .vs-device-card:nth-child(1) { animation-delay: 40ms; }
-.vs-devices-grid .vs-device-card:nth-child(2) { animation-delay: 90ms; }
-.vs-devices-grid .vs-device-card:nth-child(3) { animation-delay: 140ms; }
-.vs-devices-grid .vs-device-card:nth-child(4) { animation-delay: 190ms; }
-.vs-devices-grid .vs-device-card:nth-child(5) { animation-delay: 240ms; }
-.vs-devices-grid .vs-device-card:nth-child(6) { animation-delay: 290ms; }
-.vs-devices-grid .vs-device-card:nth-child(n+7) { animation-delay: 340ms; }
+/* 入场由 App.vue 路由过渡统一处理；此处仅保留交互反馈 */
 
 .virtual-shadow-page .vs-device-card {
   transition:
@@ -1767,13 +1744,4 @@
   background: var(--surface-1);
 }
 
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
-.virtual-shadow-page .saas-table .arco-table-tbody .arco-table-tr:nth-child(n+5) { animation-delay: 190ms; }
+/* 表格行：即时可见，不做逐行错开入场 */

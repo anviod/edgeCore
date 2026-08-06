@@ -1099,10 +1099,7 @@
 }
 
 /* ── log viewer motion polish ── */
-.log-viewer-page.page-shell {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
+/* 入场由 App.vue 路由过渡统一处理 */
 
 .log-viewer-page .log-toolbar {
   animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);

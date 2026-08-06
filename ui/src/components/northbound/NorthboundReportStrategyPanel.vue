@@ -29,10 +29,14 @@
     </div>
     <div class="table-container saas-table nb-device-table">
       <a-table
+        ref="realTableRef"
         row-key="id"
         :columns="realDeviceColumns"
         :data="realDeviceTableData"
         :row-selection="realRowSelection"
+        @selection-change="onRealSelectionChange"
+        :virtual-list-props="realVirtualListProps"
+        :scroll="realTableScroll"
         size="small"
         :bordered="false"
         :pagination="false"
@@ -107,10 +111,14 @@
     </div>
     <div class="table-container saas-table nb-device-table">
       <a-table
+        ref="virtualTableRef"
         row-key="id"
         :columns="virtualDeviceColumns"
         :data="virtualDeviceTableData"
         :row-selection="virtualRowSelection"
+        @selection-change="onVirtualSelectionChange"
+        :virtual-list-props="virtualVirtualListProps"
+        :scroll="virtualTableScroll"
         size="small"
         :bordered="false"
         :pagination="false"
@@ -165,7 +173,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { IconDown } from '@arco-design/web-vue/es/icon'
 import { showMessage } from '@/composables/useGlobalState'
 import { listVirtualShadows } from '@/api/virtualShadow'
@@ -192,23 +200,48 @@ const virtualBatchInterval = ref(props.defaultInterval)
 
 const realSelectedKeys = ref([])
 const virtualSelectedKeys = ref([])
+const realTableRef = ref(null)
+const virtualTableRef = ref(null)
 
-// Arco 受控选择：selectedRowKeys + onChange（与项目内其余批量选择一致）
+// Arco 受控选择：由表格内部维护勾选状态（点击即时响应，避免受控回传延迟），
+// 通过 selection-change 事件同步到外部用于批量操作
 const realRowSelection = computed(() => ({
   type: 'checkbox',
   showCheckedAll: true,
-  onlyCurrent: false,
-  selectedRowKeys: realSelectedKeys.value,
-  onChange: (keys) => { realSelectedKeys.value = keys }
+  onlyCurrent: false
 }))
 
 const virtualRowSelection = computed(() => ({
   type: 'checkbox',
   showCheckedAll: true,
-  onlyCurrent: false,
-  selectedRowKeys: virtualSelectedKeys.value,
-  onChange: (keys) => { virtualSelectedKeys.value = keys }
+  onlyCurrent: false
 }))
+
+const onRealSelectionChange = (keys) => {
+  realSelectedKeys.value = keys || []
+}
+
+const onVirtualSelectionChange = (keys) => {
+  virtualSelectedKeys.value = keys || []
+}
+
+// 大列表时启用虚拟滚动：仅渲染可视行，避免勾选 100+ 行时整表重渲染导致的卡顿
+const VIRTUAL_ROW_THRESHOLD = 50
+const virtualListConfig = { height: 320, estimatedSize: 40, buffer: 8 }
+
+const realVirtualListProps = computed(() =>
+  realDeviceTableData.value.length > VIRTUAL_ROW_THRESHOLD ? virtualListConfig : undefined
+)
+const realTableScroll = computed(() =>
+  realDeviceTableData.value.length > VIRTUAL_ROW_THRESHOLD ? { y: 320 } : undefined
+)
+
+const virtualVirtualListProps = computed(() =>
+  virtualDeviceTableData.value.length > VIRTUAL_ROW_THRESHOLD ? virtualListConfig : undefined
+)
+const virtualTableScroll = computed(() =>
+  virtualDeviceTableData.value.length > VIRTUAL_ROW_THRESHOLD ? { y: 320 } : undefined
+)
 
 const realDeviceColumns = [
   { title: '设备', dataIndex: 'name', width: 180, ellipsis: true, tooltip: true },
@@ -259,10 +292,14 @@ const buildVirtualDeviceTable = async () => {
 const rebuildTables = async () => {
   batchInterval.value = props.defaultInterval
   virtualBatchInterval.value = props.defaultInterval
-  realSelectedKeys.value = []
-  virtualSelectedKeys.value = []
   buildRealDeviceTable()
   await buildVirtualDeviceTable()
+  await nextTick()
+  // 表格内部维护勾选状态，重建后需同步清空（同时通过 selection-change 清空外部引用）
+  realTableRef.value?.selectAll?.(false)
+  virtualTableRef.value?.selectAll?.(false)
+  realSelectedKeys.value = []
+  virtualSelectedKeys.value = []
 }
 
 onMounted(() => {

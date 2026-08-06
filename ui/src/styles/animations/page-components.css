@@ -3,56 +3,16 @@
  * 覆盖所有页面和通用组件的基础动效，实现全量组件动效落地
  */
 
-/* ── 所有页面 shell 入场 ── */
-.page-shell,
-.page-container,
-.list-detail-page,
-.settings-page,
-.install-page,
-.login-page {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
+/* ── 页面入场已由 App.vue 路由 <transition> 统一处理 ── */
+/* （不再叠加 page-shell / section 独立入场，避免二次淡入造成的迟钝感） */
 
-/* ── 页面区块 stagger ── */
-.page-shell > section,
-.page-shell > .section,
-.page-container > section,
-.page-container > .section,
-.page-shell > .arco-card,
-.page-container > .arco-card {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.page-shell > section:nth-child(1),
-.page-container > section:nth-child(1) { animation-delay: 0ms; }
-.page-shell > section:nth-child(2),
-.page-container > section:nth-child(2) { animation-delay: 50ms; }
-.page-shell > section:nth-child(3),
-.page-container > section:nth-child(3) { animation-delay: 100ms; }
-.page-shell > section:nth-child(4),
-.page-container > section:nth-child(4) { animation-delay: 150ms; }
-.page-shell > section:nth-child(5),
-.page-container > section:nth-child(5) { animation-delay: 200ms; }
-.page-shell > section:nth-child(n+6),
-.page-container > section:nth-child(n+6) { animation-delay: 250ms; }
-
-/* ── 通用卡片/面板 hover & entrance ── */
-.arco-card,
-.settings-card,
-.scanner-panel,
-.editor-panel,
-.nb-channel-card,
-.cluster-node,
+/* ── 通用卡片/面板 hover（仅对可点击卡片保留浮起） ── */
 .ai-mcp-tool-card,
 .ai-help-card,
 .ai-dg-case,
 .ai-dg-faq-item,
 .rule-flow-card,
 .edge-compute-footer-card,
-.metric-card,
-.device-metric-card,
 .vs-device-card,
 .northbound-card,
 .edge-compute-card,
@@ -64,20 +24,12 @@
     border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-.arco-card:hover,
-.settings-card:hover,
-.scanner-panel:hover,
-.editor-panel:hover,
-.nb-channel-card:hover,
-.cluster-node:hover,
 .ai-mcp-tool-card:hover,
 .ai-help-card:hover,
 .ai-dg-case:hover,
 .ai-dg-faq-item:hover,
 .rule-flow-card:hover,
 .edge-compute-footer-card:hover,
-.metric-card:hover,
-.device-metric-card:hover,
 .vs-device-card:hover,
 .northbound-card:hover,
 .edge-compute-card:hover,
@@ -90,16 +42,11 @@
 /* ── 所有表格行 hover ── */
 .arco-table-tbody .arco-table-tr {
   transition:
-    background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .arco-table-tbody .arco-table-tr:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  position: relative;
-  z-index: 1;
+  background-color: var(--surface-1);
 }
 
 /* ── 所有表单输入框 focus ── */
@@ -114,17 +61,7 @@
   transition:
     border-color var(--motion-duration-fast) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard) !important;
-}
-
-.arco-input-wrapper:hover,
-.arco-input:hover,
-.arco-textarea:hover,
-.arco-select-view:hover,
-.arco-input-number:hover,
-.arco-picker:hover {
-  transform: translateY(-1px);
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .arco-input-wrapper.arco-input-focus,
@@ -321,10 +258,5 @@ button[class*="btn"]:active {
 .arco-badge-status-text {
   transition:
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    border-color var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard);
-}
-
-.arco-tag:hover {
-  transform: translateY(-1px);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }

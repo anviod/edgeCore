@@ -39,14 +39,12 @@ a:focus-visible {
 }
 
 /* ── cards / panels ── */
+/* 仅对真正可点击的卡片保留悬停浮起，避免误导性动效 */
 .settings-card,
 .scanner-panel,
 .editor-panel,
 .nb-channel-card,
-.cluster-node,
-.metric-card,
-.device-metric-card,
-.arco-card {
+.cluster-node {
   transition:
     transform var(--motion-duration-fast) var(--motion-ease-standard),
     box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
@@ -57,10 +55,7 @@ a:focus-visible {
 .scanner-panel:hover,
 .editor-panel:hover,
 .nb-channel-card:hover,
-.cluster-node:hover,
-.metric-card:hover,
-.device-metric-card:hover,
-.arco-card:hover {
+.cluster-node:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
@@ -68,16 +63,11 @@ a:focus-visible {
 /* ── table rows ── */
 .arco-table-tbody .arco-table-tr {
   transition:
-    background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .arco-table-tbody .arco-table-tr:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-  z-index: 1;
-  position: relative;
+  background-color: var(--surface-1);
 }
 
 /* ── form inputs ── */
@@ -92,17 +82,7 @@ a:focus-visible {
   transition:
     border-color var(--motion-duration-fast) var(--motion-ease-standard),
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard) !important;
-}
-
-.arco-input-wrapper:hover,
-.arco-input:hover,
-.arco-textarea:hover,
-.arco-select-view:hover,
-.arco-input-number:hover,
-.arco-picker:hover {
-  transform: translateY(-1px);
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .arco-input-wrapper.arco-input-focus,
@@ -118,12 +98,7 @@ a:focus-visible {
 .arco-select-option {
   transition:
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    color var(--motion-duration-fast) var(--motion-ease-standard),
-    padding-left var(--motion-duration-fast) var(--motion-ease-standard);
-}
-
-.arco-select-option:hover {
-  padding-left: calc(var(--space-3) + 2px);
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 /* ── nav items ── */
@@ -203,14 +178,15 @@ a:focus-visible {
   border-radius: var(--radius-sm);
 }
 
-/* ── back button pulse ── */
+/* ── back button hover ── */
 .back-button:hover .nav-icon,
 .back-btn:hover .arco-icon {
-  animation: bounce-subtle 0.6s var(--motion-ease-bounce);
+  transform: translateX(-2px);
+  transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
-/* ── confirm / danger action warning pulse ── */
+/* ── confirm / danger action ── */
 .arco-btn-status-danger:hover,
 .arco-button-status-danger:hover {
-  animation: pulse-soft 1.2s var(--motion-ease-standard) infinite;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
 }

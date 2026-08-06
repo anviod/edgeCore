@@ -16,7 +16,12 @@
 .arco-button {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
-  transition: all var(--transition-fast) !important;
+  transition:
+    background-color var(--transition-fast) !important,
+    border-color var(--transition-fast) !important,
+    color var(--transition-fast) !important,
+    box-shadow var(--transition-fast) !important,
+    transform var(--transition-fast) !important;
 }
 
 .arco-btn-primary,
@@ -348,7 +353,11 @@
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: none !important;
-  transition: all var(--transition-fast) !important;
+  transition:
+    border-color var(--transition-fast) !important,
+    box-shadow var(--transition-fast) !important,
+    transform var(--transition-fast) !important,
+    background-color var(--transition-fast) !important;
   position: relative;
 }
 

@@ -629,10 +629,7 @@
 }
 
 /* ── list view motion polish ── */
-.list-detail-page {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
+/* 入场由 App.vue 路由过渡统一处理 */
 
 .list-back-btn {
   transition:
@@ -649,38 +646,7 @@
   animation: bounce-subtle 0.6s var(--motion-ease-bounce);
 }
 
-/* 表格行错开入场 */
-.table-container .arco-table-tbody .arco-table-tr,
-.saas-table .arco-table-tbody .arco-table-tr,
-.page-shell .arco-table-tbody .arco-table-tr {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.table-container .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(5) { animation-delay: 190ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(6) { animation-delay: 230ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(7) { animation-delay: 270ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(8) { animation-delay: 310ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(9) { animation-delay: 350ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(10) { animation-delay: 390ms; }
-.table-container .arco-table-tbody .arco-table-tr:nth-child(n+11) { animation-delay: 430ms; }
-
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(5) { animation-delay: 190ms; }
-.saas-table .arco-table-tbody .arco-table-tr:nth-child(n+6) { animation-delay: 230ms; }
-
-.page-shell .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
-.page-shell .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
-.page-shell .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
-.page-shell .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
-.page-shell .arco-table-tbody .arco-table-tr:nth-child(n+5) { animation-delay: 190ms; }
+/* 表格行：渲染即时可见，不做逐行错开入场（避免列表延迟感） */
 
 /* 列表状态点 */
 .list-detail-meta__dot:not(.is-offline):not(.is-idle) {
