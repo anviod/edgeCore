@@ -9,7 +9,7 @@ const debugSteps = [
     title: '检查北向通道',
     description: '确认 edgeCore 已配置 edgeOS MQTT 或 edgeOS NATS 北向通道并成功连接',
     checklist: [
-      '进入「节点同步」页面，确认 edgeOS 连接状态为「已连接」',
+      '进入「北向接口」页面，确认 edgeOS 通道连接状态为「已连接」',
       '北向通道协议选择 edgeOS(MQTT) 或 edgeOS(NATS)',
       'Broker 地址正确且网络可达',
       'MQTT 默认端口 1883，NATS 默认端口 4222'
@@ -148,7 +148,7 @@ const useCases = [
 const faqItems = [
   {
     q: 'Agent 状态显示「未连接」',
-    a: '检查北向 edgeOS 通道是否已配置并连接。进入「节点同步」页面确认连接状态。若使用 MQTT，确认 Broker 地址和端口正确。'
+    a: '检查北向 edgeOS 通道是否已配置并连接。进入「北向接口」页面确认连接状态。若使用 MQTT，确认 Broker 地址和端口正确。'
   },
   {
     q: 'Capability 列表为空',

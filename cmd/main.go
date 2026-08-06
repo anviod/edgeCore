@@ -240,13 +240,9 @@ func main() {
 	}
 	zap.L().Info("Core components initialized")
 
-	// Cluster sync (internal/sync) is temporarily disabled at startup.
-	// Sync API routes remain registered but return 503 until re-enabled in main.
-	zap.L().Info("Sync Manager disabled (cluster sync temporarily bypassed)")
-
 	// 4. Init Web Server
 	zap.L().Info("Initializing Web Server...")
-	srv := server.NewServer(cm, store, pipeline, nbm, ecm, sm, dsm, cfgManager, nil, logBroadcaster)
+	srv := server.NewServer(cm, store, pipeline, nbm, ecm, sm, dsm, cfgManager, logBroadcaster)
 	if shadowCore != nil {
 		srv.SetShadowCore(shadowCore)
 	}

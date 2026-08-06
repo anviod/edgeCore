@@ -29,7 +29,7 @@ func newChannelTestServer(t *testing.T) *Server {
 	t.Helper()
 	pipeline := core.NewDataPipeline(100)
 	cm := core.NewChannelManager(pipeline, nil)
-	return NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil, nil)
+	return NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil)
 }
 
 func postChannel(t *testing.T, srv *Server, body any) *http.Response {

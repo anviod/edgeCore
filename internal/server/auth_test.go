@@ -125,7 +125,7 @@ func TestHandleGetSystemInfo(t *testing.T) {
 	cfg := cfgManager.GetConfig()
 	sm := core.NewSystemManager(cfg)
 
-	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/api/auth/system-info", nil)
 	resp, err := srv.app.Test(req, -1)
@@ -147,7 +147,7 @@ func TestHandleLogin_LocalDebugMode(t *testing.T) {
 	}
 	sm := core.NewSystemManager(cfg)
 
-	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil)
 
 	body, _ := json.Marshal(map[string]any{
 		"loginFlag": true,
@@ -180,7 +180,7 @@ func TestHandleLogin_WrongPassword(t *testing.T) {
 	}
 	sm := core.NewSystemManager(cfg)
 
-	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil)
 
 	body, _ := json.Marshal(map[string]any{
 		"loginFlag": true,
@@ -223,7 +223,7 @@ func TestHandleChangePassword_InvalidNonce(t *testing.T) {
 	}
 	sm := core.NewSystemManager(cfg)
 
-	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(nil, nil, nil, nil, nil, sm, nil, cfgManager, nil)
 
 	body, _ := json.Marshal(map[string]any{
 		"oldPassword": "old",

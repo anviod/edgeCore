@@ -34,7 +34,7 @@ func newInstallTestServer(t *testing.T) (*Server, *core.SystemManager, string) {
 
 	pipeline := core.NewDataPipeline(10)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, store, pipeline, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(cm, store, pipeline, nil, nil, sm, nil, cfgManager, nil)
 
 	return srv, sm, tmpDir
 }
@@ -47,7 +47,7 @@ func TestInstallStorageAttachHook(t *testing.T) {
 
 	pipeline := core.NewDataPipeline(10)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, nil, pipeline, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(cm, nil, pipeline, nil, nil, sm, nil, cfgManager, nil)
 
 	var attached *storage.Storage
 	srv.SetStorageAttachHook(func(st *storage.Storage) {

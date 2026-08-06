@@ -12,7 +12,6 @@ import EdgeCompute from '../views/EdgeCompute.vue'
 import SystemSettings from '../views/SystemSettings.vue'
 import LogViewer from '../views/LogViewer.vue'
 import Login from '../views/Login.vue'
-import NodeSync from '../views/NodeSync.vue'
 import Install from '../views/Install.vue'
 
 const routes = [
@@ -71,11 +70,6 @@ const routes = [
         path: '/northbound',
         component: Northbound,
         meta: { title: '北向上报', level: 1 }
-    },
-    {
-        path: '/node-sync',
-        component: NodeSync,
-        meta: { title: '节点同步', level: 1 }
     }
 ]
 

@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 开发计划
-description: edgeCore 开发计划与路线图 — Q3/Q4 驱动交付、ScanEngine、ShadowCore、多节点同步
+description: edgeCore 开发计划与路线图 — Q3/Q4 驱动交付、ScanEngine、ShadowCore
 hero_eyebrow: Roadmap & Planning
-hero_lead: edgeCore 项目开发规划、路线图与待实现功能 — 驱动扩展、ScanEngine 采集优化、ShadowCore 影子设备与多节点同步通信。
+hero_lead: edgeCore 项目开发规划、路线图与待实现功能 — 驱动扩展、ScanEngine 采集优化、ShadowCore 影子设备。
 hero_buttons:
   - text: 返回首页
     url: ../index.html
@@ -56,8 +56,6 @@ hero_buttons:
 | **工业验证 Phase 2** | 进行中 | Q3 2026 | 各协议联机长跑、断网恢复与统一验证报告 |
 | **ARMv7 板端验收** | 进行中 | Q3 2026 | 目标硬件 2h/72h 长跑与 Shadow/SLA 板端复验 |
 | **ShadowCore 跨通道聚合** | 进行中 | Q3 2026 | 虚拟影子跨通道引用与多源点位聚合 |
-| **多节点同步通信** | 预研中 | Q3 2026 | 基于 go-libp2p 的分布式配置同步 |
-| **高可用接管** | 预研中 | Q3 2026 | 故障自动接管与租约机制 |
 | **IEC 104 M2** | 待启动 | Q4 2026 | 遥调、时钟同步、SOE、双点遥控 |
 
 ### 2026年7月（新增已交付）
@@ -86,10 +84,6 @@ hero_buttons:
 - [IEC 60870-5-104 驱动开发](drivers/采集驱动ICE104开发.html)
 - [Omron FINS TCP 驱动开发](drivers/采集驱动Omron%20FINS%20TCP开发.html)
 - [SNMP 驱动开发](drivers/SNMP采集驱动开发.html)
-
-### 多节点同步通信
-- [基于 go-libp2p 同步通信规划方案](../TODO/基于go-libp2p%20同步通信规划方案.html)（权威 · TODO）
-- [联机测试方案](sync/联机测试方案.html)
 
 ### edgeCore Industrial Protocol Copilot（AI 协同 · MVP 已落地）
 - [**AI 协同组件规划 / Industrial Protocol Copilot**](../TODO/AI协同组件规划.html)（权威 · **V1.4**；**MVP 已落地**，工业联调验收进行中）
@@ -122,32 +116,6 @@ hero_buttons:
    - 电能量采集（有功/无功电能）
    - 需量采集与变量采集
 
-5. **多节点同步通信**（预研中）
-   - 基于 go-libp2p 的 P2P 网络
-   - 配置自动发现与同步
-   - 设备控制权租约机制
-
----
-
-## 核心特性规划
-
-### 多节点同步通信 (Hybrid Sync Model)
-
-**定位**: 分布式配置与控制权同步系统，而非数据同步系统
-
-**三层一致性模型**:
-- **Config 层** → 最终一致 (Eventual Consistency)
-- **Ownership 层** → 租约约束 (Lease)
-- **Runtime 层** → 单点主控 (Owner Only)
-
-**核心价值**:
-- 0 配置运维：节点接入网络自动组网
-- 高可用保障：单点故障秒级接管
-- 工业协议适配：Exclusive/Shared/Lease 三种访问模式
-- 轻量级实现：内存占用 < 50MB，ARMv7 友好
-
-> 详细方案请参考 [基于 go-libp2p 同步通信规划方案](../TODO/基于go-libp2p%20同步通信规划方案.html)
-
 ---
 
 ## 项目进度跟踪
@@ -160,7 +128,6 @@ hero_buttons:
 - [已交付] CGO-free CI 流水线稳定
 - [已交付] **ScanEngine 调度驱动内核**（10ms Tick + ExecutionLayer + 13 协议迁移）
 - [已交付] DL/T645、Mitsubishi SLMP、Profinet IO、KNXnet/IP 驱动
-- [预研中] 多节点同步通信方案设计
 
 ### 2026年5月
 - [已交付] S7 协议完整支持

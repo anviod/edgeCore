@@ -19,7 +19,7 @@ func TestUpsertSparkplugBConfig_Returns200WithWarningWhenBrokerUnreachable(t *te
 		saved = cfg
 		return nil
 	})
-	srv := NewServer(nil, nil, nil, nbm, nil, nil, nil, nil, nil, nil)
+	srv := NewServer(nil, nil, nil, nbm, nil, nil, nil, nil, nil)
 
 	body := model.SparkplugBConfig{
 		ID:       "api-spb-test",
