@@ -1,14 +1,14 @@
-# EAN 2.0 EdgeX-EdgeOS 联合复验报告
+# EAN 2.0 edgeCore-EdgeOS 联合复验报告
 
 > **历史归档（2026-07-30 v2）**：早期联合复验记录。当前最新状态见 [V1-to-EAN-Migration-Assessment.md v2.25](./V1-to-EAN-Migration-Assessment.md)（Phase 4 全量落地 + V1 命令面全面下线 + 联机复测通过）。
 
 | 属性 | 值 |
 |---|---|
 | 日期 | 2026-07-30（v2 更新） |
-| EdgeX 版本 | v2.7 (Phase 3 EdgeX 侧全部实现 + 工具合并优化 + 地址语义统一修复) |
+| edgeCore 版本 | v2.7 (Phase 3 edgeCore 侧全部实现 + 工具合并优化 + 地址语义统一修复) |
 | EdgeOS 版本 | v2.7 (Phase 1/2 完成 + 启动韧性) |
 | 共识文档 | V1-to-EAN-Migration-Assessment.md v2.13（当时） |
-| 验证环境 | 本地 Windows, EdgeX :8080, EdgeOS :8000, MQTT broker :18083, ARM64 硬件 192.168.3.230 |
+| 验证环境 | 本地 Windows, edgeCore :8080, EdgeOS :8000, MQTT broker :18083, ARM64 硬件 192.168.3.230 |
 
 ---
 
@@ -16,15 +16,15 @@
 
 | 验证项 | 结果 | 说明 |
 |---|---|---|
-| EdgeX MCP Runtime 状态 | **通过** | 7 个统一 ean_* 工具已注册（ean_read_points / ean_write_points / ean_scan_devices / ean_list_points / ean_get_diagnostics / ean_ai_protocol_reverse / ean_ai_doc_parse），status=online, version=2.0.0。注：MCP Runtime 侧已做工具统一，不再暴露 63 条协议特定工具；63 Cap 仍由北向 EAN Runtime 生成并发布至 EdgeOS |
-| EdgeX Invoke metrics | **通过** | total=1, success=1, success_rate=100% (MCP Runtime) |
-| EdgeX `system.diagnostics` Invoke | **通过** | 返回 2 channels (BACnet + ModbusTCP) |
-| EdgeX 北向通道 EAN 启用 | **通过** | `ean_enabled=true`, `ean_heartbeat_sec=60` |
+| edgeCore MCP Runtime 状态 | **通过** | 7 个统一 ean_* 工具已注册（ean_read_points / ean_write_points / ean_scan_devices / ean_list_points / ean_get_diagnostics / ean_ai_protocol_reverse / ean_ai_doc_parse），status=online, version=2.0.0。注：MCP Runtime 侧已做工具统一，不再暴露 63 条协议特定工具；63 Cap 仍由北向 EAN Runtime 生成并发布至 EdgeOS |
+| edgeCore Invoke metrics | **通过** | total=1, success=1, success_rate=100% (MCP Runtime) |
+| edgeCore `system.diagnostics` Invoke | **通过** | 返回 2 channels (BACnet + ModbusTCP) |
+| edgeCore 北向通道 EAN 启用 | **通过** | `ean_enabled=true`, `ean_heartbeat_sec=60` |
 | EAN Runtime Discovery 发布 | **通过** | 日志确认 63 Cap 已发布到 `$edgeos/discovery/*` |
-| EdgeOS Agent 发现 | **通过** | 1 Agent online, id=edgex-node-001 |
+| EdgeOS Agent 发现 | **通过** | 1 Agent online, id=edgeCore-node-001 |
 | EdgeOS 原生 Cap 索引 | **通过** | 63 条 EAN 2.0 原生 Cap (modbus_tcp.* / bacnet_ip.* / system.* / ai.*) |
-| V1 Bridge Cap 并存 | **符合预期** | 过渡期 V1 合成 Cap (edgex-node-001/*/read-write) 与原生 Cap 共存 |
-| 跨系统 Invoke (EdgeOS→EdgeX) | **通过** | `system.diagnostics` 返回 status=completed, 2 channels |
+| V1 Bridge Cap 并存 | **符合预期** | 过渡期 V1 合成 Cap (edgeCore-node-001/*/read-write) 与原生 Cap 共存 |
+| 跨系统 Invoke (EdgeOS→edgeCore) | **通过** | `system.diagnostics` 返回 status=completed, 2 channels |
 | EdgeOS Health | **通过** | status=ok, online_agents=1, transports=mqtt |
 | **MCP 工具合并优化** | **通过** | 94 → 32 工具（15 协议×4 操作矩阵合并为 4 通用工具 + 系统工具），ToolSearch 索引抖动消除 |
 | **地址语义统一修复** | **通过** | `resolvePointIDs()` 实现 point_id/address/name 三形式自动解析，list_points 输出可直接作为 read_points 输入 |
@@ -37,7 +37,7 @@
 
 ### 2.1 双 Runtime 架构验证
 
-EdgeX 双 Runtime 架构按设计工作：
+edgeCore 双 Runtime 架构按设计工作：
 
 - **MCP Runtime** (`transport: "sdk"`)：Server 启动即就绪，通过 `GET /api/capability/agent/status` 暴露状态和 metrics。独立于北向通道，零外部依赖。
 - **北向 EAN Runtime** (`transport: "mqtt"`)：依赖 EdgeOS(MQTT) 通道连接，启用后通过 `$edgeos/discovery/*` 发布 63 条原生 Capability。跨系统 Invoke 通过 MQTT 消息到达此 Runtime。
@@ -55,7 +55,7 @@ EdgeX 双 Runtime 架构按设计工作：
 
 EdgeOS 同时索引了两类 Cap：
 - **原生 EAN 2.0 Cap**（63 条）：`modbus_tcp.read_point`, `bacnet_ip.list_points`, `system.diagnostics`, `ai.protocol_reverse` 等
-- **V1 Bridge 合成 Cap**（13 条）：`edgex-node-001/{device}/read-write` 格式
+- **V1 Bridge 合成 Cap**（13 条）：`edgeCore-node-001/{device}/read-write` 格式
 
 这符合共识文档 §2.3 的隔离机制设计：原生 Cap 到达后 purge V1 的逻辑由 EdgeOS 侧 OS-P3-01 任务负责（尚未完成）。
 
@@ -72,8 +72,8 @@ EdgeOS 显示 Agent `version: "1.0.0"`（V1 Bridge 注册），而非 EAN 2.0 �
 **背景**：MCP 工具数量超过 80 个时影响 AI 响应质量，ToolSearch 索引抖动和最终一致性延迟加剧。
 
 **实施**：将 15 协议 × 4 操作矩阵（60 个协议特定工具）合并为 4 个通用工具：
-- `read_points` — 统一读取（替代 read_point、edgex_read_point、read_point_batch 等）
-- `write_points` — 统一写入（替代 write_point、edgex_write_point、write_point_batch 等）
+- `read_points` — 统一读取（替代 read_point、edgeCore_read_point、read_point_batch 等）
+- `write_points` — 统一写入（替代 write_point、edgeCore_write_point、write_point_batch 等）
 - `scan_devices` — 统一扫描（跨协议）
 - `list_points` — 统一点位列表
 
@@ -122,7 +122,7 @@ EdgeOS 显示 Agent `version: "1.0.0"`（V1 Bridge 注册），而非 EAN 2.0 �
 
 ## 3. 未完成项（Phase 3 残留）
 
-### EdgeX 侧
+### edgeCore 侧
 - 无未完成项。EX-P3-01 至 EX-P3-09 全部实现，go build + 前端构建通过。
 - 工具合并优化（94→32）和地址语义统一修复已完成并通过 ARM64 硬件验证。
 

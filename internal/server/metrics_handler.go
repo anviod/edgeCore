@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	drv "github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	drv "github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"

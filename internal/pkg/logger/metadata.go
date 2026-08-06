@@ -3,7 +3,7 @@ package logger
 import (
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	"go.uber.org/zap/zapcore"
 )
 

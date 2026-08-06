@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver/modbus"
-	"github.com/anviod/edgex/internal/model"
-	mbsim "github.com/anviod/edgex/internal/testutil/modbus"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver/modbus"
+	"github.com/anviod/edgeCore/internal/model"
+	mbsim "github.com/anviod/edgeCore/internal/testutil/modbus"
 )
 
 func newModbusDriver(t *testing.T, sim *mbsim.Simulator, channelID, deviceID string, slaveID int) *modbus.ModbusDriver {

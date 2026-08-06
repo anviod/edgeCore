@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // VirtualShadowManager 管理虚拟影子设备配置与运行时引擎。

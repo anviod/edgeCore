@@ -1,14 +1,14 @@
 ---
 layout: default
 title: MQTT数据上下行格式
-description: EdgeX MQTT数据上下行格式
+description: edgeCore MQTT数据上下行格式
 ---
 
 # MQTT 数据上下行格式
 
 > **UI 接入说明：** 北向 MQTT 配置页 Help Dialog 为**精简接入示例**（默认 Values-format 上报 + 读写/状态主题），完整字段定义、多格式选项与自定义变量以**本文档**为准。
 >
-> **EdgeOS 专用协议：** EdgeX ↔ edgeOS 蜂群 Topic/消息体（节点注册、设备上报、下行控制）见 [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)，与本文 scope 不同。
+> **EdgeOS 专用协议：** edgeCore ↔ edgeOS 蜂群 Topic/消息体（节点注册、设备上报、下行控制）见 [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)，与本文 scope 不同。
 
 数据上下行格式支持 Neuron 兼容方式上报。以下内容描述 MQTT 插件如何上报采集数据，以及如何通过 MQTT 实现读写点位。
 

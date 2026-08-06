@@ -49,7 +49,7 @@
   
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="title">跨设备时序数据聚合：Virtual Shadow Engine 产线计算与多维综合指标矩阵</text>
-    <text y="24" class="subtitle">EdgeX 边缘计算网关 · 数据计算管道横向单条直线全对齐零交叉流转</text>
+    <text y="24" class="subtitle">edgeCore 边缘计算网关 · 数据计算管道横向单条直线全对齐零交叉流转</text>
   </g>
 
   <g transform="translate(70, 0)">

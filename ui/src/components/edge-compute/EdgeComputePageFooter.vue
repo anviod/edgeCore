@@ -74,7 +74,7 @@ const ruleTypeHighlights = [
   { key: 'state', label: 'State', color: 'green', desc: '状态持续检测，防抖动报警' },
 ]
 
-const DOCS_BASE = 'https://anviod.github.io/edgex'
+const DOCS_BASE = 'https://anviod.github.io/edgeCore'
 
 const docLinks = [
   { label: '边缘计算基础功能', url: `${DOCS_BASE}/edge/边缘计算基础功能.html`, desc: '规则引擎与数据流转说明' },

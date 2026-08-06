@@ -1,18 +1,18 @@
-﻿# EdgeX AI协同组件规划 — EAN 2.0 Capability Runtime
+﻿# edgeCore AI协同组件规划 — EAN 2.0 Capability Runtime
 
-> **产品定位**：**EAN 2.0 EdgeX Capability Runtime** — Edge Agent Network 2.0 中 EdgeX 边缘网关的统一能力运行时。在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力，**不是重新设计**。复用已有 AI、MCP、Execution Mapper、ShadowCore，新增 Capability Runtime 层。  
+> **产品定位**：**EAN 2.0 edgeCore Capability Runtime** — Edge Agent Network 2.0 中 edgeCore 边缘网关的统一能力运行时。在现有 edgeCore + EdgeOS 架构上增加一层统一的 Agent 协作能力，**不是重新设计**。复用已有 AI、MCP、Execution Mapper、ShadowCore，新增 Capability Runtime 层。  
 > **核心价值**：「工程师花 2 天分析协议」→「AI 30 分钟生成候选配置，工程师确认上线」；同时 Capability 统一接入 EAN 2.0 网络，支持跨 Agent 发现、编排、调用。  
 > **工程铁律**：任何 AI 能力不得以牺牲稳定性为代价；**禁止** AI 调用进入 ScanEngine / Pipeline Worker 热路径；所有写配置须经 **Human-in-the-loop** 确认后落库。  
-> **架构结论**：**工业边缘自治 + AI 协同中心 + Capability Runtime** — RK3588/3688 等边缘网关运行 EdgeX 采集内核、Capability Runtime、报文捕获/解码与 AI Agent Client；LLM/VLM/Embedding 与 **protocol_knowledge.db（bbolt）** 统一由远端 **AI Model Center** 承担；**AI 故障不得影响工业采集与规则执行**。
+> **架构结论**：**工业边缘自治 + AI 协同中心 + Capability Runtime** — RK3588/3688 等边缘网关运行 edgeCore 采集内核、Capability Runtime、报文捕获/解码与 AI Agent Client；LLM/VLM/Embedding 与 **protocol_knowledge.db（bbolt）** 统一由远端 **AI Model Center** 承担；**AI 故障不得影响工业采集与规则执行**。
 
 
 | 项       | 内容                                                                                                            |
 | ------- | ------------------------------------------------------------------------------------------------------------- |
 | 版本      | **V2.0**                                                                                                      |
 | 更新      | 2026-08-04                                                                                                    |
-| 状态      | **EAN-MVP 已落地**（Capability Runtime + MQTT/NATS Bridge + DriverExecutor + AI Adapter + MCP Adapter + Shadow→Event/`previous_value`；MCP 工具合并优化 94→32，含 7 个 `ean_*` 统一跨协议工具；**Phase 4 全量落地 + V1 命令面全面下线，EAN 2.0 为命令/发现/Capability 唯一协议**；详见 [EAN2.0-EdgeX-EdgeOS改造指南](./EAN2.0-EdgeX-EdgeOS改造指南.md)；迁移评估见 [V1-to-EAN-Migration-Assessment](../TODO/V1-to-EAN-Migration-Assessment.md)） |
-| 产品名     | **EdgeX Industrial Protocol Copilot + EAN 2.0 Capability Runtime**（代码路径 `internal/ai_agent/` · `internal/capability/`） |
-| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md) · [EAN 2.0 通信协议规范](./EdgeX通信协议规范(MQTT-NATS).md) |
+| 状态      | **EAN-MVP 已落地**（Capability Runtime + MQTT/NATS Bridge + DriverExecutor + AI Adapter + MCP Adapter + Shadow→Event/`previous_value`；MCP 工具合并优化 94→32，含 7 个 `ean_*` 统一跨协议工具；**Phase 4 全量落地 + V1 命令面全面下线，EAN 2.0 为命令/发现/Capability 唯一协议**；详见 [EAN2.0-edgeCore-EdgeOS改造指南](./EAN2.0-edgeCore-EdgeOS改造指南.md)；迁移评估见 [V1-to-EAN-Migration-Assessment](../TODO/V1-to-EAN-Migration-Assessment.md)） |
+| 产品名     | **edgeCore Industrial Protocol Copilot + EAN 2.0 Capability Runtime**（代码路径 `internal/ai_agent/` · `internal/capability/`） |
+| 架构基线    | [TODO 索引 §1 新架构约束](./index.md) · [边缘网关架构设计总览](../edge/边缘网关架构设计总览.md) · [EAN 2.0 通信协议规范](./edgeCore通信协议规范(MQTT-NATS).md) |
 | 关联 TODO | [设备点位读写系统升级改造计划](../设备点位读写系统升级改造计划.md) · [边缘计算优化升级 2.0](../TODO/边缘计算优化升级2.0.md)                                      |
 | 用户文档    | [边缘计算场景手册](../edge/EDGE_COMPUTING_SCENARIO_MANUAL.md) · [边缘计算最佳实践](../guide/EDGE_COMPUTING_BEST_PRACTICES.md) |
 
@@ -34,11 +34,11 @@
 
 ### EAN 2.0 设计原则
 
-> **不是重新设计，而是在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力。**
+> **不是重新设计，而是在现有 edgeCore + EdgeOS 架构上增加一层统一的 Agent 协作能力。**
 
 | 原则 | 说明 |
 |------|------|
-| **EdgeX 改动最小** | 复用已有 AI、MCP、Execution Mapper、ShadowCore、ScanEngine、Driver |
+| **edgeCore 改动最小** | 复用已有 AI、MCP、Execution Mapper、ShadowCore、ScanEngine、Driver |
 | **EdgeOS 增加平台能力** | 发现、编排、治理、调度、资源管理 |
 | **协议统一** | Capability、Discovery、Invoke、Event 统一模型 |
 | **Capability 为核心** | 所有能力（Driver Command / AI Skill / MCP Tool / Workflow Node）统一映射到 Capability |
@@ -61,9 +61,9 @@ Device    AI    Workflow    Service    Cloud
             Execution
 ```
 
-### EdgeX 在 EAN 2.0 中的角色：Capability Runtime
+### edgeCore 在 EAN 2.0 中的角色：Capability Runtime
 
-EdgeX 继续承担工业通信和能力执行，在现有 AI/MCP 基础上统一到 **Capability Runtime**：
+edgeCore 继续承担工业通信和能力执行，在现有 AI/MCP 基础上统一到 **Capability Runtime**：
 
 ```text
 AI / HTTP / SDK / MCP / Workflow
@@ -106,7 +106,7 @@ AI / HTTP / SDK / MCP / Workflow
 
 ### EAN 2.0 与 EdgeOS 协作边界
 
-| 模块 | EdgeX（执行层） | EdgeOS（平台层） |
+| 模块 | edgeCore（执行层） | EdgeOS（平台层） |
 |------|---------------|----------------|
 | Agent 生命周期 | Agent 注册、上线、心跳、下线 | 全局 Agent 管理与查询 |
 | Capability | 自动生成、注册、执行 | 聚合、检索、跨节点发现 |
@@ -174,7 +174,7 @@ Registry（本地缓存 + 发布到 EdgeOS）
 
 **Capability Descriptor 发布**：
 
-EdgeX 启动时，Capability Registry 收集所有 Capability，通过 MQTT/NATS 发布到 `$edgeos/discovery/capability`。
+edgeCore 启动时，Capability Registry 收集所有 Capability，通过 MQTT/NATS 发布到 `$edgeos/discovery/capability`。
 
 ### §E1.2 Invoke Dispatcher（新增）
 
@@ -308,7 +308,7 @@ ShadowCore 更新
 Event Publisher 发布事件
     │
     ▼
-$edgeos/event/edgex-node-001
+$edgeos/event/edgeCore-node-001
 ```
 
 **自动 Event 类型映射**：
@@ -326,7 +326,7 @@ $edgeos/event/edgex-node-001
 **启动流程**：
 
 ```text
-EdgeX 启动
+edgeCore 启动
     │
     ▼
 初始化 ChannelManager / ScanEngine
@@ -341,13 +341,13 @@ DiscoveryPublisher 收集 Agent 信息
 发布 Capability Descriptor → $edgeos/discovery/capability
     │
     ▼
-启动 Heartbeat 定时器 → $edgeos/heartbeat/edgex-node-001
+启动 Heartbeat 定时器 → $edgeos/heartbeat/edgeCore-node-001
 ```
 
 **关闭流程**：
 
 ```text
-EdgeX 关闭（Graceful Shutdown）
+edgeCore 关闭（Graceful Shutdown）
     │
     ▼
 DiscoveryPublisher 发布 Offline
@@ -375,23 +375,23 @@ ShadowCore 继续维护设备状态，同时支持按 Capability ID 查询缓存
 
 Execution 优先读取 Shadow，减少 Driver 调用。
 
-### §E1.9 EAN 2.0 Topic 规范（EdgeX 侧）
+### §E1.9 EAN 2.0 Topic 规范（edgeCore 侧）
 
-保留所有 V1.0 `edgex/*` Topic 作为兼容层，新增 EAN 2.0 Topic：
+保留所有 V1.0 `edgeCore/*` Topic 作为兼容层，新增 EAN 2.0 Topic：
 
 | Topic/Subject | 方向 | QoS | 说明 |
 |---------------|------|-----|------|
-| `$edgeos/discovery/agent` | EdgeX → EdgeOS | 1 | Agent 注册/更新 |
-| `$edgeos/discovery/agent/offline` | EdgeX → EdgeOS | 1 | Agent 下线 |
-| `$edgeos/discovery/capability` | EdgeX → EdgeOS | 1 | Capability 注册 |
-| `$edgeos/invoke/{agent_id}` | EdgeOS → EdgeX | 1 | Capability 调用请求 |
-| `$edgeos/reply/{agent_id}` | EdgeX → EdgeOS | 1 | Capability 调用响应 |
-| `$edgeos/event/{agent_id}` | EdgeX → EdgeOS | 1 | 事件上报 |
-| `$edgeos/state/{agent_id}` | EdgeX → EdgeOS | 1 | Shadow 全量上报 |
-| `$edgeos/state/{agent_id}/delta` | EdgeX → EdgeOS | 1 | Shadow 增量更新 |
-| `$edgeos/heartbeat/{agent_id}` | EdgeX → EdgeOS | 0 | 心跳 |
+| `$edgeos/discovery/agent` | edgeCore → EdgeOS | 1 | Agent 注册/更新 |
+| `$edgeos/discovery/agent/offline` | edgeCore → EdgeOS | 1 | Agent 下线 |
+| `$edgeos/discovery/capability` | edgeCore → EdgeOS | 1 | Capability 注册 |
+| `$edgeos/invoke/{agent_id}` | EdgeOS → edgeCore | 1 | Capability 调用请求 |
+| `$edgeos/reply/{agent_id}` | edgeCore → EdgeOS | 1 | Capability 调用响应 |
+| `$edgeos/event/{agent_id}` | edgeCore → EdgeOS | 1 | 事件上报 |
+| `$edgeos/state/{agent_id}` | edgeCore → EdgeOS | 1 | Shadow 全量上报 |
+| `$edgeos/state/{agent_id}/delta` | edgeCore → EdgeOS | 1 | Shadow 增量更新 |
+| `$edgeos/heartbeat/{agent_id}` | edgeCore → EdgeOS | 0 | 心跳 |
 
-详细协议规范参见 [EdgeX通信协议规范(MQTT-NATS) V2.0](./EdgeX通信协议规范(MQTT-NATS).md)。
+详细协议规范参见 [edgeCore通信协议规范(MQTT-NATS) V2.0](./edgeCore通信协议规范(MQTT-NATS).md)。
 
 ### §E1.10 Capability SDK（新增）
 
@@ -400,7 +400,7 @@ SDK 面向 Capability 编程，而非面向 Driver 编程：
 ```go
 // 调用 Capability（不直接调用 Driver）
 result, err := sdk.InvokeCapability(ctx, InvokeRequest{
-    Target:     "edgex-node-001",
+    Target:     "edgeCore-node-001",
     Capability: "modbus_tcp.read_point",
     Arguments: map[string]interface{}{
         "device_id": "slave-1",
@@ -417,14 +417,14 @@ result, err := sdk.InvokeCapability(ctx, InvokeRequest{
 
 ### 0.1 背景
 
-EdgeX 南向已支持 Modbus / OPC UA / S7 / BACnet / EIP / SNMP / IEC104 等 12+ 协议，采集内核以 **ScanEngine → ShadowCore → DataPipeline** 为统一数据面。现场集成仍高度依赖人工：
+edgeCore 南向已支持 Modbus / OPC UA / S7 / BACnet / EIP / SNMP / IEC104 等 12+ 协议，采集内核以 **ScanEngine → ShadowCore → DataPipeline** 为统一数据面。现场集成仍高度依赖人工：
 
 1. **阅读厂家 PDF / DOC / 寄存器表 / 点表 Excel / 上位机监控表 / 抓包文件**，手工录入 `model.Point`（地址、数据类型、缩放、读写属性）
 2. **对照协议差异**（Modbus 功能码、S7 DB 块、BACnet ObjectType 等）反复试错；**仅有 HMI 显示值而无寄存器地址**时，需对照 PCAP 人工逆向
 3. **编写通道驱动参数**（从站号、IP/端口、字节序、扫描类）与 EdgeRule 场景骨架
 4. **联调排障**依赖 `/api/diagnostics/`* 与日志，缺少上下文化建议
 
-上述工作重复、易错，且与协议栈知识强耦合。本模块以 **工业协议逆向工程引擎（Industrial Protocol Reverse Engineering Engine）** 为核心，在**冷路径**将厂家资料与报文分析转化为 **可生产部署的 EdgeX 配置**，而非生成可读性报告或文档摘要。
+上述工作重复、易错，且与协议栈知识强耦合。本模块以 **工业协议逆向工程引擎（Industrial Protocol Reverse Engineering Engine）** 为核心，在**冷路径**将厂家资料与报文分析转化为 **可生产部署的 edgeCore 配置**，而非生成可读性报告或文档摘要。
 
 ### 0.2 目标
 
@@ -444,7 +444,7 @@ EdgeX 南向已支持 Modbus / OPC UA / S7 / BACnet / EIP / SNMP / IEC104 等 12
 
 ### 0.3 非目标（明确边界）
 
-- **不**做通用聊天助手或文档摘要工具——AI 输出 **不是** Markdown 报告，而是 **EdgeX 可导入 JSON**
+- **不**做通用聊天助手或文档摘要工具——AI 输出 **不是** Markdown 报告，而是 **edgeCore 可导入 JSON**
 - **不**在 ScanEngine / ExecutionLayer / Pipeline Worker 循环内调用 LLM
 - **不**在 RK3588 / ARM64 边缘网关上运行 LLM 推理（无 Ollama / vLLM 本地模型）
 - **不**让 LLM 解码字节——字节解析由 **Decoder（确定性）** 与 **Rule Engine** 完成
@@ -492,7 +492,7 @@ PDF / Excel / DOC / PLC变量表 / HMI点表
     ↓  Rule Engine + Schema 校验
 Point Definition + Driver Parameter + Validation Case
     ↓  Human Confirm
-EdgeX Point Model + Channel JSON → import
+edgeCore Point Model + Channel JSON → import
 ```
 
 
@@ -544,7 +544,7 @@ Human Confirm → Production Config（Channel + Point JSON）→ import
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
-│           EdgeX Industrial Protocol Copilot                              │
+│           edgeCore Industrial Protocol Copilot                              │
 ├──────────────────────────────┬──────────────────────────────────────────┤
 │  Scenario A（有文档）         │  Scenario B（无文档 · 核心）              │
 │  PDF/Excel/DOC/PLC表/HMI点表  │  PCAP / 串口 HEX + HMI 显示值            │
@@ -557,7 +557,7 @@ Human Confirm → Production Config（Channel + Point JSON）→ import
 │         ↓                    │         ↓                                │
 │  Protocol Model + Points + Driver Param + Validation Case              │
 │         ↓                                                                │
-│  Human Confirm → EdgeX config.db（Channel + Point import）              │
+│  Human Confirm → edgeCore config.db（Channel + Point import）              │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -626,7 +626,7 @@ confidence < 0.7 → UI 提示人工选择协议；不进入阶段二
 
 ### 2.4 阶段四：生产配置生成（Production Config Generation）
 
-输出 **EdgeX 可直接导入的 JSON**，非人类可读报告：
+输出 **edgeCore 可直接导入的 JSON**，非人类可读报告：
 
 - **Channel JSON**：`protocol_id`, `ip`, `port`, `slave_id`, 协议专属参数
 - **Point JSON**：`id`, `name`, `address`, `datatype`, `scale`, `scan_class`, `function_code`, `byte_order`
@@ -704,13 +704,13 @@ LLM 最小化：仅阶段三语义推理消耗 Token
 
 
 
-## §4 组件定位（EdgeX 架构中的位置）
+## §4 组件定位（edgeCore 架构中的位置）
 
 
 
 ### 4.1 架构分层：边缘网关 vs AI 推理中心
 
-**EdgeX Industrial Protocol Copilot** 采用 **边缘网关 + AI 推理中心分离** 架构。网关侧运行 **Capture / Decoder / Task Agent**（`internal/ai_agent/`）；文档解析、RAG、LLM 路由、**protocol_knowledge.db（bbolt）** 在远端 **AI Model Center** 完成。
+**edgeCore Industrial Protocol Copilot** 采用 **边缘网关 + AI 推理中心分离** 架构。网关侧运行 **Capture / Decoder / Task Agent**（`internal/ai_agent/`）；文档解析、RAG、LLM 路由、**protocol_knowledge.db（bbolt）** 在远端 **AI Model Center** 完成。
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -802,7 +802,7 @@ ExecutionLayer 背压中的 **Token Rate** 指**协议 IO 令牌桶限流**，�
 
 ```text
 工业边缘自治 + AI 协同中心
-├── 边缘网关：EdgeX 运行时 + Capture/Decoder + AI Agent Client
+├── 边缘网关：edgeCore 运行时 + Capture/Decoder + AI Agent Client
 │   └── RK3588：ScanEngine / 驱动 / 报文解码 — 不跑 LLM
 └── AI Model Center：PDF/OCR/RAG/LLM + protocol_knowledge.db（bbolt）
     └── 语义推理 + 文档结构化 — 不直接写 config.db
@@ -833,7 +833,7 @@ ExecutionLayer 背压中的 **Token Rate** 指**协议 IO 令牌桶限流**，�
 Mode A（工业标准 · 推荐）
 ┌──────────────┐  gRPC/MQTT   ┌─────────────────────────────┐
 │ RK3588 网关  │◄────────────►│ AI Server（同网段）          │
-│ EdgeX        │  局域网      │ LLM + RAG + protocol_       │
+│ edgeCore        │  局域网      │ LLM + RAG + protocol_       │
 │ Capture/     │              │ knowledge.db（bbolt）       │
 │ Decoder/     │              │ + Rule Engine               │
 │ Agent Client │              │                             │
@@ -1495,10 +1495,10 @@ protocol_knowledge.db（AI Server 独立 bbolt 文件）
 
 | 阶段 | 时间 | 交付 | 验收 |
 |------|------|------|------|
-| **EAN-MVP** | 2026 Q3 | Capability Registry（自动生成）+ Invoke Dispatcher + Discovery Publisher + Event Publisher；MQTT `$edgeos/*` Topic 接入；保留 V1.0 `edgex/*` 兼容层 | EdgeX 启动后自动发布 Agent + Capability Descriptor；EdgeOS 可发现 EdgeX Capability；Invoke 请求可路由到 Driver；V1.0 Topic 100% 兼容 |
+| **EAN-MVP** | 2026 Q3 | Capability Registry（自动生成）+ Invoke Dispatcher + Discovery Publisher + Event Publisher；MQTT `$edgeos/*` Topic 接入；保留 V1.0 `edgeCore/*` 兼容层 | edgeCore 启动后自动发布 Agent + Capability Descriptor；EdgeOS 可发现 edgeCore Capability；Invoke 请求可路由到 Driver；V1.0 Topic 100% 兼容 |
 | **EAN-增强** | 2026 Q4 | AI Adapter 升级（Capability Planner）；MCP Adapter 升级（Capability → Tool 自动生成）；ShadowCore Capability 缓存；EAN 2.0 完整协议实现（Discovery/Invoke/Event/State） | AI 规划输出 Capability Invoke 而非直接 MCP Tool；MCP Tool 清单自动同步 Capability；Shadow 优先命中 ≥ 90%；协议一致性测试通过 |
-| **EAN-企业级** | 2027 Q1 | Capability SDK 发布；跨 EdgeOS 集群 Agent 发现；Workflow Center 集成；Resource Manager 工业资源锁 | 第三方可通过 SDK 调用 EdgeX Capability；多 EdgeOS 节点 Agent 注册同步；Workflow 可编排跨 Agent Capability；PLC/COM 资源锁无冲突 |
-| **EAN-持续** | — | A2A / OpenAI Agent 协议适配器；Capability 市场索引 | 外部 AI Agent 可发现/调用 EdgeX Capability |
+| **EAN-企业级** | 2027 Q1 | Capability SDK 发布；跨 EdgeOS 集群 Agent 发现；Workflow Center 集成；Resource Manager 工业资源锁 | 第三方可通过 SDK 调用 edgeCore Capability；多 EdgeOS 节点 Agent 注册同步；Workflow 可编排跨 Agent Capability；PLC/COM 资源锁无冲突 |
+| **EAN-持续** | — | A2A / OpenAI Agent 协议适配器；Capability 市场索引 | 外部 AI Agent 可发现/调用 edgeCore Capability |
 
 ```text
 EAN-MVP ──► EAN-增强 ──► EAN-企业级
@@ -1605,23 +1605,23 @@ MVP ──► 增强 ──► 企业级
 
 ## §16 与项目技能规划对齐（Cursor / 集成商交付）
 
-建议在 `.cursor/skills/` 维护 **EdgeX Industrial Protocol Copilot Skills**：
+建议在 `.cursor/skills/` 维护 **edgeCore Industrial Protocol Copilot Skills**：
 
 
 | Skill                            | 触发场景                                     |
 | -------------------------------- | ---------------------------------------- |
-| `edgex-protocol-reverse`         | PCAP/HEX + 显示值 → 四类生产配置（**P0+ 核心**）      |
-| `edgex-protocol-identify`        | 抓包摘要 → Rule Engine 协议识别                  |
-| `edgex-doc-to-modbus-points`     | Modbus 手册 → Point+Channel JSON           |
-| `edgex-hmi-table-parse`          | 上位机监控表 → 结构化标签 / 逆向关联输入                  |
-| `edgex-config-gen`               | 候选点位 → Channel+Point+Validation Case 完整包 |
-| `edgex-point-validate`           | 现有点表冲突与 Scan Class 审查                    |
-| `edgex-protocol-knowledge-query` | 检索 protocol_knowledge.db（bbolt）先例              |
-| `edgex-edge-rule-draft`          | 场景描述 → EdgeRule（辅助）                      |
-| `edgex-diagnostics-explain`      | diagnostics JSON → 排查步骤（辅助）              |
+| `edgeCore-protocol-reverse`         | PCAP/HEX + 显示值 → 四类生产配置（**P0+ 核心**）      |
+| `edgeCore-protocol-identify`        | 抓包摘要 → Rule Engine 协议识别                  |
+| `edgeCore-doc-to-modbus-points`     | Modbus 手册 → Point+Channel JSON           |
+| `edgeCore-hmi-table-parse`          | 上位机监控表 → 结构化标签 / 逆向关联输入                  |
+| `edgeCore-config-gen`               | 候选点位 → Channel+Point+Validation Case 完整包 |
+| `edgeCore-point-validate`           | 现有点表冲突与 Scan Class 审查                    |
+| `edgeCore-protocol-knowledge-query` | 检索 protocol_knowledge.db（bbolt）先例              |
+| `edgeCore-edge-rule-draft`          | 场景描述 → EdgeRule（辅助）                      |
+| `edgeCore-diagnostics-explain`      | diagnostics JSON → 排查步骤（辅助）              |
 
 
-技能定义应引用 **§9 API** 与 **四类交付物 Schema**，产品名统一为 **EdgeX Industrial Protocol Copilot**。
+技能定义应引用 **§9 API** 与 **四类交付物 Schema**，产品名统一为 **edgeCore Industrial Protocol Copilot**。
 
 ---
 
@@ -1630,13 +1630,13 @@ MVP ──► 增强 ──► 企业级
 ## 附录：交叉引用
 
 - 架构数据面：[TODO 索引 §1](./index.md)
-- bbolt 双库架构：[edgex-db-runtime-architecture.md](../operations/edgex-db-runtime-architecture.md)
+- bbolt 双库架构：[edgeCore-db-runtime-architecture.md](../operations/edgeCore-db-runtime-architecture.md)
 - RK3588 约束：本文 §4.3 · §5.5
 - 点位模型：`internal/model/types.go`
 - Modbus 解码：`internal/driver/modbus/decoder.go`
 - BACnet：`internal/driver/bacnet/encoding/whois.go`
-- **EAN 2.0 通信协议规范**：[EdgeX通信协议规范(MQTT-NATS) V2.0](./EdgeX通信协议规范(MQTT-NATS).md)
-- **EAN 2.0 改造指南**：[EAN2.0-EdgeX-EdgeOS改造指南](./EAN2.0-EdgeX-EdgeOS改造指南.md)
+- **EAN 2.0 通信协议规范**：[edgeCore通信协议规范(MQTT-NATS) V2.0](./edgeCore通信协议规范(MQTT-NATS).md)
+- **EAN 2.0 改造指南**：[EAN2.0-edgeCore-EdgeOS改造指南](./EAN2.0-edgeCore-EdgeOS改造指南.md)
 - **V1→EAN 迁移评估**：[V1-to-EAN-Migration-Assessment](../TODO/V1-to-EAN-Migration-Assessment.md)
 
 ---
@@ -1684,15 +1684,15 @@ MVP ──► 增强 ──► 企业级
 | E2 | Invoke Dispatcher 统一路由 MQTT/HTTP/SDK/MCP/Workflow 到 Driver |
 | E3 | Discovery Publisher 启动时自动发布 Agent + Capability Descriptor |
 | E4 | Event Publisher 点位变化时自动发布 `$edgeos/event/{agent_id}` |
-| E5 | V1.0 `edgex/*` Topic 100% 兼容，业务无感知 |
-| E6 | AI 故障 / EdgeOS 离线时，EdgeX 采集与规则执行零影响 |
+| E5 | V1.0 `edgeCore/*` Topic 100% 兼容，业务无感知 |
+| E6 | AI 故障 / EdgeOS 离线时，edgeCore 采集与规则执行零影响 |
 
 ### G.2 功能验收
 
 | # | 标准 |
 |---|------|
-| EF1 | EdgeOS 可通过 `$edgeos/discovery/capability` 查询 EdgeX 的所有 Capability |
-| EF2 | EdgeOS 可通过 `$edgeos/invoke/{agent_id}` 调用 EdgeX Capability 并收到响应 |
+| EF1 | EdgeOS 可通过 `$edgeos/discovery/capability` 查询 edgeCore 的所有 Capability |
+| EF2 | EdgeOS 可通过 `$edgeos/invoke/{agent_id}` 调用 edgeCore Capability 并收到响应 |
 | EF3 | MCP Tool 清单自动同步 Capability，新增驱动无需手动维护 Tool |
 | EF4 | AI Planner 输出 Capability Invoke 而非直接 MCP Tool 调用 |
 | EF5 | ShadowCore Capability 缓存命中时，不触发 Driver 读取 |
@@ -1726,17 +1726,17 @@ MVP ──► 增强 ──► 企业级
 
 ## §17 MCP (Model Context Protocol) 接入
 
-> **V1.5 新增 / V1.7 更新 / V2.0 整合**：MCP 协议允许外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）通过标准 JSON-RPC 2.0 协议安全操作 EdgeX 工业网关。MCP 提供 **32 个工具**（10 只读 + 2 写/管理操作 + 20 全功能 CRUD，含 7 个 `ean_*` 统一工具）、**6 个资源端点**、**13 个提示词模板**。支持 MCP 2024-11-05 与 2025-11-25（Streamable HTTP）两个协议版本。全功能操作需用户显式确认激活。
+> **V1.5 新增 / V1.7 更新 / V2.0 整合**：MCP 协议允许外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）通过标准 JSON-RPC 2.0 协议安全操作 edgeCore 工业网关。MCP 提供 **32 个工具**（10 只读 + 2 写/管理操作 + 20 全功能 CRUD，含 7 个 `ean_*` 统一工具）、**6 个资源端点**、**13 个提示词模板**。支持 MCP 2024-11-05 与 2025-11-25（Streamable HTTP）两个协议版本。全功能操作需用户显式确认激活。
 >
 > **V2.0 MCP 工具整合变更**：移除 6 个与统一 Capability 重叠的 hand-written 工具（`read_point`、`read_point_batch`、`write_point`、`write_point_batch`、`list_points`、`get_diagnostics`），新增 7 个 `ean_*` 统一跨协议工具（如 `ean_read_points`、`ean_write_points`、`ean_scan_devices` 等），由 `capability/generator.go` 的 `GenerateUnifiedCapabilities()` 自动生成。工具总数从 94 降至 32（66% 压缩）。
 
 ### 17.1 定位
 
-MCP 是 EdgeX 对外 AI 协同的**标准协议接口**。与 AI Agent 内部协同（§0-§16）不同，MCP 面向**外部 LLM 应用**，提供工业网关的远程操作能力。两者互补：
+MCP 是 edgeCore 对外 AI 协同的**标准协议接口**。与 AI Agent 内部协同（§0-§16）不同，MCP 面向**外部 LLM 应用**，提供工业网关的远程操作能力。两者互补：
 
 | 维度 | AI Agent（内部协同） | MCP（对外接口） |
 |------|---------------------|----------------|
-| 调用方 | EdgeX UI / 内部任务 | 外部 LLM 应用（Claude Desktop 等） |
+| 调用方 | edgeCore UI / 内部任务 | 外部 LLM 应用（Claude Desktop 等） |
 | 协议 | gRPC / MQTT / REST | MCP (JSON-RPC 2.0 over HTTP/SSE) |
 | 认证 | 系统 JWT | MCP API Key（独立密钥） |
 | 能力范围 | 协议逆向、文档解析、配置生成 | 通道/设备/点位 CRUD、边缘规则、批量读写测试 |
@@ -1752,17 +1752,17 @@ MCP 是 EdgeX 对外 AI 协同的**标准协议接口**。与 AI Agent 内部协
                                 │ Authorization: Bearer <mcp_api_key>
                                 │ 或 X-MCP-API-Key: <mcp_api_key>
 ┌───────────────────────────────▼─────────────────────────────────────────┐
-│  EdgeX 网关                                                              │
+│  edgeCore 网关                                                              │
 │  ┌─────────────────────────────────────────────────────────────────────┐ │
 │  │  MCP Handler  internal/server/mcp_handler.go                        │ │
 │  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │ │
 │  │  │ 只读工具 (10个)   │  │ 操作工具 (22个)   │  │ 资源 (6个)       │  │ │
-│  │  │ list_channels    │  │ ean_write_points │  │ edgex://channels │  │ │
-│  │  │ list_devices     │  │ ean_get_diag..   │  │ edgex://system   │  │ │
-│  │  │ ean_read_points  │  │ create_channel   │  │ edgex://diag..   │  │ │
-│  │  │ ean_list_points  │  │ start/stop_chan  │  │ edgex://protocol │  │ │
-│  │  │ ean_scan_devices │  │ create_device    │  │ edgex://rules    │  │ │
-│  │  │ get_system_info  │  │ update_device    │  │ edgex://config   │  │ │
+│  │  │ list_channels    │  │ ean_write_points │  │ edgeCore://channels │  │ │
+│  │  │ list_devices     │  │ ean_get_diag..   │  │ edgeCore://system   │  │ │
+│  │  │ ean_read_points  │  │ create_channel   │  │ edgeCore://diag..   │  │ │
+│  │  │ ean_list_points  │  │ start/stop_chan  │  │ edgeCore://protocol │  │ │
+│  │  │ ean_scan_devices │  │ create_device    │  │ edgeCore://rules    │  │ │
+│  │  │ get_system_info  │  │ update_device    │  │ edgeCore://config   │  │ │
 │  │  │ analyze_protocol │  │ create_point     │  └──────────────────┘  │ │
 │  │  │ get_protocol_help│  │ create_edge_rule │                        │ │
 │  │  │ ean_ai_proto_rev │  │ delete_edge_rule │  ┌──────────────────┐  │ │
@@ -1790,7 +1790,7 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 | **只读权限** | 默认状态：`list_channels`、`list_devices`、`get_system_info`、`analyze_protocol`、`get_protocol_help`、`ean_read_points`、`ean_list_points`、`ean_scan_devices`、`ean_ai_protocol_reverse`、`ean_ai_doc_parse` 等 10 个工具可用 |
 | **写操作** | `ean_write_points`（write 权限）、`ean_get_diagnostics`（admin 权限）需全功能激活（2 个工具） |
 | **全功能权限** | 用户通过 UI 显式激活后：创建/删除通道、设备、点位、边缘规则、虚拟设备、配置导出等 20 个 hand-written 工具可用 |
-| **API Key 管理** | 在 EdgeX UI → AI 助手 → MCP 接入页面设置，支持随时更换；`POST /api/mcp/generate-key` 生成 256 位随机密钥 |
+| **API Key 管理** | 在 edgeCore UI → AI 助手 → MCP 接入页面设置，支持随时更换；`POST /api/mcp/generate-key` 生成 256 位随机密钥 |
 | **会话管理** | MCP 2025-11-25 Streamable HTTP 会话通过 `Mcp-Session-Id` 头管理，SSE 每 30s 心跳 |
 
 **安全铁律**：
@@ -1880,12 +1880,12 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 
 | URI | 名称 | 说明 |
 |-----|------|------|
-| `edgex://channels` | 通道列表 | 所有采集通道的完整配置信息（JSON） |
-| `edgex://system` | 系统信息 | 网关系统状态信息（CPU/内存/运行时间/协议支持） |
-| `edgex://diagnostics` | 诊断快照 | 所有通道和设备的诊断信息汇总 |
-| `edgex://protocols` | 协议支持列表 | 12 种工业协议完整列表（含端口、传输层、特性） |
-| `edgex://edge-rules` | 边缘规则 | 所有边缘计算规则配置和状态 |
-| `edgex://config` | 完整配置 | EdgeX 完整配置导出（通道/设备/点位/规则） |
+| `edgeCore://channels` | 通道列表 | 所有采集通道的完整配置信息（JSON） |
+| `edgeCore://system` | 系统信息 | 网关系统状态信息（CPU/内存/运行时间/协议支持） |
+| `edgeCore://diagnostics` | 诊断快照 | 所有通道和设备的诊断信息汇总 |
+| `edgeCore://protocols` | 协议支持列表 | 12 种工业协议完整列表（含端口、传输层、特性） |
+| `edgeCore://edge-rules` | 边缘规则 | 所有边缘计算规则配置和状态 |
+| `edgeCore://config` | 完整配置 | edgeCore 完整配置导出（通道/设备/点位/规则） |
 
 ### 17.6 MCP 提示词模板
 
@@ -1913,7 +1913,7 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 ```json
 {
   "mcpServers": {
-    "edgex": {
+    "edgeCore": {
       "url": "http://<gateway>:8080/api/mcp",
       "headers": {
         "Authorization": "Bearer <mcp_api_key>"
@@ -1927,7 +1927,7 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 ```json
 {
   "mcpServers": {
-    "edgex": {
+    "edgeCore": {
       "transport": {
         "type": "http",
         "url": "http://<gateway>:8080/api/mcp"
@@ -1970,11 +1970,11 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 
 ### 17.10 与 AI Agent 协同
 
-MCP 和 AI Agent 是 EdgeX 对外 AI 协同的**双通道**：
+MCP 和 AI Agent 是 edgeCore 对外 AI 协同的**双通道**：
 
 ```text
 ┌──────────────────────────────────────────────────────────────────┐
-│  EdgeX 工业网关                                                    │
+│  edgeCore 工业网关                                                    │
 │                                                                    │
 │  ┌─────────────────────┐    ┌─────────────────────┐              │
 │  │  AI Agent（内部）    │    │  MCP Server（对外）   │              │

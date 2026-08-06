@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/anviod/edgex/internal/driver/bacnet"
-	"github.com/anviod/edgex/internal/model"
+	_ "github.com/anviod/edgeCore/internal/driver/bacnet"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/require"
 )
 

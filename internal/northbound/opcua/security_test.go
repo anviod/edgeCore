@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/awcullen/opcua/client"
 	"github.com/awcullen/opcua/ua"
@@ -50,7 +50,7 @@ func TestGetEndpointsMultiplePolicies(t *testing.T) {
 	tmpDir := testOutputDir(t)
 	serverCert := filepath.Join(tmpDir, "server.crt")
 	serverKey := filepath.Join(tmpDir, "server.key")
-	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgex-gateway:MultiPolicy", "MultiPolicy"); err != nil {
+	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgeCore-gateway:MultiPolicy", "MultiPolicy"); err != nil {
 		t.Fatalf("write server cert: %v", err)
 	}
 
@@ -102,7 +102,7 @@ func TestServerUserNameAuth(t *testing.T) {
 	serverKey := filepath.Join(tmpDir, "server.key")
 	clientCert := filepath.Join(tmpDir, "client.crt")
 	clientKey := filepath.Join(tmpDir, "client.key")
-	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgex-gateway:UserAuth", "UserAuth"); err != nil {
+	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgeCore-gateway:UserAuth", "UserAuth"); err != nil {
 		t.Fatalf("write server cert: %v", err)
 	}
 	if err := writeSelfSignedCert(clientCert, clientKey, "urn:test:client", "TestClient"); err != nil {

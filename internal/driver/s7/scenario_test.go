@@ -1,7 +1,7 @@
 package s7
 
 import (
-	"github.com/anviod/edgex/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver"
 	"sync"
 	"sync/atomic"
 	"testing"

@@ -7,7 +7,7 @@ const debugSteps = [
   {
     id: 0,
     title: '检查北向通道',
-    description: '确认 EdgeX 已配置 edgeOS MQTT 或 edgeOS NATS 北向通道并成功连接',
+    description: '确认 edgeCore 已配置 edgeOS MQTT 或 edgeOS NATS 北向通道并成功连接',
     checklist: [
       '进入「节点同步」页面，确认 edgeOS 连接状态为「已连接」',
       '北向通道协议选择 edgeOS(MQTT) 或 edgeOS(NATS)',
@@ -20,7 +20,7 @@ const debugSteps = [
   {
     id: 1,
     title: '验证 Agent 注册',
-    description: 'EdgeX 启动后自动发布 Agent Descriptor 到 $edgeos/discovery/agent',
+    description: 'edgeCore 启动后自动发布 Agent Descriptor 到 $edgeos/discovery/agent',
     checklist: [
       '打开 AI 助手面板 → EAN Tab → Agent 子 Tab',
       'Agent 状态显示「在线」且 Agent ID 正确',
@@ -60,7 +60,7 @@ const debugSteps = [
   {
     id: 4,
     title: '验证 Event 发布',
-    description: '设备状态变化时 EdgeX 自动发布 EAN Event',
+    description: '设备状态变化时 edgeCore 自动发布 EAN Event',
     checklist: [
       '切换到 Event 子 Tab',
       '触发设备状态变化（如写入点位、设备上下线）',
@@ -73,11 +73,11 @@ const debugSteps = [
   {
     id: 5,
     title: 'EdgeOS Discovery 验证',
-    description: '确认 EdgeOS 能发现 EdgeX Agent 及其 Capability',
+    description: '确认 EdgeOS 能发现 edgeCore Agent 及其 Capability',
     checklist: [
       '切换到 Discovery 子 Tab',
       '确认本机 Agent 出现在列表中',
-      '如有其他 EdgeX 节点，确认也出现在列表',
+      '如有其他 edgeCore 节点，确认也出现在列表',
       '离线 Agent 显示灰色状态'
     ],
     api: 'GET /api/capability/discovery/agents',
@@ -137,10 +137,10 @@ const useCases = [
     tag: 'system',
     steps: [
       '确认 EdgeOS Workflow Center 已配置',
-      'EdgeOS 通过 $edgeos/invoke 调用 EdgeX Capability',
-      'EdgeX Invoke Dispatcher 路由到 Execution Mapper',
+      'EdgeOS 通过 $edgeos/invoke 调用 edgeCore Capability',
+      'edgeCore Invoke Dispatcher 路由到 Execution Mapper',
       '执行结果通过 $edgeos/reply 返回 EdgeOS',
-      'EdgeOS Event Center 接收 EdgeX 发布的事件'
+      'EdgeOS Event Center 接收 edgeCore 发布的事件'
     ]
   }
 ]
@@ -164,7 +164,7 @@ const faqItems = [
   },
   {
     q: 'Discovery 无其他 Agent',
-    a: 'EAN Discovery 依赖 EdgeOS 平台聚合。确认 EdgeOS 已连接且 Registry Center 正常运行。单个 EdgeX 节点只能看到自身。'
+    a: 'EAN Discovery 依赖 EdgeOS 平台聚合。确认 EdgeOS 已连接且 Registry Center 正常运行。单个 edgeCore 节点只能看到自身。'
   },
   {
     q: 'MCP 工具未出现 ean_* 前缀',

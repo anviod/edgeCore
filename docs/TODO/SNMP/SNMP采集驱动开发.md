@@ -98,7 +98,7 @@ SNMP（Simple Network Management Protocol，简单网络管理协议）是一种
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      EdgeX Gateway                              │
+│                      edgeCore Gateway                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                    Device Service Layer                         │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
@@ -422,7 +422,7 @@ securityName|object_identifier[.instance]
 ### 5.1 连接建立流程
 
 ```
-EdgeX                          SNMP Agent
+edgeCore                          SNMP Agent
   |                               |
   |--- UDP Socket -------------->|  建立 UDP socket
   |                               |
@@ -537,7 +537,7 @@ return error
 
 ## 7. 与其他系统集成
 
-### 7.1 EdgeX Device Service 集成
+### 7.1 edgeCore Device Service 集成
 
 驱动通过 `driver.RegisterDriver` 注册，Device Service 通过统一接口调用：
 
@@ -553,7 +553,7 @@ func init() {
 
 ```
 ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  SNMP Agent  │─────>│  SNMP        │─────>│  EdgeX       │
+│  SNMP Agent  │─────>│  SNMP        │─────>│  edgeCore       │
 │  (Router/    │      │  Driver      │      │  Core Data   │
 │   Switch)    │      │              │      │              │
 └──────────────┘      └──────────────┘      └──────────────┘
@@ -631,7 +631,7 @@ internal/driver/snmp/
 
 ```go
 import (
-    _ "github.com/anviod/edgex/internal/driver/snmp"
+    _ "github.com/anviod/edgeCore/internal/driver/snmp"
 )
 ```
 
@@ -777,7 +777,7 @@ snmp-server community private RW
 snmp-server enable traps
 ```
 
-#### 11.1.3 EdgeX 驱动配置
+#### 11.1.3 edgeCore 驱动配置
 
 ```yaml
 device:
@@ -841,7 +841,7 @@ snmp-server user admin snmpgroup v3 auth sha AuthPass123 priv aes 128 PrivPass12
 snmp-server enable traps
 ```
 
-#### 11.2.3 EdgeX 驱动配置
+#### 11.2.3 edgeCore 驱动配置
 
 ```yaml
 device:

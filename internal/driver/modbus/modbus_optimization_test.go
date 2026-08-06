@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TestGroupPoints 测试点位分组功能

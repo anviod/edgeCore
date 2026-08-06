@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Modbus 智能探测
-description: EdgeX Modbus 智能探测
+description: edgeCore Modbus 智能探测
 ---
 
 # Modbus 智能探测

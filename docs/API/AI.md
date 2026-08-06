@@ -1,14 +1,14 @@
 ---
 layout: default
 title: AI 能力专题 — MCP 与 EAN 2.0
-description: EdgeX 工业边缘网关 AI 能力体系 — MCP 协议操作接口与 EAN 2.0 能力自治网络的技术拆解
+description: edgeCore 工业边缘网关 AI 能力体系 — MCP 协议操作接口与 EAN 2.0 能力自治网络的技术拆解
 ---
 
 # AI 能力专题 — MCP 与 EAN 2.0
 
-[产品指南](../guide/PRODUCT.zh-CN.html) · [MCP 接入指南](../guide/mcp-access-guide.html) · [AI 协同规划](../TODO/AI协同组件规划.html) · [EAN 改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html)
+[产品指南](../guide/PRODUCT.zh-CN.html) · [MCP 接入指南](../guide/mcp-access-guide.html) · [AI 协同规划](../TODO/AI协同组件规划.html) · [EAN 改造指南](../edgeos/EAN2.0-edgeCore-EdgeOS改造指南.html)
 
-EdgeX v2.x 在工业采集内核之上叠加了两层 AI 能力：**MCP Server** 把网关的通道、设备、点位暴露给外部 LLM 客户端操作；**EAN 2.0 Capability Runtime** 把 15 种协议驱动的读写扫描能力统一为可发现、可调用的 Capability，再通过 MCP 桥接层暴露为 `ean_*` 工具。两层合计 94 个 MCP 工具，覆盖从只读诊断到全功能 CRUD 的完整操作链路。
+edgeCore v2.x 在工业采集内核之上叠加了两层 AI 能力：**MCP Server** 把网关的通道、设备、点位暴露给外部 LLM 客户端操作；**EAN 2.0 Capability Runtime** 把 15 种协议驱动的读写扫描能力统一为可发现、可调用的 Capability，再通过 MCP 桥接层暴露为 `ean_*` 工具。两层合计 94 个 MCP 工具，覆盖从只读诊断到全功能 CRUD 的完整操作链路。
 
 这套能力的设计前提只有一条：**AI 可以辅助工程师，但不能替工程师按下确认键**。所有写操作——创建通道、写入点位、删除设备——都卡在 Human-in-the-loop 门禁后面，LLM 能生成配置，但不能直接落库。AI 故障时，ScanEngine、ShadowCore、Execution Mapper 照常运行，采集不中断。
 
@@ -16,12 +16,12 @@ EdgeX v2.x 在工业采集内核之上叠加了两层 AI 能力：**MCP Server**
 
 ## MCP：LLM 操作工业网关的标准通道
 
-MCP（Model Context Protocol）是 Anthropic 在 2024 年提出的开放协议，定义了 LLM 客户端与外部工具服务器之间的通信规范。EdgeX MCP Server 实现了该协议的 2024-11-05 和 2025-11-25 两个版本，传输层为 JSON-RPC 2.0 over Streamable HTTP / SSE。
+MCP（Model Context Protocol）是 Anthropic 在 2024 年提出的开放协议，定义了 LLM 客户端与外部工具服务器之间的通信规范。edgeCore MCP Server 实现了该协议的 2024-11-05 和 2025-11-25 两个版本，传输层为 JSON-RPC 2.0 over Streamable HTTP / SSE。
 
 ### 四层架构
 
 ```
-LLM 客户端              MCP 协议层              EdgeX 网关              工业设备
+LLM 客户端              MCP 协议层              edgeCore 网关              工业设备
 ─────────────         ──────────────         ──────────────         ──────────────
 Claude Desktop        JSON-RPC 2.0           JWT 认证                Modbus RTU/TCP
 Cursor                SSE Stream             API Key 权限检查         BACnet IP
@@ -30,7 +30,7 @@ Continue.dev                                 数据读写                 S7 / E
                                                                       IEC 104 / SNMP ...
 ```
 
-LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的 `tools/call` 请求，EdgeX 网关收到后走 JWT 认证和 API Key 权限检查，再分发到对应工具处理器。处理器调用 ScanEngine、ShadowCore 或 Execution Mapper 拿到结果，原路返回。
+LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的 `tools/call` 请求，edgeCore 网关收到后走 JWT 认证和 API Key 权限检查，再分发到对应工具处理器。处理器调用 ScanEngine、ShadowCore 或 Execution Mapper 拿到结果，原路返回。
 
 ### 33 个原生工具
 
@@ -38,11 +38,11 @@ LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的
 
 | 权限层级 | 工具数 | 激活方式 | 典型工具 |
 |---------|--------|---------|---------|
-| 只读查询 | 8 | 默认可用 | `edgex_list_channels` `edgex_read_point` `edgex_get_system_info` |
-| 写操作 | 1 | 需人工确认 | `edgex_write_point` |
-| 全功能 CRUD | 24 | 需 UI 显式激活 | `edgex_create_channel` `edgex_delete_device` `edgex_create_edge_rule` |
+| 只读查询 | 8 | 默认可用 | `edgeCore_list_channels` `edgeCore_read_point` `edgeCore_get_system_info` |
+| 写操作 | 1 | 需人工确认 | `edgeCore_write_point` |
+| 全功能 CRUD | 24 | 需 UI 显式激活 | `edgeCore_create_channel` `edgeCore_delete_device` `edgeCore_create_edge_rule` |
 
-只读工具覆盖了通道列表、设备列表、点位实时值、系统诊断、协议特征分析。写操作工具 `edgex_write_point` 向 R/W 点位写入控制值，每次调用都需要人工确认，LLM 无法自动执行。全功能 CRUD 工具覆盖通道管理（4）、设备管理（4）、点位管理（5）、边缘规则（3）、虚拟设备（2）和扩展工具（6），用户必须在管理 UI 的「MCP 接入」面板里手动开启全功能开关才能解锁。
+只读工具覆盖了通道列表、设备列表、点位实时值、系统诊断、协议特征分析。写操作工具 `edgeCore_write_point` 向 R/W 点位写入控制值，每次调用都需要人工确认，LLM 无法自动执行。全功能 CRUD 工具覆盖通道管理（4）、设备管理（4）、点位管理（5）、边缘规则（3）、虚拟设备（2）和扩展工具（6），用户必须在管理 UI 的「MCP 接入」面板里手动开启全功能开关才能解锁。
 
 ### 6 个资源端点
 
@@ -50,12 +50,12 @@ LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的
 
 | URI | 内容 |
 |-----|------|
-| `edgex://channels` | 所有采集通道完整配置 |
-| `edgex://system` | 网关系统状态 |
-| `edgex://diagnostics` | 通道和设备诊断汇总 |
-| `edgex://protocols` | 12 种工业协议完整列表 |
-| `edgex://edge-rules` | 所有边缘计算规则配置和状态 |
-| `edgex://config` | EdgeX 完整配置导出 |
+| `edgeCore://channels` | 所有采集通道完整配置 |
+| `edgeCore://system` | 网关系统状态 |
+| `edgeCore://diagnostics` | 通道和设备诊断汇总 |
+| `edgeCore://protocols` | 12 种工业协议完整列表 |
+| `edgeCore://edge-rules` | 所有边缘计算规则配置和状态 |
+| `edgeCore://config` | edgeCore 完整配置导出 |
 
 ### 13 个提示词模板
 
@@ -86,7 +86,7 @@ MCP 使用独立于系统 JWT 的 API Key 认证体系。API Key 为 64 字符�
 | `Authorization` | `Bearer <mcp_api_key>` |
 | `X-MCP-API-Key` | `<mcp_api_key>` |
 
-API Key 未设置时，MCP 端点拒绝所有请求。全功能 CRUD 操作还需用户在 UI 中显式激活开关。写操作 `edgex_write_point` 在激活全功能后仍需人工确认，不自动执行。
+API Key 未设置时，MCP 端点拒绝所有请求。全功能 CRUD 操作还需用户在 UI 中显式激活开关。写操作 `edgeCore_write_point` 在激活全功能后仍需人工确认，不自动执行。
 
 ### 客户端配置示例
 
@@ -95,7 +95,7 @@ Claude Desktop / Cursor / Windsurf：
 ```json
 {
   "mcpServers": {
-    "edgex": {
+    "edgeCore": {
       "url": "http://<gateway-ip>:8080/api/mcp",
       "headers": {
         "Authorization": "Bearer <mcp_api_key>"
@@ -107,22 +107,22 @@ Claude Desktop / Cursor / Windsurf：
 
 连接后可直接用自然语言操作：
 
-- "列出所有采集通道" → 调用 `edgex_list_channels`
-- "读取 1 号设备的温度点位" → 调用 `edgex_read_point`
-- "分析 3 号通道的 Modbus 报文特征" → 调用 `edgex_analyze_protocol`
-- "网关系统信息" → 调用 `edgex_get_system_info`
+- "列出所有采集通道" → 调用 `edgeCore_list_channels`
+- "读取 1 号设备的温度点位" → 调用 `edgeCore_read_point`
+- "分析 3 号通道的 Modbus 报文特征" → 调用 `edgeCore_analyze_protocol`
+- "网关系统信息" → 调用 `edgeCore_get_system_info`
 
 ---
 
 ## EAN 2.0：能力自治网络
 
-EAN（Edge Agent Network）2.0 是 EdgeX 与 EdgeOS 之间的统一能力协作层。EdgeX 作为 Agent 注册到 EAN 网络，把 15 种协议驱动的读写扫描能力封装为标准 Capability；EdgeOS 作为协调平台，负责发现、编排和治理。
+EAN（Edge Agent Network）2.0 是 edgeCore 与 EdgeOS 之间的统一能力协作层。edgeCore 作为 Agent 注册到 EAN 网络，把 15 种协议驱动的读写扫描能力封装为标准 Capability；EdgeOS 作为协调平台，负责发现、编排和治理。
 
 ### 设计原则
 
-EAN 2.0 不是重新设计——它在现有 EdgeX + EdgeOS 架构上增加一层 Agent 协作能力。四条原则贯穿整个实现：
+EAN 2.0 不是重新设计——它在现有 edgeCore + EdgeOS 架构上增加一层 Agent 协作能力。四条原则贯穿整个实现：
 
-- **EdgeX 改动最小**：复用已有 AI、MCP、Execution Mapper、ShadowCore、ScanEngine、Driver
+- **edgeCore 改动最小**：复用已有 AI、MCP、Execution Mapper、ShadowCore、ScanEngine、Driver
 - **EdgeOS 增加平台能力**：发现、编排、治理、调度、资源管理
 - **协议统一**：Capability、Discovery、Invoke、Event 统一模型
 - **Capability 为核心**：所有能力——Driver Command、AI Skill、MCP Tool、Workflow Node——统一映射到 Capability
@@ -186,7 +186,7 @@ EAN 2.0 覆盖 15 种工业协议，每种协议自动生成 4 个标准能力�
 
 | 能力 ID | 类别 | 说明 | 超时 |
 |---------|------|------|------|
-| `system.diagnostics` | system | 收集 EdgeX 系统诊断信息（通道状态、设备统计、资源使用） | 15s |
+| `system.diagnostics` | system | 收集 edgeCore 系统诊断信息（通道状态、设备统计、资源使用） | 15s |
 | `ai.protocol_reverse` | ai | AI 辅助协议逆向工程，输入抓包数据，输出候选协议结构 | 120s |
 | `ai.doc_parse` | ai | AI 辅助协议文档解析，输入文档内容，输出点位配置列表 | 120s |
 
@@ -205,7 +205,7 @@ EAN 2.0 支持四种传输方式：
 
 Agent 启动时通过 Discovery Publisher 发布 Agent Descriptor（包含 Agent ID、版本、状态、能力列表）到 `discovery/agent` 主题。其他 Agent 或 EdgeOS 可通过 `discovery/query` 主题发起查询，按 Agent ID、Capability ID、Category 或关键词过滤。
 
-心跳机制每 60 秒（可配置 10~600 秒）发布一次 `agent_heartbeat` 消息，每 60 秒周期性重发 Capability Descriptor，解决启动时序竞态——如果 EdgeOS 比 EdgeX 晚启动，心跳重发能保证能力发现不遗漏。
+心跳机制每 60 秒（可配置 10~600 秒）发布一次 `agent_heartbeat` 消息，每 60 秒周期性重发 Capability Descriptor，解决启动时序竞态——如果 EdgeOS 比 edgeCore 晚启动，心跳重发能保证能力发现不遗漏。
 
 ### Invoke 调度
 
@@ -256,14 +256,14 @@ Dispatcher 内部维护 Invoke 记录表，支持异步状态查询。每次 Inv
 
 ## MCP × EAN：桥接层
 
-MCP 桥接层是连接 EAN Capability Runtime 和 MCP 协议的适配器。它把 63 个 EAN Capability 自动转换为 MCP 工具，加上 31 个原生 EdgeX 工具，LLM 客户端一次连接就能访问 94 个工具。
+MCP 桥接层是连接 EAN Capability Runtime 和 MCP 协议的适配器。它把 63 个 EAN Capability 自动转换为 MCP 工具，加上 31 个原生 edgeCore 工具，LLM 客户端一次连接就能访问 94 个工具。
 
 ### 63 + 31 = 94 个工具
 
 | 来源 | 前缀 | 工具数 | 生成方式 |
 |------|------|--------|---------|
 | EAN Capability | `ean_` | 63 | 自动生成（协议能力 60 + 系统/AI 能力 3） |
-| EdgeX 原生 | `edgex_` | 31 | 手写注册（只读 8 + 写操作 1 + CRUD 22） |
+| edgeCore 原生 | `edgeCore_` | 31 | 手写注册（只读 8 + 写操作 1 + CRUD 22） |
 
 EAN Capability 到 MCP 工具的映射规则：
 
@@ -293,7 +293,7 @@ Capability 的 `InputSchema` 自动转换为 MCP 工具的 `inputSchema`，包�
 
 ### Human-in-the-loop
 
-所有写操作——无论来自 MCP 原生工具还是 EAN 桥接工具——都必须经过人工确认才能执行。LLM 能生成通道配置 JSON、能计算出点位地址、能推导出写入值，但不能按下"确认"键。这个约束不是配置项，是架构层面的硬限制：`edgex_write_point` 的处理器在返回结果前检查 `writeGate()`，未确认时直接返回拦截响应。
+所有写操作——无论来自 MCP 原生工具还是 EAN 桥接工具——都必须经过人工确认才能执行。LLM 能生成通道配置 JSON、能计算出点位地址、能推导出写入值，但不能按下"确认"键。这个约束不是配置项，是架构层面的硬限制：`edgeCore_write_point` 的处理器在返回结果前检查 `writeGate()`，未确认时直接返回拦截响应。
 
 ### AI 不进热路径
 
@@ -312,7 +312,7 @@ MCP API Key 与系统 JWT 完全独立。即使 API Key 泄露，攻击者也只
 现场拿到一台未知 PLC，只有串口接线和一个抓包文件。
 
 1. 工程师把抓包数据上传给 LLM 客户端
-2. LLM 调用 `edgex_analyze_protocol` 分析报文特征
+2. LLM 调用 `edgeCore_analyze_protocol` 分析报文特征
 3. LLM 调用 `ean_ai_protocol_reverse`，传入抓包数据
 4. AI 返回候选协议结构（可能是 Modbus RTU，地址从 0x01 开始）
 5. 工程师确认协议类型，LLM 调用 `modbus-quick-start` 提示词生成通道配置
@@ -331,16 +331,16 @@ MCP API Key 与系统 JWT 完全独立。即使 API Key 泄露，攻击者也只
 3. AI 返回 200 条点位配置（地址、数据类型、缩放因子）
 4. LLM 调用 `point-batch-generator` 提示词，指定起始地址和数量
 5. 工程师在 UI 中确认批量导入
-6. LLM 调用 `edgex_read_point_batch` 验证点位值
+6. LLM 调用 `edgeCore_read_point_batch` 验证点位值
 
 ### 场景 3：故障诊断
 
 3 号通道采集中断，需要快速定位。
 
 1. 工程师问 LLM："3 号通道为什么没有数据"
-2. LLM 调用 `edgex_get_diagnostics`，传入 `channel_id=3`
+2. LLM 调用 `edgeCore_get_diagnostics`，传入 `channel_id=3`
 3. 诊断信息显示：通道运行中，但 3 号设备连接超时
-4. LLM 调用 `edgex_list_devices`，确认设备配置正常
+4. LLM 调用 `edgeCore_list_devices`，确认设备配置正常
 5. LLM 调用 `ean_modbus_tcp_read_holding_register`，传入设备地址
 6. 返回连接拒绝错误，定位为网络层问题
 7. LLM 调用 `troubleshooting-guide` 提示词，生成排查步骤
@@ -389,7 +389,7 @@ MCP API Key 与系统 JWT 完全独立。即使 API Key 泄露，攻击者也只
 
 | 约束 | 说明 |
 |------|------|
-| 写操作需人工确认 | `edgex_write_point` 和 `ean_*_write_register` 不自动执行 |
+| 写操作需人工确认 | `edgeCore_write_point` 和 `ean_*_write_register` 不自动执行 |
 | AI 不进热路径 | ScanEngine / Pipeline Worker 不调用 AI，AI 故障不影响采集 |
 | Capability Invoke 超时 5s | 协议读写能力默认 10s 超时，可通过 options 覆盖 |
 | 事件缓冲容量 200 | 线程安全环形缓冲，超出自动淘汰旧事件 |
@@ -423,6 +423,6 @@ MCP API Key 与系统 JWT 完全独立。即使 API Key 泄露，攻击者也只
 
 - [MCP 接入指南](../guide/mcp-access-guide.html) — 客户端配置、认证流程、工具清单
 - [AI 协同组件规划](../TODO/AI协同组件规划.html) — EAN 2.0 架构设计、能力模型、V1.5→V2.0 映射
-- [EAN 2.0 改造指南](../edgeos/EAN2.0-EdgeX-EdgeOS改造指南.html) — EdgeX/EdgeOS 联调方案
-- [通信协议规范](../edgeos/EdgeX通信协议规范(MQTT-NATS).html) — MQTT/NATS 主题与消息格式
+- [EAN 2.0 改造指南](../edgeos/EAN2.0-edgeCore-EdgeOS改造指南.html) — edgeCore/EdgeOS 联调方案
+- [通信协议规范](../edgeos/edgeCore通信协议规范(MQTT-NATS).html) — MQTT/NATS 主题与消息格式
 - [EAN 联合验证报告](../TODO/EAN2-Joint-Verification-Report.html) — 全链路测试结果

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Registry is the local Capability Registry (EdgeX Capability Runtime side).
+// Registry is the local Capability Registry (edgeCore Capability Runtime side).
 type Registry struct {
 	mu           sync.RWMutex
 	agentID      string

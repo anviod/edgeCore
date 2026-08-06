@@ -10,7 +10,7 @@ import (
 
 func TestSyncManager_Create(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-sync", 4002)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-sync", 4002)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 
@@ -21,7 +21,7 @@ func TestSyncManager_Create(t *testing.T) {
 
 func TestSyncManager_StartStop(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-sync-startstop", 4003)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-sync-startstop", 4003)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 
@@ -35,7 +35,7 @@ func TestSyncManager_StartStop(t *testing.T) {
 
 func TestSyncManager_PutGetConfig(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-config", 4004)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-config", 4004)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	defer mgr.Stop()
@@ -58,7 +58,7 @@ func TestSyncManager_PutGetConfig(t *testing.T) {
 
 func TestSyncManager_CompareSnapshots(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-snapshot", 4005)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-snapshot", 4005)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	defer mgr.Stop()
@@ -85,7 +85,7 @@ func TestSyncManager_CompareSnapshots(t *testing.T) {
 
 func TestSyncManager_GetStatus(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-status", 4006)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-status", 4006)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	defer mgr.Stop()
@@ -101,7 +101,7 @@ func TestSyncManager_GetStatus(t *testing.T) {
 
 func TestSyncManager_TriggerSync(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-trigger", 4007)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-trigger", 4007)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	defer mgr.Stop()
@@ -124,7 +124,7 @@ func TestSyncManager_TriggerSync(t *testing.T) {
 
 func TestSyncManager_CheckConsistency(t *testing.T) {
 	ctx := context.Background()
-	mgr, err := NewSyncManager(ctx, "/tmp/edgex-test-consistency", 4008)
+	mgr, err := NewSyncManager(ctx, "/tmp/edgeCore-test-consistency", 4008)
 	assert.NoError(t, err)
 	assert.NotNil(t, mgr)
 	defer mgr.Stop()

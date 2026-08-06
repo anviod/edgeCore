@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘网关用户手册
-description: EdgeX 用户手册
+description: edgeCore 用户手册
 ---
 
 # 边缘网关用户手册
@@ -89,35 +89,35 @@ description: EdgeX 用户手册
 
 ### 安装方式
 
-从 [GitHub Releases](https://github.com/anviod/edgex/releases) 下载对应架构的安装包（`amd64` / `arm64` / `arm`）。生产环境 Linux 推荐使用 **deb / rpm 系统包**（自动注册 systemd、升级时保留配置）。
+从 [GitHub Releases](https://github.com/anviod/edgeCore/releases) 下载对应架构的安装包（`amd64` / `arm64` / `arm`）。生产环境 Linux 推荐使用 **deb / rpm 系统包**（自动注册 systemd、升级时保留配置）。
 
 #### 方式一：系统包安装（Linux，推荐）
 
-包内安装路径为 `/usr/local/bin/edgex/`，注册 systemd 服务 `edgex`；升级时 `preinstall` / `postinstall` 脚本会自动备份并恢复 `config/` 与 `data/`。
+包内安装路径为 `/usr/local/bin/edgeCore/`，注册 systemd 服务 `edgeCore`；升级时 `preinstall` / `postinstall` 脚本会自动备份并恢复 `config/` 与 `data/`。
 
-文件名形如 `edgex-v{version}-{arch}.deb` 或 `edgex-v{version}-{arch}.rpm`。
+文件名形如 `edgeCore-v{version}-{arch}.deb` 或 `edgeCore-v{version}-{arch}.rpm`。
 
 **Debian / Ubuntu（`.deb`）**
 
 首次安装：
 
 ```bash
-sudo dpkg -i edgex-v{version}-amd64.deb
+sudo dpkg -i edgeCore-v{version}-amd64.deb
 sudo apt-get install -f -y    # 若提示依赖缺失
 ```
 
 升级（覆盖安装，保留配置，服务自动重启）：
 
 ```bash
-sudo dpkg -i edgex-v{new-version}-amd64.deb
+sudo dpkg -i edgeCore-v{new-version}-amd64.deb
 # 或
-sudo apt install ./edgex-v{new-version}-amd64.deb
+sudo apt install ./edgeCore-v{new-version}-amd64.deb
 ```
 
 卸载：
 
 ```bash
-sudo apt remove -y edgex
+sudo apt remove -y edgeCore
 ```
 
 **RHEL / CentOS / Fedora（`.rpm`）**
@@ -125,32 +125,32 @@ sudo apt remove -y edgex
 首次安装：
 
 ```bash
-sudo rpm -ivh edgex-v{version}-amd64.rpm
+sudo rpm -ivh edgeCore-v{version}-amd64.rpm
 # 或（Fedora / RHEL 8+）
-sudo dnf install ./edgex-v{version}-amd64.rpm
+sudo dnf install ./edgeCore-v{version}-amd64.rpm
 ```
 
 升级：
 
 ```bash
-sudo rpm -Uvh edgex-v{new-version}-amd64.rpm
+sudo rpm -Uvh edgeCore-v{new-version}-amd64.rpm
 # 或
-sudo dnf upgrade ./edgex-v{new-version}-amd64.rpm
+sudo dnf upgrade ./edgeCore-v{new-version}-amd64.rpm
 ```
 
 卸载：
 
 ```bash
-sudo rpm -e edgex
+sudo rpm -e edgeCore
 # 或
-sudo dnf remove edgex
+sudo dnf remove edgeCore
 ```
 
 安装后验证：
 
 ```bash
-sudo systemctl status edgex
-sudo systemctl enable --now edgex   # 若未自动启动
+sudo systemctl status edgeCore
+sudo systemctl enable --now edgeCore   # 若未自动启动
 ```
 
 浏览器访问 `http://<主机>:<port>` 进入管理界面；首次启动若 `data/config.db` 不存在，将进入 Web 安装向导。
@@ -158,22 +158,22 @@ sudo systemctl enable --now edgex   # 若未自动启动
 #### 方式二：tar.gz 二进制包
 
 1. **下载安装包**
-   - 文件名格式：`edgex-{version}-linux-{arch}.tar.gz`（含二进制、`conf/`、`edgex.service`、`ui/dist/` 等）
+   - 文件名格式：`edgeCore-{version}-linux-{arch}.tar.gz`（含二进制、`conf/`、`edgeCore.service`、`ui/dist/` 等）
 
 2. **解压安装**
    ```bash
-   sudo mkdir -p /usr/local/bin/edgex
-   sudo tar -xzf edgex-{version}-linux-amd64.tar.gz -C /usr/local/bin/edgex
+   sudo mkdir -p /usr/local/bin/edgeCore
+   sudo tar -xzf edgeCore-{version}-linux-amd64.tar.gz -C /usr/local/bin/edgeCore
 
-   # 可选：配置 systemd（包内附带 edgex.service 示例）
-   sudo cp edgex.service /etc/systemd/system/
+   # 可选：配置 systemd（包内附带 edgeCore.service 示例）
+   sudo cp edgeCore.service /etc/systemd/system/
    sudo systemctl daemon-reload
-   sudo systemctl enable --now edgex
+   sudo systemctl enable --now edgeCore
    ```
 
 3. **验证安装**
    ```bash
-   sudo systemctl status edgex
+   sudo systemctl status edgeCore
    ```
 
 #### 方式三：源码编译安装
@@ -185,14 +185,14 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 2. **获取源码**
    ```bash
-   git clone https://github.com/anviod/edgex.git
-   cd edgex
+   git clone https://github.com/anviod/edgeCore.git
+   cd edgeCore
    ```
 
 3. **编译后端**
    ```bash
    go mod tidy
-   go build -o edgex cmd/main.go
+   go build -o edgeCore cmd/main.go
    ```
 
 4. **编译前端**
@@ -205,7 +205,7 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 5. **运行**
    ```bash
-   ./edgex
+   ./edgeCore
    ```
 
 ---
@@ -244,14 +244,14 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 1. **创建配置目录**
    ```bash
-   sudo mkdir -p /etc/edgex/conf
-   sudo mkdir -p /var/lib/edgex/data
+   sudo mkdir -p /etc/edgeCore/conf
+   sudo mkdir -p /var/lib/edgeCore/data
    ```
 
 2. **初始化配置**
    ```bash
    # 从示例配置复制
-   cp -r conf/* /etc/edgex/conf/
+   cp -r conf/* /etc/edgeCore/conf/
    ```
 
 3. **修改核心配置**
@@ -263,16 +263,16 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 1. **创建 systemd 服务**
    ```bash
-   sudo tee /etc/systemd/system/edgex.service > /dev/null <<EOF
+   sudo tee /etc/systemd/system/edgeCore.service > /dev/null <<EOF
    [Unit]
-   Description=EdgeX Industrial Gateway
+   Description=edgeCore Industrial Gateway
    After=network.target
 
    [Service]
    Type=simple
-   User=edgex
-   WorkingDirectory=/opt/edgex
-   ExecStart=/opt/edgex/edgex -conf /etc/edgex/conf
+   User=edgeCore
+   WorkingDirectory=/opt/edgeCore
+   ExecStart=/opt/edgeCore/edgeCore -conf /etc/edgeCore/conf
    Restart=always
    RestartSec=10
    StandardOutput=journal
@@ -285,21 +285,21 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 2. **创建运行用户**
    ```bash
-   sudo useradd -r -s /bin/false edgex
-   sudo chown -R edgex:edgex /var/lib/edgex
+   sudo useradd -r -s /bin/false edgeCore
+   sudo chown -R edgeCore:edgeCore /var/lib/edgeCore
    ```
 
 3. **启动服务**
    ```bash
    sudo systemctl daemon-reload
-   sudo systemctl enable edgex
-   sudo systemctl start edgex
+   sudo systemctl enable edgeCore
+   sudo systemctl start edgeCore
    ```
 
 4. **验证服务状态**
    ```bash
-   sudo systemctl status edgex
-   sudo journalctl -u edgex -f
+   sudo systemctl status edgeCore
+   sudo journalctl -u edgeCore -f
    ```
 
 #### 第四步：初始配置
@@ -520,14 +520,14 @@ sudo systemctl enable --now edgex   # 若未自动启动
 
 ## 北向数据共享
 
-EdgeX 支持 6 种北向通道，将边缘数据灵活对接云平台、SCADA 与企业应用：
+edgeCore 支持 6 种北向通道，将边缘数据灵活对接云平台、SCADA 与企业应用：
 
 | 北向协议 | 模式 | 说明 |
 |----------|------|------|
 | **MQTT** | 客户端 | 标准 MQTT 3.1.1/5.0 推送，支持离线缓存、设备事件上报 |
 | **Sparkplug B** | 客户端 | MQTT 之上的工业物联网互操作协议，支持 Birth/Death 证书 |
 | **OPC UA Server** | 服务端 | 以 OPC UA 服务器对外暴露影子点位，支持 Browse/Read/Write/Subscribe |
-| **BACnet Server** | 服务端（从机） | 将 EdgeX 南向点位映射为 BACnet 标准对象（AI/BI/AO/BO/MV），支持 Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅通知，对接 BMS/SCADA 主站 |
+| **BACnet Server** | 服务端（从机） | 将 edgeCore 南向点位映射为 BACnet 标准对象（AI/BI/AO/BO/MV），支持 Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅通知，对接 BMS/SCADA 主站 |
 | **HTTP** | 客户端 | 自定义 URL/Method/Headers 推送，支持离线缓存 |
 | **EdgeOS (MQTT/NATS)** | 客户端 | 专用 EdgeOS 平台协议，支持设备生命周期通知与点位元数据上报 |
 
@@ -603,7 +603,7 @@ Topic/Payload 格式与 API 字段见 [北向数据文档](../northbound/index.h
 
 ### 运维诊断与 SLA 监控
 
-EdgeX 采用**统计 SLA**（非硬实时 PLC），内置阈值门控与 diagnostics API，**无需 Prometheus/Grafana** 等外部监控栈。运维可通过 **HTTP JSON 巡检**、**Web UI 指标页** 与 **结构化日志 grep** 三条通路观察采集健康度。
+edgeCore 采用**统计 SLA**（非硬实时 PLC），内置阈值门控与 diagnostics API，**无需 Prometheus/Grafana** 等外部监控栈。运维可通过 **HTTP JSON 巡检**、**Web UI 指标页** 与 **结构化日志 grep** 三条通路观察采集健康度。
 
 #### 1. Diagnostics API 巡检
 
@@ -706,8 +706,8 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 SLA 周期告警（约每 30s 扫描，有告警才输出 WARN）：
 
 ```bash
-grep '\[SLA\]' /var/log/edgex/app.log
-grep 'scan_lag_p95_exceeded\|circuit_breaker_open' /var/log/edgex/app.log
+grep '\[SLA\]' /var/log/edgeCore/app.log
+grep 'scan_lag_p95_exceeded\|circuit_breaker_open' /var/log/edgeCore/app.log
 ```
 
 #### 5. UI 手动验证清单
@@ -887,7 +887,7 @@ telnet <设备IP> <端口>
 nc -zv <设备IP> <端口>
 
 # 3. 检查网关日志
-journalctl -u edgex -f
+journalctl -u edgeCore -f
 ```
 
 **解决方案：**

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestNorthboundManager_UpsertSparkplugB_SavesWhenBrokerUnreachable(t *testing.T) {

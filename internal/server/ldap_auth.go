@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/go-ldap/ldap/v3"
 	"go.uber.org/zap"

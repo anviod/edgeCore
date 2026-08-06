@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘网关 Modbus 优化
-description: EdgeX 边缘网关 Modbus 优化
+description: edgeCore 边缘网关 Modbus 优化
 ---
 
 # 边缘网关 Modbus 优化

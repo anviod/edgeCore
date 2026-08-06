@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
-	"github.com/anviod/edgex/internal/mcp"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
+	"github.com/anviod/edgeCore/internal/mcp"
 	"github.com/stretchr/testify/require"
 )
 

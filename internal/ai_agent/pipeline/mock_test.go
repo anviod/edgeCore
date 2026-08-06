@@ -3,7 +3,7 @@ package pipeline
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

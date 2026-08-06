@@ -11,7 +11,7 @@ HASHES=(
   "a14092455098e5fa07900845da607f9b851dd3380b39223d37b1843831e7a3b4"
 )
 
-NAMES=("admin" "admin123" "12345678" "edgex" "edgex123" "password")
+NAMES=("admin" "admin123" "12345678" "edgeCore" "edgeCore123" "password")
 
 for i in "${!HASHES[@]}"; do
   h="${HASHES[$i]}"

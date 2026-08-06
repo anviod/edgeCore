@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet 前端 Web UI 功能审查清单
-description: EdgeX BACnet 前端 UI 功能审查清单（索引）
+description: edgeCore BACnet 前端 UI 功能审查清单（索引）
 ---
 
 # BACnet 前端 Web UI 功能审查清单

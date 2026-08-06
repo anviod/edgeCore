@@ -3,7 +3,7 @@ package core
 import (
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // DataPipeline handles the flow of collected data

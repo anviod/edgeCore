@@ -1,8 +1,8 @@
 package network
 
-import "github.com/anviod/edgex/internal/model"
+import "github.com/anviod/edgeCore/internal/model"
 
-// iprouteBackend applies runtime configuration only; EdgeX DB remains the source of truth on boot.
+// iprouteBackend applies runtime configuration only; edgeCore DB remains the source of truth on boot.
 type iprouteBackend struct{}
 
 func (b *iprouteBackend) Type() BackendType { return BackendIPRoute }

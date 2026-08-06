@@ -8,9 +8,9 @@ layout: default
 
 | 文档 | 说明 |
 | :--- | :--- |
-| [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html) | MQTT/NATS 协议权威 |
+| [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html) | MQTT/NATS 协议权威 |
 | [EdgeOS 北向配置](edgeos-northbound.html) | 北向通道配置 |
 | [EdgeOS 快速入门](edgeos-quickstart.html) | 部署与联调 |
 | [EdgeOS 部署清单](edgeos-deployment-checklist.html) | 验收清单 |
 
-详见：[EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)
+详见：[edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)

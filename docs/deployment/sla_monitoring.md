@@ -47,9 +47,9 @@ curl -s http://localhost:8082/api/channels/<channelId>/diagnostics/events | jq .
 SLA 周期告警（每 30s 扫描，有告警才输出）：
 
 ```bash
-grep '\[SLA\]' /var/log/edgex/app.log
-grep 'circuit_breaker_open\|circuit_breaker_reject' /var/log/edgex/app.log
-grep 'scan_lag_p95_exceeded\|scan_drift_avg_exceeded' /var/log/edgex/app.log
+grep '\[SLA\]' /var/log/edgeCore/app.log
+grep 'circuit_breaker_open\|circuit_breaker_reject' /var/log/edgeCore/app.log
+grep 'scan_lag_p95_exceeded\|scan_drift_avg_exceeded' /var/log/edgeCore/app.log
 ```
 
 ## 4. 阈值对照

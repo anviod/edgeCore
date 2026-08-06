@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 测试验证
-description: EdgeX 测试验证文档 — 单元测试、回归验证、压力测试与验收报告
+description: edgeCore 测试验证文档 — 单元测试、回归验证、压力测试与验收报告
 hero_eyebrow: Testing & Verification
-hero_lead: EdgeX 测试验证文档 — 测试矩阵、回归验证、压力测试、南向驱动测试报告、2026-07-12 Mac 万 Tag/ScanEngine 复测与热路径单测补强、2026-07-10 ARM64 vs x86 跨架构双向对比测试。
+hero_lead: edgeCore 测试验证文档 — 测试矩阵、回归验证、压力测试、南向驱动测试报告、2026-07-12 Mac 万 Tag/ScanEngine 复测与热路径单测补强、2026-07-10 ARM64 vs x86 跨架构双向对比测试。
 hero_buttons:
   - text: 跨架构对比报告
     url: arch-cross-platform-benchmark-2026Q3/arch-cross-platform-benchmark-2026Q3.html
@@ -64,7 +64,7 @@ hero_buttons:
 
 ### 代码测试维护
 
-- [test/ 目录说明](https://github.com/anviod/edgex/blob/dev/test/README.md) — 联调资产、`go test` 常用命令与测试腐化处理原则
+- [test/ 目录说明](https://github.com/anviod/edgeCore/blob/dev/test/README.md) — 联调资产、`go test` 常用命令与测试腐化处理原则
 - [B1 采集间隔核验报告](b1_poll_interval_verification.html) — Modbus 多从站 PollStart Δt 现场样本
 
 ### ScanEngine / ShadowCore SLA 验证

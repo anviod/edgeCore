@@ -496,7 +496,7 @@ button.modbus-action-btn:focus-visible {
 
 /* 行悬停与选中反馈 */
 .modbus-group-table :deep(.arco-table-tr:hover .arco-table-td) {
-  background: var(--edgex-surface-muted, #f8fafc) !important;
+  background: var(--edgeCore-surface-muted, #f8fafc) !important;
 }
 
 .modbus-group-table :deep(.arco-table-tr.arco-table-tr-selected .arco-table-td) {
@@ -561,11 +561,11 @@ button.modbus-action-btn:focus-visible {
 }
 
 .modbus-group-table .status-display .status-icon--good {
-  color: var(--edgex-success, #16a34a);
+  color: var(--edgeCore-success, #16a34a);
 }
 
 .modbus-group-table .status-display .status-icon--bad {
-  color: var(--edgex-error, #dc2626);
+  color: var(--edgeCore-error, #dc2626);
 }
 
 /* 操作列：单行不换行 */

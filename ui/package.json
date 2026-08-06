@@ -1,5 +1,5 @@
 {
-  "name": "edgex-ui",
+  "name": "edgeCore-ui",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",

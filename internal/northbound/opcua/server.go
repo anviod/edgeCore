@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/awcullen/opcua/server"
 	"github.com/awcullen/opcua/ua"
@@ -298,7 +298,7 @@ func (s *Server) startLocked() error {
 	endpoint := fmt.Sprintf("opc.tcp://0.0.0.0:%d%s", s.config.Port, s.config.Endpoint)
 	// Sanitize name for URI (remove spaces)
 	safeName := strings.ReplaceAll(s.config.Name, " ", "")
-	appURI := fmt.Sprintf("urn:edgex-gateway:%s", safeName)
+	appURI := fmt.Sprintf("urn:edgeCore-gateway:%s", safeName)
 
 	// Resolve server certificate (DB PEM → disk, legacy path, or auto-generated)
 	certFile, keyFile, err := MaterializeServerCerts(s.config)
@@ -449,7 +449,7 @@ func (s *Server) ensureCert(certFile, keyFile, appURI string) error {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"EdgeX Gateway"},
+			Organization: []string{"edgeCore Gateway"},
 			CommonName:   s.config.Name,
 			Country:      []string{"CN"},
 			Locality:     []string{"Beijing"},
@@ -608,7 +608,7 @@ func stringMapsEqual(a, b map[string]string) bool {
 }
 
 func (s *Server) rebuildAddressSpaceInPlaceLocked() error {
-	nsURI := "http://edgex-gateway.com/opcua"
+	nsURI := "http://edgeCore-gateway.com/opcua"
 	nsIndex := s.srv.NamespaceManager().Add(nsURI)
 	gatewayID := ua.ParseNodeID(fmt.Sprintf("ns=%d;s=G", nsIndex))
 	if node, ok := s.srv.NamespaceManager().FindNode(gatewayID); ok {
@@ -673,7 +673,7 @@ func (s *Server) Update(v model.Value) {
 }
 
 func (s *Server) buildAddressSpace() error {
-	nsURI := "http://edgex-gateway.com/opcua"
+	nsURI := "http://edgeCore-gateway.com/opcua"
 	// Get namespace index from the server
 	nsIndex := s.srv.NamespaceManager().Add(nsURI)
 	//zap.L().Info("OPC UA Namespace Added", zap.String("uri", nsURI), zap.Uint16("index", nsIndex))

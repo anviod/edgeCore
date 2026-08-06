@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-echo "== EdgeX docs site verification =="
+echo "== edgeCore docs site verification =="
 echo "Root: $ROOT"
 echo
 

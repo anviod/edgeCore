@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
+	"github.com/anviod/edgeCore/internal/core"
 )
 
 // TestS7Protocol_SessionFramework is a skeleton for long-running S7 session stability (D-04).

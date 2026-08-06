@@ -10,8 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/reconnect"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/reconnect"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )

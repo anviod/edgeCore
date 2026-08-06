@@ -6,15 +6,15 @@ import (
 	"strings"
 	"sync/atomic"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"go.uber.org/zap"
 )
 
 // mqttBus adapts the edgeOS MQTT client to capability.Bus for EAN 2.0 topics.
-// V1.0 edgex/* topics remain handled by the existing Client methods unchanged.
+// V1.0 edgeCore/* topics remain handled by the existing Client methods unchanged.
 type mqttBus struct {
 	client *Client
 }
@@ -79,7 +79,7 @@ func (c *Client) notifyEANRuntimeChanged() {
 }
 
 // AttachCapabilityRuntime binds an EAN 2.0 Capability Runtime to this MQTT client.
-// V1.0 edgex/* topics continue to work independently as the compatibility layer.
+// V1.0 edgeCore/* topics continue to work independently as the compatibility layer.
 func (c *Client) AttachCapabilityRuntime(rt *capability.Runtime) {
 	c.eanMu.Lock()
 	defer c.eanMu.Unlock()
@@ -89,7 +89,7 @@ func (c *Client) AttachCapabilityRuntime(rt *capability.Runtime) {
 	}
 }
 
-// EnsureCapabilityRuntime creates a default EdgeX Capability Runtime if none is attached.
+// EnsureCapabilityRuntime creates a default edgeCore Capability Runtime if none is attached.
 // Returns (nil, nil) when EANEnabled is false — caller must check before calling startEANLocked.
 func (c *Client) EnsureCapabilityRuntime(agentVersion string) (*capability.Runtime, error) {
 	c.eanMu.Lock()

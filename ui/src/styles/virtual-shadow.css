@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Virtual Shadow Devices (list + builder modal)
+ * edgeCore v3.0 — Virtual Shadow Devices (list + builder modal)
  * Token-driven; Light / Dark via .dark-theme
  */
 
@@ -249,7 +249,7 @@
 }
 
 .virtual-shadow-page .ep-value {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
   font-weight: 600;
 }
 
@@ -400,7 +400,7 @@
   min-height: 0;
   overflow: hidden;
   color: var(--text-primary);
-  --vs-drop-soft: var(--edgex-success);
+  --vs-drop-soft: var(--edgeCore-success);
   --vs-drop-soft-deep: #15803d;
   --vs-drop-soft-bg: rgba(22, 163, 74, 0.1);
   --vs-drop-soft-border: rgba(22, 163, 74, 0.35);
@@ -419,12 +419,12 @@
 }
 
 .virtual-shadow-builder-modal .req {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .virtual-shadow-builder-modal .field-error {
   font-size: 11px;
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   margin-top: 2px;
 }
 
@@ -1176,7 +1176,7 @@
 .virtual-shadow-builder-modal .point-chip-val {
   font-size: 11px;
   font-weight: 600;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
   white-space: nowrap;
 }
 
@@ -1421,7 +1421,7 @@
 
 .virtual-shadow-builder-modal .block-badge.map {
   background: rgba(22, 163, 74, 0.12);
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .virtual-shadow-builder-modal .block-badge.formula {
@@ -1484,7 +1484,7 @@
 
 .virtual-shadow-builder-modal .inline-live {
   font-size: 12px;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .virtual-shadow-builder-modal .formula-toolbar {
@@ -1509,7 +1509,7 @@
 
 .virtual-shadow-builder-modal .dep-val {
   margin-left: 2px;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .virtual-shadow-builder-modal .hint {
@@ -1657,7 +1657,7 @@
 }
 
 .dark-theme .virtual-shadow-page .ep-value {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .dark-theme .virtual-shadow-page .arco-empty-description {

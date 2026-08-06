@@ -1,5 +1,5 @@
 // Package mcp — Model Context Protocol (MCP) 服务端实现
-// 提供 JSON-RPC 2.0 协议处理，允许外部 LLM 应用通过标准 MCP 协议操作 EdgeX
+// 提供 JSON-RPC 2.0 协议处理，允许外部 LLM 应用通过标准 MCP 协议操作 edgeCore
 package mcp
 
 import "encoding/json"
@@ -42,7 +42,7 @@ const (
 	MCPVersion    = "2024-11-05"
 	MCPVersionV25 = "2025-11-25"
 	ProtocolName  = "mcp"
-	ServerName    = "EdgeX-MCP-Server"
+	ServerName    = "edgeCore-MCP-Server"
 	ServerVersion = "1.0.0"
 
 	// JSON-RPC 标准错误码

@@ -56,7 +56,7 @@
   
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="main-title">边缘实时决策中心：质量在线检测与安全生产联锁毫秒级响应引擎</text>
-    <text y="24" class="section-subtitle">EdgeX 边缘计算网关· 决策计算数据管道横向单条直线全对齐零交叉流转</text>
+    <text y="24" class="section-subtitle">edgeCore 边缘计算网关· 决策计算数据管道横向单条直线全对齐零交叉流转</text>
   </g>
 
   <line x1="330" y1="120" x2="330" y2="640" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6 4"/>

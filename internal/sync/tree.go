@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // NodeSnapshot represents one node's configuration tree and file view.

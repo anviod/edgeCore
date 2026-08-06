@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 Form Controls — Flow Form
+ * edgeCore v3.0 Form Controls — Flow Form
  */
 
 /* ── spacing utilities ── */
@@ -76,8 +76,8 @@
 .form-controls-md :deep(.arco-input-number),
 .form-controls-md :deep(.arco-picker) {
   border-radius: 6px;
-  background-color: var(--edgex-surface-subtle, var(--color-fill-2, #fafafa));
-  border-color: var(--edgex-border, var(--color-border-2, #e2e8f0));
+  background-color: var(--edgeCore-surface-subtle, var(--color-fill-2, #fafafa));
+  border-color: var(--edgeCore-border, var(--color-border-2, #e2e8f0));
 }
 
 .form-controls-md :deep(.arco-input-wrapper),
@@ -105,8 +105,8 @@
 
 .form-controls-md :deep(.arco-textarea-wrapper) {
   border-radius: 6px;
-  background-color: var(--edgex-surface-subtle, var(--color-fill-2, #fafafa));
-  border-color: var(--edgex-border, var(--color-border-2, #e2e8f0));
+  background-color: var(--edgeCore-surface-subtle, var(--color-fill-2, #fafafa));
+  border-color: var(--edgeCore-border, var(--color-border-2, #e2e8f0));
 }
 
 .form-controls-md :deep(.arco-textarea) {
@@ -145,6 +145,6 @@
 .industrial-form :deep(.arco-select-view),
 .industrial-form :deep(.arco-input-number) {
   border-radius: 6px;
-  background-color: var(--edgex-surface-subtle, #fafafa);
-  border-color: var(--edgex-border, #e2e8f0);
+  background-color: var(--edgeCore-surface-subtle, #fafafa);
+  border-color: var(--edgeCore-border, #e2e8f0);
 }

@@ -189,7 +189,7 @@ const edgeosHelpVisible = ref(false)
 const bacnetDialogVisible = ref(false)
 const bacnetEditConfig = ref(null)
 const bacnetHelpVisible = ref(false)
-const bacnetHelpData = ref({ port: 47808, deviceId: 0, deviceName: 'EdgeX-Gateway' })
+const bacnetHelpData = ref({ port: 47808, deviceId: 0, deviceName: 'edgeCore-Gateway' })
 
 const mqttStatsVisible = ref(false)
 const mqttStatsId = ref('')
@@ -275,7 +275,7 @@ const onHelp = (type, item) => {
     opcuaHelpData.value = { port: item?.port || 4840, endpoint: item?.endpoint || '/ipp/opcua/server' }
     opcuaHelpVisible.value = true
   } else if (type === 'bacnet_server') {
-    bacnetHelpData.value = { port: item?.port || 47808, deviceId: item?.device_id || 0, deviceName: item?.device_name || 'EdgeX-Gateway' }
+    bacnetHelpData.value = { port: item?.port || 47808, deviceId: item?.device_id || 0, deviceName: item?.device_name || 'edgeCore-Gateway' }
     bacnetHelpVisible.value = true
   } else if (type === 'edgeos_mqtt' || type === 'edgeos_nats') {
     edgeosHelpVisible.value = true

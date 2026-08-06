@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Shared view styles (Login, Dashboard, Lists, Modals)
+ * edgeCore v3.0 — Shared view styles (Login, Dashboard, Lists, Modals)
  * Loaded globally; complements page-layout.css
  */
 
@@ -155,7 +155,7 @@
   background: rgba(239, 68, 68, 0.04);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--radius-sm);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   font-size: 13px;
   margin-bottom: var(--space-3);
 }
@@ -247,7 +247,7 @@
 .login-container .status-dot {
   width: 6px;
   height: 6px;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   border-radius: 50%;
   animation: blink 1.5s infinite;
 }
@@ -407,8 +407,8 @@
   margin-bottom: 4px;
 }
 
-.stat-item-label.online { color: var(--edgex-success); }
-.stat-item-label.offline { color: var(--edgex-error); }
+.stat-item-label.online { color: var(--edgeCore-success); }
+.stat-item-label.offline { color: var(--edgeCore-error); }
 
 .stat-item-value {
   font-size: 18px;
@@ -417,9 +417,9 @@
 }
 
 .stat-item-value.online,
-.stat-item-value.success { color: var(--edgex-success); }
+.stat-item-value.success { color: var(--edgeCore-success); }
 .stat-item-value.offline,
-.stat-item-value.error { color: var(--edgex-error); }
+.stat-item-value.error { color: var(--edgeCore-error); }
 .stat-item-value.warning { color: #d97706; }
 
 .metrics-header {
@@ -562,14 +562,14 @@
 }
 
 .status-badge.online {
-  border-color: var(--edgex-success);
-  color: var(--edgex-success);
+  border-color: var(--edgeCore-success);
+  color: var(--edgeCore-success);
   background: rgba(22, 163, 74, 0.05);
 }
 
 .status-badge.offline {
-  border-color: var(--edgex-error);
-  color: var(--edgex-error);
+  border-color: var(--edgeCore-error);
+  color: var(--edgeCore-error);
   background: rgba(220, 38, 38, 0.05);
 }
 

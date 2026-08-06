@@ -986,18 +986,18 @@ ldflags 配置（`.goreleaser.yml`）：
 ```yaml
 ldflags: >
   -s -w
-  -X github.com/anviod/edgex/internal/model.Version={{.Version}}
-  -X 'github.com/anviod/edgex/internal/model.BuildTime={{.Date}}'
-  -X github.com/anviod/edgex/internal/model.CommitID={{.ShortCommit}}
+  -X github.com/anviod/edgeCore/internal/model.Version={{.Version}}
+  -X 'github.com/anviod/edgeCore/internal/model.BuildTime={{.Date}}'
+  -X github.com/anviod/edgeCore/internal/model.CommitID={{.ShortCommit}}
 ```
 
 **输出产物（自动多平台）**：
 ```
 dist/
-├── edgex-v0.0.4-arm64.deb          # 远程 ARM64 节点安装包
-├── edgex-v0.0.4-amd64.deb          # AMD64 安装包
-├── edgex-0.0.4-windows-amd64.tar.gz # Windows x64
-├── edgex-0.0.4-linux-arm64.tar.gz   # Linux ARM64
+├── edgeCore-v0.0.4-arm64.deb          # 远程 ARM64 节点安装包
+├── edgeCore-v0.0.4-amd64.deb          # AMD64 安装包
+├── edgeCore-0.0.4-windows-amd64.tar.gz # Windows x64
+├── edgeCore-0.0.4-linux-arm64.tar.gz   # Linux ARM64
 └── SHA256SUMS
 ```
 
@@ -1012,7 +1012,7 @@ goreleaser release --snapshot --clean --config .goreleaser.yml
 bash scripts/deploy-remote.sh root@192.168.3.230 NODE-HNE_GATEWAY
 
 # 3. 验证远程节点服务
-ssh root@192.168.3.230 "systemctl status edgex --no-pager"
+ssh root@192.168.3.230 "systemctl status edgeCore --no-pager"
 ssh root@192.168.3.230 "curl -s http://localhost:8082/api/auth/system-info"
 ```
 
@@ -1030,7 +1030,7 @@ ssh root@192.168.3.230 "curl -s http://localhost:8082/api/auth/system-info"
 ┌──────────────────────┐         ┌──────────────────────┐
 │ 本机 (Windows/Linux) │  libp2p │ 远程 (root@192.168.3.230) │
 │                      │◄───────►│ ARM64 Linux           │
-│ goreleaser 构建      │  :4001  │ systemctl edgex       │
+│ goreleaser 构建      │  :4001  │ systemctl edgeCore       │
 │ 本地 run/debug       │         │ .deb 安装部署          │
 └──────────────────────┘         └──────────────────────┘
 ```
@@ -1073,7 +1073,7 @@ ssh root@192.168.3.230 "curl -s http://localhost:8082/api/auth/system-info"
 **双节点测试拓扑**：
 ```
 本机 (NODE-1):  go run cmd/main.go        ← API: localhost:8082
-远程 (NODE-REMOTE): systemctl edgex        ← API: 192.168.3.230:8082
+远程 (NODE-REMOTE): systemctl edgeCore        ← API: 192.168.3.230:8082
               ↕ libp2p:4001 (mDNS + 静态种子)
 ```
 
@@ -1257,7 +1257,7 @@ bash scripts/deploy-remote.sh root@192.168.3.230 NODE-REMOTE
 ┌──────────────────────┐    goreleaser 构建    ┌────────────────────────┐
 │ 本机 (开发机)         │ ──────────────────► │ 远程 root@192.168.3.230 │
 │                      │     .deb + scp       │ ARM64 Linux            │
-│ go run cmd/main.go   │                      │ systemctl edgex        │
+│ go run cmd/main.go   │                      │ systemctl edgeCore        │
 │ goreleaser build     │ ◄──── libp2p ──────► │ .deb 安装部署          │
 │ API: :8082           │       :4001          │ API: :8082             │
 └──────────────────────┘                      └────────────────────────┘
@@ -1275,13 +1275,13 @@ gateway-cli sync diff       # 查看配置差异
 
 ```bash
 # 远程状态
-ssh root@192.168.3.230 "systemctl status edgex --no-pager"
+ssh root@192.168.3.230 "systemctl status edgeCore --no-pager"
 
 # 远程日志
-ssh root@192.168.3.230 "journalctl -u edgex -n 100 --no-pager"
+ssh root@192.168.3.230 "journalctl -u edgeCore -n 100 --no-pager"
 
 # 远程重启
-ssh root@192.168.3.230 "systemctl restart edgex"
+ssh root@192.168.3.230 "systemctl restart edgeCore"
 ```
 
 ---
@@ -1399,7 +1399,7 @@ snappy.Encode(snapshot)
 
 ```text
 data/
-└── edgex/
+└── edgeCore/
     ├── local/              # 本地节点配置（可写）
     │   └── conf/
     ├── peers/             # 远端节点配置镜像（只读）

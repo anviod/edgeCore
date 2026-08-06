@@ -90,7 +90,7 @@
 
   <g transform="translate(700, 585)">
     <rect x="-290" y="-35" width="580" height="75" rx="14" fill="#ffffff" stroke="#14b8a6" stroke-width="2"/>
-    <text x="0" y="-50" text-anchor="middle" class="lbl" fill="#0f766e">[ 边缘 EdgeX 采集架构 ]</text>
+    <text x="0" y="-50" text-anchor="middle" class="lbl" fill="#0f766e">[ 边缘 edgeCore 采集架构 ]</text>
 
     <g transform="translate(-265, -18)">
       <rect width="150" height="42" rx="6" fill="#ccfbf1" stroke="#0d9488" stroke-width="1"/>

@@ -80,7 +80,7 @@
         <ChannelHelpBlock title="运行时长">
           <ChannelHelpParamList :items="runtimeInfoItems" />
           <p class="help-doc-example">
-            <strong>示例</strong>：「运行时长 2天3小时15分钟」表示 EdgeX 进程自启动以来已连续运行约 2 天 3 小时；仅分钟级时显示「45分钟」。面板每 30 秒刷新一次显示，Soak 指标仍按 15 秒间隔采样。
+            <strong>示例</strong>：「运行时长 2天3小时15分钟」表示 edgeCore 进程自启动以来已连续运行约 2 天 3 小时；仅分钟级时显示「45分钟」。面板每 30 秒刷新一次显示，Soak 指标仍按 15 秒间隔采样。
           </p>
         </ChannelHelpBlock>
       </div>
@@ -271,7 +271,7 @@ const scanClassItems = [
 const runtimeInfoItems = [
   {
     label: '运行时长',
-    desc: 'EdgeX 应用自进程启动以来的累计运行时间，按天/小时/分钟友好展示（省略为零的单位）',
+    desc: 'edgeCore 应用自进程启动以来的累计运行时间，按天/小时/分钟友好展示（省略为零的单位）',
     example: '2天3小时15分钟、3小时20分钟、45分钟',
   },
   {

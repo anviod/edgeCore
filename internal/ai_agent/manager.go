@@ -5,11 +5,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
-	"github.com/anviod/edgex/internal/ai_agent/pipeline"
-	"github.com/anviod/edgex/internal/ai_agent/quota"
-	"github.com/anviod/edgex/internal/ai_agent/validate"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/pipeline"
+	"github.com/anviod/edgeCore/internal/ai_agent/quota"
+	"github.com/anviod/edgeCore/internal/ai_agent/validate"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type Agent struct {

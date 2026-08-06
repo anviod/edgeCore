@@ -1,12 +1,12 @@
 ---
 layout: default
 title: SNMP 驱动
-description: EdgeX SNMP v2c/v3 采集驱动说明
+description: edgeCore SNMP v2c/v3 采集驱动说明
 ---
 
 # SNMP 驱动
 
-EdgeX SNMP 驱动支持 **SNMP v2c** 与 **SNMP v3**，通过 UDP（默认 161）采集网络设备 OID 点位，集成 ScanEngine 周期采集与 Shadow 数据面。
+edgeCore SNMP 驱动支持 **SNMP v2c** 与 **SNMP v3**，通过 UDP（默认 161）采集网络设备 OID 点位，集成 ScanEngine 周期采集与 Shadow 数据面。
 
 ## 协议 ID
 

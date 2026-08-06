@@ -9,7 +9,7 @@
             </svg>
           </div>
           <div class="logo-text">
-            <div class="brand-name">EdgeX</div>
+            <div class="brand-name">edgeCore</div>
             <div class="brand-version">系统初始化配置</div>
           </div>
         </div>
@@ -274,7 +274,7 @@
             <IconCloseCircle />
           </div>
           <div class="install-complete-title">初始化失败</div>
-          <div class="install-progress-subtitle" style="color: var(--edgex-error);">
+          <div class="install-progress-subtitle" style="color: var(--edgeCore-error);">
             {{ installErrorMsg }}
           </div>
           <div v-if="logMessages.length" class="install-progress-log">
@@ -289,7 +289,7 @@
       </div>
 
       <div class="install-footer">
-        © {{ new Date().getFullYear() }} EdgeX
+        © {{ new Date().getFullYear() }} edgeCore
       </div>
     </div>
   </div>

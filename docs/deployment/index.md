@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 部署指南
-description: EdgeX 部署文档 — 集成指南、EdgeOS 部署与多从站配置
+description: edgeCore 部署文档 — 集成指南、EdgeOS 部署与多从站配置
 hero_eyebrow: Deployment
-hero_lead: EdgeX 部署文档 — 集成指南、快速参考、EdgeOS 部署清单、多从站配置与项目交付。
+hero_lead: edgeCore 部署文档 — 集成指南、快速参考、EdgeOS 部署清单、多从站配置与项目交付。
 hero_buttons:
   - text: 集成指南
     url: INTEGRATION_GUIDE.html

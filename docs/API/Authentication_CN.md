@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 认证 API
-description: EdgeX 认证 API 文档（中文）
+description: edgeCore 认证 API 文档（中文）
 ---
 
 # 认证 API (Authentication)

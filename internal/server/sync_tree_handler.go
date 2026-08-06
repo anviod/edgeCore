@@ -3,7 +3,7 @@ package server
 import (
 	"strings"
 
-	syncpkg "github.com/anviod/edgex/internal/sync"
+	syncpkg "github.com/anviod/edgeCore/internal/sync"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"

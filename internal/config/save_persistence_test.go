@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 // runWithTimeout 执行 fn，若超过 d 仍未结束则判定为死锁并使测试失败。

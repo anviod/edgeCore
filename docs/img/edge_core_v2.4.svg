@@ -13,7 +13,7 @@
   <rect width="1200" height="1000" fill="#fcfcfd" />
   
   <g transform="translate(50, 60)">
-    <text x="550" y="-20" text-anchor="middle" font-family="PingFang SC, monospace" font-size="20" font-weight="bold" fill="#1e293b">EdgeX_OS 边缘计算集成架构 (V2.4.0)</text>
+    <text x="550" y="-20" text-anchor="middle" font-family="PingFang SC, monospace" font-size="20" font-weight="bold" fill="#1e293b">edgeCore_OS 边缘计算集成架构 (V2.4.0)</text>
     
     <rect x="0" y="20" width="280" height="150" fill="none" stroke="#0ea5e9" stroke-width="1.5" stroke-dasharray="4,2"/>
     <text x="10" y="15" font-family="PingFang SC, monospace" font-size="12" fill="#0ea5e9" font-weight="bold">01 数据采集层 (Ingestion)</text>

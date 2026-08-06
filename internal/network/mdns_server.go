@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // MDNSServer manages mDNS services.
@@ -149,7 +149,7 @@ func (s *MDNSServer) Start(cfg model.HostnameConfig) error {
 	}
 
 	if cfg.Name == "" {
-		cfg.Name = "edgex"
+		cfg.Name = "edgeCore"
 		s.status.Hostname = cfg.Name
 	}
 
@@ -181,7 +181,7 @@ func (s *MDNSServer) Start(cfg model.HostnameConfig) error {
 		Instance: cfg.Name,
 		Type:     "_gateway._tcp",
 		Port:     gwPort,
-		TXT:      []string{"model=edgex", "version=1.0"},
+		TXT:      []string{"model=edgeCore", "version=1.0"},
 	})
 
 	responder, err := newMDNSResponder(hostName, ips, services, ifaces)

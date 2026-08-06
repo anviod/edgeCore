@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Arco dark theme essentials (token-driven, low noise)
+ * edgeCore v3.0 — Arco dark theme essentials (token-driven, low noise)
  */
 
 .dark-theme .arco-table .arco-table-tbody .arco-table-tr {
@@ -48,14 +48,14 @@
 .dark-theme .saas-table .arco-btn-text.arco-btn-status-danger:not(:disabled):hover,
 .dark-theme .page-shell .arco-table .arco-btn-text.arco-btn-status-danger:not(:disabled):hover {
   background: rgba(220, 38, 38, 0.12) !important;
-  color: var(--edgex-error) !important;
+  color: var(--edgeCore-error) !important;
 }
 
 .dark-theme .arco-input-wrapper,
 .dark-theme .arco-select-view-single,
 .dark-theme .arco-textarea-wrapper,
 .dark-theme .arco-input-number {
-  background-color: var(--edgex-surface-subtle) !important;
+  background-color: var(--edgeCore-surface-subtle) !important;
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
 }

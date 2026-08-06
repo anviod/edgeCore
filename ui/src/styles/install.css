@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Install wizard (all steps)
+ * edgeCore v3.0 — Install wizard (all steps)
  * Scoped under .install-wrapper to avoid global conflicts
  */
 
@@ -116,8 +116,8 @@
 
 .install-wrapper .step.done .step-number {
   background: rgba(22, 163, 74, 0.1);
-  border-color: var(--edgex-success);
-  color: var(--edgex-success);
+  border-color: var(--edgeCore-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .step-label {
@@ -132,7 +132,7 @@
 }
 
 .install-wrapper .step.done .step-label {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .step-divider {
@@ -200,11 +200,11 @@
 }
 
 .install-wrapper .status.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .status.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .form-hint {
@@ -214,11 +214,11 @@
 }
 
 .install-wrapper .form-hint.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .form-hint.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .password-rules {
@@ -248,7 +248,7 @@
 }
 
 .install-wrapper .rule.pass {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
   background: rgba(22, 163, 74, 0.06);
   border-color: rgba(22, 163, 74, 0.2);
 }
@@ -283,7 +283,7 @@
   background: rgba(239, 68, 68, 0.04);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--radius-sm);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   font-size: 13px;
 }
 
@@ -401,18 +401,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .install-complete-icon.install-fail-icon {
   background: rgba(220, 38, 38, 0.08);
   border-color: rgba(220, 38, 38, 0.25);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .install-complete-icon.install-fail-icon svg,
 .install-wrapper .install-complete-icon.install-fail-icon .arco-icon {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .install-complete-icon svg,
@@ -420,7 +420,7 @@
   width: 40px;
   height: 40px;
   font-size: 40px;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .install-complete-title {

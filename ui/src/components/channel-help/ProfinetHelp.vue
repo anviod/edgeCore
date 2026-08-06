@@ -3,14 +3,14 @@
     <header class="help-doc__hero">
       <span class="protocol-tag protocol-tag--accent">Profinet IO</span>
       <p class="help-doc__lead">
-        PROFINET IO 工业以太网协议，EdgeX 作为 IO 控制器通过 TCP（端口 34964）对 IO 设备进行非循环读写。
+        PROFINET IO 工业以太网协议，edgeCore 作为 IO 控制器通过 TCP（端口 34964）对 IO 设备进行非循环读写。
       </p>
     </header>
     <div class="help-doc__sections">
       <ChannelHelpBlock title="适用场景" text="西门子及兼容 PROFINET IO 的现场设备、远程 IO 模块数据采集与反控。" />
       <ChannelHelpBlock title="部署注意">
         <p class="help-doc__text">
-          PROFINET IO 实时报文基于以太网帧传输，需将 EdgeX 部署在物理网关上并绑定真实网卡，不建议在 Docker 或虚拟机中使用。
+          PROFINET IO 实时报文基于以太网帧传输，需将 edgeCore 部署在物理网关上并绑定真实网卡，不建议在 Docker 或虚拟机中使用。
         </p>
       </ChannelHelpBlock>
       <ChannelHelpBlock title="通道配置">
@@ -81,7 +81,7 @@ const addressExamples = [
 ]
 
 const faqItems = [
-  { question: '连接失败？', answer: '确认设备 IP 可达、端口 34964 开放，且 EdgeX 已绑定正确的物理网卡。' },
+  { question: '连接失败？', answer: '确认设备 IP 可达、端口 34964 开放，且 edgeCore 已绑定正确的物理网卡。' },
   { question: '读取值为 Bad？', answer: '检查槽号/子槽号/索引是否与 GSD 或设备手册一致，数据类型与字节长度匹配。' },
   { question: 'Docker 中无法通信？', answer: 'PROFINET IO 需直接访问物理网卡，请使用裸机或 host 网络模式部署。' },
 ]

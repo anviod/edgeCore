@@ -3,7 +3,7 @@ package ethernetip
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	go_ethernet_ip "github.com/anviod/ethernet-ip"
 )

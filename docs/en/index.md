@@ -1,13 +1,13 @@
 ---
 layout: section-index
-title: EdgeX Documentation (English)
-description: English documentation hub for EdgeX industrial edge gateway — product overview, architecture, drivers, and testing
+title: edgeCore Documentation (English)
+description: English documentation hub for edgeCore industrial edge gateway — product overview, architecture, drivers, and testing
 hero_eyebrow: Expert Knowledge Base
-hero_title: EdgeX Documentation (English)
-hero_lead: English entry for EdgeX industrial edge gateway. Primary technical content is maintained in Chinese; this hub mirrors README.en and links to published Pages.
+hero_title: edgeCore Documentation (English)
+hero_lead: English entry for edgeCore industrial edge gateway. Primary technical content is maintained in Chinese; this hub mirrors README.en and links to published Pages.
 hero_buttons:
   - text: README.en (GitHub)
-    url: https://github.com/anviod/edgex/blob/dev/README.en.md
+    url: https://github.com/anviod/edgeCore/blob/dev/README.en.md
     style: primary
   - text: Home (中文)
     url: ../index.html
@@ -30,7 +30,7 @@ Industrial Edge Gateway runs at the industrial edge to bridge **OT devices ↔ I
 - **Open integration**: cloud platforms, SCADA, and enterprise apps with reverse write/control
 - **Industrial-grade stability**: built-in metric gates, Soak regression, and CI five-gate verification
 
-Full narrative: [README.en.md](https://github.com/anviod/edgex/blob/dev/README.en.md) on GitHub. Concise product page: [PRODUCT](../guide/PRODUCT.html).
+Full narrative: [README.en.md](https://github.com/anviod/edgeCore/blob/dev/README.en.md) on GitHub. Concise product page: [PRODUCT](../guide/PRODUCT.html).
 
 ## Product Advantages
 
@@ -84,5 +84,5 @@ See [Southbound Driver Test Report](../testing/southbound-driver-test-report.htm
 ## Related
 
 - [中文首页](../index.html)
-- [README.md](https://github.com/anviod/edgex/blob/dev/README.md)
-- [README.en.md](https://github.com/anviod/edgex/blob/dev/README.en.md)
+- [README.md](https://github.com/anviod/edgeCore/blob/dev/README.md)
+- [README.en.md](https://github.com/anviod/edgeCore/blob/dev/README.en.md)

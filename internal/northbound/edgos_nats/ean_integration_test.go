@@ -7,9 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
 	nats "github.com/nats-io/nats.go"
 	"github.com/stretchr/testify/require"
 )
@@ -18,9 +18,9 @@ const natsURL = "nats://127.0.0.1:4222"
 
 type stubSB struct{}
 
-func (stubSB) GetChannels() []model.Channel                { return nil }
-func (stubSB) GetChannelDevices(string) []model.Device     { return nil }
-func (stubSB) GetDevice(string, string) *model.Device      { return nil }
+func (stubSB) GetChannels() []model.Channel                 { return nil }
+func (stubSB) GetChannelDevices(string) []model.Device      { return nil }
+func (stubSB) GetDevice(string, string) *model.Device       { return nil }
 func (stubSB) WritePoint(string, string, string, any) error { return fmt.Errorf("no device") }
 func (stubSB) GetDevicePoints(string, string) ([]model.PointData, error) {
 	return nil, fmt.Errorf("no device")

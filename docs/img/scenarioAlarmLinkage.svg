@@ -47,7 +47,7 @@
   
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="title">告警安全联动：温度越限监控与故障自动化通道响应系统</text>
-    <text y="24" class="subtitle">EdgeX 边缘计算网关 · 闭环控制逻辑横向单条直线全对齐零交叉设计</text>
+    <text y="24" class="subtitle">edgeCore 边缘计算网关 · 闭环控制逻辑横向单条直线全对齐零交叉设计</text>
   </g>
 
   <g transform="translate(70, 0)">

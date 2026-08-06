@@ -1,6 +1,6 @@
 # Industrial Edge Gateway
 
-[中文文档](README.md) | [Documentation Site](https://anviod.github.io/edgex/)
+[中文文档](README.md) | [Documentation Site](https://anviod.github.io/edgeCore/)
 
 Industrial Edge Gateway is a lightweight industrial edge computing gateway for manufacturing, energy, building automation, and other field deployments. The backend is Go; the management UI is Vue 3 + Vuetify.
 
@@ -16,21 +16,12 @@ Industrial Edge Gateway runs at the industrial edge to bridge **OT devices ↔ I
 
 > Designed for the industrial field, built on stability-first principles, unified architecture, and long-term maintainability — a future-ready industrial edge computing platform.
 
-See [Product Advantages](#product-advantages) below; concise guide: [PRODUCT.md](docs/guide/PRODUCT.md); full details in the [Product Guide (中文)](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#产品优势) ([source](docs/guide/产品说明.md#产品优势)).
+See [Product Advantages](#product-advantages) below; concise guide: [PRODUCT.md](docs/guide/PRODUCT.md); full details in the [Product Guide (中文)](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#产品优势) ([source](docs/guide/产品说明.md#产品优势)).
 
-## Why EdgeX?
-
-Every industrial site holds devices and data still waiting to be connected — different protocols, vintages, and vendors, quietly isolated on the OT side. They are unrealized potential: valuable, but not yet visible to IT.
-
-We call that unknown **X**.
-
-**Edge** is where they live: control panels on the line, building RIO rooms, field cabinets at the substation — the closest point to the data source and the right place to decide. **X** is the convergence point on site: multi-protocol access, edge rules, and the first real dialogue between OT and IT.
-
-**EdgeX** is not just two letters stitched together. It is **Edge + X — the convergence of unrealized potential at the industrial edge**: the "X factor" deployed on site — giving silent equipment a voice, turning edge intelligence into reliable industrial capability, and backing it with SLA and Soak long-stability verification so that capability becomes an observable, verifiable engineering commitment.
 
 ## Product Advantages
 
-**Industrial-grade stability** is EdgeX's core differentiator: delivering rich functionality while sustaining SLA in production through built-in metric gates, Soak long-stability regression, and CI five-gate verification.
+**Industrial-grade stability** is edgeCore's core differentiator: delivering rich functionality while sustaining SLA in production through built-in metric gates, Soak long-stability regression, and CI five-gate verification.
 
 | Capability | Core Value | Key Metrics / Deliverables |
 | :--- | :--- | :--- |
@@ -40,11 +31,11 @@ We call that unknown **X**.
 | **Edge intelligence** | rule engine + virtual shadow derived computation | cross-device mapping · formula aggregation · local control linkage |
 | **Northbound integration** | multi-protocol cloud, SCADA, and enterprise connectivity | MQTT · Sparkplug B · OPC UA · BACnet · EdgeOS |
 
-Full details: [Product Guide — Product Advantages (中文)](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#产品优势) ([source](docs/guide/产品说明.md#产品优势)).
+Full details: [Product Guide — Product Advantages (中文)](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#产品优势) ([source](docs/guide/产品说明.md#产品优势)).
 
 ### Industrial-Grade SLA & Stability Verification
 
-Statistical SLA (not hard real-time PLC). Built-in gates and `GET /diagnostics/scan-engine` for observability. Verification chain: **runtime metric monitoring** → **diagnostics API** → **CI five-gate regression** → **Soak long-stability verification**. Thresholds, 10k-tag benchmark, Soak reports, and deployment guidance: [Product Guide — Industrial SLA (中文)](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#工业级-sla-与稳定性验证) ([source](docs/guide/产品说明.md#工业级-sla-与稳定性验证)).
+Statistical SLA (not hard real-time PLC). Built-in gates and `GET /diagnostics/scan-engine` for observability. Verification chain: **runtime metric monitoring** → **diagnostics API** → **CI five-gate regression** → **Soak long-stability verification**. Thresholds, 10k-tag benchmark, Soak reports, and deployment guidance: [Product Guide — Industrial SLA (中文)](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#工业级-sla-与稳定性验证) ([source](docs/guide/产品说明.md#工业级-sla-与稳定性验证)).
 
 ### Lightweight Deployment
 
@@ -59,31 +50,31 @@ Statistical SLA (not hard real-time PLC). Built-in gates and `GET /diagnostics/s
 
 | Module | Description |
 | :--- | :--- |
-| **Southbound collection** | [Industrial protocols](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#丰富的工业协议支持) · [Scheduling & shadow](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#低延迟数据采集与处理) · [Collection optimization](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#智能采集优化) |
-| **Northbound reporting** | [Northbound integration](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#北向平台集成) |
-| **Virtual shadow** | [Virtual shadow devices](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#虚拟影子设备) |
-| **Edge computing** | [Rules & linkage](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#边缘规则与联动控制) |
+| **Southbound collection** | [Industrial protocols](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#丰富的工业协议支持) · [Scheduling & shadow](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#低延迟数据采集与处理) · [Collection optimization](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#智能采集优化) |
+| **Northbound reporting** | [Northbound integration](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#北向平台集成) |
+| **Virtual shadow** | [Virtual shadow devices](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#虚拟影子设备) |
+| **Edge computing** | [Rules & linkage](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#边缘规则与联动控制) |
 | **System management** | Vue 3 admin UI · JWT / LDAP · install wizard · config.db · logging · WebSocket live push |
 | **Quality assurance** | [Industrial SLA](#industrial-grade-sla--stability-verification) · [Lightweight deployment](#lightweight-deployment) |
 
 ## Documentation
 
-Runtime details — architecture, component responsibilities, data paths — see the [documentation site](https://anviod.github.io/edgex/) (local sources in `docs/`):
+Runtime details — architecture, component responsibilities, data paths — see the [documentation site](https://anviod.github.io/edgeCore/) (local sources in `docs/`):
 
 | Document | Description |
 | :--- | :--- |
-| [Architecture](https://anviod.github.io/edgex/architecture/index.html) · [source](docs/architecture/index.md) | ScanEngine scheduling kernel, ShadowCore, system diagrams |
-| [Architecture Overview (EN)](https://anviod.github.io/edgex/en/architecture-overview.html) · [source](docs/en/architecture-overview.md) | English hot-path architecture summary |
+| [Architecture](https://anviod.github.io/edgeCore/architecture/index.html) · [source](docs/architecture/index.md) | ScanEngine scheduling kernel, ShadowCore, system diagrams |
+| [Architecture Overview (EN)](https://anviod.github.io/edgeCore/en/architecture-overview.html) · [source](docs/en/architecture-overview.md) | English hot-path architecture summary |
 | [Product Guide (EN)](docs/guide/PRODUCT.md) · [产品手册](docs/guide/PRODUCT.zh-CN.md) | Concise product positioning |
-| [Product Guide (中文)](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [source](docs/guide/产品说明.md) | capabilities, SLA metrics, feature details |
-| [Changelog (更新记录)](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95) · [source](docs/guide/产品说明.md#更新记录) | Jul 2026 highlights: EtherCAT M1, drivers 22/22, Mac 10k-tag retest, AI Copilot MVP |
-| [Edge Gateway Architecture Overview (中文)](https://anviod.github.io/edgex/edge/%E8%BE%B9%E7%BC%98%E7%BD%91%E5%85%B3%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E6%80%BB%E8%A7%88.html) · [source](docs/edge/边缘网关架构设计总览.md) | authoritative component layout and hot path (v3.0) |
+| [Product Guide (中文)](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [source](docs/guide/产品说明.md) | capabilities, SLA metrics, feature details |
+| [Changelog (更新记录)](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html#%E6%9B%B4%E6%96%B0%E8%AE%B0%E5%BD%95) · [source](docs/guide/产品说明.md#更新记录) | Jul 2026 highlights: EtherCAT M1, drivers 22/22, Mac 10k-tag retest, AI Copilot MVP |
+| [Edge Gateway Architecture Overview (中文)](https://anviod.github.io/edgeCore/edge/%E8%BE%B9%E7%BC%98%E7%BD%91%E5%85%B3%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E6%80%BB%E8%A7%88.html) · [source](docs/edge/边缘网关架构设计总览.md) | authoritative component layout and hot path (v3.0) |
 | [User Manual (EN)](docs/guide/USER_MANUAL.en.md) · [用户手册](docs/guide/USER_MANUAL.md) | protocols, deploy, ops, best practices |
-| [Southbound Driver Matrix](https://anviod.github.io/edgex/drivers/index.html) · [source](docs/drivers/index.md) | 13 protocol drivers and development standards |
-| [Development plan](https://anviod.github.io/edgex/development_plan/index.html) · [source](docs/development_plan/index.md) | Q3/Q4 delivery tracking |
-| [Testing & Verification](https://anviod.github.io/edgex/testing/index.html) · [source](docs/testing/index.md) | SLA benchmarks, Soak, and regression reports |
+| [Southbound Driver Matrix](https://anviod.github.io/edgeCore/drivers/index.html) · [source](docs/drivers/index.md) | 13 protocol drivers and development standards |
+| [Development plan](https://anviod.github.io/edgeCore/development_plan/index.html) · [source](docs/development_plan/index.md) | Q3/Q4 delivery tracking |
+| [Testing & Verification](https://anviod.github.io/edgeCore/testing/index.html) · [source](docs/testing/index.md) | SLA benchmarks, Soak, and regression reports |
 
-English driver matrix: [online](https://anviod.github.io/edgex/drivers/index_en.html) · [source](docs/drivers/index_en.md) · English docs hub: [online](https://anviod.github.io/edgex/en/index.html) · [source](docs/en/index.md)
+English driver matrix: [online](https://anviod.github.io/edgeCore/drivers/index_en.html) · [source](docs/drivers/index_en.md) · English docs hub: [online](https://anviod.github.io/edgeCore/en/index.html) · [source](docs/en/index.md)
 
 ---
 
@@ -104,19 +95,19 @@ goreleaser release --snapshot --clean
 
 **Build pipeline** (`before.hooks`): `go mod tidy` → `npm run build --prefix ./ui`
 
-**Cross-compile targets** (`CGO_ENABLED=0`, entry `./cmd/main.go`, binary `edgex`): Linux amd64/arm64/arm/v7; Windows amd64.
+**Cross-compile targets** (`CGO_ENABLED=0`, entry `./cmd/main.go`, binary `edgeCore`): Linux amd64/arm64/arm/v7; Windows amd64.
 
 Artifacts under `./dist/`: tar.gz bundles, `.deb` packages, SHA256SUMS.
 
 #### Manual build (development / single platform)
 
 ```bash
-git clone https://github.com/anviod/edgex.git
-cd edgex
+git clone https://github.com/anviod/edgeCore.git
+cd edgeCore
 go mod tidy
 
 # Backend: static build, no CGO
-CGO_ENABLED=0 go build -o edgex ./cmd/main.go
+CGO_ENABLED=0 go build -o edgeCore ./cmd/main.go
 
 # Frontend (recommended for production; served from ui/dist)
 cd ui && npm install && npm run build && cd ..
@@ -127,27 +118,27 @@ cd ui && npm install && npm run build && cd ..
 | Path | Description |
 | :--- | :--- |
 | `data/` | runtime data; `config.db` stores config (install wizard on first start if empty) |
-| `logs/` | runtime logs (default `logs/gateway.edgex.log`) |
+| `logs/` | runtime logs (default `logs/gateway.edgeCore.log`) |
 | `conf/` | legacy YAML for one-time migration (`-conf` flag, default `./conf`) |
 
 ### 3. Start
 
 ```bash
 # Default config dir ./conf; HTTP port from server config (commonly 8080/8082)
-./edgex
+./edgeCore
 
 # Specify legacy YAML migration directory
-./edgex -conf ./conf/
+./edgeCore -conf ./conf/
 ```
 
 Open `http://localhost:<port>` for the admin UI. Default credentials via install wizard or `conf/users.yaml`.
 
 ### 4. Production References
 
-- **systemd, firewall, initialization**: [User Manual — Deployment (中文)](https://anviod.github.io/edgex/guide/USER_MANUAL.html#部署流程) ([source](docs/guide/USER_MANUAL.md#部署流程))
-- **EdgeOS integration**: [EdgeOS Quick Start](https://anviod.github.io/edgex/deployment/edgeos-quickstart.html) ([source](docs/deployment/edgeos-quickstart.md))
-- **Multi-slave Modbus**: [Multi-Slave Quick Start](https://anviod.github.io/edgex/deployment/QUICK_START_MULTI_SLAVE.html) ([source](docs/deployment/QUICK_START_MULTI_SLAVE.md))
-- **Full deployment index**: [GitHub Pages](https://anviod.github.io/edgex/deployment/) · [source](docs/deployment/index.md)
+- **systemd, firewall, initialization**: [User Manual — Deployment (中文)](https://anviod.github.io/edgeCore/guide/USER_MANUAL.html#部署流程) ([source](docs/guide/USER_MANUAL.md#部署流程))
+- **EdgeOS integration**: [EdgeOS Quick Start](https://anviod.github.io/edgeCore/deployment/edgeos-quickstart.html) ([source](docs/deployment/edgeos-quickstart.md))
+- **Multi-slave Modbus**: [Multi-Slave Quick Start](https://anviod.github.io/edgeCore/deployment/QUICK_START_MULTI_SLAVE.html) ([source](docs/deployment/QUICK_START_MULTI_SLAVE.md))
+- **Full deployment index**: [GitHub Pages](https://anviod.github.io/edgeCore/deployment/) · [source](docs/deployment/index.md)
 
 ---
 
@@ -155,16 +146,16 @@ Open `http://localhost:<port>` for the admin UI. Default credentials via install
 
 | Category | Link |
 | :--- | :--- |
-| Documentation site (GitHub Pages) | [https://anviod.github.io/edgex/](https://anviod.github.io/edgex/) |
-| **Development principles & acceptance** | [online](https://anviod.github.io/edgex/DEVELOPMENT_PRINCIPLES.html) · [source](docs/DEVELOPMENT_PRINCIPLES.md) |
-| **Roadmap** | [online](https://anviod.github.io/edgex/ROADMAP.html) · [source](docs/ROADMAP.md) |
-| **Release gates** | [online](https://anviod.github.io/edgex/RELEASE_GATE.html) · [source](docs/RELEASE_GATE.md) |
-| Driver docs | [online](https://anviod.github.io/edgex/drivers/index.html) · [source](docs/drivers/index.md) |
-| Deployment guides | [online](https://anviod.github.io/edgex/deployment/) · [source](docs/deployment/index.md) |
-| Architecture | [online](https://anviod.github.io/edgex/architecture/index.html) · [source](docs/architecture/index.md) |
-| Development plan / TODO | [online](https://anviod.github.io/edgex/development_plan/index.html) · [TODO index](https://anviod.github.io/edgex/TODO/index.html) · [source](docs/TODO/index.md) |
-| Testing & verification | [online](https://anviod.github.io/edgex/testing/index.html) · [source](docs/testing/index.md) |
-| Operations reference | [online](https://anviod.github.io/edgex/operations/index.html) · [source](docs/operations/index.md) |
+| Documentation site (GitHub Pages) | [https://anviod.github.io/edgeCore/](https://anviod.github.io/edgeCore/) |
+| **Development principles & acceptance** | [online](https://anviod.github.io/edgeCore/DEVELOPMENT_PRINCIPLES.html) · [source](docs/DEVELOPMENT_PRINCIPLES.md) |
+| **Roadmap** | [online](https://anviod.github.io/edgeCore/ROADMAP.html) · [source](docs/ROADMAP.md) |
+| **Release gates** | [online](https://anviod.github.io/edgeCore/RELEASE_GATE.html) · [source](docs/RELEASE_GATE.md) |
+| Driver docs | [online](https://anviod.github.io/edgeCore/drivers/index.html) · [source](docs/drivers/index.md) |
+| Deployment guides | [online](https://anviod.github.io/edgeCore/deployment/) · [source](docs/deployment/index.md) |
+| Architecture | [online](https://anviod.github.io/edgeCore/architecture/index.html) · [source](docs/architecture/index.md) |
+| Development plan / TODO | [online](https://anviod.github.io/edgeCore/development_plan/index.html) · [TODO index](https://anviod.github.io/edgeCore/TODO/index.html) · [source](docs/TODO/index.md) |
+| Testing & verification | [online](https://anviod.github.io/edgeCore/testing/index.html) · [source](docs/testing/index.md) |
+| Operations reference | [online](https://anviod.github.io/edgeCore/operations/index.html) · [source](docs/operations/index.md) |
 
 ---
 
@@ -185,7 +176,7 @@ Default admin port depends on `server` config; BACnet requires UDP 47808 open.
 ## Build & Tests
 
 ```bash
-CGO_ENABLED=0 go build -o edgex ./cmd/main.go
+CGO_ENABLED=0 go build -o edgeCore ./cmd/main.go
 
 # Short gate (see test/README.md for soak / Q3 benchmarks)
 make test-short
@@ -197,7 +188,7 @@ Test assets and maintenance rules: [test/README.md](test/README.md) · Reports: 
 
 ## Related Documents
 
-- **Product Guide (中文)**: [online](https://anviod.github.io/edgex/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [source](docs/guide/产品说明.md)
-- **User Manual**: [online](https://anviod.github.io/edgex/guide/USER_MANUAL.html) · [source](docs/guide/USER_MANUAL.md)
-- **Driver matrix**: [online](https://anviod.github.io/edgex/drivers/index.html) · [source](docs/drivers/index.md) · [English](https://anviod.github.io/edgex/drivers/index_en.html) · [source](docs/drivers/index_en.md)
+- **Product Guide (中文)**: [online](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [source](docs/guide/产品说明.md)
+- **User Manual**: [online](https://anviod.github.io/edgeCore/guide/USER_MANUAL.html) · [source](docs/guide/USER_MANUAL.md)
+- **Driver matrix**: [online](https://anviod.github.io/edgeCore/drivers/index.html) · [source](docs/drivers/index.md) · [English](https://anviod.github.io/edgeCore/drivers/index_en.html) · [source](docs/drivers/index_en.md)
 - **中文 README**: [README.md](README.md)

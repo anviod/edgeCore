@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/core"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/core"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 )
@@ -232,14 +232,14 @@ func (s *Server) handleEanDiscoveryAgents(c *fiber.Ctx) error {
 	snap := rt.Registry().Snapshot()
 
 	localAgent := fiber.Map{
-		"id":                 agent.ID,
-		"kind":               string(agent.Kind),
-		"version":            agent.Version,
-		"status":             string(agent.Status),
-		"transport":          string(agent.Transport),
-		"capabilities_count": snap.CapabilitiesCount,
+		"id":                    agent.ID,
+		"kind":                  string(agent.Kind),
+		"version":               agent.Version,
+		"status":                string(agent.Status),
+		"transport":             string(agent.Transport),
+		"capabilities_count":    snap.CapabilitiesCount,
 		"last_seen_seconds_ago": maxInt(0, int((time.Now().UnixMilli()-snap.LastSeen)/1000)),
-		"capabilities":        caps,
+		"capabilities":          caps,
 	}
 
 	return c.JSON(fiber.Map{
@@ -307,17 +307,17 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 			if !nbAvailable && ch.Enable {
 				nbAvailable = true
 				nbChannel = fiber.Map{
-					"id":                  ch.ID,
-					"name":                ch.Name,
-					"type":                "edgeOS(MQTT)",
-					"broker":              ch.Broker,
-					"node_id":             ch.NodeID,
-					"enabled":             ch.Enable,
-					"status":              status,
-					"ean_enabled":         ch.EANEnabled,
-					"ean_heartbeat_sec":   ch.EANHeartbeatSec,
+					"id":                     ch.ID,
+					"name":                   ch.Name,
+					"type":                   "edgeOS(MQTT)",
+					"broker":                 ch.Broker,
+					"node_id":                ch.NodeID,
+					"enabled":                ch.Enable,
+					"status":                 status,
+					"ean_enabled":            ch.EANEnabled,
+					"ean_heartbeat_sec":      ch.EANHeartbeatSec,
 					"ean_event_auto_publish": ch.EANEventAutoPublish,
-					"v1_command_enabled":  ch.V1CommandEnabled,
+					"v1_command_enabled":     ch.V1CommandEnabled,
 				}
 			}
 		}
@@ -333,17 +333,17 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 			if ch.Enable {
 				nbAvailable = true
 				nbChannel = fiber.Map{
-					"id":                  ch.ID,
-					"name":                ch.Name,
-					"type":                "edgeOS(NATS)",
-					"url":                 ch.URL,
-					"node_id":             ch.NodeID,
-					"enabled":             ch.Enable,
-					"status":              status,
-					"ean_enabled":         ch.EANEnabled,
-					"ean_heartbeat_sec":   ch.EANHeartbeatSec,
+					"id":                     ch.ID,
+					"name":                   ch.Name,
+					"type":                   "edgeOS(NATS)",
+					"url":                    ch.URL,
+					"node_id":                ch.NodeID,
+					"enabled":                ch.Enable,
+					"status":                 status,
+					"ean_enabled":            ch.EANEnabled,
+					"ean_heartbeat_sec":      ch.EANHeartbeatSec,
 					"ean_event_auto_publish": ch.EANEventAutoPublish,
-					"v1_command_enabled":  ch.V1CommandEnabled,
+					"v1_command_enabled":     ch.V1CommandEnabled,
 				}
 			}
 		}
@@ -354,10 +354,10 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 			"code":    "0",
 			"message": "success",
 			"data": fiber.Map{
-				"enabled":             false,
-				"transport":           "mqtt",
-				"heartbeat_sec":       60,
-				"event_auto_publish":  true,
+				"enabled":              false,
+				"transport":            "mqtt",
+				"heartbeat_sec":        60,
+				"event_auto_publish":   true,
 				"northbound_available": nbAvailable,
 				"northbound_channel":   nbChannel,
 			},
@@ -385,7 +385,7 @@ func (s *Server) handleEanSettings(c *fiber.Ctx) error {
 
 // eanEventRingOnce / eanEventRingInstance 确保环形缓冲区单例
 var (
-	eanEventRingOnce    sync.Once
+	eanEventRingOnce     sync.Once
 	eanEventRingInstance *eanEventRing
 )
 
@@ -426,7 +426,7 @@ func (s *Server) captureInvokeEvent(rt *capability.Runtime, req capability.Invok
 func (s *Server) captureShadowEvent(deviceID, pointID string, value, previous any) {
 	ring := s.ensureEanEventRing()
 	rt := s.ensureCapabilityRuntime()
-	agentID := "edgex"
+	agentID := "edgeCore"
 	if rt != nil {
 		agentID = rt.Registry().AgentID()
 	}

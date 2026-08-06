@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func newTestEdgeComputeManager(t *testing.T) *EdgeComputeManager {

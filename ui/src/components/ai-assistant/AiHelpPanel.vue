@@ -62,7 +62,7 @@
           </div>
           <div class="ai-help-card">
             <strong>MCP 接入</strong>
-            <span>将 EdgeX 能力以 MCP 工具形式提供给外部 LLM 客户端。</span>
+            <span>将 edgeCore 能力以 MCP 工具形式提供给外部 LLM 客户端。</span>
           </div>
           <div class="ai-help-card">
             <strong>EAN 联合调试</strong>

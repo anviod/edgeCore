@@ -3,14 +3,14 @@
     <header class="help-doc__hero">
       <span class="protocol-tag protocol-tag--accent">EtherCAT</span>
       <p class="help-doc__lead">
-        EtherCAT 工业以太网现场总线，EdgeX 作为 EtherCAT 主站通过 UDP 多播（端口 0x88A4）对从站进行 PDO 过程数据采集与 CoE SDO 参数访问。
+        EtherCAT 工业以太网现场总线，edgeCore 作为 EtherCAT 主站通过 UDP 多播（端口 0x88A4）对从站进行 PDO 过程数据采集与 CoE SDO 参数访问。
       </p>
     </header>
     <div class="help-doc__sections">
       <ChannelHelpBlock title="适用场景" text="Beckhoff 及兼容 EtherCAT 的伺服驱动器、IO 耦合器、传感器模块的数据采集与反控。" />
       <ChannelHelpBlock title="部署注意">
         <p class="help-doc__text">
-          EtherCAT 主站基于原始以太网帧（UDP 多播），需将 EdgeX 部署在物理网关上并绑定真实网卡，不支持 Docker 或虚拟机环境。实时性要求高的场景需评估网卡白名单与内核实时补丁。
+          EtherCAT 主站基于原始以太网帧（UDP 多播），需将 edgeCore 部署在物理网关上并绑定真实网卡，不支持 Docker 或虚拟机环境。实时性要求高的场景需评估网卡白名单与内核实时补丁。
         </p>
       </ChannelHelpBlock>
       <ChannelHelpBlock title="通道配置">

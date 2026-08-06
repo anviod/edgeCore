@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 const DefaultMaxHistoryRecords = 1000

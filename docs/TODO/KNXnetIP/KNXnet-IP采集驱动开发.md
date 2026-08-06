@@ -4,9 +4,9 @@
 
 ### 1.1 协议简介
 
-KNXnet/IP 是基于标准 IP 网络（以太网、Wi-Fi）的 KNX 隧道协议，用于楼宇与家居自动化。EdgeX 本驱动作为 **KNXnet/IP 隧道客户端**，通过 KNX IP 接口（网关）访问总线上的组地址（Group Address, GA）。
+KNXnet/IP 是基于标准 IP 网络（以太网、Wi-Fi）的 KNX 隧道协议，用于楼宇与家居自动化。edgeCore 本驱动作为 **KNXnet/IP 隧道客户端**，通过 KNX IP 接口（网关）访问总线上的组地址（Group Address, GA）。
 
-典型部署：EdgeX 网关与 KNX IP 接口在同一局域网，使用 **隧道模式（Tunneling）** 建立连接，发送 `GroupValueRead` / `GroupValueWrite` 采集或反控点位。
+典型部署：edgeCore 网关与 KNX IP 接口在同一局域网，使用 **隧道模式（Tunneling）** 建立连接，发送 `GroupValueRead` / `GroupValueWrite` 采集或反控点位。
 
 ### 1.2 功能定位
 
@@ -32,7 +32,7 @@ KNXnet/IP 是基于标准 IP 网络（以太网、Wi-Fi）的 KNX 隧道协议�
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      EdgeX Gateway                              │
+│                      edgeCore Gateway                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                    Device Service Layer                         │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
@@ -148,7 +148,7 @@ main/middle/sub,area.line.device,BIT
 ### 4.3 连接流程
 
 ```
-EdgeX                         KNX IP 接口
+edgeCore                         KNX IP 接口
   |--- CONNECT_REQUEST -------->|
   |<-- CONNECT_RESPONSE --------|  分配 Channel ID
   |--- TUNNELING_REQUEST ------>|  GroupValueRead/Write
@@ -187,7 +187,7 @@ func init() {
 `cmd/main.go` 中 blank import：
 
 ```go
-_ "github.com/anviod/edgex/internal/driver/knxnetip"
+_ "github.com/anviod/edgeCore/internal/driver/knxnetip"
 ```
 
 ### 6.2 配置示例

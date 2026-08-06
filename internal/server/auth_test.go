@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -243,5 +243,3 @@ func TestHandleChangePassword_InvalidNonce(t *testing.T) {
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&result))
 	assert.Equal(t, "1", result["code"])
 }
-
-

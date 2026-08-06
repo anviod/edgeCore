@@ -8,9 +8,9 @@ layout: default
 
 | 文档 | 说明 |
 | :--- | :--- |
-| [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html) | MQTT/NATS 协议 |
+| [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html) | MQTT/NATS 协议 |
 | [EdgeOS 北向配置](edgeos-northbound.html) | 后端配置项 |
 | [样式参考](../operations/样式参考.html) | 北向表单 UI 规范 |
 | [北向配置 API](../API/Northbound_Configuration_CN.html) | REST API |
 
-详见：[EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)
+详见：[edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)

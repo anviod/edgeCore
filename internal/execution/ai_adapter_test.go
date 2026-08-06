@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent"
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
+	"github.com/anviod/edgeCore/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
 	"github.com/stretchr/testify/require"
 )
 

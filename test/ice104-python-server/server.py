@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Headless IEC 60870-5-104 server for EdgeX ice104 driver M1 integration tests.
+"""Headless IEC 60870-5-104 server for edgeCore ice104 driver M1 integration tests.
 
 Uses Fraunhofer c104 (iec104-python / lib60870-C bindings, GPLv3).
 Exposes M_ME_NA_1 IOA=1 CA=1 with normalized value 0.5 on TCP 2404.
@@ -31,7 +31,7 @@ NORMALIZED_VALUE = 0.5
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="EdgeX ice104 M1 test server (c104)")
+    parser = argparse.ArgumentParser(description="edgeCore ice104 M1 test server (c104)")
     parser.add_argument("--bind", default="127.0.0.1", help="listen address")
     parser.add_argument("--port", type=int, default=2404, help="TCP port")
     args = parser.parse_args()

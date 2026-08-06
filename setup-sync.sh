@@ -73,11 +73,10 @@ build_project() {
     print_step "2" "Building project..."
     
     print_info "Building for local (Windows)..."
-    go build -o bin/edgex.exe ./cmd/main.go
-    go build -o bin/sync-test.exe ./cmd/sync-test/main.go
+    go build -o bin/edgeCore.exe ./cmd/main.go
     
     print_info "Building for remote (Linux ARM64)..."
-    GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/edgex-linux-arm64 ./cmd/main.go
+    GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/edgeCore-linux-arm64 ./cmd/main.go
     GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -o bin/sync-test-linux-arm64 ./cmd/sync-test/main.go
     
     print_success "Build completed"
@@ -118,18 +117,18 @@ deploy_remote() {
     # Deploy
     print_info "Deploying files..."
     
-    ssh "$host" "mkdir -p /opt/edgex/{bin,conf,data,logs}"
+    ssh "$host" "mkdir -p /opt/edgeCore/{bin,conf,data,logs}"
     
-    scp bin/edgex-linux-arm64 "$host:/opt/edgex/bin/edgex"
-    scp bin/sync-test-linux-arm64 "$host:/opt/edgex/bin/sync-test"
-    scp -r conf/* "$host:/opt/edgex/conf/" 2>/dev/null || true
+    scp bin/edgeCore-linux-arm64 "$host:/opt/edgeCore/bin/edgeCore"
+    scp bin/sync-test-linux-arm64 "$host:/opt/edgeCore/bin/sync-test"
+    scp -r conf/* "$host:/opt/edgeCore/conf/" 2>/dev/null || true
     
-    ssh "$host" "chmod +x /opt/edgex/bin/*"
+    ssh "$host" "chmod +x /opt/edgeCore/bin/*"
     
     # Create service
     print_info "Creating systemd service..."
     ssh "$host" << EOF
-cat > /etc/systemd/system/edgex.service << 'SERVICE'
+cat > /etc/systemd/system/edgeCore.service << 'SERVICE'
 [Unit]
 Description=Edge Gateway Service
 After=network.target
@@ -137,8 +136,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/edgex
-ExecStart=/opt/edgex/bin/edgex -conf conf
+WorkingDirectory=/opt/edgeCore
+ExecStart=/opt/edgeCore/bin/edgeCore -conf conf
 Restart=on-failure
 RestartSec=10
 
@@ -147,8 +146,8 @@ WantedBy=multi-user.target
 SERVICE
 
 systemctl daemon-reload
-systemctl enable edgex
-systemctl restart edgex
+systemctl enable edgeCore
+systemctl restart edgeCore
 EOF
     
     print_success "Deployment completed"
@@ -203,7 +202,7 @@ show_status() {
     
     echo ""
     print_info "Remote nodes:"
-    ssh root@192.168.3.230 "systemctl is-active edgex" &>/dev/null && \
+    ssh root@192.168.3.230 "systemctl is-active edgeCore" &>/dev/null && \
         print_success "NODE-2@192.168.3.230: Running" || \
         print_error "NODE-2@192.168.3.230: Not running"
     
@@ -284,7 +283,7 @@ view_logs() {
             fi
             ;;
         2)
-            ssh root@192.168.3.230 "tail -f /opt/edgex/logs/edgex.log"
+            ssh root@192.168.3.230 "tail -f /opt/edgeCore/logs/edgeCore.log"
             ;;
         *)
             return
@@ -313,7 +312,7 @@ stop_all() {
     
     # Stop remote node
     print_info "Stopping remote node..."
-    ssh root@192.168.3.230 "systemctl stop edgex" 2>/dev/null || true
+    ssh root@192.168.3.230 "systemctl stop edgeCore" 2>/dev/null || true
     
     print_success "All nodes stopped"
 }

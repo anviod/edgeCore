@@ -4,7 +4,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestCollectIPv4AddressesLoopbackSkipped(t *testing.T) {
@@ -57,7 +57,7 @@ func TestMDNSServerStartRequiresIPs(t *testing.T) {
 
 	server := NewMDNSServer()
 	err = server.Start(model.HostnameConfig{
-		Name:       "edgex",
+		Name:       "edgeCore",
 		EnableMDNS: true,
 		HTTPPort:   8080,
 		Interfaces: []string{loName},

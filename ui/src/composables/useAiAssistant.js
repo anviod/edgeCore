@@ -1,6 +1,6 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 
-const STORAGE_KEY = 'edgex-ai-assistant'
+const STORAGE_KEY = 'edgeCore-ai-assistant'
 
 // MCP 连接状态（全局共享，供顶部按钮和悬浮 FAB 使用）
 const mcpConnected = ref(false)

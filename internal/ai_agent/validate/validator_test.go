@@ -3,7 +3,7 @@ package validate
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算SVG流程图绘制指南
-description: EdgeX 边缘计算SVG流程图绘制指南
+description: edgeCore 边缘计算SVG流程图绘制指南
 ---
 
 # 边缘计算SVG流程图绘制指南

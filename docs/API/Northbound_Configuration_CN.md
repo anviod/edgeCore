@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 北向配置 API
-description: EdgeX 北向配置 API 文档（中文）
+description: edgeCore 北向配置 API 文档（中文）
 ---
 
 # 北向配置 API (Northbound Configuration)
@@ -122,7 +122,7 @@ description: EdgeX 北向配置 API 文档（中文）
   "enable": true,
   "port": 47810,
   "device_id": 47810,
-  "device_name": "EdgeX-Gateway",
+  "device_name": "edgeCore-Gateway",
   "vendor_id": 999,
   "devices": {
     "2228316": { "enable": true },

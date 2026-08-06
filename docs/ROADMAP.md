@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 分阶段开发路线图
-description: EdgeX 工业边缘网关分阶段路线图 — 稳定性闭环、工业验证、性能优化与轻量化可观测
+description: edgeCore 工业边缘网关分阶段路线图 — 稳定性闭环、工业验证、性能优化与轻量化可观测
 version: v1.0
 date: 2026-07-12
 status: 现行
@@ -11,7 +11,7 @@ status: 现行
 
 > **工程铁律：** 任何性能优化不得以牺牲稳定性为代价；任何架构优化不得增加系统恢复复杂度。
 
-本文档定义 EdgeX 的**战略分阶段实施顺序**。各阶段有明确前置条件：**未完成 Phase 1，不得进入 Phase 3 性能优化；不得在稳定性封闭前优化确定性调度。**
+本文档定义 edgeCore 的**战略分阶段实施顺序**。各阶段有明确前置条件：**未完成 Phase 1，不得进入 Phase 3 性能优化；不得在稳定性封闭前优化确定性调度。**
 
 > 相关文档：
 > - [开发原则与验收标准](DEVELOPMENT_PRINCIPLES.html) — 优先级与量化验收
@@ -43,7 +43,7 @@ Phase 4  轻量化与可观测 ─────────────► HTTP/U
 | **3** | 性能优化 | 优化 | Phase 1 封闭 |
 | **4** | 轻量化与可观测 | 增强 | 可与 Phase 2/3 并行，不削弱 1 |
 
-> **2026-07 重点交付**：BACnet Server 北向从机模式（Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅通知），将 EdgeX 南向点位映射为 BACnet 标准对象对外暴露给 BMS/SCADA 主站。
+> **2026-07 重点交付**：BACnet Server 北向从机模式（Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅通知），将 edgeCore 南向点位映射为 BACnet 标准对象对外暴露给 BMS/SCADA 主站。
 
 ---
 
@@ -189,7 +189,7 @@ Phase 4  轻量化与可观测 ─────────────► HTTP/U
 
 ### 主体交付完成
 
-EdgeX **调度驱动南向采集 + 统计 SLA** 主体已交付：
+edgeCore **调度驱动南向采集 + 统计 SLA** 主体已交付：
 
 ```text
 ScanEngine（EDF + CB + SLA metrics + adaptive throttle）

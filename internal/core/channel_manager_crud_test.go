@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func setupMockChannel(t *testing.T, enable bool) (*ChannelManager, string) {

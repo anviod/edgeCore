@@ -1,7 +1,7 @@
 ---
 layout: section-index
 title: 设备驱动
-description: EdgeX 南向采集驱动文档 — Modbus、BACnet、OPC UA、S7、EtherNet/IP、FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT
+description: edgeCore 南向采集驱动文档 — Modbus、BACnet、OPC UA、S7、EtherNet/IP、FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT
 hero_eyebrow: Southbound Drivers
 hero_lead: 南向采集驱动的设计文档、测试报告、优化方案与故障分析 — 覆盖 Modbus、BACnet、OPC UA、S7、EtherNet/IP、Omron FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT 等工业协议。
 hero_buttons:

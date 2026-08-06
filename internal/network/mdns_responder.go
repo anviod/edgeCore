@@ -334,7 +334,7 @@ func (r *mdnsResponder) appendARecords(list []dns.RR, ttl uint32, flush bool) []
 func (r *mdnsResponder) announceLoop() {
 	defer r.wg.Done()
 
-	// Hostname A record announcements (critical for edgex.local resolution).
+	// Hostname A record announcements (critical for edgeCore.local resolution).
 	for i := 0; i < mdnsMulticastRepetitions; i++ {
 		resp := new(dns.Msg)
 		resp.MsgHdr.Response = true

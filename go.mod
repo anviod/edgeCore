@@ -1,4 +1,4 @@
-module github.com/anviod/edgex
+module github.com/anviod/edgeCore
 
 go 1.26.4
 

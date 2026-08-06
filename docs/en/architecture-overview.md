@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Edge Gateway Architecture Overview
-description: EdgeX system overview — southbound collection, ShadowCore hot path, and industrial stability
+description: edgeCore system overview — southbound collection, ShadowCore hot path, and industrial stability
 version: v3.0
 date: 2026-07-12
 status: current
@@ -15,7 +15,7 @@ status: current
 
 ## 1. System overview
 
-EdgeX is a **schedule-driven** industrial edge gateway:
+edgeCore is a **schedule-driven** industrial edge gateway:
 
 1. **Config SoT** — `data/config.db` (bbolt); runtime history in `data/runtime.db`
 2. **Runtime SoT** — in-memory **ShadowCore** (COW); REST/WebSocket prefer shadow reads

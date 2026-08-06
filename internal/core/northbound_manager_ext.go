@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
-	"github.com/anviod/edgex/internal/northbound/http"
-	"github.com/anviod/edgex/internal/northbound/mqtt"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/northbound/http"
+	"github.com/anviod/edgeCore/internal/northbound/mqtt"
 )
 
 func (nm *NorthboundManager) UpsertHTTPConfig(cfg model.HTTPConfig) error {
@@ -248,7 +248,6 @@ func (nm *NorthboundManager) onShadowDelta(shadowDeviceID string, points map[str
 	}
 	bridge.HandleDelta(deviceID, channelID, views)
 }
-
 
 // findDevice retrieves a device by ID from all channels via ChannelManager
 func (nm *NorthboundManager) findDevice(dID string) any {

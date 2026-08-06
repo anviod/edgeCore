@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,13 +17,13 @@ func TestNormalizeProtocolID(t *testing.T) {
 }
 
 func TestGenerateDefaultCapabilities(t *testing.T) {
-	caps := capability.GenerateDefaultCapabilities("edgex-node-001", []string{"modbus-tcp"})
+	caps := capability.GenerateDefaultCapabilities("edgeCore-node-001", []string{"modbus-tcp"})
 	require.GreaterOrEqual(t, len(caps), 5) // 4 device + system/ai
 
 	ids := map[string]bool{}
 	for _, c := range caps {
 		ids[c.ID] = true
-		require.Equal(t, "edgex-node-001", c.AgentID)
+		require.Equal(t, "edgeCore-node-001", c.AgentID)
 	}
 	require.True(t, ids["modbus_tcp.read_point"])
 	require.True(t, ids["modbus_tcp.write_point"])
@@ -32,13 +32,13 @@ func TestGenerateDefaultCapabilities(t *testing.T) {
 }
 
 func TestGenerateUnifiedCapabilities(t *testing.T) {
-	caps := capability.GenerateUnifiedCapabilities("edgex-node-001")
+	caps := capability.GenerateUnifiedCapabilities("edgeCore-node-001")
 	require.Equal(t, 7, len(caps), "expected 7 unified capabilities")
 
 	ids := map[string]bool{}
 	for _, c := range caps {
 		ids[c.ID] = true
-		require.Equal(t, "edgex-node-001", c.AgentID)
+		require.Equal(t, "edgeCore-node-001", c.AgentID)
 		require.NotEmpty(t, c.Description)
 		require.NotEmpty(t, c.Metadata["driver_command"])
 	}
@@ -120,7 +120,7 @@ func TestRegistryAndDispatcherUnified(t *testing.T) {
 func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {
 	bus := capability.NewMemoryBus()
 	rt, err := capability.NewRuntime(capability.RuntimeConfig{
-		AgentID:              "edgex-node-001",
+		AgentID:              "edgeCore-node-001",
 		HeartbeatIntervalSec: 60,
 		Protocols:            []string{"modbus-tcp"},
 	}, bus)
@@ -139,12 +139,12 @@ func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {
 	}
 	require.True(t, topics[capability.TopicDiscoveryAgent])
 	require.True(t, topics[capability.TopicDiscoveryCapability])
-	require.True(t, topics[capability.TopicHeartbeat("edgex-node-001")])
+	require.True(t, topics[capability.TopicHeartbeat("edgeCore-node-001")])
 
 	// Invoke over bus
 	req := capability.NewEnvelope("edgeos-planner", capability.MessageTypeInvokeCapability, capability.InvokeRequest{
 		InvokeID:   "invoke-test-1",
-		Target:     "edgex-node-001",
+		Target:     "edgeCore-node-001",
 		Capability: "modbus_tcp.write_point",
 		Arguments: map[string]any{
 			"device_id": "slave-1",
@@ -156,7 +156,7 @@ func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {
 	payload, err := json.Marshal(req)
 	require.NoError(t, err)
 
-	require.NoError(t, bus.Publish(capability.TopicInvoke("edgex-node-001"), payload, 1))
+	require.NoError(t, bus.Publish(capability.TopicInvoke("edgeCore-node-001"), payload, 1))
 
 	// Allow handler to reply
 	deadline := time.Now().Add(2 * time.Second)
@@ -184,20 +184,20 @@ func TestRuntimeDiscoveryAndInvokeViaBus(t *testing.T) {
 }
 
 func TestV1CompatTopicsPreserved(t *testing.T) {
-	require.Equal(t, "edgex/nodes/register", capability.V1.NodesRegister())
-	require.Equal(t, "edgex/nodes/gw1/offline", capability.V1.NodeOffline("gw1"))
-	require.Equal(t, "edgex/cmd/gw1/dev1/write", capability.V1.CmdWrite("gw1", "dev1"))
-	require.Equal(t, "edgex/heartbeat/gw1", capability.V1.Heartbeat("gw1"))
+	require.Equal(t, "edgeCore/nodes/register", capability.V1.NodesRegister())
+	require.Equal(t, "edgeCore/nodes/gw1/offline", capability.V1.NodeOffline("gw1"))
+	require.Equal(t, "edgeCore/cmd/gw1/dev1/write", capability.V1.CmdWrite("gw1", "dev1"))
+	require.Equal(t, "edgeCore/heartbeat/gw1", capability.V1.Heartbeat("gw1"))
 }
 
 func TestEventPublisher(t *testing.T) {
 	bus := capability.NewMemoryBus()
-	pub := capability.NewEventPublisher("edgex-node-001", bus)
+	pub := capability.NewEventPublisher("edgeCore-node-001", bus)
 	require.NoError(t, pub.PublishPointChanged("slave-1", "temperature", 45.2, 42.1, map[string]any{"quality": "good"}))
 
 	msgs := bus.Published()
 	require.NotEmpty(t, msgs)
-	require.Equal(t, capability.TopicEvent("edgex-node-001"), msgs[0].Topic)
+	require.Equal(t, capability.TopicEvent("edgeCore-node-001"), msgs[0].Topic)
 
 	var msg capability.Message
 	require.NoError(t, json.Unmarshal(msgs[0].Payload, &msg))

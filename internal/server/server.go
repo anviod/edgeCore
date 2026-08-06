@@ -19,16 +19,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent"
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/mcp"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/opcua"
-	"github.com/anviod/edgex/internal/pkg/logger"
-	"github.com/anviod/edgex/internal/storage"
-	syncpkg "github.com/anviod/edgex/internal/sync"
+	"github.com/anviod/edgeCore/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/mcp"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/pkg/logger"
+	"github.com/anviod/edgeCore/internal/storage"
+	syncpkg "github.com/anviod/edgeCore/internal/sync"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -1140,7 +1140,7 @@ func (s *Server) addDevice(c *fiber.Ctx) error {
 		// 触发点位元数据同步到 edgeOS
 		if s.nbm != nil {
 			s.nbm.PublishPointsMetadata()
-			// 触发设备清单重新上报（edgex/devices/report），确保 EdgeOS 设备列表更新
+			// 触发设备清单重新上报（edgeCore/devices/report），确保 EdgeOS 设备列表更新
 			s.nbm.PublishDeviceReport()
 		}
 		return c.JSON(dev)
@@ -1770,7 +1770,7 @@ func (s *Server) handleLogWebSocket(c *websocket.Conn) {
 
 // handleLogDownload serves the log file
 func (s *Server) handleLogDownload(c *fiber.Ctx) error {
-	return c.Download("logs/gateway.edgex.log", "gateway.edgex.log")
+	return c.Download("logs/gateway.edgeCore.log", "gateway.edgeCore.log")
 }
 
 func (s *Server) getOPCUAStats(c *fiber.Ctx) error {

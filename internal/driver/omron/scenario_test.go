@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	finslib "github.com/anviod/fins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

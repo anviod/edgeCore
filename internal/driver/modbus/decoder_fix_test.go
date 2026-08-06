@@ -3,7 +3,7 @@ package modbus
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestPointDecoder_Encode_Int64(t *testing.T) {

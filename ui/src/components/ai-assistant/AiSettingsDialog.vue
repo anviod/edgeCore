@@ -136,7 +136,7 @@
         <div class="ai-settings-tab-body">
           <div class="ai-settings-intro">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
-            <span>局域网 gRPC 对接 EdgeX AI Model Center，提供协议逆向、文档解析等高阶 AI 能力</span>
+            <span>局域网 gRPC 对接 edgeCore AI Model Center，提供协议逆向、文档解析等高阶 AI 能力</span>
           </div>
 
           <div class="ai-settings-card ai-settings-card--vertical">
@@ -354,7 +354,7 @@
             <div class="ai-settings-card__row">
               <div class="ai-settings-card__label">
                 <span class="ai-settings-card__title">Agent ID</span>
-                <span class="ai-settings-card__desc">全局唯一标识符，由 EdgeX 自动生成</span>
+                <span class="ai-settings-card__desc">全局唯一标识符，由 edgeCore 自动生成</span>
               </div>
               <code class="ai-settings-ean-mono">{{ eanSettings.agent_id || '—' }}</code>
             </div>
@@ -552,7 +552,7 @@ const mcpClientConfig = computed(() => {
   const configs = {
     claude: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -560,7 +560,7 @@ const mcpClientConfig = computed(() => {
     },
     cursor: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -568,7 +568,7 @@ const mcpClientConfig = computed(() => {
     },
     windsurf: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -576,7 +576,7 @@ const mcpClientConfig = computed(() => {
     },
     continue: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           transport: { type: 'http', url: mcpEndpoint.value },
           auth: { type: 'bearer', token: key }
         }
@@ -627,7 +627,7 @@ const saveKeyLoading = ref(false)
 const mcpInputReadonly = ref(true)
 
 // 使用 sessionStorage 持久化 MCP Key，避免 unmount-on-close 导致丢失
-const MCP_KEY_STORAGE = 'edgex_mcp_api_key'
+const MCP_KEY_STORAGE = 'edgeCore_mcp_api_key'
 function loadMcpKeyFromStorage() {
   if (typeof sessionStorage !== 'undefined') {
     try { return sessionStorage.getItem(MCP_KEY_STORAGE) || '' } catch (e) {}
@@ -875,7 +875,7 @@ const cloudProviders = computed(() =>
 )
 
 const remoteModels = computed(() => {
-  const preset = findProvider('edgex-center')
+  const preset = findProvider('edgeCore-center')
   return preset?.models || []
 })
 

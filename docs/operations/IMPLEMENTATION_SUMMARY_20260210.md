@@ -10,6 +10,6 @@ layout: default
 | :--- | :--- |
 | [北向配置 API](../API/Northbound_Configuration_CN.html) | MQTT/HTTP 离线缓存与事件上报（权威） |
 | [MQTT 数据上下行格式](../northbound/MQTT数据上下行格式.html) | 上下行 Payload |
-| [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html) | EdgeOS 协议 |
+| [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html) | EdgeOS 协议 |
 
 详见：[北向配置 API](../API/Northbound_Configuration_CN.html)

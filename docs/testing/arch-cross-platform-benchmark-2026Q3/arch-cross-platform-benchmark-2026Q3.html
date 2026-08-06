@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ARM64 vs x86 跨架构双向对比测试报告 | EdgeX 知识库</title>
+<title>ARM64 vs x86 跨架构双向对比测试报告 | edgeCore 知识库</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
 <header class="site-header site-header--docs">
   <div class="shell shell--wide">
     <div class="site-header__topbar">
-      <a class="site-brand" href="../../index.html">EdgeX 知识库</a>
+      <a class="site-brand" href="../../index.html">edgeCore 知识库</a>
       <nav class="site-nav" aria-label="主导航">
         <a href="../../index.html">首页</a>
         <a href="../../guide/">产品指南</a>
@@ -71,7 +71,7 @@
 </div>
 
 <blockquote>
-  <p><strong>架构差异说明：</strong>Cortex-A55 为<strong>顺序执行核心</strong>，IPC 和分支预测能力显著弱于 i5-13500H 的 Golden Cove 性能核。因此 <strong>2–5 倍的纯 CPU 性能差距属于正常范围</strong>。本报告聚焦于 EdgeX 工业网关在两类硬件上的 SLA 达标能力和实际部署表现，而非纯 CPU 性能竞赛。</p>
+  <p><strong>架构差异说明：</strong>Cortex-A55 为<strong>顺序执行核心</strong>，IPC 和分支预测能力显著弱于 i5-13500H 的 Golden Cove 性能核。因此 <strong>2–5 倍的纯 CPU 性能差距属于正常范围</strong>。本报告聚焦于 edgeCore 工业网关在两类硬件上的 SLA 达标能力和实际部署表现，而非纯 CPU 性能竞赛。</p>
 </blockquote>
 
 <h3>测试矩阵</h3>
@@ -293,7 +293,7 @@
 </div>
 
 <blockquote>
-  <p><strong>结论：</strong>两平台<strong>测试结果完全一致</strong> — 所有核心测试通过，5 个集成测试正确跳过（需要真实硬件设备的测试在 short 模式下被跳过），无 panic、无崩溃、无 goroutine 泄漏。这证明 EdgeX 代码库在 ARM64 和 x86 架构上具有<strong>完全的行为一致性</strong>。</p>
+  <p><strong>结论：</strong>两平台<strong>测试结果完全一致</strong> — 所有核心测试通过，5 个集成测试正确跳过（需要真实硬件设备的测试在 short 模式下被跳过），无 panic、无崩溃、无 goroutine 泄漏。这证明 edgeCore 代码库在 ARM64 和 x86 架构上具有<strong>完全的行为一致性</strong>。</p>
 </blockquote>
 
 <h3>跳过的集成测试 (expected skips)</h3>
@@ -360,7 +360,7 @@
 <h3>6.4 部署建议</h3>
 
 <blockquote>
-  <p><strong>ARM64 工业网关部署完全可行。</strong>RK3588s (Cortex-A55 + A76) 在 EdgeX 的所有核心场景中均<strong>满足 SLA 要求</strong>，且在实际吞吐量上甚至略优于开发机 i5-13500H。考虑到工业网关的典型负载（<strong>真实 I/O 等待 &gt;&gt; CPU 计算</strong>），ARM64 的性能裕量充足。</p>
+  <p><strong>ARM64 工业网关部署完全可行。</strong>RK3588s (Cortex-A55 + A76) 在 edgeCore 的所有核心场景中均<strong>满足 SLA 要求</strong>，且在实际吞吐量上甚至略优于开发机 i5-13500H。考虑到工业网关的典型负载（<strong>真实 I/O 等待 &gt;&gt; CPU 计算</strong>），ARM64 的性能裕量充足。</p>
   <p>对于<strong>纯计算密集型边缘规则</strong>（如复杂表达式求值），建议评估实际规则复杂度后决定是否需要在 ARM64 上增加 CPU 资源或优化规则表达式。对于<strong>I/O 密集型采集场景</strong>（Modbus、OPC UA、BACnet 等），ARM64 平台是性价比极高的选择。</p>
 </blockquote>
 
@@ -371,18 +371,18 @@
 
 <pre><code># 交叉编译测试二进制
 $env:GOOS='linux'; $env:GOARCH='arm64'; $env:CGO_ENABLED='0'
-go test -tags=bench -c ./internal/core/ -o edgex-bench-arm64.test
-go test -c ./internal/core/ -o edgex-core-arm64.test
-go test -c ./internal/integration/ -o edgex-integration-arm64.test
-go test -c ./internal/driver/ -o edgex-driver-arm64.test
+go test -tags=bench -c ./internal/core/ -o edgeCore-bench-arm64.test
+go test -c ./internal/core/ -o edgeCore-core-arm64.test
+go test -c ./internal/integration/ -o edgeCore-integration-arm64.test
+go test -c ./internal/driver/ -o edgeCore-driver-arm64.test
 
 # 推送到 ARM64 目标板
-scp *.test root@192.168.3.230:/tmp/edgex-tests/
+scp *.test root@192.168.3.230:/tmp/edgeCore-tests/
 
 # SSH 到目标板执行
 ssh root@192.168.3.230
-Q3_BENCH_DURATION=60 /tmp/edgex-tests/edgex-bench-arm64.test -test.run TestQ3_TenThousandTagBenchmark -test.v
-G007_BENCH_DURATION=30 /tmp/edgex-tests/edgex-bench-arm64.test -test.run TestG007_DeviceThroughputBenchmark -test.v</code></pre>
+Q3_BENCH_DURATION=60 /tmp/edgeCore-tests/edgeCore-bench-arm64.test -test.run TestQ3_TenThousandTagBenchmark -test.v
+G007_BENCH_DURATION=30 /tmp/edgeCore-tests/edgeCore-bench-arm64.test -test.run TestG007_DeviceThroughputBenchmark -test.v</code></pre>
 
 <h3>x86 本地执行</h3>
 

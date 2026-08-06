@@ -1,7 +1,7 @@
 ---
 layout: default
 title: API Points Response Optimization Test Report
-description: EdgeX API Points Test Report
+description: edgeCore API Points Test Report
 ---
 
 # API Points Response Optimization Test Report
@@ -41,7 +41,7 @@ Command: `go test -v ./internal/server`
 === RUN   TestGetDevicePoints_ProtocolFields
 --- PASS: TestGetDevicePoints_ProtocolFields (0.01s)
 PASS
-ok      github.com/anviod/edgex/internal/server    1.236s
+ok      github.com/anviod/edgeCore/internal/server    1.236s
 ```
 
 ## 5. Conclusion
@@ -51,5 +51,5 @@ The API correctly identifies the channel protocol and filters the response field
 - The `protocol` field is correctly added to all responses.
 
 ## 6. Code Reference
-- Test Implementation: [points_api_test.go](https://github.com/anviod/edgex/blob/dev/internal/server/points_api_test.go)
-- Server Logic: [server.go](https://github.com/anviod/edgex/blob/dev/internal/server/server.go)
+- Test Implementation: [points_api_test.go](https://github.com/anviod/edgeCore/blob/dev/internal/server/points_api_test.go)
+- Server Logic: [server.go](https://github.com/anviod/edgeCore/blob/dev/internal/server/server.go)

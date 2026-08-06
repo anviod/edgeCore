@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/anviod/edgex/internal/core"
-	_ "github.com/anviod/edgex/internal/driver/bacnet"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	_ "github.com/anviod/edgeCore/internal/driver/bacnet"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

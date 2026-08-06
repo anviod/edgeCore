@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算最佳实践
-description: EdgeX 边缘计算最佳实践（索引）
+description: edgeCore 边缘计算最佳实践（索引）
 ---
 
 # 边缘计算最佳实践

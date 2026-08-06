@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/ai_agent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -227,7 +227,7 @@ func TestPostAiTaskFromUpload(t *testing.T) {
 	require.Len(t, inputFiles, 1)
 	assert.Equal(t, "capture.pcap", inputFiles[0])
 
-	uploadDir := filepath.Join(os.TempDir(), "edgex-ai-uploads", taskID)
+	uploadDir := filepath.Join(os.TempDir(), "edgeCore-ai-uploads", taskID)
 	_, err = os.Stat(filepath.Join(uploadDir, "capture.pcap"))
 	assert.NoError(t, err, "uploaded file should be stored under task ID directory")
 }

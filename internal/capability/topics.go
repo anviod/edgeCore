@@ -4,14 +4,14 @@ import "fmt"
 
 // EAN 2.0 Topic / Subject templates ($edgeos/*).
 const (
-	TopicDiscoveryAgent      = "$edgeos/discovery/agent"
+	TopicDiscoveryAgent        = "$edgeos/discovery/agent"
 	TopicDiscoveryAgentOffline = "$edgeos/discovery/agent/offline"
-	TopicDiscoveryCapability = "$edgeos/discovery/capability"
-	TopicDiscoveryService    = "$edgeos/discovery/service"
-	TopicDiscoveryQuery      = "$edgeos/discovery/query"
-	TopicDiscoveryResponse   = "$edgeos/discovery/response"
-	TopicEventBroadcast      = "$edgeos/event/broadcast"
-	TopicEventSubscribe      = "$edgeos/event/subscribe"
+	TopicDiscoveryCapability   = "$edgeos/discovery/capability"
+	TopicDiscoveryService      = "$edgeos/discovery/service"
+	TopicDiscoveryQuery        = "$edgeos/discovery/query"
+	TopicDiscoveryResponse     = "$edgeos/discovery/response"
+	TopicEventBroadcast        = "$edgeos/event/broadcast"
+	TopicEventSubscribe        = "$edgeos/event/subscribe"
 )
 
 // TopicInvoke returns $edgeos/invoke/{agentID}.
@@ -59,69 +59,69 @@ func TopicHeartbeat(agentID string) string {
 	return fmt.Sprintf("$edgeos/heartbeat/%s", agentID)
 }
 
-// V1Compat holds V1.0 edgex/* topic helpers retained as a compatibility layer.
+// V1Compat holds V1.0 edgeCore/* topic helpers retained as a compatibility layer.
 // New development should prefer EAN 2.0 $edgeos/* topics above.
 type V1Compat struct{}
 
 // V1 is the V1.0 compatibility topic namespace.
 var V1 = V1Compat{}
 
-func (V1Compat) NodesRegister() string   { return "edgex/nodes/register" }
-func (V1Compat) NodesUnregister() string { return "edgex/nodes/unregister" }
+func (V1Compat) NodesRegister() string   { return "edgeCore/nodes/register" }
+func (V1Compat) NodesUnregister() string { return "edgeCore/nodes/unregister" }
 
 func (V1Compat) NodeStatus(nodeID string) string {
-	return fmt.Sprintf("edgex/nodes/%s/status", nodeID)
+	return fmt.Sprintf("edgeCore/nodes/%s/status", nodeID)
 }
 func (V1Compat) NodeOnline(nodeID string) string {
-	return fmt.Sprintf("edgex/nodes/%s/online", nodeID)
+	return fmt.Sprintf("edgeCore/nodes/%s/online", nodeID)
 }
 func (V1Compat) NodeOffline(nodeID string) string {
-	return fmt.Sprintf("edgex/nodes/%s/offline", nodeID)
+	return fmt.Sprintf("edgeCore/nodes/%s/offline", nodeID)
 }
 func (V1Compat) Heartbeat(nodeID string) string {
-	return fmt.Sprintf("edgex/heartbeat/%s", nodeID)
+	return fmt.Sprintf("edgeCore/heartbeat/%s", nodeID)
 }
 
-func (V1Compat) DevicesReport() string { return "edgex/devices/report" }
+func (V1Compat) DevicesReport() string { return "edgeCore/devices/report" }
 func (V1Compat) DevicesList(nodeID string) string {
-	return fmt.Sprintf("edgex/devices/%s/list", nodeID)
+	return fmt.Sprintf("edgeCore/devices/%s/list", nodeID)
 }
 func (V1Compat) DeviceInfo(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/devices/%s/%s/info", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/devices/%s/%s/info", nodeID, deviceID)
 }
 func (V1Compat) DeviceOnline(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/devices/%s/%s/online", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/devices/%s/%s/online", nodeID, deviceID)
 }
 func (V1Compat) DeviceOffline(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/devices/%s/%s/offline", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/devices/%s/%s/offline", nodeID, deviceID)
 }
 
-func (V1Compat) PointsReport() string { return "edgex/points/report" }
+func (V1Compat) PointsReport() string { return "edgeCore/points/report" }
 func (V1Compat) PointsDevice(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/points/%s/%s", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/points/%s/%s", nodeID, deviceID)
 }
 
 func (V1Compat) DataDevice(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/data/%s/%s", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/data/%s/%s", nodeID, deviceID)
 }
 func (V1Compat) DataPoint(nodeID, deviceID, pointID string) string {
-	return fmt.Sprintf("edgex/data/%s/%s/%s", nodeID, deviceID, pointID)
+	return fmt.Sprintf("edgeCore/data/%s/%s/%s", nodeID, deviceID, pointID)
 }
 
-func (V1Compat) CmdNodesRegister() string { return "edgex/cmd/nodes/register" }
+func (V1Compat) CmdNodesRegister() string { return "edgeCore/cmd/nodes/register" }
 func (V1Compat) CmdDiscover(nodeID string) string {
-	return fmt.Sprintf("edgex/cmd/%s/discover", nodeID)
+	return fmt.Sprintf("edgeCore/cmd/%s/discover", nodeID)
 }
 func (V1Compat) CmdWrite(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/cmd/%s/%s/write", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/cmd/%s/%s/write", nodeID, deviceID)
 }
 func (V1Compat) CmdResponse(nodeID, deviceID string) string {
-	return fmt.Sprintf("edgex/cmd/responses/%s/%s", nodeID, deviceID)
+	return fmt.Sprintf("edgeCore/cmd/responses/%s/%s", nodeID, deviceID)
 }
 
-func (V1Compat) EventsAlert() string { return "edgex/events/alert" }
-func (V1Compat) EventsError() string { return "edgex/events/error" }
-func (V1Compat) EventsInfo() string  { return "edgex/events/info" }
+func (V1Compat) EventsAlert() string { return "edgeCore/events/alert" }
+func (V1Compat) EventsError() string { return "edgeCore/events/error" }
+func (V1Compat) EventsInfo() string  { return "edgeCore/events/info" }
 
 // QoS defaults for EAN 2.0 topics.
 const (

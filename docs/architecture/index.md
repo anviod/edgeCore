@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 架构设计
-description: EdgeX 架构设计 — ScanEngine 调度驱动内核、SLA 统计调度、ShadowCore 影子设备与系统架构
+description: edgeCore 架构设计 — ScanEngine 调度驱动内核、SLA 统计调度、ShadowCore 影子设备与系统架构
 hero_eyebrow: Architecture
-hero_lead: EdgeX 系统架构权威文档 — ScanEngine 调度驱动采集（EDF/CB/SLA diagnostics）、ExecutionLayer 背压、ShadowCore COW 快照与 ShadowIngress 批量写入。运行时架构细节以此目录与 edge/ 总览为准。
+hero_lead: edgeCore 系统架构权威文档 — ScanEngine 调度驱动采集（EDF/CB/SLA diagnostics）、ExecutionLayer 背压、ShadowCore COW 快照与 ShadowIngress 批量写入。运行时架构细节以此目录与 edge/ 总览为准。
 hero_buttons:
   - text: 核心设计
     url: "4. 核心设计.html"
@@ -51,10 +51,10 @@ hero_buttons:
 ### 智能采集优化系列（ScanEngine 调度驱动内核）
 
 <div align="center">
-  <img src="../img/dataScanEngineCN.svg" width="100%" alt="EdgeX V2.0 架构 · ScanEngine引擎" />
+  <img src="../img/dataScanEngineCN.svg" width="100%" alt="edgeCore V2.0 架构 · ScanEngine引擎" />
 </div>
 
-> **EdgeX V2.0 架构 · ScanEngine 统一调度**：13 种南向驱动经 ScanEngine（EDF + CB + SLA metrics）写入 ShadowIngress → ShadowCore 快照，再联通虚拟设备、边缘计算与北向接口。
+> **edgeCore V2.0 架构 · ScanEngine 统一调度**：13 种南向驱动经 ScanEngine（EDF + CB + SLA metrics）写入 ShadowIngress → ShadowCore 快照，再联通虚拟设备、边缘计算与北向接口。
 
 > 规范：`docs/TODO/ScanEngine重构方案.md` · 总览：`docs/edge/边缘网关架构设计总览.md`
 

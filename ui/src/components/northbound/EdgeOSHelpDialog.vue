@@ -13,8 +13,8 @@
           <header class="nb-help-hero">
             <h4 class="nb-help-hero__title">概述</h4>
             <p class="nb-help-hero__lead">
-              edgeOS(MQTT) 北向通道，将 EdgeX 数据上报至 edgeOS 蜂群网络。完整协议见
-              <a href="/docs/edgeos/EdgeX通信协议规范(MQTT-NATS).html" target="_blank" class="nb-help-link">EdgeX 通信协议规范</a>。
+              edgeOS(MQTT) 北向通道，将 edgeCore 数据上报至 edgeOS 蜂群网络。完整协议见
+              <a href="/docs/edgeos/edgeCore通信协议规范(MQTT-NATS).html" target="_blank" class="nb-help-link">edgeCore 通信协议规范</a>。
             </p>
           </header>
 
@@ -31,28 +31,28 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>edgex/nodes/register</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore/nodes/register</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>节点注册</td>
                   </tr>
                   <tr>
-                    <td><code>edgex/data/{node_id}/{device_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore/data/{node_id}/{device_id}</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>实时数据上报</td>
                   </tr>
                   <tr>
-                    <td><code>edgex/nodes/{node_id}/heartbeat</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore/nodes/{node_id}/heartbeat</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>节点心跳</td>
                   </tr>
                   <tr>
-                    <td><code>edgex/cmd/{node_id}/discover</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td><code>edgeCore/cmd/{node_id}/discover</code></td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>设备发现命令</td>
                   </tr>
                   <tr>
-                    <td><code>edgex/cmd/{node_id}/{device_id}/write</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td><code>edgeCore/cmd/{node_id}/{device_id}/write</code></td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>写入设备数据</td>
                   </tr>
                 </tbody>
@@ -66,12 +66,12 @@
   "header": {
     "message_id": "msg-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "data",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
+    "node_id": "edgeCore-node-001",
     "device_id": "device-001",
     "timestamp": 1744680000000,
     "points": {
@@ -91,7 +91,7 @@
             <h4 class="nb-help-hero__title">概述</h4>
             <p class="nb-help-hero__lead">
               edgeOS(NATS) 北向通道，Subject 命名与 MQTT 版对应（<code>.</code> 分隔）。协议细节见
-              <a href="/docs/edgeos/EdgeX通信协议规范(MQTT-NATS).html" target="_blank" class="nb-help-link">EdgeX 通信协议规范</a>。
+              <a href="/docs/edgeos/edgeCore通信协议规范(MQTT-NATS).html" target="_blank" class="nb-help-link">edgeCore 通信协议规范</a>。
             </p>
           </header>
 
@@ -108,28 +108,28 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td><code>edgex.nodes.register</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore.nodes.register</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>节点注册</td>
                   </tr>
                   <tr>
-                    <td><code>edgex.data.{node_id}.{device_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore.data.{node_id}.{device_id}</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>实时数据上报</td>
                   </tr>
                   <tr>
-                    <td><code>edgex.nodes.{node_id}.heartbeat</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td><code>edgeCore.nodes.{node_id}.heartbeat</code></td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>节点心跳</td>
                   </tr>
                   <tr>
-                    <td><code>edgex.cmd.{node_id}.discover</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td><code>edgeCore.cmd.{node_id}.discover</code></td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>设备发现命令</td>
                   </tr>
                   <tr>
-                    <td><code>edgex.cmd.{node_id}.{device_id}.write</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td><code>edgeCore.cmd.{node_id}.{device_id}.write</code></td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>写入设备数据</td>
                   </tr>
                 </tbody>
@@ -148,10 +148,10 @@
           <div class="nb-help-block">
             <div class="nb-help-block-title">示例</div>
             <pre class="nb-help-pre"><code>// 订阅所有设备的写入命令
-edgex.cmd.edgex-node-001.*.write
+edgeCore.cmd.edgeCore-node-001.*.write
 
 // 订阅所有数据上报
-edgex.data.>></code></pre>
+edgeCore.data.>></code></pre>
           </div>
         </div>
       </a-tab-pane>
@@ -163,7 +163,7 @@ edgex.data.>></code></pre>
             <p class="nb-help-hero__lead">
               EAN 2.0（Edge Agent Network）能力层复用 edgeOS(MQTT/NATS) 北向通道作为传输层，以
               <code>$edgeos/*</code> 为主题空间承载 Agent 注册、能力发现、远程调用与事件发布。
-              EdgeX 节点作为 Agent 加入蜂群网络，EdgeOS 可远程发现并调用本设备能力。协议细节见
+              edgeCore 节点作为 Agent 加入蜂群网络，EdgeOS 可远程发现并调用本设备能力。协议细节见
               <a href="/docs/edgeos/AI协同组件规划.html" target="_blank" class="nb-help-link">AI 协同组件规划</a>。
             </p>
           </header>
@@ -188,62 +188,62 @@ edgex.data.>></code></pre>
                 <tbody>
                   <tr>
                     <td><code>$edgeos/discovery/agent</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>Agent 注册 / 上线公告</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/discovery/agent/offline</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>Agent 离线公告</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/discovery/capability</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>Capability 能力公告</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/discovery/query</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>能力发现查询</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/discovery/response</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>发现结果响应</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/invoke/{agent_id}</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>能力调用请求</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/invoke/{agent_id}/status</code></td>
-                    <td>EdgeOS → EdgeX</td>
+                    <td>EdgeOS → edgeCore</td>
                     <td>异步调用状态查询</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/reply/{agent_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>调用执行结果</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/event/{agent_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>事件上报 / 状态变化</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/event/broadcast</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>事件广播</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/heartbeat/{agent_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>Agent 心跳（QoS 0）</td>
                   </tr>
                   <tr>
                     <td><code>$edgeos/state/{agent_id}</code></td>
-                    <td>EdgeX → EdgeOS</td>
+                    <td>edgeCore → EdgeOS</td>
                     <td>设备状态同步</td>
                   </tr>
                 </tbody>
@@ -256,7 +256,7 @@ edgex.data.>></code></pre>
 
             <div class="nb-flow">
               <div class="nb-flow__head">
-                <span class="nb-flow__actor">EdgeX Agent</span>
+                <span class="nb-flow__actor">edgeCore Agent</span>
                 <span class="nb-flow__headline">① 启动与注册流程</span>
                 <span class="nb-flow__actor">EdgeOS 蜂群</span>
               </div>
@@ -296,7 +296,7 @@ edgex.data.>></code></pre>
 
             <div class="nb-flow">
               <div class="nb-flow__head">
-                <span class="nb-flow__actor">EdgeX Agent</span>
+                <span class="nb-flow__actor">edgeCore Agent</span>
                 <span class="nb-flow__headline">② 能力发现与调用流程</span>
                 <span class="nb-flow__actor">EdgeOS 蜂群</span>
               </div>
@@ -355,15 +355,15 @@ edgex.data.>></code></pre>
   "header": {
     "message_id": "msg-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
-    "destination": "edgex-node-001",
+    "source": "edgeCore-node-001",
+    "destination": "edgeCore-node-001",
     "message_type": "invoke_capability",
     "version": "2.0",
     "correlation_id": "req-001"
   },
   "body": {
     "invoke_id": "inv-001",
-    "target": "edgex-node-001",
+    "target": "edgeCore-node-001",
     "capability": "device.read_points",
     "arguments": { "device_id": "device-001" },
     "options": { "timeout_sec": 10, "async": false }
@@ -434,13 +434,13 @@ edgex.data.>></code></pre>
                     <td>client_id</td>
                     <td>string</td>
                     <td>MQTT 客户端 ID</td>
-                    <td>edgex-node-001</td>
+                    <td>edgeCore-node-001</td>
                   </tr>
                   <tr>
                     <td>node_id</td>
                     <td>string</td>
                     <td>节点唯一标识</td>
-                    <td>edgex-node-001</td>
+                    <td>edgeCore-node-001</td>
                   </tr>
                   <tr>
                     <td>qos</td>
@@ -482,7 +482,7 @@ edgex.data.>></code></pre>
                     <td>client_id</td>
                     <td>string</td>
                     <td>NATS 客户端名称</td>
-                    <td>edgex-node-001</td>
+                    <td>edgeCore-node-001</td>
                   </tr>
                   <tr>
                     <td>jetstream_enabled</td>

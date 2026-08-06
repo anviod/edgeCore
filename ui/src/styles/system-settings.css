@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 系统设置页（SystemSettings + 子组件）
+ * edgeCore v3.0 — 系统设置页（SystemSettings + 子组件）
  */
 
 .system-settings-page.page-shell {
@@ -285,7 +285,7 @@
 }
 
 .system-settings-page .system-maintenance-card .reset-card .card-icon {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   background: rgba(220, 38, 38, 0.1);
 }
 

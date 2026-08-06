@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet 驱动采集测试与验收标准清单
-description: EdgeX BACnet 驱动采集测试与验收标准清单
+description: edgeCore BACnet 驱动采集测试与验收标准清单
 ---
 
 # BACnet 驱动采集测试与验收标准清单

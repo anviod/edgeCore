@@ -11,8 +11,8 @@ import (
 
 	bacnetlib "github.com/anviod/bacnet"
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 // PointRuntime Runtime state of a point

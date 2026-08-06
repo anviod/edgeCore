@@ -5,8 +5,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // BenchmarkGroupTags 测试分组逻辑性能

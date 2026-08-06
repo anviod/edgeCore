@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 北向接口（列表卡片 + 弹窗 + 帮助文档）
+ * edgeCore v3.0 — 北向接口（列表卡片 + 弹窗 + 帮助文档）
  */
 
 /* ── Modal shells ── */
@@ -62,13 +62,13 @@
 }
 
 .northbound-add-modal .add-section__header--push {
-  background: var(--edgex-push-bg);
-  border-color: var(--edgex-push-border);
+  background: var(--edgeCore-push-bg);
+  border-color: var(--edgeCore-push-border);
 }
 
 .northbound-add-modal .add-section__header--passive {
-  background: var(--edgex-passive-bg);
-  border-color: var(--edgex-passive-border);
+  background: var(--edgeCore-passive-bg);
+  border-color: var(--edgeCore-passive-border);
 }
 
 .northbound-add-modal .add-section__title {
@@ -267,13 +267,13 @@
 }
 
 .nb-mode-banner--push {
-  background: var(--edgex-push-bg);
-  border-color: var(--edgex-push-border);
+  background: var(--edgeCore-push-bg);
+  border-color: var(--edgeCore-push-border);
 }
 
 .nb-mode-banner--passive {
-  background: var(--edgex-passive-bg);
-  border-color: var(--edgex-passive-border);
+  background: var(--edgeCore-passive-bg);
+  border-color: var(--edgeCore-passive-border);
 }
 
 .nb-mode-banner__tag {
@@ -459,8 +459,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.northbound-stats-modal .nb-stat-card__value--success { color: var(--edgex-success); }
-.northbound-stats-modal .nb-stat-card__value--danger { color: var(--edgex-error); }
+.northbound-stats-modal .nb-stat-card__value--success { color: var(--edgeCore-success); }
+.northbound-stats-modal .nb-stat-card__value--danger { color: var(--edgeCore-error); }
 .northbound-stats-modal .nb-stat-card__value--warning { color: #ff7d00; }
 .northbound-stats-modal .nb-stat-card__value--primary { color: var(--primary); }
 .northbound-stats-modal .nb-stat-card__value--info { color: #0ea5e9; }
@@ -493,7 +493,7 @@
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.6;
@@ -660,7 +660,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -678,7 +678,7 @@
 
 .northbound-help-modal pre,
 .northbound-help-modal .nb-help-pre {
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -1031,7 +1031,7 @@
 }
 
 .dark-theme .northbound-stats-modal .log-viewer {
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
 }
 
 .northbound-page .empty-wrap .arco-empty-image {

@@ -162,7 +162,7 @@ func (s *MCPServer) handleInitialize(req *JSONRPCRequest) *JSONRPCResponse {
 }
 
 func (s *MCPServer) getInstructions() string {
-	return `EdgeX MCP Server — 工业边缘网关协议操作接口
+	return `edgeCore MCP Server — 工业边缘网关协议操作接口
 
 # 可用能力
 - **Tools**: 查询通道/设备/点位、读写点位值、分析协议报文、获取诊断信息
@@ -173,15 +173,15 @@ func (s *MCPServer) getInstructions() string {
 将此 MCP Server 配置到你的 LLM 客户端（如 Claude Desktop、Cursor 等）：
 {
   "mcpServers": {
-    "edgex": {
-      "url": "http://<edgex-host>:8080/api/mcp"
+    "edgeCore": {
+      "url": "http://<edgeCore-host>:8080/api/mcp"
     }
   }
 }
 
 # 安全说明
 - 写操作（write_point）需要人工确认，不会自动执行
-- 所有操作通过 EdgeX JWT 认证
+- 所有操作通过 edgeCore JWT 认证
 - 敏感配置信息已脱敏处理`
 }
 

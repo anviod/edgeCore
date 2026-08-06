@@ -11,7 +11,7 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span v-if="!drawerRail" class="logo-text">EdgeX</span>
+        <span v-if="!drawerRail" class="logo-text">edgeCore</span>
       </div>
 
       <nav class="sidebar-nav">

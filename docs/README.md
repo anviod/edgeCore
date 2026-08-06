@@ -1,8 +1,8 @@
-# EdgeX 文档 GitHub Pages 站点
+# edgeCore 文档 GitHub Pages 站点
 
 ## 简介
 
-这是 EdgeX 项目的文档 GitHub Pages 站点（Jekyll + Cayman 主题），用于展示产品说明、用户手册、驱动文档与架构设计。站点首页内容见 [README_CN.md](README_CN.md)（与仓库根目录 README 结构对齐，路径为 docs 相对路径）。
+这是 edgeCore 项目的文档 GitHub Pages 站点（Jekyll + Cayman 主题），用于展示产品说明、用户手册、驱动文档与架构设计。站点首页内容见 [README_CN.md](README_CN.md)（与仓库根目录 README 结构对齐，路径为 docs 相对路径）。
 
 ## 站点结构
 
@@ -22,9 +22,9 @@
 2. 在 `docs` 目录中运行：
    ```bash
    bundle install
-   bundle exec jekyll serve --baseurl /edgex
+   bundle exec jekyll serve --baseurl /edgeCore
    ```
-3. 打开浏览器访问 `http://localhost:4000/edgex/`
+3. 打开浏览器访问 `http://localhost:4000/edgeCore/`
 
 ### 链接与资源校验（无需 Jekyll）
 
@@ -37,12 +37,12 @@ bash scripts/verify_site.sh
 
 ## 部署
 
-GitHub Pages 从仓库指定分支的 `docs/` 目录构建（Jekyll + Cayman 主题，`baseurl: /edgex`）。部署步骤：
+GitHub Pages 从仓库指定分支的 `docs/` 目录构建（Jekyll + Cayman 主题，`baseurl: /edgeCore`）。部署步骤：
 
 1. 将文档更改合并并推送到 Pages 源分支（通常为 `main` 或 `dev`，以仓库 Settings → Pages 为准）
 2. 在仓库 Settings → Pages 中确认 Source 为 **Branch + `/docs` folder**
 3. 等待 GitHub Pages 构建完成
-4. 访问 [https://anviod.github.io/edgex/](https://anviod.github.io/edgex/)
+4. 访问 [https://anviod.github.io/edgeCore/](https://anviod.github.io/edgeCore/)
 
 ### 发布范围
 

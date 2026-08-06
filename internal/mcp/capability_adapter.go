@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/capability"
+	"github.com/anviod/edgeCore/internal/capability"
 )
 
 // CapabilityToolPrefix namespaces auto-generated EAN tools so they do not collide

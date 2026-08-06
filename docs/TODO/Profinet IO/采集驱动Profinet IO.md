@@ -1,19 +1,19 @@
 Profinet IO
 PROFINET 是一个开放式的工业以太网通信协议，是由 PROFIBUS & PROFINET 国际协会所提出。PROFINET 应用 TCP/IP 相关标准，是实时的工业以太网。PROFINET 有模组化的结构，使用者可以依其需求选择层叠的技能。
 
-> **状态**：已在 EdgeX 中实现，详见 [Profinet IO 驱动文档](../../drivers/PLC_Profinet_IO.html)。
+> **状态**：已在 edgeCore 中实现，详见 [Profinet IO 驱动文档](../../drivers/PLC_Profinet_IO.html)。
 
 PROFINET IO 系统包括几个部分：IO 控制器，IO 设备，IO 监控器。IO 控制器用于控制自动化的任务工作；IO 设备一般是现场设备，受 IO 控制器的控制及监控，一个 IO 设备可能包括数个模组和子模组；IO 监控器是一个 PC 软件，可以设定参数以及诊断个别模组的状态。
 
 TIP
 
-因为 PROFINET IO 实时消息使用 PROFINET 中定义的以太网协议传输（实时消息基于以太网帧传输），因此要使用 PROFINET 驱动时，需要使用物理设备直接部署 EdgeX，不能使用虚拟化的部署，如 Docker 镜像或是虚拟机。
+因为 PROFINET IO 实时消息使用 PROFINET 中定义的以太网协议传输（实时消息基于以太网帧传输），因此要使用 PROFINET 驱动时，需要使用物理设备直接部署 edgeCore，不能使用虚拟化的部署，如 Docker 镜像或是虚拟机。
 
 添加通道
 在 **配置 → 南向通道**，点击添加通道，协议类型选择 **Profinet IO**。
 
 设备配置
-点击通道进入设备列表，添加 IO 设备。配置 EdgeX 与设备建立连接所需的参数，下表为设备相关配置项。
+点击通道进入设备列表，添加 IO 设备。配置 edgeCore 与设备建立连接所需的参数，下表为设备相关配置项。
 
 参数	说明
 设备名称	IO 设备名称

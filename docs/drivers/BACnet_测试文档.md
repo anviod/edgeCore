@@ -120,15 +120,15 @@ POST /api/channels/BACnet/scan?sync=1
 
 ### 3.1 环境准备
 
-- 采集端：192.168.3.230（RK3588 ARM64，运行 edgex）
+- 采集端：192.168.3.230（RK3588 ARM64，运行 edgeCore）
 - 目标端：192.168.3.115（Yabe BACnet 模拟器）
 - 网络：同一子网 192.168.3.0/24
 
 ### 3.2 测试步骤
 
 1. **构建部署**：`goreleaser release --snapshot --clean` → 生成 ARM64 deb 包
-2. **远程安装**：`dpkg -i edgex-v0.0.9~SNAPSHOT-arm64.deb`
-3. **服务验证**：`systemctl is-active edgex` → active
+2. **远程安装**：`dpkg -i edgeCore-v0.0.9~SNAPSHOT-arm64.deb`
+3. **服务验证**：`systemctl is-active edgeCore` → active
 4. **创建通道**：POST /api/channels → BACnet 通道
 5. **手动添加**：POST /api/channels/BACnet/devices → 设备注册成功
 6. **WhoIs 扫描**：POST /api/channels/BACnet/scan → 返回设备列表

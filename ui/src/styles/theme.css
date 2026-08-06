@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 Design Tokens — Light / Dark
+ * edgeCore v3.0 Design Tokens — Light / Dark
  * Arco + Linear / Vercel / Notion SaaS paradigm
  */
 
@@ -56,34 +56,34 @@
   --content-max-width: 1200px;
 
   /* ── legacy aliases (keep views working) ── */
-  --edgex-surface-base: var(--surface);
-  --edgex-surface-raised: var(--bg);
-  --edgex-surface-muted: var(--surface-2);
-  --edgex-surface-subtle: #fafafa;
-  --edgex-surface-inset: var(--surface);
-  --edgex-border: var(--border);
-  --edgex-border-strong: var(--border-hover);
-  --edgex-text-primary: var(--text-primary);
-  --edgex-text-secondary: var(--text-secondary);
-  --edgex-text-tertiary: var(--text-tertiary);
-  --edgex-text-muted: var(--text-tertiary);
-  --edgex-primary: var(--primary);
-  --edgex-primary-hover: var(--primary-hover);
-  --edgex-success: #16a34a;
-  --edgex-warning: #d97706;
-  --edgex-error: #dc2626;
-  --edgex-info: #3b82f6;
-  --edgex-radius-md: var(--radius-sm);
-  --edgex-radius-lg: var(--radius-lg);
-  --edgex-shadow-sm: none;
-  --edgex-shadow-md: var(--shadow-md);
+  --edgeCore-surface-base: var(--surface);
+  --edgeCore-surface-raised: var(--bg);
+  --edgeCore-surface-muted: var(--surface-2);
+  --edgeCore-surface-subtle: #fafafa;
+  --edgeCore-surface-inset: var(--surface);
+  --edgeCore-border: var(--border);
+  --edgeCore-border-strong: var(--border-hover);
+  --edgeCore-text-primary: var(--text-primary);
+  --edgeCore-text-secondary: var(--text-secondary);
+  --edgeCore-text-tertiary: var(--text-tertiary);
+  --edgeCore-text-muted: var(--text-tertiary);
+  --edgeCore-primary: var(--primary);
+  --edgeCore-primary-hover: var(--primary-hover);
+  --edgeCore-success: #16a34a;
+  --edgeCore-warning: #d97706;
+  --edgeCore-error: #dc2626;
+  --edgeCore-info: #3b82f6;
+  --edgeCore-radius-md: var(--radius-sm);
+  --edgeCore-radius-lg: var(--radius-lg);
+  --edgeCore-shadow-sm: none;
+  --edgeCore-shadow-md: var(--shadow-md);
 
-  --edgex-terminal-bg: #f1f5f9;
-  --edgex-terminal-text: #1e293b;
-  --edgex-push-bg: #f0f9ff;
-  --edgex-push-border: #bae6fd;
-  --edgex-passive-bg: #f5f3ff;
-  --edgex-passive-border: #ddd6fe;
+  --edgeCore-terminal-bg: #f1f5f9;
+  --edgeCore-terminal-text: #1e293b;
+  --edgeCore-push-bg: #f0f9ff;
+  --edgeCore-push-border: #bae6fd;
+  --edgeCore-passive-bg: #f5f3ff;
+  --edgeCore-passive-border: #ddd6fe;
 
   --transition-fast: 160ms ease;
 }
@@ -103,26 +103,26 @@
   --text-secondary: #94a3b8;
   --text-tertiary: #64748b;
 
-  --edgex-surface-base: var(--surface);
-  --edgex-surface-raised: var(--bg);
-  --edgex-surface-muted: #1f2937;
-  --edgex-surface-subtle: #334155;
-  --edgex-surface-inset: #111827;
-  --edgex-border: var(--border);
-  --edgex-border-strong: var(--border-hover);
-  --edgex-text-primary: var(--text-primary);
-  --edgex-text-secondary: var(--text-secondary);
-  --edgex-text-tertiary: var(--text-tertiary);
-  --edgex-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --edgeCore-surface-base: var(--surface);
+  --edgeCore-surface-raised: var(--bg);
+  --edgeCore-surface-muted: #1f2937;
+  --edgeCore-surface-subtle: #334155;
+  --edgeCore-surface-inset: #111827;
+  --edgeCore-border: var(--border);
+  --edgeCore-border-strong: var(--border-hover);
+  --edgeCore-text-primary: var(--text-primary);
+  --edgeCore-text-secondary: var(--text-secondary);
+  --edgeCore-text-tertiary: var(--text-tertiary);
+  --edgeCore-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
 
-  --edgex-terminal-bg: #0b1220;
-  --edgex-terminal-text: #e2e8f0;
-  --edgex-push-bg: rgba(14, 165, 233, 0.12);
-  --edgex-push-border: rgba(14, 165, 233, 0.35);
-  --edgex-passive-bg: rgba(114, 46, 209, 0.12);
-  --edgex-passive-border: rgba(114, 46, 209, 0.35);
+  --edgeCore-terminal-bg: #0b1220;
+  --edgeCore-terminal-text: #e2e8f0;
+  --edgeCore-push-bg: rgba(14, 165, 233, 0.12);
+  --edgeCore-push-border: rgba(14, 165, 233, 0.35);
+  --edgeCore-passive-bg: rgba(114, 46, 209, 0.12);
+  --edgeCore-passive-border: rgba(114, 46, 209, 0.35);
 
-  /* Bridge Arco CSS vars → EdgeX palette (Arco reads body[arco-theme="dark"]) */
+  /* Bridge Arco CSS vars → edgeCore palette (Arco reads body[arco-theme="dark"]) */
   --color-bg-1: var(--surface);
   --color-bg-2: var(--bg);
   --color-bg-3: var(--surface-2);
@@ -143,7 +143,7 @@
 .dark-theme .industrial-form :deep(.arco-textarea-wrapper),
 .dark-theme .industrial-form :deep(.arco-select-view),
 .dark-theme .industrial-form :deep(.arco-input-number) {
-  background-color: var(--edgex-surface-subtle) !important;
+  background-color: var(--edgeCore-surface-subtle) !important;
   border-color: var(--border) !important;
   color: var(--text-primary) !important;
 }

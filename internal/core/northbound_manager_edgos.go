@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
 )
 
 // updateEdgeOSMQTTClients 更新 edgeOS(MQTT) 客户端

@@ -59,7 +59,7 @@
 
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="main-title">电力自动化控制：IEC 60870-5-104 变电站遥测采集与遥控协同引擎</text>
-    <text y="24" class="section-subtitle">EdgeX 边缘计算网关 · 遥测上行与遥控下行通道横向绝对平直、零交叉流转</text>
+    <text y="24" class="section-subtitle">edgeCore 边缘计算网关 · 遥测上行与遥控下行通道横向绝对平直、零交叉流转</text>
   </g>
 
   <line x1="330" y1="120" x2="330" y2="640" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6 4"/>

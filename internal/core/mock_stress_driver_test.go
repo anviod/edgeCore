@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type mockStressDriver struct{}

@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 开发计划
-description: EdgeX 开发计划与路线图 — Q3/Q4 驱动交付、ScanEngine、ShadowCore、多节点同步
+description: edgeCore 开发计划与路线图 — Q3/Q4 驱动交付、ScanEngine、ShadowCore、多节点同步
 hero_eyebrow: Roadmap & Planning
-hero_lead: EdgeX 项目开发规划、路线图与待实现功能 — 驱动扩展、ScanEngine 采集优化、ShadowCore 影子设备与多节点同步通信。
+hero_lead: edgeCore 项目开发规划、路线图与待实现功能 — 驱动扩展、ScanEngine 采集优化、ShadowCore 影子设备与多节点同步通信。
 hero_buttons:
   - text: 返回首页
     url: ../index.html
@@ -67,7 +67,7 @@ hero_buttons:
 - [已交付] **SLA 调度达标** — Phase A–C 综合达标率 ≥95%，EDF/硬抖动钳制
 - [已交付] **ShadowCore 性能优化** — COW 快照、Worker Pool、ShadowIngress 批量写入
 - [已交付] **北向统一重连** — MQTT/NATS/Sparkplug B 公共 reconnect 模块
-- [已交付] **BACnet Server 北向从机模式** — Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅；将 EdgeX 南向点位映射为 BACnet 标准对象暴露给 BMS/SCADA
+- [已交付] **BACnet Server 北向从机模式** — Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 双向读写、COV 订阅；将 edgeCore 南向点位映射为 BACnet 标准对象暴露给 BMS/SCADA
 - [已交付] **Dashboard v3 UI** — Linear 级 SaaS 样式改版与 Soak 监控面板
 - [已交付] **版本发布门禁** — G-Stability/Industrial/Performance/Lightweight 四道门禁
 - [已交付] **虚拟影子设备体验** — 编辑流程、帮助文档与跨页面样式统一
@@ -91,7 +91,7 @@ hero_buttons:
 - [基于 go-libp2p 同步通信规划方案](../TODO/基于go-libp2p%20同步通信规划方案.html)（权威 · TODO）
 - [联机测试方案](sync/联机测试方案.html)
 
-### EdgeX Industrial Protocol Copilot（AI 协同 · MVP 已落地）
+### edgeCore Industrial Protocol Copilot（AI 协同 · MVP 已落地）
 - [**AI 协同组件规划 / Industrial Protocol Copilot**](../TODO/AI协同组件规划.html)（权威 · **V1.4**；**MVP 已落地**，工业联调验收进行中）
   - 工业协议工程 Copilot：厂家资料 + 报文分析 → 生产可部署 Channel/Point/Driver/Validation 配置
   - **协议逆向工程引擎 P0+ 核心** — PCAP/监控表关联、无文档设备接入

@@ -13,25 +13,25 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/core"
-	_ "github.com/anviod/edgex/internal/driver/bacnet"
-	_ "github.com/anviod/edgex/internal/driver/dlt645"
-	_ "github.com/anviod/edgex/internal/driver/ethercat"
-	_ "github.com/anviod/edgex/internal/driver/ethernetip"
-	_ "github.com/anviod/edgex/internal/driver/ice104"
-	_ "github.com/anviod/edgex/internal/driver/knxnetip"
-	_ "github.com/anviod/edgex/internal/driver/mitsubishi"
-	_ "github.com/anviod/edgex/internal/driver/modbus"
-	_ "github.com/anviod/edgex/internal/driver/omron"
-	_ "github.com/anviod/edgex/internal/driver/opcua"
-	_ "github.com/anviod/edgex/internal/driver/profinetio"
-	_ "github.com/anviod/edgex/internal/driver/s7"
-	_ "github.com/anviod/edgex/internal/driver/snmp"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/pkg/logger"
-	"github.com/anviod/edgex/internal/server"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/core"
+	_ "github.com/anviod/edgeCore/internal/driver/bacnet"
+	_ "github.com/anviod/edgeCore/internal/driver/dlt645"
+	_ "github.com/anviod/edgeCore/internal/driver/ethercat"
+	_ "github.com/anviod/edgeCore/internal/driver/ethernetip"
+	_ "github.com/anviod/edgeCore/internal/driver/ice104"
+	_ "github.com/anviod/edgeCore/internal/driver/knxnetip"
+	_ "github.com/anviod/edgeCore/internal/driver/mitsubishi"
+	_ "github.com/anviod/edgeCore/internal/driver/modbus"
+	_ "github.com/anviod/edgeCore/internal/driver/omron"
+	_ "github.com/anviod/edgeCore/internal/driver/opcua"
+	_ "github.com/anviod/edgeCore/internal/driver/profinetio"
+	_ "github.com/anviod/edgeCore/internal/driver/s7"
+	_ "github.com/anviod/edgeCore/internal/driver/snmp"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/logger"
+	"github.com/anviod/edgeCore/internal/server"
+	"github.com/anviod/edgeCore/internal/storage"
 
 	"go.uber.org/zap"
 )
@@ -133,8 +133,8 @@ func main() {
 	if err := os.MkdirAll("logs", 0755); err != nil {
 		zap.L().Warn("Failed to create logs directory", zap.Error(err))
 	}
-	logger.InitLogger(cfg.Server.LogLevel, "logs/gateway.edgex.log", logBroadcaster)
-	zap.L().Info("Logger initialized", zap.String("level", cfg.Server.LogLevel), zap.String("file", "logs/gateway.edgex.log"))
+	logger.InitLogger(cfg.Server.LogLevel, "logs/gateway.edgeCore.log", logBroadcaster)
+	zap.L().Info("Logger initialized", zap.String("level", cfg.Server.LogLevel), zap.String("file", "logs/gateway.edgeCore.log"))
 	zap.L().Info("Build info",
 		zap.String("version", model.Version),
 		zap.String("build_time", model.FormatBuildTime()),

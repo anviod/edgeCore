@@ -99,7 +99,7 @@
               </a-col>
               <a-col :span="8">
                 <a-form-item label="设备名称">
-                  <a-input v-model="form.device_name" placeholder="EdgeX-Gateway" />
+                  <a-input v-model="form.device_name" placeholder="edgeCore-Gateway" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
@@ -111,7 +111,7 @@
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="厂商名称">
-                  <a-input v-model="form.vendor_name" placeholder="EdgeX Foundry" />
+                  <a-input v-model="form.vendor_name" placeholder="edgeCore Foundry" />
                 </a-form-item>
               </a-col>
             </a-row>

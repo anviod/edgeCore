@@ -115,7 +115,7 @@ const haConfig = reactive({
 })
 
 const hostnameConfig = reactive({
-  name: 'edgex',
+  name: 'edgeCore',
   enable_mdns: true,
   enable_bare: true,
   http_port: 8080,

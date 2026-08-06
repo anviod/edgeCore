@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 )

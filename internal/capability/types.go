@@ -1,4 +1,4 @@
-// Package capability implements the EdgeX Capability Runtime for EAN 2.0.
+// Package capability implements the edgeCore Capability Runtime for EAN 2.0.
 // It defines the shared Agent / Capability / Discovery / Invoke / Event models
 // and local runtime components (registry, dispatcher, discovery/event publishers).
 package capability
@@ -25,10 +25,10 @@ const (
 type AgentStatus string
 
 const (
-	AgentStatusOnline    AgentStatus = "online"
-	AgentStatusOffline   AgentStatus = "offline"
-	AgentStatusDegraded  AgentStatus = "degraded"
-	AgentStatusError     AgentStatus = "error"
+	AgentStatusOnline   AgentStatus = "online"
+	AgentStatusOffline  AgentStatus = "offline"
+	AgentStatusDegraded AgentStatus = "degraded"
+	AgentStatusError    AgentStatus = "error"
 )
 
 // TransportType is how the Agent is reachable.
@@ -85,16 +85,16 @@ const (
 
 // MessageType values used in EAN 2.0 envelopes.
 const (
-	MessageTypeAgentDescriptor       = "agent_descriptor"
-	MessageTypeAgentOffline          = "agent_offline"
-	MessageTypeCapabilityDescriptor  = "capability_descriptor"
-	MessageTypeDiscoveryQuery        = "discovery_query"
-	MessageTypeDiscoveryResponse     = "discovery_response"
-	MessageTypeInvokeCapability      = "invoke_capability"
-	MessageTypeInvokeResponse        = "invoke_response"
-	MessageTypeInvokeStatusQuery     = "invoke_status_query"
-	MessageTypeEvent                 = "event"
-	MessageTypeHeartbeat             = "agent_heartbeat"
+	MessageTypeAgentDescriptor      = "agent_descriptor"
+	MessageTypeAgentOffline         = "agent_offline"
+	MessageTypeCapabilityDescriptor = "capability_descriptor"
+	MessageTypeDiscoveryQuery       = "discovery_query"
+	MessageTypeDiscoveryResponse    = "discovery_response"
+	MessageTypeInvokeCapability     = "invoke_capability"
+	MessageTypeInvokeResponse       = "invoke_response"
+	MessageTypeInvokeStatusQuery    = "invoke_status_query"
+	MessageTypeEvent                = "event"
+	MessageTypeHeartbeat            = "agent_heartbeat"
 )
 
 // MessageHeader is the common EAN 2.0 envelope header.
@@ -123,15 +123,15 @@ type AgentEndpoint struct {
 
 // Agent is the EAN 2.0 unified Agent model.
 type Agent struct {
-	ID                    string         `json:"id"`
-	Kind                  AgentKind      `json:"kind"`
-	Version               string         `json:"version"`
-	Status                AgentStatus    `json:"status"`
-	Transport             TransportType  `json:"transport"`
-	HeartbeatIntervalSec  int            `json:"heartbeat_interval_sec"`
-	Endpoint              *AgentEndpoint `json:"endpoint,omitempty"`
-	Metadata              map[string]any `json:"metadata,omitempty"`
-	Capabilities          []Capability   `json:"capabilities,omitempty"`
+	ID                   string         `json:"id"`
+	Kind                 AgentKind      `json:"kind"`
+	Version              string         `json:"version"`
+	Status               AgentStatus    `json:"status"`
+	Transport            TransportType  `json:"transport"`
+	HeartbeatIntervalSec int            `json:"heartbeat_interval_sec"`
+	Endpoint             *AgentEndpoint `json:"endpoint,omitempty"`
+	Metadata             map[string]any `json:"metadata,omitempty"`
+	Capabilities         []Capability   `json:"capabilities,omitempty"`
 }
 
 // AgentDescriptorBody is published on discovery/agent.
@@ -147,15 +147,15 @@ type AgentOfflineBody struct {
 
 // Capability is the EAN 2.0 unified capability model.
 type Capability struct {
-	ID           string              `json:"id"`
-	AgentID      string              `json:"agent_id"`
-	Description  string              `json:"description"`
-	Category     CapabilityCategory  `json:"category"`
-	InputSchema  map[string]any      `json:"input_schema,omitempty"`
-	OutputSchema map[string]any      `json:"output_schema,omitempty"`
-	TimeoutSec   int                 `json:"timeout_sec"`
-	Permission   Permission          `json:"permission"`
-	Metadata     map[string]any      `json:"metadata,omitempty"`
+	ID           string             `json:"id"`
+	AgentID      string             `json:"agent_id"`
+	Description  string             `json:"description"`
+	Category     CapabilityCategory `json:"category"`
+	InputSchema  map[string]any     `json:"input_schema,omitempty"`
+	OutputSchema map[string]any     `json:"output_schema,omitempty"`
+	TimeoutSec   int                `json:"timeout_sec"`
+	Permission   Permission         `json:"permission"`
+	Metadata     map[string]any     `json:"metadata,omitempty"`
 }
 
 // CapabilityDescriptorBody is published on discovery/capability.
@@ -165,12 +165,12 @@ type CapabilityDescriptorBody struct {
 
 // RegistrySnapshot is the local/remote registry view.
 type RegistrySnapshot struct {
-	AgentID            string   `json:"agent_id"`
-	LastSeen           int64    `json:"last_seen"`
-	CapabilitiesCount  int      `json:"capabilities_count"`
-	Capabilities       []string `json:"capabilities"`
-	Status             string   `json:"status"`
-	Version            string   `json:"version"`
+	AgentID           string   `json:"agent_id"`
+	LastSeen          int64    `json:"last_seen"`
+	CapabilitiesCount int      `json:"capabilities_count"`
+	Capabilities      []string `json:"capabilities"`
+	Status            string   `json:"status"`
+	Version           string   `json:"version"`
 }
 
 // InvokeOptions controls Invoke execution.
@@ -216,10 +216,10 @@ type InvokeStatusQuery struct {
 // InvokeMetrics tracks EAN Invoke runtime statistics for monitoring.
 // Thread-safe; designed for concurrent Invoke calls from HTTP/MCP/bus adapters.
 type InvokeMetrics struct {
-	TotalInvokes int64 `json:"total_invokes"`
-	SuccessCount int64 `json:"success_count"`
-	FailedCount  int64 `json:"failed_count"`
-	TimeoutCount int64 `json:"timeout_count"`
+	TotalInvokes  int64 `json:"total_invokes"`
+	SuccessCount  int64 `json:"success_count"`
+	FailedCount   int64 `json:"failed_count"`
+	TimeoutCount  int64 `json:"timeout_count"`
 	RejectedCount int64 `json:"rejected_count"`
 
 	// 延迟统计（毫秒）| Latency statistics in milliseconds
@@ -230,17 +230,17 @@ type InvokeMetrics struct {
 
 // InvokeMetricsSnapshot is a point-in-time copy of InvokeMetrics for API exposure.
 type InvokeMetricsSnapshot struct {
-	TotalInvokes  int64   `json:"total_invokes"`
-	SuccessCount  int64   `json:"success_count"`
-	FailedCount   int64   `json:"failed_count"`
-	TimeoutCount  int64   `json:"timeout_count"`
-	RejectedCount int64   `json:"rejected_count"`
-	SuccessRate   float64 `json:"success_rate"`
-	AvgLatencyMs  float64 `json:"avg_latency_ms"`
-	P50LatencyMs  int64   `json:"p50_latency_ms"`
-	P99LatencyMs  int64   `json:"p99_latency_ms"`
-	MinLatencyMs  int64   `json:"min_latency_ms"`
-	MaxLatencyMs  int64   `json:"max_latency_ms"`
+	TotalInvokes  int64          `json:"total_invokes"`
+	SuccessCount  int64          `json:"success_count"`
+	FailedCount   int64          `json:"failed_count"`
+	TimeoutCount  int64          `json:"timeout_count"`
+	RejectedCount int64          `json:"rejected_count"`
+	SuccessRate   float64        `json:"success_rate"`
+	AvgLatencyMs  float64        `json:"avg_latency_ms"`
+	P50LatencyMs  int64          `json:"p50_latency_ms"`
+	P99LatencyMs  int64          `json:"p99_latency_ms"`
+	MinLatencyMs  int64          `json:"min_latency_ms"`
+	MaxLatencyMs  int64          `json:"max_latency_ms"`
 	TopErrors     []ErrorCounter `json:"top_errors,omitempty"`
 }
 

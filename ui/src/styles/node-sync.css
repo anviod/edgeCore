@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 节点同步页（SyncControl / Cluster / ConfigDiff）
+ * edgeCore v3.0 — 节点同步页（SyncControl / Cluster / ConfigDiff）
  */
 
 .node-sync-page .page-header {
@@ -153,7 +153,7 @@
 }
 
 .sync-status-dot--online {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
 }
 
@@ -328,7 +328,7 @@
 }
 
 .discovery-status .status-idle {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 /* ── 发现节点列表 ── */
@@ -366,7 +366,7 @@
 }
 
 .node-indicator.indicator-connected {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
 }
 
 .node-indicator.indicator-discovered {
@@ -651,11 +651,11 @@
 }
 
 .timeline-status.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .timeline-status.failed {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .timeline-time {
@@ -726,7 +726,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   flex-shrink: 0;
 }
 
@@ -815,7 +815,7 @@
 }
 
 .log-type.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   background: rgba(220, 38, 38, 0.1);
 }
 
@@ -1053,9 +1053,9 @@
   margin-left: var(--space-1);
 }
 
-.summary-value.same { color: var(--edgex-success); }
+.summary-value.same { color: var(--edgeCore-success); }
 .summary-value.different { color: #d97706; }
-.summary-value.missing { color: var(--edgex-error); }
+.summary-value.missing { color: var(--edgeCore-error); }
 
 .diff-list {
   display: flex;
@@ -1348,7 +1348,7 @@
 }
 
 .node-tree-container .node-status-dot.online {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
 
@@ -1357,7 +1357,7 @@
 }
 
 .node-tree-container .node-status-dot.offline {
-  background: var(--edgex-error);
+  background: var(--edgeCore-error);
 }
 
 .node-tree-container .node-item .node-info {
@@ -1540,13 +1540,13 @@
 .node-tree-container .status-badge.online,
 .node-tree-container .node-status-badge.online {
   background: rgba(22, 163, 74, 0.1);
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .node-tree-container .status-badge.offline,
 .node-tree-container .node-status-badge.offline {
   background: rgba(220, 38, 38, 0.1);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .node-tree-container .status-badge.degraded,

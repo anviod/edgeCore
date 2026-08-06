@@ -1,10 +1,10 @@
 ---
 layout: default
 title: User Manual
-description: EdgeX user manual — protocols, deployment, operations, and best practices
+description: edgeCore user manual — protocols, deployment, operations, and best practices
 ---
 
-# EdgeX User Manual
+# edgeCore User Manual
 
 [中文用户手册](USER_MANUAL.html) · [Product Guide](PRODUCT.html) · [Architecture](../en/architecture-overview.html)
 
@@ -44,12 +44,12 @@ Driver docs: [index_en](../drivers/index_en.html).
 
 ```bash
 # Debian/Ubuntu
-sudo dpkg -i edgex-v{version}-amd64.deb
+sudo dpkg -i edgeCore-v{version}-amd64.deb
 
 # RHEL/Fedora
-sudo rpm -ivh edgex-v{version}-amd64.rpm
+sudo rpm -ivh edgeCore-v{version}-amd64.rpm
 
-sudo systemctl enable --now edgex
+sudo systemctl enable --now edgeCore
 ```
 
 Open `http://<host>:<port>`. First boot runs the install wizard if `data/config.db` is missing.

@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type netplanBackend struct{}
@@ -13,7 +13,7 @@ type netplanBackend struct{}
 func (b *netplanBackend) Type() BackendType { return BackendNetplan }
 
 func (b *netplanBackend) ApplyInterfaceConfig(iface model.NetworkInterface) error {
-	path := "/etc/netplan/99-edgex.yaml"
+	path := "/etc/netplan/99-edgeCore.yaml"
 	var builder strings.Builder
 	builder.WriteString("network:\n  version: 2\n  ethernets:\n")
 	builder.WriteString(fmt.Sprintf("    %s:\n", iface.Name))
@@ -71,7 +71,7 @@ func (b *netplanBackend) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 }
 
 func (b *netplanBackend) ApplyStaticRoute(route model.StaticRoute) error {
-	path := "/etc/netplan/98-edgex-routes.yaml"
+	path := "/etc/netplan/98-edgeCore-routes.yaml"
 	dest := route.Destination
 	if route.Prefix > 0 {
 		dest = fmt.Sprintf("%s/%d", route.Destination, route.Prefix)

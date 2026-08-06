@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet 多设备隔离采集测试方案
-description: EdgeX BACnet 多设备隔离测试（索引）
+description: edgeCore BACnet 多设备隔离测试（索引）
 ---
 
 # BACnet 多设备隔离采集测试方案

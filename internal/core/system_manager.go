@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/network"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/network"
 )
 
 type SystemManager struct {
@@ -250,7 +250,7 @@ func (sm *SystemManager) normalizeHostnameConfig() {
 
 func (sm *SystemManager) normalizeHostnameConfigLocked() {
 	if sm.config.System.Hostname.Name == "" {
-		sm.config.System.Hostname.Name = "edgex"
+		sm.config.System.Hostname.Name = "edgeCore"
 	}
 	if sm.config.Server.Port > 0 {
 		sm.config.System.Hostname.HTTPPort = sm.config.Server.Port
@@ -271,7 +271,7 @@ func (sm *SystemManager) effectiveHostnameConfig() model.HostnameConfig {
 func (sm *SystemManager) effectiveHostnameConfigLocked() model.HostnameConfig {
 	cfg := sm.config.System.Hostname
 	if cfg.Name == "" {
-		cfg.Name = "edgex"
+		cfg.Name = "edgeCore"
 	}
 	if sm.config.Server.Port > 0 {
 		cfg.HTTPPort = sm.config.Server.Port

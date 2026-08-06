@@ -36,12 +36,12 @@
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="Client ID" required>
-                  <a-input v-model="form.client_id" placeholder="edgex-node-001" class="mono-text" />
+                  <a-input v-model="form.client_id" placeholder="edgeCore-node-001" class="mono-text" />
                 </a-form-item>
               </a-col>
               <a-col :span="12">
                 <a-form-item label="节点 ID" required>
-                  <a-input v-model="form.node_id" placeholder="edgex-node-001" class="mono-text" />
+                  <a-input v-model="form.node_id" placeholder="edgeCore-node-001" class="mono-text" />
                 </a-form-item>
               </a-col>
             </a-row>
@@ -199,8 +199,8 @@ const initForm = () => {
       enable: true,
       name: 'New edgeOS NATS',
       url: 'nats://127.0.0.1:4222',
-      client_id: 'edgex-node-001',
-      node_id: 'edgex-node-001',
+      client_id: 'edgeCore-node-001',
+      node_id: 'edgeCore-node-001',
       username: '',
       password: '',
       token: '',

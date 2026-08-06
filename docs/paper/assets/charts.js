@@ -1,5 +1,5 @@
 /**
- * EdgeX Paper — Nature-style Charts & Diagrams
+ * edgeCore Paper — Nature-style Charts & Diagrams
  * 跨架构性能对比图表 + Mermaid 初始化
  */
 (function () {

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestEdgeAction_BitValueLogic(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestPointSchedulerDecodeResponseWithDataformat(t *testing.T) {

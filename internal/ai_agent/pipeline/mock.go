@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 )
 
 type MockRunner struct {

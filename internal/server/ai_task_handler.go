@@ -10,9 +10,9 @@ import (
 
 	"encoding/json"
 
-	"github.com/anviod/edgex/internal/ai_agent"
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
-	"github.com/anviod/edgex/internal/ai_agent/pipeline"
+	"github.com/anviod/edgeCore/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/pipeline"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -110,7 +110,7 @@ func (s *Server) uploadAiTaskFile(c *fiber.Ctx) error {
 		})
 	}
 
-	uploadDir := filepath.Join(os.TempDir(), "edgex-ai-uploads", id)
+	uploadDir := filepath.Join(os.TempDir(), "edgeCore-ai-uploads", id)
 	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"code": "1", "message": "创建上传目录失败", "data": nil,
@@ -335,7 +335,7 @@ func (s *Server) postAiTaskFromUpload(c *fiber.Ctx) error {
 		})
 	}
 
-	uploadDir := filepath.Join(os.TempDir(), "edgex-ai-uploads", rec.ID)
+	uploadDir := filepath.Join(os.TempDir(), "edgeCore-ai-uploads", rec.ID)
 	if err := os.MkdirAll(uploadDir, 0o755); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"code": "1", "message": "创建上传目录失败", "data": nil,

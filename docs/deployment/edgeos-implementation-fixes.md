@@ -8,8 +8,8 @@ layout: default
 
 | 文档 | 说明 |
 | :--- | :--- |
-| [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html) | 协议与 Topic（权威） |
+| [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html) | 协议与 Topic（权威） |
 | [EdgeOS 北向配置](edgeos-northbound.html) | 配置说明 |
 | [EdgeOS 实现总结](edgeos-implementation-summary.html) | 历史完成索引 |
 
-详见：[EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)
+详见：[edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)

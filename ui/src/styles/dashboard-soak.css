@@ -99,7 +99,7 @@
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: var(--radius-md);
   background: rgba(220, 38, 38, 0.06);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   font-size: 13px;
 }
 

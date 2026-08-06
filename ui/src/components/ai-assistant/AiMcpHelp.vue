@@ -32,7 +32,7 @@
     <div class="ai-workbench-section">
       <h3 class="ai-workbench-section__title">接入方式</h3>
       <p class="ai-workbench-section__hint">
-        外部 LLM 应用通过 MCP 协议安全操作 EdgeX 工业网关。使用 MCP API Key 简化认证（无需 JWT）。
+        外部 LLM 应用通过 MCP 协议安全操作 edgeCore 工业网关。使用 MCP API Key 简化认证（无需 JWT）。
       </p>
 
       <div class="ai-mcp-client-tabs">
@@ -211,40 +211,40 @@ const toggleSecurity = () => { expandedSecurity.value = !expandedSecurity.value 
 
 // 客户端列表
 const clients = [
-  { name: 'Claude Desktop', config: '{"mcpServers":{"edgex":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
-  { name: 'Cursor', config: '{"mcpServers":{"edgex":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
-  { name: 'Windsurf', config: '{"mcpServers":{"edgex":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
-  { name: 'Continue.dev', config: '{"mcpServers":{"edgex":{"transport":{"type":"http","url":"<host>/api/mcp"},"auth":{"type":"bearer","token":"<mcp_api_key>"}}}}' }
+  { name: 'Claude Desktop', config: '{"mcpServers":{"edgeCore":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
+  { name: 'Cursor', config: '{"mcpServers":{"edgeCore":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
+  { name: 'Windsurf', config: '{"mcpServers":{"edgeCore":{"url":"<host>/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}' },
+  { name: 'Continue.dev', config: '{"mcpServers":{"edgeCore":{"transport":{"type":"http","url":"<host>/api/mcp"},"auth":{"type":"bearer","token":"<mcp_api_key>"}}}}' }
 ]
 
 // 只读工具
 const readTools = [
-  { name: 'edgex_list_channels', desc: '列出所有采集通道及其状态', category: 'read' },
-  { name: 'edgex_list_devices', desc: '列出指定通道下的所有设备', category: 'read' },
-  { name: 'edgex_list_points', desc: '列出指定设备下的所有点位（含当前值）', category: 'read' },
-  { name: 'edgex_read_point', desc: '读取指定点位的当前实时值', category: 'read' },
-  { name: 'edgex_get_system_info', desc: '获取 EdgeX 网关系统信息', category: 'read' },
-  { name: 'edgex_get_diagnostics', desc: '获取通道或设备的诊断信息', category: 'read' },
-  { name: 'edgex_analyze_protocol', desc: '分析工业协议特征（端口/名称匹配）', category: 'read' },
-  { name: 'edgex_get_protocol_help', desc: '获取指定工业协议的接入帮助', category: 'read' }
+  { name: 'edgeCore_list_channels', desc: '列出所有采集通道及其状态', category: 'read' },
+  { name: 'edgeCore_list_devices', desc: '列出指定通道下的所有设备', category: 'read' },
+  { name: 'edgeCore_list_points', desc: '列出指定设备下的所有点位（含当前值）', category: 'read' },
+  { name: 'edgeCore_read_point', desc: '读取指定点位的当前实时值', category: 'read' },
+  { name: 'edgeCore_get_system_info', desc: '获取 edgeCore 网关系统信息', category: 'read' },
+  { name: 'edgeCore_get_diagnostics', desc: '获取通道或设备的诊断信息', category: 'read' },
+  { name: 'edgeCore_analyze_protocol', desc: '分析工业协议特征（端口/名称匹配）', category: 'read' },
+  { name: 'edgeCore_get_protocol_help', desc: '获取指定工业协议的接入帮助', category: 'read' }
 ]
 
 // 全功能 CRUD 工具
 const writeTools = [
-  { name: 'edgex_write_point', desc: '向指定点位写入控制值', category: 'write' },
-  { name: 'edgex_read_point_batch', desc: '批量读取多个点位实时值（测试验证）', category: 'write' },
-  { name: 'edgex_write_point_batch', desc: '批量写入多个点位值（测试验证）', category: 'write' },
-  { name: 'edgex_create_channel', desc: '创建南向采集通道（自动配置协议驱动）', category: 'write' },
-  { name: 'edgex_delete_channel', desc: '删除指定通道（含设备/点位）', category: 'write' },
-  { name: 'edgex_start_channel', desc: '启动通道采集引擎', category: 'write' },
-  { name: 'edgex_stop_channel', desc: '停止通道采集引擎', category: 'write' },
-  { name: 'edgex_create_device', desc: '在通道下创建设备（自动配置从站地址）', category: 'write' },
-  { name: 'edgex_delete_device', desc: '删除指定设备（含点位）', category: 'write' },
-  { name: 'edgex_create_point', desc: '创建设备采集点位（自动配置地址/类型/缩放）', category: 'write' },
-  { name: 'edgex_delete_point', desc: '删除指定点位', category: 'write' },
-  { name: 'edgex_create_edge_rule', desc: '创建边缘计算规则（阈值/计算/状态/窗口）', category: 'write' },
-  { name: 'edgex_delete_edge_rule', desc: '删除边缘计算规则', category: 'write' },
-  { name: 'edgex_create_virtual_device', desc: '创建虚拟设备（公式计算，不占用物理连接）', category: 'write' }
+  { name: 'edgeCore_write_point', desc: '向指定点位写入控制值', category: 'write' },
+  { name: 'edgeCore_read_point_batch', desc: '批量读取多个点位实时值（测试验证）', category: 'write' },
+  { name: 'edgeCore_write_point_batch', desc: '批量写入多个点位值（测试验证）', category: 'write' },
+  { name: 'edgeCore_create_channel', desc: '创建南向采集通道（自动配置协议驱动）', category: 'write' },
+  { name: 'edgeCore_delete_channel', desc: '删除指定通道（含设备/点位）', category: 'write' },
+  { name: 'edgeCore_start_channel', desc: '启动通道采集引擎', category: 'write' },
+  { name: 'edgeCore_stop_channel', desc: '停止通道采集引擎', category: 'write' },
+  { name: 'edgeCore_create_device', desc: '在通道下创建设备（自动配置从站地址）', category: 'write' },
+  { name: 'edgeCore_delete_device', desc: '删除指定设备（含点位）', category: 'write' },
+  { name: 'edgeCore_create_point', desc: '创建设备采集点位（自动配置地址/类型/缩放）', category: 'write' },
+  { name: 'edgeCore_delete_point', desc: '删除指定点位', category: 'write' },
+  { name: 'edgeCore_create_edge_rule', desc: '创建边缘计算规则（阈值/计算/状态/窗口）', category: 'write' },
+  { name: 'edgeCore_delete_edge_rule', desc: '删除边缘计算规则', category: 'write' },
+  { name: 'edgeCore_create_virtual_device', desc: '创建虚拟设备（公式计算，不占用物理连接）', category: 'write' }
 ]
 
 const toolList = computed(() => [...readTools, ...writeTools])
@@ -532,7 +532,7 @@ function renderHelpDoc(data) {
   if (data.resources?.length) {
     html += `<section class="ai-mcp-docs-section">
       <h3 class="ai-mcp-docs-section__title">资源端点 (${data.resources.length} 个)</h3>
-      <p class="ai-mcp-docs-section__text">资源端点以结构化 JSON 格式提供 EdgeX 网关的实时配置数据，LLM 可通过 <code>resources/read</code> 直接读取。</p>
+      <p class="ai-mcp-docs-section__text">资源端点以结构化 JSON 格式提供 edgeCore 网关的实时配置数据，LLM 可通过 <code>resources/read</code> 直接读取。</p>
       <div class="ai-mcp-docs-resource-grid">`
     for (const r of data.resources) {
       html += `<div class="ai-mcp-docs-resource-card">

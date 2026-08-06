@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +27,7 @@ func lib60870ServerAvailable(t *testing.T) (host string, port int, ok bool) {
 	addr := lib60870ServerAddr()
 	conn, err := net.DialTimeout("tcp", addr, 2*time.Second)
 	if err != nil {
-		t.Skipf("lib60870 edgex_server not available at %s: %v (see test/lib60870/README.md)", addr, err)
+		t.Skipf("lib60870 edgeCore_server not available at %s: %v (see test/lib60870/README.md)", addr, err)
 		return "", 0, false
 	}
 	_ = conn.Close()
@@ -47,7 +47,7 @@ func lib60870ServerAvailable(t *testing.T) (host string, port int, ok bool) {
 }
 
 // TestIntegrationWithLib60870Server connects to a running lib60870 CS104 slave
-// (test/lib60870/edgex_server.c). Start the server manually or via build-windows.bat.
+// (test/lib60870/edgeCore_server.c). Start the server manually or via build-windows.bat.
 func TestIntegrationWithLib60870Server(t *testing.T) {
 	host, port, ok := lib60870ServerAvailable(t)
 	if !ok {

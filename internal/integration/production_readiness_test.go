@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
+	"github.com/anviod/edgeCore/internal/core"
 )
 
 const (

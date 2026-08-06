@@ -3,7 +3,7 @@ package network
 import (
 	"fmt"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // HostnameAccessStatus summarizes how the gateway can be reached on the LAN.
@@ -22,7 +22,7 @@ type HostnameAccessStatus struct {
 func BuildHostnameAccessStatus(cfg model.HostnameConfig, mdns HostnameMDNSStatus, dnsProxy HostnameDNSProxyStatus) HostnameAccessStatus {
 	name := cfg.Name
 	if name == "" {
-		name = "edgex"
+		name = "edgeCore"
 	}
 	httpPort := cfg.HTTPPort
 	if httpPort == 0 {

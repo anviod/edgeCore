@@ -135,7 +135,7 @@ func (p *DiscoveryPublisher) publish(topic string, msg Message, qos byte) error 
 	if err != nil {
 		return err
 	}
-	// Soft-fail when offline: discovery must not block EdgeX industrial path.
+	// Soft-fail when offline: discovery must not block edgeCore industrial path.
 	if p.bus == nil || !p.bus.IsConnected() {
 		return nil
 	}

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 Page Layout — centered SaaS flow
+ * edgeCore v3.0 Page Layout — centered SaaS flow
  */
 
 .page-shell {
@@ -253,12 +253,12 @@
 }
 
 .section-header--push {
-  background: var(--edgex-push-bg);
+  background: var(--edgeCore-push-bg);
   border-left-color: var(--primary);
 }
 
 .section-header--passive {
-  background: var(--edgex-passive-bg);
+  background: var(--edgeCore-passive-bg);
   border-left-color: #722ed1;
 }
 

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 采集通道页（Dashboard 三级视觉对齐）
+ * edgeCore v3.0 — 采集通道页（Dashboard 三级视觉对齐）
  */
 
 /* ── page shell：全宽 + 紧凑 section 间距 ── */
@@ -223,11 +223,11 @@
 .channel-list-page .channel-status-chip.is-enabled {
   border-color: rgba(22, 163, 74, 0.25);
   background: rgba(22, 163, 74, 0.06);
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .channel-list-page .channel-status-chip.is-enabled .status-dot {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
 }
 
@@ -297,12 +297,12 @@
 
 .channel-list-page .channel-kpi-value.online,
 .channel-list-page .channel-kpi-value.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .channel-list-page .channel-kpi-value.offline,
 .channel-list-page .channel-kpi-value.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .channel-list-page .channel-kpi-value.warning {

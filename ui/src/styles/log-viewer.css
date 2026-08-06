@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 系统日志页（LogViewer）
+ * edgeCore v3.0 — 系统日志页（LogViewer）
  * Flow UI：page-header → toolbar → floating log rows
  */
 
@@ -155,7 +155,7 @@
 
 .log-viewer-page .log-stream-toggle.is-streaming .log-stream-toggle__indicator {
   left: 3px;
-  background: var(--edgex-success, #16a34a);
+  background: var(--edgeCore-success, #16a34a);
   box-shadow:
     0 0 0 1px rgba(22, 163, 74, 0.28),
     0 2px 10px rgba(22, 163, 74, 0.24),
@@ -370,7 +370,7 @@
 }
 
 .log-viewer-page .stream-status.is-live .stream-status__dot {
-  background: var(--edgex-success, #16a34a);
+  background: var(--edgeCore-success, #16a34a);
   box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
   animation: log-stream-status-dot-pulse 2.2s ease-in-out infinite;
 }
@@ -659,7 +659,7 @@
 }
 
 .log-viewer-page .log-level.error {
-  color: var(--edgex-error, #dc2626);
+  color: var(--edgeCore-error, #dc2626);
   background: rgba(220, 38, 38, 0.1);
 }
 

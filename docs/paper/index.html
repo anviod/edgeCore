@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>面向工业互联网的轻量化边缘计算网关 EdgeX 架构设计与实现</title>
+<title>面向工业互联网的轻量化边缘计算网关 edgeCore 架构设计与实现</title>
 <style>
 /* ===== Font Faces ===== */
 @font-face { font-family: 'IBMPlexSerif'; src: url('./shared/fonts/IBMPlexSerif-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; }
@@ -299,7 +299,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
 
 <!-- Journal Header -->
 <header class="journal-header">
-  <span class="jh-name">EdgeX Research</span>
+  <span class="jh-name">edgeCore Research</span>
   <span class="jh-meta">2026 · Architecture &amp; Systems Engineering</span>
 </header>
 
@@ -332,7 +332,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
       <h1>面向工业互联网场景的轻量化高可靠边缘计算网关架构设计与实现</h1>
       <p class="subtitle">Design and Implementation of a Lightweight and Highly Reliable Edge Computing Gateway Architecture for Industrial Internet Applications</p>
       <div class="author-block" style="font-family:var(--font-heading);font-size:0.85rem;line-height:1.9;color:var(--muted);margin-top:0.8rem;">
-        <p>所属项目：EdgeX Industrial Edge Gateway（<a href="https://github.com/anviod/edgex">github.com/anviod/edgex</a>）</p>
+        <p>所属项目：edgeCore Industrial Edge Gateway（<a href="https://github.com/anviod/edgeCore">github.com/anviod/edgeCore</a>）</p>
         <p>开源协议: MIT</p>
         <p>作者: <strong style="color:var(--ink);">二手科学家</strong><sup>*</sup>　电子邮箱：<a href="mailto:anviod@aliyun.com">anviod@aliyun.com</a></p>
         <p>EdgeOS 组织 · 工业边缘计算实验室 · 2026</p>
@@ -342,8 +342,8 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
     <!-- Abstract -->
     <section class="abstract-box" id="abstract">
       <h2>摘要 Abstract</h2>
-      <p>工业互联网的深入发展使得海量异构工业设备亟需被统一接入与智能化管理。然而，传统工业网关普遍采用"微服务 + 容器 + 数据库 + 消息组件"的复杂栈，存在资源占用高、故障链路长、协议驱动自治导致行为不可控、以及工业数据无法被人工智能直接理解等问题。针对以上挑战，本文提出一种面向工业互联网的轻量化、高可靠边缘计算网关架构——EdgeX。该架构以 <strong>ScanEngine 统一调度内核</strong>、<strong>ShadowCore 实时设备状态模型</strong> 与 <strong>基于 MCP 的工业 AI 能力开放层</strong> 为核心，将设备连接、状态管理、AI 能力开放三者融合为一个可验证的工程基础设施。</p>
-      <p>ScanEngine 采用最早截止优先（EDF）调度与资源配额、自适应限流、熔断与失败指数退避，实现确定性的采集调度；ShadowCore 以版本化的写时复制（COW）内存快照作为唯一数据真源（SoT），解耦南向采集与北向消费；MCP Server 将工业设备的读、写、诊断能力抽象为标准 Tool / Resource / Prompt，使 AI Agent 可通过 Model Context Protocol 以统一协议发现和调用工业资源，并将写操作纳入审批门控与操作审计。进一步地，本文在 MCP 之上引入 EAN 2.0 边缘智能体网络，使 EdgeX 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点能力发现、Invoke 编排与分布式 Agent 协同，并配套工业协议逆向工程引擎降低异构设备的现场接入成本。</p>
+      <p>工业互联网的深入发展使得海量异构工业设备亟需被统一接入与智能化管理。然而，传统工业网关普遍采用"微服务 + 容器 + 数据库 + 消息组件"的复杂栈，存在资源占用高、故障链路长、协议驱动自治导致行为不可控、以及工业数据无法被人工智能直接理解等问题。针对以上挑战，本文提出一种面向工业互联网的轻量化、高可靠边缘计算网关架构——edgeCore。该架构以 <strong>ScanEngine 统一调度内核</strong>、<strong>ShadowCore 实时设备状态模型</strong> 与 <strong>基于 MCP 的工业 AI 能力开放层</strong> 为核心，将设备连接、状态管理、AI 能力开放三者融合为一个可验证的工程基础设施。</p>
+      <p>ScanEngine 采用最早截止优先（EDF）调度与资源配额、自适应限流、熔断与失败指数退避，实现确定性的采集调度；ShadowCore 以版本化的写时复制（COW）内存快照作为唯一数据真源（SoT），解耦南向采集与北向消费；MCP Server 将工业设备的读、写、诊断能力抽象为标准 Tool / Resource / Prompt，使 AI Agent 可通过 Model Context Protocol 以统一协议发现和调用工业资源，并将写操作纳入审批门控与操作审计。进一步地，本文在 MCP 之上引入 EAN 2.0 边缘智能体网络，使 edgeCore 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点能力发现、Invoke 编排与分布式 Agent 协同，并配套工业协议逆向工程引擎降低异构设备的现场接入成本。</p>
       <p>实验表明，在 1 万 Tag 规模下系统调度延迟 P99 &lt; 150 ms、P95 实测低至 1.56 ms，内存常驻稳定低于 120 MB、长稳 Soak 内存漂移为 0%，可长期稳定运行于 ARM 工业网关，并以四道发布门禁（稳定性/工业验证/性能/轻量化）与量化验收标准验证其工业可部署性。此外，虚拟影子设备与边缘规则引擎在边缘侧完成就地计算与联动控制，使架构兼具"连接—状态—智能"三层能力。本文的工作为工业互联网场景下"边缘基础设施 + 工业状态模型 + AI 能力开放"的融合提供了可落地的架构范式。</p>
       <p class="keywords"><strong>关键词：</strong>工业互联网；边缘计算；工业网关；实时调度；数字孪生；ShadowCore；虚拟影子设备；Model Context Protocol；Edge Agent Network（EAN）；Capability Runtime；EdgeOS；AI Agent</p>
     </section>
@@ -386,7 +386,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
         <li><strong>电力能源行业</strong>：IEC 60870-5-104、DL/T645；</li>
         <li><strong>网络设备管理</strong>：SNMP。</li>
       </ul>
-      <p>因此，工业边缘网关面对的并非单一通信标准，而是由<strong>网络层协议 + 现场总线 + 设备私有协议 + 行业标准协议</strong>共同组成的复杂协议矩阵。任何声称"统一接入"的网关都必须解决不同协议栈、数据模型、设备能力描述与实时通信机制之间的统一抽象问题——这正是 EdgeX 构建多协议南向接入能力（支持 13 类工业协议）的根本动因。</p>
+      <p>因此，工业边缘网关面对的并非单一通信标准，而是由<strong>网络层协议 + 现场总线 + 设备私有协议 + 行业标准协议</strong>共同组成的复杂协议矩阵。任何声称"统一接入"的网关都必须解决不同协议栈、数据模型、设备能力描述与实时通信机制之间的统一抽象问题——这正是 edgeCore 构建多协议南向接入能力（支持 13 类工业协议）的根本动因。</p>
 
       <h3>1.2 工业边缘网关面临的问题</h3>
 
@@ -442,7 +442,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
         <li><strong>贡献 2（ScanEngine 调度模型）</strong>：提出基于 EDF 最早截止优先与资源配额的 ScanEngine 统一调度模型，将原先分散在驱动内的调度逻辑集中编排，实现确定性采集调度。</li>
         <li><strong>贡献 3（ShadowCore 状态模型）</strong>：提出 ShadowCore 实时设备状态模型，以版本化 COW 内存快照作为数据真源，解耦采集与消费，并支撑数字孪生语义。</li>
         <li><strong>贡献 4（MCP AI 能力开放）</strong>：提出基于 Model Context Protocol 的工业能力开放机制，将设备能力抽象为标准 Tool / Resource / Prompt，实现 AI Agent 与工业设备的安全协同。</li>
-        <li><strong>贡献 5（EAN 2.0 边缘智能体网络）</strong>：在 MCP 能力开放基础上提出 EAN 2.0 边缘智能体网络，将 Driver / AI / MCP / Workflow 统一抽象为 Capability，使 EdgeX 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点能力发现、Invoke 编排与分布式 Agent 协同，并配套工业协议逆向工程引擎降低无文档设备的现场接入成本。</li>
+        <li><strong>贡献 5（EAN 2.0 边缘智能体网络）</strong>：在 MCP 能力开放基础上提出 EAN 2.0 边缘智能体网络，将 Driver / AI / MCP / Workflow 统一抽象为 Capability，使 edgeCore 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点能力发现、Invoke 编排与分布式 Agent 协同，并配套工业协议逆向工程引擎降低无文档设备的现场接入成本。</li>
       </ul>
     </section>
 
@@ -454,7 +454,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
       <p>边缘计算（Edge Computing）将算力下沉到数据源附近，降低云中心往返延迟<sup><a href="#cite-5">[5]</a></sup>；雾计算（Fog Computing）强调多层级的网络边缘编排；工业物联网（Industrial IoT, IIoT）则聚焦于设备协议接入与现场可靠性。三者的交汇点正是工业边缘网关——它既要完成 OT 协议接入，又要在资源受限的现场设备上提供稳定的边缘处理能力。与以云为中心的采集方案相比，边缘网关在数据不出厂、低延迟联动与断网续传等方面具有不可替代的价值。</p>
 
       <h3>2.2 工业数字孪生</h3>
-      <p>数字孪生（Digital Twin）旨在为物理实体构建可计算的数字镜像<sup><a href="#cite-6">[6]</a></sup>。传统数字孪生多为<strong>模型驱动</strong>，依赖预先建立的设备机理模型；而 EdgeX 的 ShadowCore 采用<strong>实时状态驱动</strong>，以采集数据驱动的版本化内存快照反映设备实时真值，更贴合工业现场"状态优先于模型"的诉求。ShadowCore 既承载实时点位值，也维护通信画像（RTT、稳定性评分等），为上层规则、虚拟设备与 AI 提供一致的数据底座。</p>
+      <p>数字孪生（Digital Twin）旨在为物理实体构建可计算的数字镜像<sup><a href="#cite-6">[6]</a></sup>。传统数字孪生多为<strong>模型驱动</strong>，依赖预先建立的设备机理模型；而 edgeCore 的 ShadowCore 采用<strong>实时状态驱动</strong>，以采集数据驱动的版本化内存快照反映设备实时真值，更贴合工业现场"状态优先于模型"的诉求。ShadowCore 既承载实时点位值，也维护通信画像（RTT、稳定性评分等），为上层规则、虚拟设备与 AI 提供一致的数据底座。</p>
 
       <h3>2.3 AI Agent 与 MCP 技术</h3>
       <p>Model Context Protocol（MCP）是由 Anthropic 提出的开放标准，用于让 AI 应用通过统一协议访问外部工具与数据资源，其提供 <strong>Tool（工具）</strong>、<strong>Resource（资源）</strong>、<strong>Prompt（提示词）</strong> 三类标准能力的发现与调用机制<sup><a href="#cite-1">[1]</a></sup>。MCP 的定位天然契合"工业设备能力开放层"：它将分散、私有的工业接口收敛为标准协议，使任意兼容 MCP 的 AI Agent 都能以统一方式发现并调用工业能力。本文将 MCP 作为架构中的 <strong>AI Native 扩展层</strong>，而非附加功能。进一步地，在 MCP 之上本文引入 EAN 2.0 边缘智能体网络（第 5.5 节），将 MCP Tool / AI Skill / Workflow Node 统一抽象为 Capability，使边缘网关得以接入 EdgeOS 协同平台，从"单 Agent 访问单网关"演进为"多 Agent、多网关的工业智能体网络"。</p>
@@ -465,7 +465,7 @@ hr.section-divider { border: none; border-top: 1px solid var(--rule); margin: 3r
       <h2><span class="sec-num">3</span>轻量化高可靠边缘网关总体架构设计</h2>
 
       <h3>3.1 总体架构</h3>
-      <p>EdgeX 采用自底向上的五层模型，各层职责清晰、单向依赖：</p>
+      <p>edgeCore 采用自底向上的五层模型，各层职责清晰、单向依赖：</p>
 
       <figure>
         <pre class="mermaid">
@@ -500,7 +500,7 @@ flowchart TB
     EL --> DRV
     DRV --> CM
         </pre>
-        <figcaption><strong>图 1</strong> EdgeX 五层架构模型。从底层 Protocol Driver 到顶层 EdgeOS 协同平台，各层单向依赖、职责分离。</figcaption>
+        <figcaption><strong>图 1</strong> edgeCore 五层架构模型。从底层 Protocol Driver 到顶层 EdgeOS 协同平台，各层单向依赖、职责分离。</figcaption>
       </figure>
 
       <p>各层职责如下：</p>
@@ -514,7 +514,7 @@ flowchart TB
       <p>从产品能力视角，上述五层可进一步映射为 <strong>接入层 → 采集层 → 边缘层 → 北向层 → 质量层</strong> 的纵向分层：接入层负责多协议报文解析；采集层提供确定性调度与统一连接治理；边缘层完成状态真源与就地计算；北向层对接 IT 系统；质量层横切前四层，使"稳定性优先"成为贯穿架构的硬约束。</p>
 
       <h3>3.2 协议驱动执行模型：Driver Execute Only</h3>
-      <p>为消除"协议驱动自治导致不可控"的问题，EdgeX 明确约束驱动的边界——<strong>Driver Execute Only</strong>：</p>
+      <p>为消除"协议驱动自治导致不可控"的问题，edgeCore 明确约束驱动的边界——<strong>Driver Execute Only</strong>：</p>
       <p><strong>驱动负责</strong>：报文解析、数据读写（ReadPoints / WritePoint）、连接状态上报（Health）。</p>
       <p><strong>驱动禁止</strong>：</p>
       <ul>
@@ -525,7 +525,7 @@ flowchart TB
       <p>该约束使驱动成为"纯 I/O 与协议解析单元"，其行为完全可预测、可观测、可恢复，从架构层面根除了重连风暴与线程泄漏。</p>
 
       <h3>3.3 ScanEngine 统一调度算法设计（核心研究点）</h3>
-      <p>ScanEngine 是 EdgeX 的调度驱动内核，其执行链路为：</p>
+      <p>ScanEngine 是 edgeCore 的调度驱动内核，其执行链路为：</p>
       <div class="flow-inline">
         <span class="chip">Task Queue</span><span class="arrow">→</span>
         <span class="chip accent">Scheduler</span><span class="arrow">→</span>
@@ -545,7 +545,7 @@ flowchart TB
       <pre><code>Less(i,j) := (NextRun_i &lt; NextRun_j)
           ∨ (NextRun_i = NextRun_j ∧ DeadlineAt_i &lt; DeadlineAt_j)
           ∨ (NextRun_i = NextRun_j ∧ DeadlineAt_i = DeadlineAt_j ∧ Priority_i &gt; Priority_j)</code></pre>
-      <p><strong>常数松弛截止期。</strong> 与隐式截止期 EDF（<code>d = r + T</code>）不同，EdgeX 采用<strong>常数松弛</strong>模型：<code>d = r + B</code>（<code>B = JitterBound</code>，默认 50 ms，与周期 T 无关），使调度器对任意周期都保留固定宽度的容许窗口。</p>
+      <p><strong>常数松弛截止期。</strong> 与隐式截止期 EDF（<code>d = r + T</code>）不同，edgeCore 采用<strong>常数松弛</strong>模型：<code>d = r + B</code>（<code>B = JitterBound</code>，默认 50 ms，与周期 T 无关），使调度器对任意周期都保留固定宽度的容许窗口。</p>
       <p><strong>重排与追赶语义。</strong> 任务完成后以<strong>绝对时基</strong>递推下一周期，锚点取 <code>LastScheduledAt</code>（而非"完成时刻"），避免执行耗时累积成相位漂移：</p>
       <pre><code>L_{k+1} = L_k + m·T,   m = min{ n∈ℕ⁺ : L_k + n·T ≥ c_k }
 r_{k+1} = L_{k+1} + J(id)
@@ -664,7 +664,7 @@ flowchart TD
       </ul>
 
       <h3>3.5 智能采集优化</h3>
-      <p>为在异构、不稳定的工业网络中兼顾采集效率与设备负载，EdgeX 引入基于设备画像的自适应采集机制：</p>
+      <p>为在异构、不稳定的工业网络中兼顾采集效率与设备负载，edgeCore 引入基于设备画像的自适应采集机制：</p>
       <ul>
         <li><strong>RTT 管理器</strong>：以 EWMA 动态估计往返时延并据此调整读超时；</li>
         <li><strong>MTU 管理器</strong>：自动探测单次批量读可取的最大寄存器/数据块规模；</li>
@@ -674,7 +674,7 @@ flowchart TD
       <p>执行隔离由 ExecutionLayer 以三种模式提供：<strong>Serial</strong>（慢/共享链路设备硬隔离）、<strong>Parallel</strong>（独立设备并发）、<strong>Limited</strong>（低并发受限批量）。在 100 台 + 5 台慢设备的压测下，per-device RTT 限流使集群 lag P95 增幅为 <strong>−6.8%</strong>（优于 &lt; 30% 门限），热路径 <code>loadPoints</code> 达到 <strong>0 allocs/op</strong>。</p>
 
       <h3>3.6 北向平台集成</h3>
-      <p>边缘层与状态真源之上，EdgeX 提供 6 种北向通道将工业数据对接云平台、SCADA 与企业应用：</p>
+      <p>边缘层与状态真源之上，edgeCore 提供 6 种北向通道将工业数据对接云平台、SCADA 与企业应用：</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>北向协议</th><th>模式</th><th>说明</th></tr></thead>
@@ -696,7 +696,7 @@ flowchart TD
       <h2><span class="sec-num">4</span>ShadowCore 设备状态模型设计</h2>
 
       <h3>4.1 设计思想</h3>
-      <p>传统架构中业务直接访问设备，采集与消费强耦合：<code>业务 → 设备</code>。EdgeX 引入 ShadowCore 作为中间真源，将访问路径改为：</p>
+      <p>传统架构中业务直接访问设备，采集与消费强耦合：<code>业务 → 设备</code>。edgeCore 引入 ShadowCore 作为中间真源，将访问路径改为：</p>
       <div class="flow-inline">
         <span class="chip">设备</span><span class="arrow">→</span>
         <span class="chip accent">ShadowCore</span><span class="arrow">→</span>
@@ -748,7 +748,7 @@ CommunicationProfile {
     <!-- ===== Section 5: AI Capability Open Architecture ===== -->
     <section id="sec5">
       <h2><span class="sec-num">5</span>工业 AI 能力开放架构设计（重点）</h2>
-      <p>本章对应 EdgeX 的 AI 协同方向，是本文创新性的集中体现。先在 5.1–5.4 给出基于 MCP 的本地 AI 能力开放机制，再在 5.5–5.7 将其扩展为 EAN 2.0 边缘智能体网络，使 EdgeX 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点、跨 Agent 的工业能力开放与编排。</p>
+      <p>本章对应 edgeCore 的 AI 协同方向，是本文创新性的集中体现。先在 5.1–5.4 给出基于 MCP 的本地 AI 能力开放机制，再在 5.5–5.7 将其扩展为 EAN 2.0 边缘智能体网络，使 edgeCore 以 Capability Runtime 接入自研 EdgeOS 协同平台，实现跨节点、跨 Agent 的工业能力开放与编排。</p>
 
       <h3>5.1 工业 AI Agent 场景需求</h3>
       <p>传统人工查询路径冗长且依赖专家经验：<code>工程师 → SCADA → 设备</code>。面向未来的智能化路径则更直接：</p>
@@ -756,27 +756,27 @@ CommunicationProfile {
         <div style="display:flex;align-items:center;gap:0.4rem;">
           <span class="line-label">单网关路径：</span>
           <span class="chip">AI Agent</span><span class="arrow">→</span>
-          <span class="chip accent">EdgeX (MCP)</span><span class="arrow">→</span>
+          <span class="chip accent">edgeCore (MCP)</span><span class="arrow">→</span>
           <span class="chip">设备</span>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem;">
           <span class="line-label">网络协同路径：</span>
           <span class="chip">AI / Workflow Agent</span><span class="arrow">→</span>
           <span class="chip">EdgeOS (EAN 2.0)</span><span class="arrow">→</span>
-          <span class="chip">EdgeX Capability Runtime</span><span class="arrow">→</span>
+          <span class="chip">edgeCore Capability Runtime</span><span class="arrow">→</span>
           <span class="chip">设备</span>
         </div>
       </div>
       <p>本地 AI Agent 可通过 MCP 自主发现设备能力、查询实时状态、触发诊断，并在受控前提下执行操作；当涉及多网关、多 Agent 协同时，则经由 EAN 2.0 接入 EdgeOS 平台，实现跨节点能力发现与编排，将"人找数据"升级为"Agent 协同设备"。</p>
 
       <h3>5.2 MCP 工具模型设计</h3>
-      <p>EdgeX 将工业能力抽象为 MCP 三类标准原语<sup><a href="#cite-1">[1]</a></sup><sup><a href="#cite-4">[4]</a></sup>：</p>
+      <p>edgeCore 将工业能力抽象为 MCP 三类标准原语<sup><a href="#cite-1">[1]</a></sup><sup><a href="#cite-4">[4]</a></sup>：</p>
       <p><strong>Tool（工具）</strong>——可被调用的原子能力。例如查询设备状态：<code>device_get_status({device:"PLC001"})</code>。工具以 <code>ean_</code> 前缀统一注册（如 <code>ean_modbus_tcp_read_point</code>），底层由统一的 <strong>EAN Capability Runtime</strong> 承载，而非为每种协议分别暴露接口。</p>
-      <p><strong>Resource（资源）</strong>——可读取的上下文数据，包括设备模型、点表、配置信息与状态数据，例如 <code>edgex://channels</code>、<code>edgex://system</code>、<code>edgex://diagnostics</code>、<code>edgex://protocols</code>、<code>edgex://edge-rules</code>、<code>edgex://config</code> 共 6 个只读资源。</p>
+      <p><strong>Resource（资源）</strong>——可读取的上下文数据，包括设备模型、点表、配置信息与状态数据，例如 <code>edgeCore://channels</code>、<code>edgeCore://system</code>、<code>edgeCore://diagnostics</code>、<code>edgeCore://protocols</code>、<code>edgeCore://edge-rules</code>、<code>edgeCore://config</code> 共 6 个只读资源。</p>
       <p><strong>Prompt（提示词）</strong>——工业知识上下文模板，例如"设备报警分析模板""PLC 诊断模板"，帮助 Agent 在调用工具时获得领域化引导（共 13 个提示词）。</p>
 
-      <h3>5.3 EdgeX MCP Server 架构</h3>
-      <p>EdgeX 暴露一个符合 Model Context Protocol 的 MCP Server，端点 <code>/api/mcp</code>，支持协议版本 <code>2024-11-05</code> 与 <code>2025-11-25</code>，传输方式为 HTTP 与 SSE，经 MCP API Key 认证。</p>
+      <h3>5.3 edgeCore MCP Server 架构</h3>
+      <p>edgeCore 暴露一个符合 Model Context Protocol 的 MCP Server，端点 <code>/api/mcp</code>，支持协议版本 <code>2024-11-05</code> 与 <code>2025-11-25</code>，传输方式为 HTTP 与 SSE，经 MCP API Key 认证。</p>
       <figure>
         <pre class="mermaid">
 flowchart TB
@@ -790,12 +790,12 @@ flowchart TB
     CHM --> SE["ScanEngine / Driver"]
     SE --> ID["Industrial Device"]
         </pre>
-        <figcaption><strong>图 3</strong> EdgeX MCP Server 架构。读路径优先从 ShadowCore 快照读取，写路径经审批后由 Driver 执行。</figcaption>
+        <figcaption><strong>图 3</strong> edgeCore MCP Server 架构。读路径优先从 ShadowCore 快照读取，写路径经审批后由 Driver 执行。</figcaption>
       </figure>
       <p>调用链路为：<code>MCP Client → MCP Server → capability_adapter → capability_mapper → DriverExecutor → ChannelManager → ScanEngine / Driver</code>。读路径支持 <code>live</code> 与 <code>prefer_shadow</code> 两种模式。当前版本共注册 <strong>33 个 Tool、6 个 Resource、13 个 Prompt</strong>，形成"AI 可观测 / 可诊断 / 可配置"的能力层。</p>
 
       <h3>5.4 工业控制安全机制</h3>
-      <p>工业现场严禁 AI 直接、无约束地控制设备。EdgeX 在 MCP 层内置双重安全机制：</p>
+      <p>工业现场严禁 AI 直接、无约束地控制设备。edgeCore 在 MCP 层内置双重安全机制：</p>
       <p><strong>权限控制（写门控）。</strong> 读类工具直接允许；写类 / 管理类工具在调用前必须经 <code>writeGate</code> 审批：</p>
       <div class="flow-inline" style="flex-direction:column;align-items:flex-start;gap:0.5rem;">
         <div style="display:flex;align-items:center;gap:0.4rem;">
@@ -811,7 +811,7 @@ flowchart TB
       <p><strong>操作审计。</strong> 每一次工具调用均记录完整审计条目：<code>Agent · Tool · Parameter · Result · Time</code>，审计记录可被保留与追溯（如北向 BACnet 模块保留最近 100 条外部写入记录），为工业可控性提供合规依据。</p>
 
       <h3>5.5 EAN 2.0 边缘智能体网络：从 MCP 能力开放到 Agent 协同</h3>
-      <p>前述 MCP 层解决了"单个 AI Agent 如何以标准协议访问单台网关"的问题；但当现场存在多台网关、多类 Agent 时，还需要一种<strong>跨节点、跨 Agent 的统一协作层</strong>。为此，本文在 MCP 之上进一步引入 <strong>Edge Agent Network（EAN）2.0</strong>，使 EdgeX 网关以 <strong>Capability Runtime</strong> 身份接入自研配套平台 <strong>EdgeOS</strong>，实现能力的自动发现、编排与跨节点调用<sup><a href="#cite-10">[10]</a></sup><sup><a href="#cite-11">[11]</a></sup>。</p>
+      <p>前述 MCP 层解决了"单个 AI Agent 如何以标准协议访问单台网关"的问题；但当现场存在多台网关、多类 Agent 时，还需要一种<strong>跨节点、跨 Agent 的统一协作层</strong>。为此，本文在 MCP 之上进一步引入 <strong>Edge Agent Network（EAN）2.0</strong>，使 edgeCore 网关以 <strong>Capability Runtime</strong> 身份接入自研配套平台 <strong>EdgeOS</strong>，实现能力的自动发现、编排与跨节点调用<sup><a href="#cite-10">[10]</a></sup><sup><a href="#cite-11">[11]</a></sup>。</p>
 
       <h4>5.5.1 设计原则与三层架构</h4>
       <figure>
@@ -827,7 +827,7 @@ flowchart TB
         SCH["Scheduler"]
         SEC["Security / ACL"]
     end
-    subgraph EX["EdgeX Capability Runtime"]
+    subgraph EX["edgeCore Capability Runtime"]
         CR["Registry / Dispatcher"]
         DIS["Discovery / Event"]
         ADP["AI / MCP Adapter"]
@@ -836,26 +836,26 @@ flowchart TB
     PROTO --> EX
     EOS <-->|"MQTT v5 / NATS 2.x<br/>$edgeos/..."| EX
         </pre>
-        <figcaption><strong>图 4</strong> EAN 2.0 三层架构。EdgeX 以 Capability Runtime 接入，EdgeOS 承担平台治理，两者通过 MQTT/NATS 互联。</figcaption>
+        <figcaption><strong>图 4</strong> EAN 2.0 三层架构。edgeCore 以 Capability Runtime 接入，EdgeOS 承担平台治理，两者通过 MQTT/NATS 互联。</figcaption>
       </figure>
 
       <h4>5.5.2 Capability 统一能力模型</h4>
-      <p>EAN 2.0 的核心抽象是 <strong>Capability</strong>：MCP Tool、AI Skill、Workflow Node、HTTP/SDK 函数全部由统一的 Capability 模型映射生成。EdgeX 启动时由 Driver / Commands 自动生成 Capability（<code>{protocol}.read_point</code> / <code>{protocol}.write_point</code> / <code>{protocol}.scan_devices</code> / <code>{protocol}.list_points</code> 等）。</p>
+      <p>EAN 2.0 的核心抽象是 <strong>Capability</strong>：MCP Tool、AI Skill、Workflow Node、HTTP/SDK 函数全部由统一的 Capability 模型映射生成。edgeCore 启动时由 Driver / Commands 自动生成 Capability（<code>{protocol}.read_point</code> / <code>{protocol}.write_point</code> / <code>{protocol}.scan_devices</code> / <code>{protocol}.list_points</code> 等）。</p>
       <p>为降低面向本地 LLM 的 MCP 接口复杂度，MCP Runtime 采用 <strong>7 个统一 Capability</strong>（<code>ean_read_points</code> / <code>ean_write_points</code> / <code>ean_scan_devices</code> / <code>ean_list_points</code> / <code>ean_get_diagnostics</code> / <code>ean_ai_protocol_reverse</code> / <code>ean_ai_doc_parse</code>）替代协议特定工具。Capability 自带 <code>permission</code>（read / write / readwrite / admin）与 JSON Schema 输入/输出定义，使能力可被自动校验、发现与编排。</p>
 
       <h4>5.5.3 Agent / Discovery / Invoke / Event 协议</h4>
       <ul>
         <li><strong>Agent 模型</strong>：网关以 <code>kind=device</code> 上线，发布 Agent Descriptor，周期性发送 Heartbeat；</li>
         <li><strong>Discovery</strong>：启动时发布 Agent 与 Capability Descriptor，EdgeOS 维护全局索引，支持按 Agent / Capability / Category / Keyword / Permission 检索；</li>
-        <li><strong>Invoke</strong>：EdgeOS 向 <code>$edgeos/invoke/{agent_id}</code> 发布 <code>invoke_capability</code> 信封，EdgeX 校验后执行并回 <code>invoke_response</code>；状态机为 <code>queued → running → completed | failed | timeout | rejected</code>；</li>
+        <li><strong>Invoke</strong>：EdgeOS 向 <code>$edgeos/invoke/{agent_id}</code> 发布 <code>invoke_capability</code> 信封，edgeCore 校验后执行并回 <code>invoke_response</code>；状态机为 <code>queued → running → completed | failed | timeout | rejected</code>；</li>
         <li><strong>Event</strong>：设备状态变化自动发布 <code>{$point_id}.changed</code>、<code>device.online/offline</code>、<code>alarm.created</code>、<code>capability.invoked</code> 等事件。</li>
       </ul>
 
       <h3>5.6 EdgeOS 协同平台对接</h3>
-      <p>EdgeOS 不直接执行设备操作，而承担平台治理：Registry / Discovery Center 聚合所有 Agent 与 Capability；Workflow Center + AI Planner 将自然语言需求解析为 Capability 执行计划并编排；Scheduler 统一调度优先级；Resource Manager 管理工业资源锁；Security 提供 ACL 与多租户隔离。EdgeX 与 EdgeOS 的<strong>职责边界</strong>清晰：EdgeX 保持轻量自治，协同智能集中于平台侧，可被多站点、多网关复用。</p>
+      <p>EdgeOS 不直接执行设备操作，而承担平台治理：Registry / Discovery Center 聚合所有 Agent 与 Capability；Workflow Center + AI Planner 将自然语言需求解析为 Capability 执行计划并编排；Scheduler 统一调度优先级；Resource Manager 管理工业资源锁；Security 提供 ACL 与多租户隔离。edgeCore 与 EdgeOS 的<strong>职责边界</strong>清晰：edgeCore 保持轻量自治，协同智能集中于平台侧，可被多站点、多网关复用。</p>
 
       <h3>5.7 AI 协同组件：工业协议逆向工程引擎</h3>
-      <p>在 EAN 2.0 的 AI 能力之上，EdgeX 进一步提供 <strong>Industrial Protocol Copilot</strong>——以工业协议逆向工程引擎为核心的 AI 协同组件，解决现场"有 HMI 显示值、无寄存器地址"的接入痛点<sup><a href="#cite-12">[12]</a></sup>。引擎贯通<strong>协议识别 → 报文结构解析 → 物理量推理 → 生产配置生成</strong>四阶段流水线：阶段一、二以确定性 Decoder 提取报文字段（不调用 LLM）；阶段三由 LLM 完成数值关联与语义命名（仅消耗 Token 于语义层）；阶段四输出 EdgeX 可直接导入的 Channel / Point JSON。</p>
+      <p>在 EAN 2.0 的 AI 能力之上，edgeCore 进一步提供 <strong>Industrial Protocol Copilot</strong>——以工业协议逆向工程引擎为核心的 AI 协同组件，解决现场"有 HMI 显示值、无寄存器地址"的接入痛点<sup><a href="#cite-12">[12]</a></sup>。引擎贯通<strong>协议识别 → 报文结构解析 → 物理量推理 → 生产配置生成</strong>四阶段流水线：阶段一、二以确定性 Decoder 提取报文字段（不调用 LLM）；阶段三由 LLM 完成数值关联与语义命名（仅消耗 Token 于语义层）；阶段四输出 edgeCore 可直接导入的 Channel / Point JSON。</p>
 
       <figure class="svg-figure">
         <svg viewBox="0 0 820 400" xmlns="http://www.w3.org/2000/svg" style="font-family: var(--font-heading);">
@@ -934,10 +934,10 @@ flowchart TB
       <h2><span class="sec-num">6</span>系统实现</h2>
 
       <h3>6.1 软件实现</h3>
-      <p>EdgeX 以 <strong>Go 1.26.4</strong> 实现，具备以下工程特性：</p>
+      <p>edgeCore 以 <strong>Go 1.26.4</strong> 实现，具备以下工程特性：</p>
       <ul>
         <li><strong>静态编译</strong>：<code>CGO_ENABLED=0</code> 关闭 CGO，无运行时依赖；</li>
-        <li><strong>单文件部署</strong>：单一 <code>edgex</code> 二进制即包含后端与托管的 Vue 3 前端，交付形态为 tar.gz / deb / rpm；</li>
+        <li><strong>单文件部署</strong>：单一 <code>edgeCore</code> 二进制即包含后端与托管的 Vue 3 前端，交付形态为 tar.gz / deb / rpm；</li>
         <li><strong>低依赖</strong>：核心依赖精简，便于嵌入式设备落地。</li>
       </ul>
 
@@ -1080,7 +1080,7 @@ flowchart TB
       <p>短 soak 五 gate <strong>全绿 PASS</strong>。需如实说明——<strong>72 h 长稳 Soak 目前作为框架就绪、尚未纳入自动化 nightly 流水线</strong>，属于后续工程验证计划。</p>
 
       <h3>7.7 AI / MCP 能力验证</h3>
-      <p>验证 AI Agent 能否通过标准协议访问工业设备能力。测试流程：<code>AI Agent → MCP Client → EdgeX MCP Server → ShadowCore / Action Runtime → Industrial Device</code>。三个测试案例覆盖：① 设备状态查询；② 实时数据查询（<code>prefer_shadow</code> 模式，&lt; 5 ms）；③ 受控写操作（<code>writeGate</code> 审批 + 操作审计）。验证覆盖<strong>工具发现、参数校验、返回结果、安全门控</strong>四个环节。</p>
+      <p>验证 AI Agent 能否通过标准协议访问工业设备能力。测试流程：<code>AI Agent → MCP Client → edgeCore MCP Server → ShadowCore / Action Runtime → Industrial Device</code>。三个测试案例覆盖：① 设备状态查询；② 实时数据查询（<code>prefer_shadow</code> 模式，&lt; 5 ms）；③ 受控写操作（<code>writeGate</code> 审批 + 操作审计）。验证覆盖<strong>工具发现、参数校验、返回结果、安全门控</strong>四个环节。</p>
 
       <h3>7.8 实验总结</h3>
       <div class="table-wrap">
@@ -1098,7 +1098,7 @@ flowchart TB
       </div>
 
       <h3>7.9 版本发布门禁与量化验收体系</h3>
-      <p>每个 EdgeX 版本在标记生产就绪前，须依次通过四道门禁，任一门禁未通过即不得对外宣称"可用于工业现场"：</p>
+      <p>每个 edgeCore 版本在标记生产就绪前，须依次通过四道门禁，任一门禁未通过即不得对外宣称"可用于工业现场"：</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>门禁</th><th>代号</th><th>核心问题</th><th>未通过后果</th></tr></thead>
@@ -1119,7 +1119,7 @@ flowchart TB
     <!-- ===== Section 8: Application Validation ===== -->
     <section id="sec8">
       <h2><span class="sec-num">8</span>应用验证与讨论</h2>
-      <p>EdgeX 的架构已在多类工业现场落地。产品说明基于真实场景梳理出 <strong>20 类典型工业边缘应用</strong>，这些场景可自由组合、叠加配置，延伸出成百上千种业务落地方案。本章按 OT 领域将其归纳为五类。</p>
+      <p>edgeCore 的架构已在多类工业现场落地。产品说明基于真实场景梳理出 <strong>20 类典型工业边缘应用</strong>，这些场景可自由组合、叠加配置，延伸出成百上千种业务落地方案。本章按 OT 领域将其归纳为五类。</p>
       <div class="table-wrap">
         <table>
           <thead><tr><th>场景类别</th><th>典型应用</th><th>关键协议 / 能力</th></tr></thead>
@@ -1152,22 +1152,22 @@ flowchart TB
       <p>通过 IEC 60870-5-104、DL/T645 接入电力系统，支持总召唤、自发上报与单点遥控；<strong>光伏逆变器聚合</strong>场景批量采集多台 Modbus 逆变器功率，由 Virtual Shadow Engine 计算总功率并经 MQTT 上报；<strong>冷链物流监控</strong>在网络中断时由 ScanEngine 持续采集并本地缓存，恢复后按时间戳补传，满足 GSP 合规追溯。MCP 层可让 AI Agent 主动巡检电站状态并辅助分析异常。</p>
 
       <h3>8.2 智能制造</h3>
-      <p>在产线侧，EdgeX 以 <strong>PLC 读写控制</strong>（Modbus / S7 / EtherNet/IP 实时读写）与 <strong>多设备联动控制</strong>（跨协议编排 PLC 与 BACnet 控制器）实现柔性生产；<strong>边缘实时决策</strong>在边缘端完成质量检测与安全联锁；<strong>预测性维护</strong>通过 ScanEngine 持续采集振动、温度并结合 expr 规则做趋势分析；<strong>Modbus 设备透传</strong>以 &lt; 5 ms 转发延迟桥接 legacy RS485 设备。</p>
+      <p>在产线侧，edgeCore 以 <strong>PLC 读写控制</strong>（Modbus / S7 / EtherNet/IP 实时读写）与 <strong>多设备联动控制</strong>（跨协议编排 PLC 与 BACnet 控制器）实现柔性生产；<strong>边缘实时决策</strong>在边缘端完成质量检测与安全联锁；<strong>预测性维护</strong>通过 ScanEngine 持续采集振动、温度并结合 expr 规则做趋势分析；<strong>Modbus 设备透传</strong>以 &lt; 5 ms 转发延迟桥接 legacy RS485 设备。</p>
 
       <h3>8.3 楼宇自动化</h3>
       <p>通过 BACnet、KNXnet/IP 接入暖通、照明与安防子系统。<strong>告警联动</strong>基于边缘规则引擎实现毫秒级响应；<strong>楼宇能耗分项计量</strong>整合 DL/T645 电表、BACnet 能耗点与 KNX 传感器，生成能耗看板；<strong>多协议网关转换</strong>将南向协议映射至统一数据模型，北向输出 MQTT / OPC UA / REST。</p>
 
       <h3>8.4 无人值守站点</h3>
-      <p>在通信基站、泵站、变电站等边远站点，EdgeX 以最低 128 MB 配置长期稳定运行；<strong>数据断点续传</strong>在网络中断时持续采集并写入本地队列，恢复后按序补传，保障数据完整零丢失。该场景对"轻量化 + 高可靠"诉求最强，也最能体现本文架构的工程价值。</p>
+      <p>在通信基站、泵站、变电站等边远站点，edgeCore 以最低 128 MB 配置长期稳定运行；<strong>数据断点续传</strong>在网络中断时持续采集并写入本地队列，恢复后按序补传，保障数据完整零丢失。该场景对"轻量化 + 高可靠"诉求最强，也最能体现本文架构的工程价值。</p>
 
       <h3>8.5 网络设备与 ICT 监控</h3>
-      <p>工业网络的可用性直接影响 OT 系统。EdgeX 通过 SNMP 采集交换机、路由器的端口流量、设备温度与电源状态 OID，实现工业网络健康度实时监测与预警；该能力可与前述 OT 场景组合，构成"OT + 网络"一体化的边缘可观测底座。</p>
+      <p>工业网络的可用性直接影响 OT 系统。edgeCore 通过 SNMP 采集交换机、路由器的端口流量、设备温度与电源状态 OID，实现工业网络健康度实时监测与预警；该能力可与前述 OT 场景组合，构成"OT + 网络"一体化的边缘可观测底座。</p>
     </section>
 
     <!-- ===== Section 9: Conclusion ===== -->
     <section id="sec9">
       <h2><span class="sec-num">9</span>结论与展望</h2>
-      <p>本文提出一种面向工业互联网的轻量化、高可靠、AI 可扩展边缘计算网关架构 EdgeX，其核心创新在于将 <strong>设备连接、状态管理、AI 能力开放三者融合</strong>为统一的基础设施：ScanEngine 提供确定性调度，ShadowCore 提供实时状态真源，MCP 与 EAN 2.0 将工业能力以标准协议向 AI Agent 及自研 EdgeOS 平台开放，并以写门控、操作审计与权限分级保障工业可控性。与此同时，系统以四道发布门禁（稳定性/工业验证/性能/轻量化）与量化验收标准（PASS/WARN/BLOCK）约束版本可发布性，使架构创新可被工程化地验证与交付。</p>
+      <p>本文提出一种面向工业互联网的轻量化、高可靠、AI 可扩展边缘计算网关架构 edgeCore，其核心创新在于将 <strong>设备连接、状态管理、AI 能力开放三者融合</strong>为统一的基础设施：ScanEngine 提供确定性调度，ShadowCore 提供实时状态真源，MCP 与 EAN 2.0 将工业能力以标准协议向 AI Agent 及自研 EdgeOS 平台开放，并以写门控、操作审计与权限分级保障工业可控性。与此同时，系统以四道发布门禁（稳定性/工业验证/性能/轻量化）与量化验收标准（PASS/WARN/BLOCK）约束版本可发布性，使架构创新可被工程化地验证与交付。</p>
       <p>实验表明，该架构在万 Tag 规模下具备统计 SLA 上界 P99 &lt; 150 ms 的调度能力、&lt; 120 MB 的常驻内存与 0% 长稳内存漂移，可稳定落地于 ARM 工业网关。</p>
       <p>未来工作将围绕以下方向展开：</p>
       <ul>
@@ -1182,23 +1182,23 @@ flowchart TB
       <h2>参考文献</h2>
       <ol>
         <li id="cite-1"><span class="ref-title">Model Context Protocol. 模型上下文协议官方网站（能力发现与调用标准：Tool / Resource / Prompt）.</span> <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener">https://modelcontextprotocol.io</a></li>
-        <li id="cite-2"><span class="ref-title">EdgeX 工业边缘网关架构设计文档（内部）.</span> docs/architecture/index.md；docs/edge/边缘网关架构设计总览.md.</li>
-        <li id="cite-3"><span class="ref-title">EdgeX 产品说明与工业级 SLA.</span> docs/guide/产品说明.md；docs/testing/SLA 系列报告（2026 Q3）.</li>
-        <li id="cite-4"><span class="ref-title">EdgeX MCP 接入指南.</span> docs/guide/mcp-access-guide.md.</li>
+        <li id="cite-2"><span class="ref-title">edgeCore 工业边缘网关架构设计文档（内部）.</span> docs/architecture/index.md；docs/edge/边缘网关架构设计总览.md.</li>
+        <li id="cite-3"><span class="ref-title">edgeCore 产品说明与工业级 SLA.</span> docs/guide/产品说明.md；docs/testing/SLA 系列报告（2026 Q3）.</li>
+        <li id="cite-4"><span class="ref-title">edgeCore MCP 接入指南.</span> docs/guide/mcp-access-guide.md.</li>
         <li id="cite-5"><span class="ref-title">Shi W, Cao J, Zhang Q, et al. Edge Computing: Vision and Challenges.</span> <em>IEEE Internet of Things Journal</em>, 2016, 3(5): 637-646.</li>
         <li id="cite-6"><span class="ref-title">Tao F, Zhang H, Liu A, et al. Digital Twin in Industry: State-of-the-Art.</span> <em>IEEE Transactions on Industrial Informatics</em>, 2019, 15(4): 2405-2415.</li>
-        <li id="cite-7"><span class="ref-title">EdgeX 版本发布门禁与开发原则.</span> docs/RELEASE_GATE.md；docs/DEVELOPMENT_PRINCIPLES.md（四道发布门禁、量化验收标准、PASS/WARN/BLOCK 判定矩阵）.</li>
-        <li id="cite-8"><span class="ref-title">EdgeX 测试验证体系.</span> docs/testing/（CI 与发布门禁对照、南向驱动测试报告、Q3 万 Tag 压测报告、SLA 完成/确定性报告、B1 采集间隔核验、南向采集通道回归验证测试方案、工业验证测试报告模板），2026 Q3.</li>
+        <li id="cite-7"><span class="ref-title">edgeCore 版本发布门禁与开发原则.</span> docs/RELEASE_GATE.md；docs/DEVELOPMENT_PRINCIPLES.md（四道发布门禁、量化验收标准、PASS/WARN/BLOCK 判定矩阵）.</li>
+        <li id="cite-8"><span class="ref-title">edgeCore 测试验证体系.</span> docs/testing/（CI 与发布门禁对照、南向驱动测试报告、Q3 万 Tag 压测报告、SLA 完成/确定性报告、B1 采集间隔核验、南向采集通道回归验证测试方案、工业验证测试报告模板），2026 Q3.</li>
         <li id="cite-9"><span class="ref-title">HMS Networks. 工业网络市场份额报告（2026）.</span> <a href="https://www.hms-networks.cn/network-report" target="_blank" rel="noopener">https://www.hms-networks.cn/network-report</a></li>
-        <li id="cite-10"><span class="ref-title">EdgeX EAN 2.0 通信协议规范（MQTT/NATS）.</span> docs/edgeos/EdgeX通信协议规范(MQTT-NATS).md（V2.0，2026-07-27）.</li>
-        <li id="cite-11"><span class="ref-title">EdgeX EAN 2.0 EdgeX↔EdgeOS 改造指南.</span> docs/edgeos/EAN2.0-EdgeX-EdgeOS改造指南.md（V1.12，2026-08-04）.</li>
-        <li id="cite-12"><span class="ref-title">EdgeX AI 协同组件规划（EAN 2.0 Capability Runtime）.</span> docs/edgeos/AI协同组件规划.md（V2.0，2026-08-04）.</li>
+        <li id="cite-10"><span class="ref-title">edgeCore EAN 2.0 通信协议规范（MQTT/NATS）.</span> docs/edgeos/edgeCore通信协议规范(MQTT-NATS).md（V2.0，2026-07-27）.</li>
+        <li id="cite-11"><span class="ref-title">edgeCore EAN 2.0 edgeCore↔EdgeOS 改造指南.</span> docs/edgeos/EAN2.0-edgeCore-EdgeOS改造指南.md（V1.12，2026-08-04）.</li>
+        <li id="cite-12"><span class="ref-title">edgeCore AI 协同组件规划（EAN 2.0 Capability Runtime）.</span> docs/edgeos/AI协同组件规划.md（V2.0，2026-08-04）.</li>
       </ol>
     </div>
 
     <footer>
-      <p>本文架构与实验数据均基于 EdgeX 代码库 <code>github.com/anviod/edgex</code> 与配套设计文档核实。</p>
-      <p>&copy; 2026 EdgeOS 组织 · 二手科学家 · MIT License · <a href="https://github.com/anviod/edgex">github.com/anviod/edgex</a></p>
+      <p>本文架构与实验数据均基于 edgeCore 代码库 <code>github.com/anviod/edgeCore</code> 与配套设计文档核实。</p>
+      <p>&copy; 2026 EdgeOS 组织 · 二手科学家 · MIT License · <a href="https://github.com/anviod/edgeCore">github.com/anviod/edgeCore</a></p>
     </footer>
 
     </main>

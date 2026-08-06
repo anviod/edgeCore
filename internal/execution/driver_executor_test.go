@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -162,9 +162,9 @@ func TestDriverExecutorPreferShadow(t *testing.T) {
 	out, err := exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev1",
-			"address":        "p1",
-			"prefer_shadow":  true,
+			"device_id":     "dev1",
+			"address":       "p1",
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)
@@ -374,9 +374,9 @@ func TestAddressResolutionAllForms(t *testing.T) {
 	out, err := exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev_test",
-			"point_id":       "pt_001",
-			"prefer_shadow":  true,
+			"device_id":     "dev_test",
+			"point_id":      "pt_001",
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)
@@ -391,9 +391,9 @@ func TestAddressResolutionAllForms(t *testing.T) {
 	out, err = exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev_test",
-			"address":        "0", // PDU offset from list_points
-			"prefer_shadow":  true,
+			"device_id":     "dev_test",
+			"address":       "0", // PDU offset from list_points
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)
@@ -407,9 +407,9 @@ func TestAddressResolutionAllForms(t *testing.T) {
 	out, err = exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev_test",
-			"address":        "TEMPERATURE", // case-insensitive name
-			"prefer_shadow":  true,
+			"device_id":     "dev_test",
+			"address":       "TEMPERATURE", // case-insensitive name
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)
@@ -422,9 +422,9 @@ func TestAddressResolutionAllForms(t *testing.T) {
 	out, err = exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev_test",
-			"address":        "40001",
-			"prefer_shadow":  true,
+			"device_id":     "dev_test",
+			"address":       "40001",
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)
@@ -437,9 +437,9 @@ func TestAddressResolutionAllForms(t *testing.T) {
 	out, err = exec.Execute(context.Background(), execution.DriverCommand{
 		Command: "ReadPoints",
 		Args: map[string]any{
-			"device_id":      "dev_test",
-			"addresses":      []string{"pt_001", "2", "pressure"},
-			"prefer_shadow":  true,
+			"device_id":     "dev_test",
+			"addresses":     []string{"pt_001", "2", "pressure"},
+			"prefer_shadow": true,
 		},
 	})
 	require.NoError(t, err)

@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}">
     <script>
       (function () {
-        var stored = localStorage.getItem('edgex-docs-theme');
+        var stored = localStorage.getItem('edgeCore-docs-theme');
         var theme;
         if (stored) {
           theme = stored === 'light' ? 'light' : 'dark';
@@ -28,7 +28,7 @@
     <header class="site-header site-header--docs">
       <div class="shell shell--wide">
         <div class="site-header__topbar">
-          <a class="site-brand" href="{{ '/' | relative_url }}">{{ site.name | default: 'EdgeX 文档' }}</a>
+          <a class="site-brand" href="{{ '/' | relative_url }}">{{ site.name | default: 'edgeCore 文档' }}</a>
           <nav class="site-nav" aria-label="主导航">
             {% for item in site.nav %}
               <a href="{{ item.url | relative_url }}">{{ item.title }}</a>

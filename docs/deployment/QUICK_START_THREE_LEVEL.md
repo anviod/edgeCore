@@ -15,13 +15,13 @@ layout: default
 ### 1. 编译
 
 ```bash
-cd edgex
+cd edgeCore
 go build ./cmd/main.go -o main.exe
 ```
 
 ### 2. 准备配置文件
 
-使用本文件「配置文件详解」中的 YAML 片段，或通过 Web UI/API 导入；全量快照见 [test/README.md](https://github.com/anviod/edgex/blob/dev/test/README.md) 与 `test/legacy/config_full_snapshot.yaml.bak`。参考 [ARCHITECTURE_V2](../architecture/ARCHITECTURE_V2.html)。
+使用本文件「配置文件详解」中的 YAML 片段，或通过 Web UI/API 导入；全量快照见 [test/README.md](https://github.com/anviod/edgeCore/blob/dev/test/README.md) 与 `test/legacy/config_full_snapshot.yaml.bak`。参考 [ARCHITECTURE_V2](../architecture/ARCHITECTURE_V2.html)。
 
 ### 3. 运行
 
@@ -210,7 +210,7 @@ A: 系统支持自动重试和失败转移机制（通过状态机管理）。�
 ## 文件结构
 
 ```
-edgex/
+edgeCore/
 ├── cmd/
 │   └── main.go                  # 应用入口
 ├── internal/

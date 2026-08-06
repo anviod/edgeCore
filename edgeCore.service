@@ -1,0 +1,13 @@
+[Unit]
+Description=edgeCore Service (edgeCore)
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/usr/local/bin/edgeCore
+ExecStart=/usr/local/bin/edgeCore/edgeCore
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

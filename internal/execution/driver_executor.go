@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // PointReader is the optional live Driver read path (ChannelManager.ReadPoint).
@@ -254,15 +254,15 @@ func (e *DriverExecutor) writePoint(ctx context.Context, cmd DriverCommand) (any
 			})
 		}
 		return map[string]any{
-			"success":    successCount == len(writes),
-			"channel_id": channelID,
-			"device_id":  deviceID,
-			"protocol":   cmd.Protocol,
-			"count":      len(writes),
+			"success":       successCount == len(writes),
+			"channel_id":    channelID,
+			"device_id":     deviceID,
+			"protocol":      cmd.Protocol,
+			"count":         len(writes),
 			"success_count": successCount,
-			"results":    results,
-			"timestamp":  time.Now().UnixMilli(),
-			"source":     "driver",
+			"results":       results,
+			"timestamp":     time.Now().UnixMilli(),
+			"source":        "driver",
 		}, nil
 	}
 
@@ -367,7 +367,7 @@ func (e *DriverExecutor) diagnostics(cmd DriverCommand) (any, error) {
 	deviceID, _ := cmd.Args["device_id"].(string)
 	if provider, ok := e.sb.(DiagnosticsProvider); ok && deviceID != "" {
 		return map[string]any{
-			"device_id":    deviceID,
+			"device_id":   deviceID,
 			"diagnostics": provider.GetDeviceDiagnostics(deviceID),
 		}, nil
 	}

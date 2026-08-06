@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/google/uuid"
 )

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 版本发布门禁
-description: EdgeX 每版本发布前的四道门禁 — 稳定性、工业验证、性能与轻量化
+description: edgeCore 每版本发布前的四道门禁 — 稳定性、工业验证、性能与轻量化
 version: v1.0
 date: 2026-07-03
 status: 现行
@@ -11,7 +11,7 @@ status: 现行
 
 > **工程铁律：** 任何性能优化不得以牺牲稳定性为代价；任何架构优化不得增加系统恢复复杂度。
 
-每个 EdgeX 版本在标记 **生产就绪** 或发布 Release 之前，须依次通过以下四道门禁。**任一门禁未通过，不得对外宣称该版本可用于工业现场。**
+每个 edgeCore 版本在标记 **生产就绪** 或发布 Release 之前，须依次通过以下四道门禁。**任一门禁未通过，不得对外宣称该版本可用于工业现场。**
 
 > 相关文档：
 > - [开发原则与验收标准](DEVELOPMENT_PRINCIPLES.html) — 优先级与量化标准
@@ -184,7 +184,7 @@ Release 范围包含某协议时，须满足下表最低要求（验证重点见
 
 | 检查项 | 验收标准 | 验证方式 |
 | --- | --- | --- |
-| 单二进制 | `CGO_ENABLED=0` 静态编译，单 `edgex` 可运行 | GoReleaser / 构建产物 |
+| 单二进制 | `CGO_ENABLED=0` 静态编译，单 `edgeCore` 可运行 | GoReleaser / 构建产物 |
 | 零外部依赖 | 运行时不依赖 Redis、Prometheus、Grafana、外部 TSDB 等 | 部署清单审查 |
 | 诊断通路 | HTTP API + Web UI + 结构化日志覆盖运维所需 | diagnostics 端点走查 |
 | 无重量级栈 | 不引入与产品定位冲突的重型运行时 | 依赖与镜像体积审查 |
@@ -228,7 +228,7 @@ Release 范围包含某协议时，须满足下表最低要求（验证重点见
 
 ## 与 CI 的关系
 
-> **现状审计（2026-07-03）：** PR / `main` 由 [CI Workflow](https://github.com/anviod/edgex/blob/main/.github/workflows/ci.yml) 运行 P0 门控（`test-short`、`test-soak-short`、构建 smoke、`bench-q3`）；tag 发布仍走 [Release Workflow](https://github.com/anviod/edgex/blob/main/.github/workflows/release.yml)。G-Industrial 仍未自动化。详见 **[CI 与发布门禁对照](testing/CI与发布门禁对照.html)**。
+> **现状审计（2026-07-03）：** PR / `main` 由 [CI Workflow](https://github.com/anviod/edgeCore/blob/main/.github/workflows/ci.yml) 运行 P0 门控（`test-short`、`test-soak-short`、构建 smoke、`bench-q3`）；tag 发布仍走 [Release Workflow](https://github.com/anviod/edgeCore/blob/main/.github/workflows/release.yml)。G-Industrial 仍未自动化。详见 **[CI 与发布门禁对照](testing/CI与发布门禁对照.html)**。
 
 | 门禁 | 目标 CI 行为 | 当前状态 |
 | --- | --- | --- |

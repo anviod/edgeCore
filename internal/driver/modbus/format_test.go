@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 func TestModbus_FormatPoint_Int16(t *testing.T) {

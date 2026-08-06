@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 通道监控指标（统一规范）
+ * edgeCore v3.0 — 通道监控指标（统一规范）
  */
 
 .channel-metrics-modal.arco-modal {
@@ -292,7 +292,7 @@
 
 .channel-metric-stat__value.is-success,
 .channel-metrics-detail__val.is-success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .channel-metric-stat__value.is-warning,
@@ -302,7 +302,7 @@
 
 .channel-metric-stat__value.is-danger,
 .channel-metrics-detail__val.is-danger {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 /* ── 详细指标 ── */

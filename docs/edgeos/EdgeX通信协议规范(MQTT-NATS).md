@@ -1,10 +1,10 @@
-﻿# EdgeX端 通信协议规范 (MQTT/NATS) — EAN 2.0
+﻿# edgeCore端 通信协议规范 (MQTT/NATS) — EAN 2.0
 
 > **文档版本**: V2.0  
 > **最后更新**: 2026-07-27  
 > **维护者**: edgeOS 团队  
-> **文档定位**: 本文档定义 **Edge Agent Network（EAN）2.0** 基于 MQTT v5 / NATS 2.x 的统一工业智能体协作协议。涵盖共性协议层（Agent / Capability / Discovery / Invoke / Event）、EdgeX Capability Runtime 接入规范、EdgeOS Coordination Platform 平台规范，以及 V1.0 兼容层 Topic 保留。  
-> **适用对象**: EdgeX 边缘网关（Capability Runtime）、EdgeOS 蜂群网络（Coordination Platform）、第三方 Runtime 实现者。
+> **文档定位**: 本文档定义 **Edge Agent Network（EAN）2.0** 基于 MQTT v5 / NATS 2.x 的统一工业智能体协作协议。涵盖共性协议层（Agent / Capability / Discovery / Invoke / Event）、edgeCore Capability Runtime 接入规范、EdgeOS Coordination Platform 平台规范，以及 V1.0 兼容层 Topic 保留。  
+> **适用对象**: edgeCore 边缘网关（Capability Runtime）、EdgeOS 蜂群网络（Coordination Platform）、第三方 Runtime 实现者。
 
 ---
 
@@ -12,8 +12,8 @@
 
 | 版本 | 日期 | 变更说明 |
 |------|------|---------|
-| v1.0 | 2026-04-21 | 初始版本：EdgeX ↔ EdgeOS 专用 Topic/Subject 与消息体（节点注册、设备上报、下行控制等） |
-| **v2.0** | **2026-07-27** | **全面升级至 EAN 2.0**：新增统一 Agent 模型、Capability 模型、Discovery/Invoke/Event 协议；EdgeX 作为 Capability Runtime 接入；EdgeOS 作为 Coordination Platform；保留 V1.0 Topic 作为兼容层 |
+| v1.0 | 2026-04-21 | 初始版本：edgeCore ↔ EdgeOS 专用 Topic/Subject 与消息体（节点注册、设备上报、下行控制等） |
+| **v2.0** | **2026-07-27** | **全面升级至 EAN 2.0**：新增统一 Agent 模型、Capability 模型、Discovery/Invoke/Event 协议；edgeCore 作为 Capability Runtime 接入；EdgeOS 作为 Coordination Platform；保留 V1.0 Topic 作为兼容层 |
 
 ---
 
@@ -21,9 +21,9 @@
 
 ### 0.1 设计原则
 
-> **不是重新设计，而是在现有 EdgeX + EdgeOS 架构上增加一层统一的 Agent 协作能力。**
+> **不是重新设计，而是在现有 edgeCore + EdgeOS 架构上增加一层统一的 Agent 协作能力。**
 
-- **EdgeX 改动最小** — 复用已有 AI、MCP、Execution Mapper、ShadowCore
+- **edgeCore 改动最小** — 复用已有 AI、MCP、Execution Mapper、ShadowCore
 - **EdgeOS 增加平台能力** — 发现、编排、治理
 - **协议统一** — Capability、Discovery、Invoke、Event
 
@@ -59,7 +59,7 @@ Device    AI    Workflow    Service    Cloud
                      │
       ┌──────────────┴──────────────┐
       ▼                             ▼
-EdgeOS Coordination      EdgeX Capability
+EdgeOS Coordination      edgeCore Capability
     Platform                Runtime
 ───────────────────    ───────────────────
 Registry Center        Capability Registry
@@ -78,7 +78,7 @@ Metrics
 
 ### 0.4 协议职责边界
 
-| 职责 | 共性协议 | EdgeX Runtime | EdgeOS Platform |
+| 职责 | 共性协议 | edgeCore Runtime | EdgeOS Platform |
 |------|---------|---------------|-----------------|
 | Agent 注册/发现 | 定义模型与 Topic | 发布 Descriptor | 聚合索引 |
 | Capability 描述 | 统一 Schema | 自动生成/注册/执行 | 聚合/检索/跨节点发现 |
@@ -93,7 +93,7 @@ Metrics
 
 # 第一章 共性部分（Protocol & Common Specification）
 
-> 本章所有 Runtime 共用。不涉及 EdgeX 具体实现，不涉及 EdgeOS 具体实现。第三方 Runtime 也可据此实现互操作。
+> 本章所有 Runtime 共用。不涉及 edgeCore 具体实现，不涉及 EdgeOS 具体实现。第三方 Runtime 也可据此实现互操作。
 
 ---
 
@@ -118,7 +118,7 @@ Metrics
 
 ```yaml
 agent:
-  id: "edgex-node-001"           # 全局唯一标识
+  id: "edgeCore-node-001"           # 全局唯一标识
   kind: "device"                 # agent 类型
   version: "2.0.0"               # agent 版本
   status: "online"               # online | offline | degraded | error
@@ -127,7 +127,7 @@ agent:
   metadata:                      # 扩展元数据
     os: "linux"
     arch: "arm64"
-    hostname: "edgex-node-001.local"
+    hostname: "edgeCore-node-001.local"
   capabilities: []               # Capability 列表（见 1.3）
 ```
 
@@ -135,7 +135,7 @@ agent:
 
 | kind | 说明 | 示例 |
 |------|------|------|
-| `device` | 设备采集 Agent | EdgeX 网关 |
+| `device` | 设备采集 Agent | edgeCore 网关 |
 | `ai` | AI 推理 Agent | AI Model Center |
 | `workflow` | 工作流 Agent | EdgeOS Workflow Engine |
 | `service` | 通用服务 Agent | 日志服务、监控服务 |
@@ -174,13 +174,13 @@ agent:
   "header": {
     "message_id": "msg-agent-desc-001",
     "timestamp": 1776787200000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "agent_descriptor",
     "version": "2.0"
   },
   "body": {
     "agent": {
-      "id": "edgex-node-001",
+      "id": "edgeCore-node-001",
       "kind": "device",
       "version": "2.0.0",
       "status": "online",
@@ -193,8 +193,8 @@ agent:
       "metadata": {
         "os": "linux",
         "arch": "arm64",
-        "hostname": "edgex-node-001.local",
-        "model": "edgex-gateway-pro"
+        "hostname": "edgeCore-node-001.local",
+        "model": "edgeCore-gateway-pro"
       }
     }
   }
@@ -212,7 +212,7 @@ Capability 是 EAN 2.0 协议唯一的能力模型。以后 MCP Tool、HTTP API�
 ```yaml
 capability:
   id: "modbus_tcp.read_point"   # 全局唯一标识
-  agent_id: "edgex-node-001"               # 所属 Agent
+  agent_id: "edgeCore-node-001"               # 所属 Agent
   description: "读取 Modbus TCP 保持寄存器"
   category: "device"                       # device | ai | workflow | system
   input_schema: {}                         # JSON Schema 输入参数定义
@@ -231,7 +231,7 @@ capability:
   "header": {
     "message_id": "msg-cap-desc-001",
     "timestamp": 1776787200000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "capability_descriptor",
     "version": "2.0"
   },
@@ -239,7 +239,7 @@ capability:
     "capabilities": [
       {
         "id": "modbus_tcp.read_point",
-        "agent_id": "edgex-node-001",
+        "agent_id": "edgeCore-node-001",
         "description": "读取 Modbus TCP 保持寄存器",
         "category": "device",
         "input_schema": {
@@ -263,7 +263,7 @@ capability:
       },
       {
         "id": "modbus_tcp.write_point",
-        "agent_id": "edgex-node-001",
+        "agent_id": "edgeCore-node-001",
         "description": "写入 Modbus TCP 寄存器",
         "category": "device",
         "input_schema": {
@@ -285,7 +285,7 @@ capability:
 
 ### 1.3.3 自动生成的 Capability 命名规范
 
-EdgeX Capability Runtime 中，Capability 由 Driver / Commands 自动生成，命名遵循：
+edgeCore Capability Runtime 中，Capability 由 Driver / Commands 自动生成，命名遵循：
 
 ```
 {protocol_id}.{command_name}
@@ -362,7 +362,7 @@ Discovery 查询 / 调度决策
 ```json
 {
   "registry": {
-    "agent_id": "edgex-node-001",
+    "agent_id": "edgeCore-node-001",
     "last_seen": 1776787200000,
     "capabilities_count": 15,
     "capabilities": ["modbus_tcp.read_point", "modbus_tcp.write_point", ...],
@@ -386,14 +386,14 @@ Discovery 查询 / 调度决策
     "message_id": "msg-invoke-001",
     "timestamp": 1776787200000,
     "source": "edgeos-planner-001",
-    "destination": "edgex-node-001",
+    "destination": "edgeCore-node-001",
     "message_type": "invoke_capability",
     "version": "2.0",
     "correlation_id": "req-plan-001"
   },
   "body": {
     "invoke_id": "invoke-001",
-    "target": "edgex-node-001",
+    "target": "edgeCore-node-001",
     "capability": "modbus_tcp.write_point",
     "arguments": {
       "device_id": "slave-1",
@@ -418,7 +418,7 @@ Discovery 查询 / 调度决策
   "header": {
     "message_id": "msg-reply-001",
     "timestamp": 1776787200500,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "destination": "edgeos-planner-001",
     "message_type": "invoke_response",
     "version": "2.0",
@@ -489,21 +489,21 @@ Rejected（权限不足/目标离线）
 
 ### 1.7.2 Event 消息格式
 
-**Topic**: `$edgeos/event/edgex-node-001`
+**Topic**: `$edgeos/event/edgeCore-node-001`
 
 ```json
 {
   "header": {
     "message_id": "msg-event-001",
     "timestamp": 1776787200000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "event",
     "version": "2.0"
   },
   "body": {
     "event_id": "evt-001",
     "event_type": "temperature.changed",
-    "agent_id": "edgex-node-001",
+    "agent_id": "edgeCore-node-001",
     "device_id": "slave-1",
     "point_id": "temperature",
     "value": 45.2,
@@ -522,13 +522,13 @@ Rejected（权限不足/目标离线）
 
 | Event 类型 | 说明 | 来源 |
 |-----------|------|------|
-| `{point_id}.changed` | 点位值变化 | EdgeX ShadowCore |
-| `{point_id}.updated` | 点位更新（含相同值） | EdgeX ScanEngine |
-| `device.online` | 设备上线 | EdgeX Driver |
-| `device.offline` | 设备离线 | EdgeX Driver |
-| `device.error` | 设备错误 | EdgeX Driver |
-| `alarm.created` | 告警创建 | EdgeX EdgeRule |
-| `alarm.cleared` | 告警清除 | EdgeX EdgeRule |
+| `{point_id}.changed` | 点位值变化 | edgeCore ShadowCore |
+| `{point_id}.updated` | 点位更新（含相同值） | edgeCore ScanEngine |
+| `device.online` | 设备上线 | edgeCore Driver |
+| `device.offline` | 设备离线 | edgeCore Driver |
+| `device.error` | 设备错误 | edgeCore Driver |
+| `alarm.created` | 告警创建 | edgeCore EdgeRule |
+| `alarm.cleared` | 告警清除 | edgeCore EdgeRule |
 | `agent.heartbeat` | 心跳事件 | 所有 Agent |
 | `capability.invoked` | Capability 被调用 | 所有 Agent |
 | `workflow.step_completed` | 工作流步骤完成 | Workflow Agent |
@@ -548,7 +548,7 @@ Workflow Definition
 Workflow Node → Capability Invoke
     │
     ▼
-EdgeX Capability Runtime → Execution Mapper → Driver
+edgeCore Capability Runtime → Execution Mapper → Driver
 ```
 
 ### 1.8.2 Workflow 节点类型
@@ -563,7 +563,7 @@ EdgeX Capability Runtime → Execution Mapper → Driver
 | `parallel` | 并行执行 | 内置调度逻辑 |
 | `event_wait` | 等待事件 | `system.event.subscribe` |
 
-### 1.8.3 Workflow 通过 Capability 调用 EdgeX
+### 1.8.3 Workflow 通过 Capability 调用 edgeCore
 
 ```json
 {
@@ -571,7 +571,7 @@ EdgeX Capability Runtime → Execution Mapper → Driver
     "step_id": "step-001",
     "node_type": "action",
     "capability": "modbus_tcp.read_point",
-    "target_agent": "edgex-node-001",
+    "target_agent": "edgeCore-node-001",
     "arguments": {
       "device_id": "slave-1",
       "address": "40001",
@@ -623,7 +623,7 @@ Capability 默认读取 Shadow。需要实时数据时，Execution Mapper 访问
 ```json
 {
   "shadow": {
-    "agent_id": "edgex-node-001",
+    "agent_id": "edgeCore-node-001",
     "device_id": "slave-1",
     "points": {
       "temperature": {
@@ -655,7 +655,7 @@ Capability 默认读取 Shadow。需要实时数据时，Execution Mapper 访问
 
 ---
 
-# 第二章 EdgeX Capability Runtime
+# 第二章 edgeCore Capability Runtime
 
 > **目标：尽量少改动，复用现有 AI 与 MCP。**  
 > 新增的是 **Capability Runtime**，不是新的 Runtime。
@@ -867,7 +867,7 @@ ShadowCore 更新
 Event Publisher 发布事件
     │
     ▼
-$edgeos/event/edgex-node-001
+$edgeos/event/edgeCore-node-001
 ```
 
 ### 2.7.2 自动 Event 类型映射
@@ -887,7 +887,7 @@ $edgeos/event/edgex-node-001
 ### 2.8.1 启动时发布 Agent Descriptor
 
 ```text
-EdgeX 启动
+edgeCore 启动
     │
     ▼
 初始化 ChannelManager / ScanEngine
@@ -908,7 +908,7 @@ DiscoveryPublisher 收集 Agent 信息
 ### 2.8.2 关闭时发布 Offline
 
 ```text
-EdgeX 关闭（Graceful Shutdown）
+edgeCore 关闭（Graceful Shutdown）
     │
     ▼
 DiscoveryPublisher 发布 Offline
@@ -927,20 +927,20 @@ $edgeos/discovery/agent/offline
 
 | Topic/Subject | 方向 | QoS | 说明 |
 |---------------|------|-----|------|
-| `$edgeos/discovery/agent` | EdgeX → EdgeOS | 1 | Agent 注册/更新 |
-| `$edgeos/discovery/agent/offline` | EdgeX → EdgeOS | 1 | Agent 下线 |
-| `$edgeos/discovery/capability` | EdgeX → EdgeOS | 1 | Capability 注册 |
-| `$edgeos/discovery/query` | EdgeOS → EdgeX | 0 | Discovery 查询 |
-| `$edgeos/discovery/response` | EdgeX → EdgeOS | 1 | Discovery 响应 |
-| `$edgeos/invoke/{agent_id}` | EdgeOS → EdgeX | 1 | Capability 调用请求 |
-| `$edgeos/reply/{agent_id}` | EdgeX → EdgeOS | 1 | Capability 调用响应 |
-| `$edgeos/invoke/{agent_id}/status` | EdgeOS → EdgeX | 0 | 查询 Invoke 状态 |
-| `$edgeos/event/{agent_id}` | EdgeX → EdgeOS | 1 | 事件上报 |
-| `$edgeos/event/broadcast` | EdgeX → EdgeOS | 1 | 广播事件 |
-| `$edgeos/state/{agent_id}` | EdgeX → EdgeOS | 1 | Shadow 全量上报 |
-| `$edgeos/state/{agent_id}/delta` | EdgeX → EdgeOS | 1 | Shadow 增量更新 |
-| `$edgeos/state/{agent_id}/get` | EdgeOS → EdgeX | 0 | Shadow 查询请求 |
-| `$edgeos/heartbeat/{agent_id}` | EdgeX → EdgeOS | 0 | 心跳 |
+| `$edgeos/discovery/agent` | edgeCore → EdgeOS | 1 | Agent 注册/更新 |
+| `$edgeos/discovery/agent/offline` | edgeCore → EdgeOS | 1 | Agent 下线 |
+| `$edgeos/discovery/capability` | edgeCore → EdgeOS | 1 | Capability 注册 |
+| `$edgeos/discovery/query` | EdgeOS → edgeCore | 0 | Discovery 查询 |
+| `$edgeos/discovery/response` | edgeCore → EdgeOS | 1 | Discovery 响应 |
+| `$edgeos/invoke/{agent_id}` | EdgeOS → edgeCore | 1 | Capability 调用请求 |
+| `$edgeos/reply/{agent_id}` | edgeCore → EdgeOS | 1 | Capability 调用响应 |
+| `$edgeos/invoke/{agent_id}/status` | EdgeOS → edgeCore | 0 | 查询 Invoke 状态 |
+| `$edgeos/event/{agent_id}` | edgeCore → EdgeOS | 1 | 事件上报 |
+| `$edgeos/event/broadcast` | edgeCore → EdgeOS | 1 | 广播事件 |
+| `$edgeos/state/{agent_id}` | edgeCore → EdgeOS | 1 | Shadow 全量上报 |
+| `$edgeos/state/{agent_id}/delta` | edgeCore → EdgeOS | 1 | Shadow 增量更新 |
+| `$edgeos/state/{agent_id}/get` | EdgeOS → edgeCore | 0 | Shadow 查询请求 |
+| `$edgeos/heartbeat/{agent_id}` | edgeCore → EdgeOS | 0 | 心跳 |
 
 ### 2.9.2 Transport 复用
 
@@ -957,7 +957,7 @@ SDK 面向 Capability 编程，而非面向 Driver 编程：
 ```go
 // 调用 Capability（不直接调用 Driver）
 result, err := sdk.InvokeCapability(ctx, InvokeRequest{
-    Target:     "edgex-node-001",
+    Target:     "edgeCore-node-001",
     Capability: "modbus_tcp.read_point",
     Arguments: map[string]interface{}{
         "device_id": "slave-1",
@@ -1024,7 +1024,7 @@ Workflow Center 生成执行计划
 Scheduler 调度 Capability Invoke
     │
     ▼
-EdgeX Capability Runtime 执行
+edgeCore Capability Runtime 执行
 ```
 
 ---
@@ -1130,9 +1130,9 @@ Workflow Sync  ←────→  Workflow Sync
 
 ---
 
-# EdgeX 与 EdgeOS 职责边界（EAN 2.0）
+# edgeCore 与 EdgeOS 职责边界（EAN 2.0）
 
-| 模块 | EdgeX（执行层） | EdgeOS（平台层） |
+| 模块 | edgeCore（执行层） | EdgeOS（平台层） |
 |------|---------------|----------------|
 | Agent 生命周期 | Agent 注册、上线、心跳、下线 | 全局 Agent 管理与查询 |
 | Capability | 自动生成、注册、执行 | 聚合、检索、跨节点发现 |
@@ -1151,12 +1151,12 @@ Workflow Sync  ←────→  Workflow Sync
 
 # 附录 A：V1.0 Topic 兼容层
 
-> 以下为 EdgeX ↔ EdgeOS V1.0 通信协议 Topic，EAN 2.0 中继续保留作为兼容层。新开发建议优先使用 EAN 2.0 Topic（`$edgeos/*`）。
+> 以下为 edgeCore ↔ EdgeOS V1.0 通信协议 Topic，EAN 2.0 中继续保留作为兼容层。新开发建议优先使用 EAN 2.0 Topic（`$edgeos/*`）。
 
 ## A.1 MQTT Topic 命名规则（V1.0）
 
 ```
-edgex/{layer}/{category}[/{node_id}[/{device_id}[/{point_id}]]]
+edgeCore/{layer}/{category}[/{node_id}[/{device_id}[/{point_id}]]]
 ```
 
 ## A.2 V1.0 Topic 列表
@@ -1165,73 +1165,73 @@ edgex/{layer}/{category}[/{node_id}[/{device_id}[/{point_id}]]]
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/nodes/register` | EdgeX → EdgeOS | 1 | 节点注册 |
-| `edgex/nodes/unregister` | EdgeX → EdgeOS | 1 | 节点注销 |
-| `edgex/nodes/{node_id}/status` | EdgeX → EdgeOS | 1 | 节点状态更新 |
-| `edgex/nodes/{node_id}/online` | EdgeX → EdgeOS | 2 | 节点上线上报 |
-| `edgex/nodes/{node_id}/offline` | EdgeX → EdgeOS | 2 | 节点离线上报 |
-| `edgex/heartbeat/{node_id}` | EdgeX → EdgeOS | 0 | 节点心跳（丰富版） |
+| `edgeCore/nodes/register` | edgeCore → EdgeOS | 1 | 节点注册 |
+| `edgeCore/nodes/unregister` | edgeCore → EdgeOS | 1 | 节点注销 |
+| `edgeCore/nodes/{node_id}/status` | edgeCore → EdgeOS | 1 | 节点状态更新 |
+| `edgeCore/nodes/{node_id}/online` | edgeCore → EdgeOS | 2 | 节点上线上报 |
+| `edgeCore/nodes/{node_id}/offline` | edgeCore → EdgeOS | 2 | 节点离线上报 |
+| `edgeCore/heartbeat/{node_id}` | edgeCore → EdgeOS | 0 | 节点心跳（丰富版） |
 
 ### A.2.2 设备管理 Topics
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/devices/report` | EdgeX → EdgeOS | 1 | 设备信息上报 |
-| `edgex/devices/{node_id}/list` | EdgeOS → EdgeX | 0 | 查询设备列表 |
-| `edgex/devices/{node_id}/{device_id}/info` | EdgeOS → EdgeX | 0 | 查询设备详情 |
-| `edgex/devices/{node_id}/{device_id}/bind` | EdgeOS → EdgeX | 1 | 绑定设备 |
-| `edgex/devices/{node_id}/{device_id}/unbind` | EdgeOS → EdgeX | 1 | 解绑设备 |
-| `edgex/devices/{node_id}/{device_id}/online` | EdgeX → EdgeOS | 2 | 子设备上线上报 |
-| `edgex/devices/{node_id}/{device_id}/offline` | EdgeX → EdgeOS | 2 | 子设备离线上报 |
+| `edgeCore/devices/report` | edgeCore → EdgeOS | 1 | 设备信息上报 |
+| `edgeCore/devices/{node_id}/list` | EdgeOS → edgeCore | 0 | 查询设备列表 |
+| `edgeCore/devices/{node_id}/{device_id}/info` | EdgeOS → edgeCore | 0 | 查询设备详情 |
+| `edgeCore/devices/{node_id}/{device_id}/bind` | EdgeOS → edgeCore | 1 | 绑定设备 |
+| `edgeCore/devices/{node_id}/{device_id}/unbind` | EdgeOS → edgeCore | 1 | 解绑设备 |
+| `edgeCore/devices/{node_id}/{device_id}/online` | edgeCore → EdgeOS | 2 | 子设备上线上报 |
+| `edgeCore/devices/{node_id}/{device_id}/offline` | edgeCore → EdgeOS | 2 | 子设备离线上报 |
 
 ### A.2.3 点位管理 Topics
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/points/report` | EdgeX → EdgeOS | 1 | 点位信息上报 |
-| `edgex/points/{node_id}/{device_id}` | EdgeX → EdgeOS | 1 | 点位全量数据同步 |
-| `edgex/points/{node_id}/{device_id}/list` | EdgeOS → EdgeX | 0 | 查询点位列表 |
-| `edgex/points/{node_id}/{device_id}/sync` | EdgeOS → EdgeX | 1 | 同步点位数据 |
+| `edgeCore/points/report` | edgeCore → EdgeOS | 1 | 点位信息上报 |
+| `edgeCore/points/{node_id}/{device_id}` | edgeCore → EdgeOS | 1 | 点位全量数据同步 |
+| `edgeCore/points/{node_id}/{device_id}/list` | EdgeOS → edgeCore | 0 | 查询点位列表 |
+| `edgeCore/points/{node_id}/{device_id}/sync` | EdgeOS → edgeCore | 1 | 同步点位数据 |
 
 ### A.2.4 数据采集 Topics
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/data/{node_id}/{device_id}` | EdgeX → EdgeOS | 0 | 设备实时数据 |
-| `edgex/data/{node_id}/{device_id}/batch` | EdgeX → EdgeOS | 1 | 批量数据上报 |
-| `edgex/data/{node_id}/{device_id}/{point_id}` | EdgeX → EdgeOS | 0 | 单点位数据 |
+| `edgeCore/data/{node_id}/{device_id}` | edgeCore → EdgeOS | 0 | 设备实时数据 |
+| `edgeCore/data/{node_id}/{device_id}/batch` | edgeCore → EdgeOS | 1 | 批量数据上报 |
+| `edgeCore/data/{node_id}/{device_id}/{point_id}` | edgeCore → EdgeOS | 0 | 单点位数据 |
 
-### A.2.5 控制命令 Topics（EdgeOS 发布 → EdgeX 订阅）
+### A.2.5 控制命令 Topics（EdgeOS 发布 → edgeCore 订阅）
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/cmd/nodes/register` | EdgeOS → EdgeX | 1 | 触发节点重新注册 |
-| `edgex/cmd/{node_id}/discover` | EdgeOS → EdgeX | 0 | 设备发现命令 |
-| `edgex/cmd/{node_id}/task/create` | EdgeOS → EdgeX | 1 | 创建任务 |
-| `edgex/cmd/{node_id}/task/{task_id}/pause` | EdgeOS → EdgeX | 1 | 暂停任务 |
-| `edgex/cmd/{node_id}/task/{task_id}/resume` | EdgeOS → EdgeX | 1 | 恢复任务 |
-| `edgex/cmd/{node_id}/task/{task_id}/stop` | EdgeOS → EdgeX | 1 | 停止任务 |
-| `edgex/cmd/{node_id}/{device_id}/write` | EdgeOS → EdgeX | 1 | 写入数据 |
-| `edgex/cmd/{node_id}/config/update` | EdgeOS → EdgeX | 1 | 更新配置 |
+| `edgeCore/cmd/nodes/register` | EdgeOS → edgeCore | 1 | 触发节点重新注册 |
+| `edgeCore/cmd/{node_id}/discover` | EdgeOS → edgeCore | 0 | 设备发现命令 |
+| `edgeCore/cmd/{node_id}/task/create` | EdgeOS → edgeCore | 1 | 创建任务 |
+| `edgeCore/cmd/{node_id}/task/{task_id}/pause` | EdgeOS → edgeCore | 1 | 暂停任务 |
+| `edgeCore/cmd/{node_id}/task/{task_id}/resume` | EdgeOS → edgeCore | 1 | 恢复任务 |
+| `edgeCore/cmd/{node_id}/task/{task_id}/stop` | EdgeOS → edgeCore | 1 | 停止任务 |
+| `edgeCore/cmd/{node_id}/{device_id}/write` | EdgeOS → edgeCore | 1 | 写入数据 |
+| `edgeCore/cmd/{node_id}/config/update` | EdgeOS → edgeCore | 1 | 更新配置 |
 
 ### A.2.6 事件告警 Topics
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/events/alert` | EdgeX → EdgeOS | 2 | 告警消息 |
-| `edgex/events/error` | EdgeX → EdgeOS | 1 | 错误消息 |
-| `edgex/events/info` | EdgeX → EdgeOS | 0 | 信息消息 |
+| `edgeCore/events/alert` | edgeCore → EdgeOS | 2 | 告警消息 |
+| `edgeCore/events/error` | edgeCore → EdgeOS | 1 | 错误消息 |
+| `edgeCore/events/info` | edgeCore → EdgeOS | 0 | 信息消息 |
 
 ### A.2.7 响应 Topics
 
 | Topic | 方向 | QoS | 说明 |
 |-------|------|-----|------|
-| `edgex/cmd/responses/{node_id}/{device_id}` | EdgeX → EdgeOS | 1 | 命令响应 |
+| `edgeCore/cmd/responses/{node_id}/{device_id}` | edgeCore → EdgeOS | 1 | 命令响应 |
 
 ## A.3 NATS Subject 规范（V1.0）
 
 ```
-edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
+edgeCore.{layer}.{category}.{node_id}.{device_id}.{point_id}
 ```
 
 | 通配符 | 说明 |
@@ -1243,36 +1243,36 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 | Subject | 方向 | 说明 |
 |---------|------|------|
-| `edgex.nodes.register` | EdgeX → EdgeOS | 节点注册 |
-| `edgex.nodes.unregister` | EdgeX → EdgeOS | 节点注销 |
-| `edgex.nodes.heartbeat.>` | EdgeX → EdgeOS | 节点心跳 |
-| `edgex.nodes.status.>` | EdgeX → EdgeOS | 节点状态 |
-| `edgex.cmd.nodes.register` | EdgeOS → EdgeX | 触发节点重新注册 |
-| `edgex.cmd.>.discover` | EdgeOS → EdgeX | 设备发现 |
+| `edgeCore.nodes.register` | edgeCore → EdgeOS | 节点注册 |
+| `edgeCore.nodes.unregister` | edgeCore → EdgeOS | 节点注销 |
+| `edgeCore.nodes.heartbeat.>` | edgeCore → EdgeOS | 节点心跳 |
+| `edgeCore.nodes.status.>` | edgeCore → EdgeOS | 节点状态 |
+| `edgeCore.cmd.nodes.register` | EdgeOS → edgeCore | 触发节点重新注册 |
+| `edgeCore.cmd.>.discover` | EdgeOS → edgeCore | 设备发现 |
 
 ### A.3.2 设备管理 Subjects
 
 | Subject | 方向 | 说明 |
 |---------|------|------|
-| `edgex.devices.report` | EdgeX → EdgeOS | 设备上报 |
-| `edgex.devices.>.list` | EdgeOS → EdgeX | 查询设备 |
-| `edgex.devices.>.info.>` | EdgeOS → EdgeX | 设备详情 |
-| `edgex.devices.>.online` | EdgeX → EdgeOS | 子设备上线 |
-| `edgex.devices.>.offline` | EdgeX → EdgeOS | 子设备下线 |
+| `edgeCore.devices.report` | edgeCore → EdgeOS | 设备上报 |
+| `edgeCore.devices.>.list` | EdgeOS → edgeCore | 查询设备 |
+| `edgeCore.devices.>.info.>` | EdgeOS → edgeCore | 设备详情 |
+| `edgeCore.devices.>.online` | edgeCore → EdgeOS | 子设备上线 |
+| `edgeCore.devices.>.offline` | edgeCore → EdgeOS | 子设备下线 |
 
 ### A.3.3 数据采集 Subjects
 
 | Subject | 方向 | 说明 |
 |---------|------|------|
-| `edgex.data.>.>` | EdgeX → EdgeOS | 实时数据 |
-| `edgex.data.>.batch` | EdgeX → EdgeOS | 批量数据 |
+| `edgeCore.data.>.>` | edgeCore → EdgeOS | 实时数据 |
+| `edgeCore.data.>.batch` | edgeCore → EdgeOS | 批量数据 |
 
 ### A.3.4 请求/响应 Subjects
 
 | Subject | 类型 | 说明 |
 |---------|------|------|
-| `edgex.req.>` | Request | 请求消息 |
-| `edgex.res.>` | Response | 响应消息 |
+| `edgeCore.req.>` | Request | 请求消息 |
+| `edgeCore.res.>` | Response | 响应消息 |
 
 ---
 
@@ -1286,7 +1286,7 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 {
   "message_id": "msg-001",
   "timestamp": 1744680000000,
-  "source": "edgex-node-001",
+  "source": "edgeCore-node-001",
   "destination": "edgeos-queen",
   "message_type": "node_register",
   "version": "1.0"
@@ -1295,22 +1295,22 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.2 节点注册消息
 
-**Topic**: `edgex/nodes/register`
+**Topic**: `edgeCore/nodes/register`
 
 ```json
 {
   "header": {
     "message_id": "msg-node-reg-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "destination": "edgeos-queen",
     "message_type": "node_register",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
-    "node_name": "EdgeX Gateway Node",
-    "model": "edgex",
+    "node_id": "edgeCore-node-001",
+    "node_name": "edgeCore Gateway Node",
+    "model": "edgeCore",
     "version": "1.0.0",
     "api_version": "v1",
     "capabilities": ["shadow-sync", "heartbeat", "device-control", "task-execution"],
@@ -1322,7 +1322,7 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
     "metadata": {
       "os": "linux",
       "arch": "amd64",
-      "hostname": "edgex-node-001.local"
+      "hostname": "edgeCore-node-001.local"
     }
   }
 }
@@ -1330,19 +1330,19 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.3 设备上报消息
 
-**Topic**: `edgex/devices/report`
+**Topic**: `edgeCore/devices/report`
 
 ```json
 {
   "header": {
     "message_id": "msg-dev-report-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "device_report",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
+    "node_id": "edgeCore-node-001",
     "devices": [
       {
         "device_id": "device-001",
@@ -1366,19 +1366,19 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.4 实时数据消息
 
-**Topic**: `edgex/data/{node_id}/{device_id}`
+**Topic**: `edgeCore/data/{node_id}/{device_id}`
 
 ```json
 {
   "header": {
     "message_id": "msg-data-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "data",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
+    "node_id": "edgeCore-node-001",
     "device_id": "device-001",
     "timestamp": 1744680000000,
     "points": {
@@ -1394,19 +1394,19 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.5 心跳消息
 
-**Topic**: `edgex/heartbeat/{node_id}`
+**Topic**: `edgeCore/heartbeat/{node_id}`
 
 ```json
 {
   "header": {
     "message_id": "msg-hb-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "heartbeat",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
+    "node_id": "edgeCore-node-001",
     "status": "active",
     "timestamp": 1744680000000,
     "sequence": 100,
@@ -1460,7 +1460,7 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.6 写入命令
 
-**Topic**: `edgex/cmd/{node_id}/{device_id}/write`
+**Topic**: `edgeCore/cmd/{node_id}/{device_id}/write`
 
 ```json
 {
@@ -1468,7 +1468,7 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
     "message_id": "msg-cmd-write-001",
     "timestamp": 1744680000000,
     "source": "edgeos-queen",
-    "destination": "edgex-node-001",
+    "destination": "edgeCore-node-001",
     "message_type": "write_command",
     "version": "1.0",
     "correlation_id": "req-write-001"
@@ -1491,19 +1491,19 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 
 ## B.7 告警消息
 
-**Topic**: `edgex/events/alert`
+**Topic**: `edgeCore/events/alert`
 
 ```json
 {
   "header": {
     "message_id": "msg-alert-001",
     "timestamp": 1744680000000,
-    "source": "edgex-node-001",
+    "source": "edgeCore-node-001",
     "message_type": "alert",
     "version": "1.0"
   },
   "body": {
-    "node_id": "edgex-node-001",
+    "node_id": "edgeCore-node-001",
     "device_id": "device-001",
     "alert_id": "alert-001",
     "alert_type": "device_offline",
@@ -1528,9 +1528,9 @@ edgex.{layer}.{category}.{node_id}.{device_id}.{point_id}
 ```yaml
 mqtt:
   broker: "tcp://127.0.0.1:1883"
-  client_id: "edgex-node-001"
-  username: "edgex"
-  password: "edgex-secret"
+  client_id: "edgeCore-node-001"
+  username: "edgeCore"
+  password: "edgeCore-secret"
   qos: 1
   retain: false
   clean_session: true
@@ -1547,9 +1547,9 @@ mqtt:
 ```yaml
 nats:
   url: "nats://127.0.0.1:4222"
-  client_name: "edgex-node-001"
-  username: "edgex"
-  password: "edgex-secret"
+  client_name: "edgeCore-node-001"
+  username: "edgeCore"
+  password: "edgeCore-secret"
   token: ""
   connect_timeout: 30
   reconnect_wait: 2

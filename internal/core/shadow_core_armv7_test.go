@@ -8,7 +8,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestShadowCore_ARMv7_VersionCounterAlignment(t *testing.T) {

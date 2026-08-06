@@ -39,22 +39,22 @@
 
 .dashboard-status-chip.is-online {
   border-color: rgba(22, 163, 74, 0.35);
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
   background: rgba(22, 163, 74, 0.05);
 }
 
 .dashboard-status-chip.is-online .status-dot {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
 }
 
 .dashboard-status-chip.is-offline {
   border-color: rgba(220, 38, 38, 0.35);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   background: rgba(220, 38, 38, 0.05);
 }
 
 .dashboard-status-chip.is-offline .status-dot {
-  background: var(--edgex-error);
+  background: var(--edgeCore-error);
 }
 
 .dashboard-status-chip.is-neutral {
@@ -133,8 +133,8 @@
   width: 100%;
   background: repeating-linear-gradient(
     90deg,
-    var(--edgex-info) 0,
-    var(--edgex-info) 6px,
+    var(--edgeCore-info) 0,
+    var(--edgeCore-info) 6px,
     transparent 6px,
     transparent 12px
   );
@@ -150,7 +150,7 @@
   border: 1px solid rgba(220, 38, 38, 0.3);
   border-radius: var(--radius-md);
   background: rgba(220, 38, 38, 0.06);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   font-size: 13px;
 }
 

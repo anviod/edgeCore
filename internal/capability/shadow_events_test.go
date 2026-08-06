@@ -3,13 +3,13 @@ package capability_test
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/capability"
+	"github.com/anviod/edgeCore/internal/capability"
 	"github.com/stretchr/testify/require"
 )
 
 func TestShadowEventBridgePublishesPointChanged(t *testing.T) {
 	bus := capability.NewMemoryBus()
-	pub := capability.NewEventPublisher("edgex-node-001", bus)
+	pub := capability.NewEventPublisher("edgeCore-node-001", bus)
 	bridge := capability.NewShadowEventBridge()
 	bridge.AddPublisher(pub)
 
@@ -24,5 +24,5 @@ func TestShadowEventBridgePublishesPointChanged(t *testing.T) {
 
 	msgs := bus.Published()
 	require.NotEmpty(t, msgs)
-	require.Equal(t, capability.TopicEvent("edgex-node-001"), msgs[0].Topic)
+	require.Equal(t, capability.TopicEvent("edgeCore-node-001"), msgs[0].Topic)
 }

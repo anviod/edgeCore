@@ -480,7 +480,7 @@ const flattenOpcNodes = (nodes, level = 0) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
   border: 1px solid #e9ecef;
   margin-bottom: 12px;
 }
@@ -510,7 +510,7 @@ const flattenOpcNodes = (nodes, level = 0) => {
 .industrial-input :deep(.arco-input-wrapper) {
   border-radius: 0;
   border-color: #dee2e6;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
 }
 
 .industrial-input :deep(.arco-input-wrapper:hover) {

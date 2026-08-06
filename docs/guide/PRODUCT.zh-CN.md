@@ -1,10 +1,10 @@
 ---
 layout: default
 title: 产品手册
-description: EdgeX 工业边缘网关产品手册 
+description: edgeCore 工业边缘网关产品手册 
 ---
 
-# EdgeX 产品手册
+# edgeCore 产品手册
 
 [English](PRODUCT.html) · [完整产品说明](产品说明.html) · [用户手册](USER_MANUAL.html)
 
@@ -29,7 +29,7 @@ Modbus TCP/RTU · BACnet IP · OPC UA · Siemens S7 · EtherNet/IP · Omron FINS
 
 ## AI 协同与 MCP
 
-EdgeX 提供双通道 AI 协同能力：
+edgeCore 提供双通道 AI 协同能力：
 
 | 通道 | 定位 | 协议 | 认证 |
 |------|------|------|------|
@@ -63,4 +63,4 @@ EdgeX 提供双通道 AI 协同能力：
 
 ## 对标定位
 
-同类工业采集 / 边缘软件（Kepware 多协议采集、Ignition / ThingsBoard Edge 边缘处理、Node-RED industrial 流编排）中，EdgeX 强调：**统一影子真源**、**调度驱动的统计 SLA**、**轻量单机现场交付**。
+同类工业采集 / 边缘软件（Kepware 多协议采集、Ignition / ThingsBoard Edge 边缘处理、Node-RED industrial 流编排）中，edgeCore 强调：**统一影子真源**、**调度驱动的统计 SLA**、**轻量单机现场交付**。

@@ -25,6 +25,6 @@ bench-loadpoints:
 
 # ARMv7 cross-compile gate (compile-only; run binary on board or qemu-arm)
 bench-armv7:
-	GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -tags=bench -c ./internal/core/ -o $(TMPDIR)/edgex-armv7.test
-	@echo "Cross-compiled: $(TMPDIR)/edgex-armv7.test"
-	@echo "Run: Q3_BENCH_DURATION=60 $(TMPDIR)/edgex-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m"
+	GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -tags=bench -c ./internal/core/ -o $(TMPDIR)/edgeCore-armv7.test
+	@echo "Cross-compiled: $(TMPDIR)/edgeCore-armv7.test"
+	@echo "Run: Q3_BENCH_DURATION=60 $(TMPDIR)/edgeCore-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m"

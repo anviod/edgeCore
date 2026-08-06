@@ -10,10 +10,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
-	"github.com/anviod/edgex/internal/mcp"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
+	"github.com/anviod/edgeCore/internal/mcp"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
@@ -69,14 +69,14 @@ func (s *Server) mcpHasFullAccess() bool {
 // mcpRequireFullAccess 返回 nil 表示允许，返回 error 表示需要用户确认开启全功能
 func (s *Server) mcpRequireFullAccess() *mcp.CallToolResult {
 	if !s.mcpHasFullAccess() {
-		return mcp.NewErrorResult("全功能读写未开启。请在 EdgeX UI → AI 助手 → MCP 接入页面，点击「激活全功能」确认后重试。当前仅支持只读操作。")
+		return mcp.NewErrorResult("全功能读写未开启。请在 edgeCore UI → AI 助手 → MCP 接入页面，点击「激活全功能」确认后重试。当前仅支持只读操作。")
 	}
 	return nil
 }
 
 // ── MCP 工具注册 ──
 
-// registerMCPTools 注册所有 EdgeX MCP 工具到 MCP Server
+// registerMCPTools 注册所有 edgeCore MCP 工具到 MCP Server
 func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 	// ── 查询类工具 ──
 
@@ -106,7 +106,7 @@ func (s *Server) registerMCPTools(mcpSrv *mcp.MCPServer) {
 
 	mcpSrv.RegisterTool(mcp.Tool{
 		Name:        "get_system_info",
-		Description: "获取 EdgeX 网关系统信息（CPU/内存/磁盘使用率、运行时间、Go 版本、协议支持列表）",
+		Description: "获取 edgeCore 网关系统信息（CPU/内存/磁盘使用率、运行时间、Go 版本、协议支持列表）",
 		InputSchema: mcp.InputSchema{Type: "object", Properties: map[string]mcp.PropertyDef{}},
 	}, s.mcpGetSystemInfo)
 
@@ -370,18 +370,18 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 		InputSchema: mcp.InputSchema{
 			Type: "object",
 			Properties: map[string]mcp.PropertyDef{
-				"channel_id":    {Type: "string", Description: "通道 ID"},
-				"device_id":     {Type: "string", Description: "设备 ID"},
-				"point_id":      {Type: "string", Description: "点位 ID"},
-				"name":          {Type: "string", Description: "新名称（可选）"},
-				"address":       {Type: "string", Description: "新地址（可选）"},
-				"datatype":      {Type: "string", Description: "新数据类型（可选）：int16, uint16, int32, uint32, float32, float64, bool, string"},
-				"scale":         {Type: "number", Description: "新缩放系数（可选）"},
-				"offset":        {Type: "number", Description: "新偏移量（可选）"},
-				"unit":          {Type: "string", Description: "新单位（可选）"},
-				"readwrite":     {Type: "string", Description: "新读写属性（可选）：R 或 RW"},
-				"word_order":    {Type: "string", Description: "新字节序（可选）：ABCD, CDAB, BADC, DCBA"},
-				"scan_class":    {Type: "string", Description: "新扫描类（可选）：fast, normal, slow"},
+				"channel_id": {Type: "string", Description: "通道 ID"},
+				"device_id":  {Type: "string", Description: "设备 ID"},
+				"point_id":   {Type: "string", Description: "点位 ID"},
+				"name":       {Type: "string", Description: "新名称（可选）"},
+				"address":    {Type: "string", Description: "新地址（可选）"},
+				"datatype":   {Type: "string", Description: "新数据类型（可选）：int16, uint16, int32, uint32, float32, float64, bool, string"},
+				"scale":      {Type: "number", Description: "新缩放系数（可选）"},
+				"offset":     {Type: "number", Description: "新偏移量（可选）"},
+				"unit":       {Type: "string", Description: "新单位（可选）"},
+				"readwrite":  {Type: "string", Description: "新读写属性（可选）：R 或 RW"},
+				"word_order": {Type: "string", Description: "新字节序（可选）：ABCD, CDAB, BADC, DCBA"},
+				"scan_class": {Type: "string", Description: "新扫描类（可选）：fast, normal, slow"},
 			},
 			Required: []string{"channel_id", "device_id", "point_id"},
 		},
@@ -429,7 +429,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 	// 配置导出
 	mcpSrv.RegisterTool(mcp.Tool{
 		Name:        "export_config",
-		Description: "导出 EdgeX 完整配置（所有通道、设备、点位、边缘规则的 JSON 配置，可用于备份或迁移）",
+		Description: "导出 edgeCore 完整配置（所有通道、设备、点位、边缘规则的 JSON 配置，可用于备份或迁移）",
 		InputSchema: mcp.InputSchema{
 			Type: "object",
 			Properties: map[string]mcp.PropertyDef{
@@ -446,11 +446,11 @@ func (s *Server) mcpListChannels(args json.RawMessage) (*mcp.CallToolResult, err
 	channels := s.cm.GetChannels()
 
 	if len(channels) == 0 {
-		return mcp.NewSuccessResult("当前没有配置任何通道。可通过 EdgeX UI 或 API 创建通道。"), nil
+		return mcp.NewSuccessResult("当前没有配置任何通道。可通过 edgeCore UI 或 API 创建通道。"), nil
 	}
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("## EdgeX 通道列表 (共 %d 个)\n\n", len(channels)))
+	sb.WriteString(fmt.Sprintf("## edgeCore 通道列表 (共 %d 个)\n\n", len(channels)))
 	sb.WriteString("| ID | 名称 | 协议 | 状态 | 设备数 |\n")
 	sb.WriteString("|----|------|------|------|--------|\n")
 
@@ -1440,18 +1440,18 @@ func (s *Server) mcpUpdatePoint(args json.RawMessage) (*mcp.CallToolResult, erro
 		return blocked, nil
 	}
 	var params struct {
-		ChannelID  string   `json:"channel_id"`
-		DeviceID   string   `json:"device_id"`
-		PointID    string   `json:"point_id"`
-		Name       string   `json:"name"`
-		Address    string   `json:"address"`
-		Datatype   string   `json:"datatype"`
-		Scale      *float64 `json:"scale"`
-		Offset     *float64 `json:"offset"`
-		Unit       string   `json:"unit"`
-		ReadWrite  string   `json:"readwrite"`
-		WordOrder  string   `json:"word_order"`
-		ScanClass  string   `json:"scan_class"`
+		ChannelID string   `json:"channel_id"`
+		DeviceID  string   `json:"device_id"`
+		PointID   string   `json:"point_id"`
+		Name      string   `json:"name"`
+		Address   string   `json:"address"`
+		Datatype  string   `json:"datatype"`
+		Scale     *float64 `json:"scale"`
+		Offset    *float64 `json:"offset"`
+		Unit      string   `json:"unit"`
+		ReadWrite string   `json:"readwrite"`
+		WordOrder string   `json:"word_order"`
+		ScanClass string   `json:"scan_class"`
 	}
 	if err := json.Unmarshal(args, &params); err != nil {
 		return mcp.NewErrorResult("参数解析失败: " + err.Error()), nil
@@ -1594,7 +1594,7 @@ func (s *Server) mcpGetPointHistory(args json.RawMessage) (*mcp.CallToolResult, 
 		// 检查设备存储是否启用——历史空白最常见原因
 		hint := "暂无历史数据。"
 		if s.dsm != nil && !s.dsm.IsStorageEnabled(params.DeviceID) {
-			hint += "该设备未启用历史存储。请在 EdgeX UI → 设备配置 → 存储策略中启用并选择策略（realtime/minute_aligned/interval）。"
+			hint += "该设备未启用历史存储。请在 edgeCore UI → 设备配置 → 存储策略中启用并选择策略（realtime/minute_aligned/interval）。"
 		} else {
 			hint += "设备可能尚未采集到数据，请确认通道已启动且设备在线。"
 		}
@@ -1660,7 +1660,7 @@ func (s *Server) mcpExportConfig(args json.RawMessage) (*mcp.CallToolResult, err
 	}
 	export := make(map[string]any)
 	export["export_time"] = time.Now().Format(time.RFC3339)
-	export["server"] = map[string]string{"name": "EdgeX", "version": "v0.0.8"}
+	export["server"] = map[string]string{"name": "edgeCore", "version": "v0.0.8"}
 	if params.Scope == "all" || params.Scope == "channels" {
 		channels := s.cm.GetChannels()
 		chList := make([]map[string]any, 0, len(channels))
@@ -1692,7 +1692,7 @@ func (s *Server) mcpExportConfig(args json.RawMessage) (*mcp.CallToolResult, err
 			chData["devices"] = devList
 			chList = append(chList, chData)
 		}
-	export["channels"] = chList
+		export["channels"] = chList
 	}
 	if params.Scope == "all" || params.Scope == "rules" {
 		if s.ecm != nil {
@@ -1709,7 +1709,7 @@ func (s *Server) mcpExportConfig(args json.RawMessage) (*mcp.CallToolResult, err
 				ruleList = append(ruleList, map[string]any{
 					"rule_id": rule.ID, "name": rule.Name, "type": rule.Type,
 					"condition": rule.Condition, "enabled": rule.Enable,
-					"expression": rule.Expression,
+					"expression":    rule.Expression,
 					"trigger_count": triggerCount, "action_count": len(rule.Actions),
 					"action_success": actionStatus,
 				})
@@ -1980,24 +1980,24 @@ bool / byte / int16 / uint16 / int32 / uint32 / float32 / string`,
 
 // ── MCP 资源注册 ──
 
-// registerMCPResources 注册所有 EdgeX MCP 资源
+// registerMCPResources 注册所有 edgeCore MCP 资源
 func (s *Server) registerMCPResources(mcpSrv *mcp.MCPServer) {
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://channels",
+		URI:         "edgeCore://channels",
 		Name:        "通道列表",
 		Description: "所有采集通道的完整配置信息（JSON 格式）",
 		MimeType:    "application/json",
 	}, s.mcpResourceChannels)
 
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://system",
+		URI:         "edgeCore://system",
 		Name:        "系统信息",
-		Description: "EdgeX 网关系统状态信息（CPU/内存/运行时间/协议支持）",
+		Description: "edgeCore 网关系统状态信息（CPU/内存/运行时间/协议支持）",
 		MimeType:    "application/json",
 	}, s.mcpResourceSystem)
 
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://diagnostics",
+		URI:         "edgeCore://diagnostics",
 		Name:        "诊断快照",
 		Description: "所有通道和设备的诊断信息汇总",
 		MimeType:    "application/json",
@@ -2005,15 +2005,15 @@ func (s *Server) registerMCPResources(mcpSrv *mcp.MCPServer) {
 
 	// 协议支持列表
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://protocols",
+		URI:         "edgeCore://protocols",
 		Name:        "协议支持列表",
-		Description: "EdgeX 支持的工业协议完整列表（含端口、特性）",
+		Description: "edgeCore 支持的工业协议完整列表（含端口、特性）",
 		MimeType:    "application/json",
 	}, s.mcpResourceProtocols)
 
 	// 边缘规则
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://edge-rules",
+		URI:         "edgeCore://edge-rules",
 		Name:        "边缘规则",
 		Description: "所有边缘计算规则的配置和状态",
 		MimeType:    "application/json",
@@ -2021,9 +2021,9 @@ func (s *Server) registerMCPResources(mcpSrv *mcp.MCPServer) {
 
 	// 完整配置导出
 	mcpSrv.RegisterResource(mcp.Resource{
-		URI:         "edgex://config",
+		URI:         "edgeCore://config",
 		Name:        "完整配置",
-		Description: "EdgeX 完整配置导出（通道、设备、点位、规则）",
+		Description: "edgeCore 完整配置导出（通道、设备、点位、规则）",
 		MimeType:    "application/json",
 	}, s.mcpResourceConfig)
 }
@@ -2093,15 +2093,15 @@ func (s *Server) mcpResourceProtocols(uri string) (*mcp.ReadResourceResult, erro
 
 func (s *Server) mcpResourceEdgeRules(uri string) (*mcp.ReadResourceResult, error) {
 	type ruleInfo struct {
-		ID             string           `json:"id"`
-		Name           string           `json:"name"`
-		Type           string           `json:"type"`
-		Condition      string           `json:"condition"`
-		Expression     string           `json:"expression"`
-		Actions        []model.RuleAction `json:"actions"`
-		Enable         bool             `json:"enable"`
-		TriggerCount   int64            `json:"trigger_count"`
-		ActionSuccess  int64            `json:"action_success_count"`
+		ID            string             `json:"id"`
+		Name          string             `json:"name"`
+		Type          string             `json:"type"`
+		Condition     string             `json:"condition"`
+		Expression    string             `json:"expression"`
+		Actions       []model.RuleAction `json:"actions"`
+		Enable        bool               `json:"enable"`
+		TriggerCount  int64              `json:"trigger_count"`
+		ActionSuccess int64              `json:"action_success_count"`
 	}
 	var rules []ruleInfo
 	if s.ecm != nil {
@@ -2139,7 +2139,7 @@ func (s *Server) mcpResourceEdgeRules(uri string) (*mcp.ReadResourceResult, erro
 func (s *Server) mcpResourceConfig(uri string) (*mcp.ReadResourceResult, error) {
 	export := make(map[string]any)
 	export["export_time"] = time.Now().Format(time.RFC3339)
-	export["server"] = map[string]string{"name": "EdgeX", "version": "v0.0.8"}
+	export["server"] = map[string]string{"name": "edgeCore", "version": "v0.0.8"}
 	channels := s.cm.GetChannels()
 	chList := make([]map[string]any, 0, len(channels))
 	for _, ch := range channels {
@@ -2193,7 +2193,7 @@ func (s *Server) mcpResourceConfig(uri string) (*mcp.ReadResourceResult, error) 
 func (s *Server) getSystemInfoSnapshot() map[string]any {
 	info := map[string]any{
 		"server": map[string]string{
-			"name":    "EdgeX",
+			"name":    "edgeCore",
 			"version": "v0.0.8",
 		},
 		"protocols": []string{
@@ -2239,7 +2239,7 @@ func (s *Server) initMCPServer() *mcp.MCPServer {
 // ensureCapabilityRuntime builds (once) a local Capability Runtime for MCP / in-process Invoke.
 func (s *Server) ensureCapabilityRuntime() *capability.Runtime {
 	s.eanRuntimeOnce.Do(func() {
-		agentID := "edgex"
+		agentID := "edgeCore"
 		if s.nbm != nil {
 			cfg := s.nbm.GetConfig()
 			if len(cfg.EdgeOSMQTT) > 0 && cfg.EdgeOSMQTT[0].NodeID != "" {
@@ -2389,7 +2389,7 @@ func (s *Server) registerMCPPrompts(mcpSrv *mcp.MCPServer) {
 	mcpSrv.RegisterPrompt(mcp.Prompt{
 		Name:        "gateway-health-check",
 		Description: "网关健康检查清单：CPU/内存/磁盘/网络/采集延迟/断线重连等关键指标的监控与诊断",
-		Arguments:    []mcp.PromptArgument{},
+		Arguments:   []mcp.PromptArgument{},
 	})
 
 	// 协议迁移
@@ -2436,7 +2436,7 @@ func (s *Server) handleMCP(c *fiber.Ctx) error {
 			"protocol":    "MCP " + mcp.MCPVersion,
 			"transport":   "HTTP/SSE with JSON-RPC 2.0",
 			"endpoint":    "/api/mcp",
-			"description": "EdgeX Industrial Protocol Copilot MCP Server",
+			"description": "edgeCore Industrial Protocol Copilot MCP Server",
 			"tools":       len(s.mcpServer.GetTools()),
 			"resources":   len(s.mcpServer.GetResources()),
 			"prompts":     len(s.mcpServer.GetPrompts()),
@@ -2454,7 +2454,7 @@ func (s *Server) handleMCP(c *fiber.Ctx) error {
 			"jsonrpc": "2.0",
 			"error": fiber.Map{
 				"code":    -32001,
-				"message": "MCP 认证失败：请在 EdgeX UI → AI 助手 → MCP 接入页面设置 API Key，并在请求头中携带 Authorization: Bearer <key> 或 X-MCP-API-Key: <key>",
+				"message": "MCP 认证失败：请在 edgeCore UI → AI 助手 → MCP 接入页面设置 API Key，并在请求头中携带 Authorization: Bearer <key> 或 X-MCP-API-Key: <key>",
 			},
 		})
 	}
@@ -2557,11 +2557,11 @@ func (s *Server) handleMCPHelp(c *fiber.Ctx) error {
 	}
 
 	help := map[string]any{
-		"title":       "EdgeX MCP Server — 接入指南",
-		"description": "通过 MCP (Model Context Protocol) 协议，外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）可以安全地操作 EdgeX 工业网关。支持 30 个工具、13 个提示词模板、6 个资源端点。",
+		"title":       "edgeCore MCP Server — 接入指南",
+		"description": "通过 MCP (Model Context Protocol) 协议，外部 LLM 应用（Claude Desktop、Cursor、Windsurf、Continue.dev 等）可以安全地操作 edgeCore 工业网关。支持 30 个工具、13 个提示词模板、6 个资源端点。",
 		"transport":   "HTTP/SSE (JSON-RPC 2.0)",
 		"endpoint":    "/api/mcp",
-		"auth":        "MCP API Key（简化认证）— 在 EdgeX UI → AI 助手 → MCP 接入页面设置",
+		"auth":        "MCP API Key（简化认证）— 在 edgeCore UI → AI 助手 → MCP 接入页面设置",
 		"auth_mode":   "api_key",
 		"auth_header": "Authorization: Bearer <mcp_api_key> 或 X-MCP-API-Key: <mcp_api_key>",
 		"mcp_enabled": settings.McpEnabled,
@@ -2569,29 +2569,29 @@ func (s *Server) handleMCPHelp(c *fiber.Ctx) error {
 		"clients": []map[string]string{
 			{
 				"name":   "Claude Desktop",
-				"config": `{"mcpServers":{"edgex":{"url":"http://<host>:8080/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}`,
+				"config": `{"mcpServers":{"edgeCore":{"url":"http://<host>:8080/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}`,
 			},
 			{
 				"name":   "Cursor / Windsurf",
-				"config": `{"mcpServers":{"edgex":{"url":"http://<host>:8080/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}`,
+				"config": `{"mcpServers":{"edgeCore":{"url":"http://<host>:8080/api/mcp","headers":{"Authorization":"Bearer <mcp_api_key>"}}}}`,
 			},
 			{
 				"name":   "Continue.dev",
-				"config": `{"mcpServers":{"edgex":{"transport":{"type":"http","url":"http://<host>:8080/api/mcp"},"auth":{"type":"bearer","token":"<mcp_api_key>"}}}}`,
+				"config": `{"mcpServers":{"edgeCore":{"transport":{"type":"http","url":"http://<host>:8080/api/mcp"},"auth":{"type":"bearer","token":"<mcp_api_key>"}}}}`,
 			},
 		},
-		"tools":        tools,
-		"tool_names":   s.mcpServer.GetToolNames(),
-		"resources":    s.mcpServer.GetResources(),
-		"prompts":      s.mcpServer.GetPrompts(),
-		"security":     "全功能 CRUD 操作（创建/删除/写入）需要用户在 UI 中确认激活全功能权限；默认仅支持只读操作；所有操作通过 MCP API Key 认证",
-		"activation":   "POST /api/mcp/activate — 激活全功能读写（需用户确认）",
-		"status":       "GET /api/mcp/status — 查询 MCP 激活状态",
+		"tools":      tools,
+		"tool_names": s.mcpServer.GetToolNames(),
+		"resources":  s.mcpServer.GetResources(),
+		"prompts":    s.mcpServer.GetPrompts(),
+		"security":   "全功能 CRUD 操作（创建/删除/写入）需要用户在 UI 中确认激活全功能权限；默认仅支持只读操作；所有操作通过 MCP API Key 认证",
+		"activation": "POST /api/mcp/activate — 激活全功能读写（需用户确认）",
+		"status":     "GET /api/mcp/status — 查询 MCP 激活状态",
 		"architecture": map[string]any{
 			"layers": []map[string]string{
 				{"name": "LLM 客户端", "desc": "Claude Desktop / Cursor / Windsurf / Continue.dev", "color": "purple"},
 				{"name": "MCP 协议层", "desc": "JSON-RPC 2.0 / SSE / Streamable HTTP", "color": "blue"},
-				{"name": "EdgeX 网关", "desc": "认证 → 权限检查 → 工具分发 → 数据读写", "color": "green"},
+				{"name": "edgeCore 网关", "desc": "认证 → 权限检查 → 工具分发 → 数据读写", "color": "green"},
 				{"name": "工业设备", "desc": "Modbus / S7 / BACnet / OPC UA / SNMP / ICE104", "color": "orange"},
 			},
 		},

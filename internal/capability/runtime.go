@@ -10,7 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
-// RuntimeConfig configures the EdgeX Capability Runtime.
+// RuntimeConfig configures the edgeCore Capability Runtime.
 type RuntimeConfig struct {
 	AgentID              string
 	AgentVersion         string
@@ -24,8 +24,8 @@ type RuntimeConfig struct {
 	Unified bool
 }
 
-// Runtime is the EdgeX Capability Runtime entrypoint (EAN 2.0).
-// EdgeOS acts as Coordination Platform; EdgeX exposes Capabilities via this runtime.
+// Runtime is the edgeCore Capability Runtime entrypoint (EAN 2.0).
+// EdgeOS acts as Coordination Platform; edgeCore exposes Capabilities via this runtime.
 type Runtime struct {
 	cfg        RuntimeConfig
 	registry   *Registry

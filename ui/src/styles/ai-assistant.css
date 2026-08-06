@@ -1,6 +1,6 @@
 /*
  * ====================================================================
- * EdgeX — AI Assistant Premium UI Engine (Apple Liquid Glass Edition)
+ * edgeCore — AI Assistant Premium UI Engine (Apple Liquid Glass Edition)
  * High-Density Solid-Glass System — Optimized for Zero Text Bleed
  * ====================================================================
  */
@@ -4261,7 +4261,7 @@ body.dark-theme .ai-fab.mcp-glow {
 }
 
 .ai-mcp-docs-tool-required {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   margin-left: 1px;
 }
 

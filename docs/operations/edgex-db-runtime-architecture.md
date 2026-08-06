@@ -2,7 +2,7 @@
 layout: default
 ---
 
-# edgex 运行时架构（双数据库：config.db + runtime.db）
+# edgeCore 运行时架构（双数据库：config.db + runtime.db）
 
 | 项 | 内容 |
 |----|------|
@@ -179,7 +179,7 @@ UI 数据管理页面区分两类操作：
 | `ChannelManager.dataDir` | Sync 遗留字段 |
 | `cmd/main.go` migrateDir 复制工具 | 无调用方 |
 | SyncManager 运行时 YAML 同步 | 已禁用 |
-| `edgex.db` 迁移工具 | 已删除，不再支持旧库迁移 |
+| `edgeCore.db` 迁移工具 | 已删除，不再支持旧库迁移 |
 | `AutoMigrateConfigFromDir` / `MigrateConfigToDB` | YAML→DB 迁移已删除 |
 | `POST /api/data/migrate-legacy` | 一次性迁移 API 已删除 |
 | `internal/migration` 包 | 已删除 |

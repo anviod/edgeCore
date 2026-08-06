@@ -1,7 +1,7 @@
 ---
 layout: default
 title: CI 与发布门禁对照
-description: EdgeX 四道发布门禁（G-Stability / G-Industrial / G-Performance / G-Lightweight）与当前 CI 自动化覆盖对照
+description: edgeCore 四道发布门禁（G-Stability / G-Industrial / G-Performance / G-Lightweight）与当前 CI 自动化覆盖对照
 version: v1.0
 date: 2026-07-03
 status: 现行

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 Arco Design overrides
+ * edgeCore v3.0 Arco Design overrides
  * Linear-class: rounded, no glow, low noise
  */
 
@@ -62,7 +62,7 @@
 .arco-timepicker {
   border-radius: var(--radius-sm) !important;
   box-shadow: none !important;
-  background-color: var(--edgex-surface-subtle, #fafafa) !important;
+  background-color: var(--edgeCore-surface-subtle, #fafafa) !important;
   border-color: var(--border) !important;
   transition: border-color var(--transition-fast) !important;
 }

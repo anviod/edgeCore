@@ -54,7 +54,7 @@
         <div class="stat-card">
           <div class="stat-label">协程数量</div>
 
-          <div class="stat-value" style="color: var(--edgex-info);">
+          <div class="stat-value" style="color: var(--edgeCore-info);">
             {{ system.goroutines || 0 }}
           </div>
 

@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func waitForTaskStatus(t *testing.T, a *Agent, id string, want aitypes.TaskStatus, timeout time.Duration) *aitypes.TaskRecord {

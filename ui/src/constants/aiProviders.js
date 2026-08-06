@@ -1,13 +1,13 @@
 /** AI 助手设置三大分类 */
 export const AI_SETTING_CATEGORIES = [
   { value: 'mcp', label: 'MCP 接入', desc: '外部 LLM 通过 MCP 协议操作网关' },
-  { value: 'remote', label: '本地 AI 模型', desc: '局域网 gRPC 对接 EdgeX AI Model Center' },
+  { value: 'remote', label: '本地 AI 模型', desc: '局域网 gRPC 对接 edgeCore AI Model Center' },
   { value: 'cloud', label: '云端大模型', desc: '直连公网或私有 LLM API' }
 ]
 
 /** AI deployment modes (legacy — kept for compatibility) */
 export const AI_DEPLOYMENT_MODES = [
-  { value: 'remote', label: '本地 AI 模型', desc: '局域网 gRPC 对接 EdgeX AI Model Center（Mode A/B）' },
+  { value: 'remote', label: '本地 AI 模型', desc: '局域网 gRPC 对接 edgeCore AI Model Center（Mode A/B）' },
   { value: 'cloud', label: '云端大模型', desc: '直连公网或私有 LLM API（Mode C，需 enable_cloud）' }
 ]
 
@@ -22,8 +22,8 @@ export const AI_AUTH_TYPES = [
 
 export const AI_PROVIDERS = [
   {
-    value: 'edgex-center',
-    label: 'EdgeX AI Model Center',
+    value: 'edgeCore-center',
+    label: 'edgeCore AI Model Center',
     deploymentMode: 'remote',
     authType: 'none',
     baseUrl: '',
@@ -110,7 +110,7 @@ export const AI_PROVIDERS = [
 
 export const defaultAiSettings = () => ({
   deployment_mode: 'remote',
-  provider: 'edgex-center',
+  provider: 'edgeCore-center',
   grpc_endpoint: '127.0.0.1:50051',
   base_url: '',
   auth_type: 'bearer',

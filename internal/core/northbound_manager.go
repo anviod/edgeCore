@@ -7,16 +7,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/bacnet"
-	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
-	"github.com/anviod/edgex/internal/northbound/http"
-	"github.com/anviod/edgex/internal/northbound/mqtt"
-	"github.com/anviod/edgex/internal/northbound/opcua"
-	"github.com/anviod/edgex/internal/northbound/sparkplugb"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/bacnet"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/northbound/http"
+	"github.com/anviod/edgeCore/internal/northbound/mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/northbound/sparkplugb"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 type NorthboundStatus struct {
@@ -55,9 +55,9 @@ type NorthboundManager struct {
 	saveFunc          func(model.NorthboundConfig) error
 	mu                sync.RWMutex
 
-	shadowCore        *ShadowCore
-	eanShadowBridge   *capability.ShadowEventBridge
-	eanShadowOnce     sync.Once
+	shadowCore      *ShadowCore
+	eanShadowBridge *capability.ShadowEventBridge
+	eanShadowOnce   sync.Once
 }
 
 func NewNorthboundManager(cfg model.NorthboundConfig, pipeline *DataPipeline, sb model.SouthboundManager, s *storage.Storage, saveFunc func(model.NorthboundConfig) error) *NorthboundManager {
@@ -461,7 +461,7 @@ func (nm *NorthboundManager) PublishPointsMetadata() {
 	}
 }
 
-// PublishDeviceReport republishes the device inventory (edgex/devices/report) to all
+// PublishDeviceReport republishes the device inventory (edgeCore/devices/report) to all
 // edgeOS clients. Called when channels/devices are added/updated or the northbound
 // Devices mapping changes, so EdgeOS's device list stays in sync without re-connecting.
 func (nm *NorthboundManager) PublishDeviceReport() {

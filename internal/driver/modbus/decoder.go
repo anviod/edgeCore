@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 // Decoder 接口定义

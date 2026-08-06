@@ -14,12 +14,12 @@ Compile-only (no ARM hardware required):
 
 	make bench-armv7
 	# or:
-	GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -c ./internal/core/ -o /tmp/edgex-armv7.test
+	GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -c ./internal/core/ -o /tmp/edgeCore-armv7.test
 
 Run on ARMv7 board or via qemu-user:
 
-	Q3_BENCH_DURATION=60 /tmp/edgex-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m
-	qemu-arm /tmp/edgex-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m
+	Q3_BENCH_DURATION=60 /tmp/edgeCore-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m
+	qemu-arm /tmp/edgeCore-armv7.test -test.run TestARMv7_Q3BenchmarkGate -test.v -test.timeout=15m
 
 Micro-benchmarks (native or cross-compiled binary):
 

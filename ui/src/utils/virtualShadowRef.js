@@ -128,7 +128,7 @@ export function sourceFromRef(ref, sources) {
   }
 }
 
-export const DRAG_MIME = 'application/vnd.edgex.virtual-shadow-points+json'
+export const DRAG_MIME = 'application/vnd.edgeCore.virtual-shadow-points+json'
 
 export function encodeDragRefs(refs) {
   return encodeDragPayload({ refs })

@@ -8,8 +8,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 var (

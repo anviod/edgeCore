@@ -1040,12 +1040,12 @@
 
       <div style="padding: 16px;">
         <!-- 设备信息 -->
-        <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px; background: var(--edgex-surface-inset); border: 1px solid var(--edgex-border);">
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px; background: var(--edgeCore-surface-inset); border: 1px solid var(--edgeCore-border);">
           <div>
             <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">设备</div>
             <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.deviceID }}</div>
           </div>
-          <div style="border-left: 1px solid var(--edgex-border);"></div>
+          <div style="border-left: 1px solid var(--edgeCore-border);"></div>
           <div>
             <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">点位</div>
             <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.pointID }}</div>

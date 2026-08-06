@@ -6,11 +6,11 @@ kramdown:
   parse_block_html: true
   syntax_highlighter: rouge
   hard_wrap: false
-name: EdgeX
-description: EdgeX 工业边缘计算平台 · 统一设备接入、边缘计算与数据互联
+name: edgeCore
+description: edgeCore 工业边缘计算平台 · 统一设备接入、边缘计算与数据互联
 lang: zh-CN
 url: https://anviod.github.io
-baseurl: /edgex
+baseurl: /edgeCore
 
 # 主题设置
 remote_theme: pages-themes/cayman@v0.2.0
@@ -22,7 +22,7 @@ plugins:
 # 导航配置
 nav:
   - title: Github
-    url: https://github.com/anviod/edgex
+    url: https://github.com/anviod/edgeCore
   - title: 首页
     url: /
   - title: 产品指南

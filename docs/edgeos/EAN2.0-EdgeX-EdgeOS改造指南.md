@@ -1,9 +1,9 @@
-# EAN 2.0 EdgeX ↔ EdgeOS 改造指南
+# EAN 2.0 edgeCore ↔ EdgeOS 改造指南
 
 > **文档版本**: 1.12  
 > **日期**: 2026-08-04  
-> **适用范围**: EdgeX Capability Runtime（本仓库）与 EdgeOS Coordination Platform（对端必须实现）  
-> **协议基线**: [EdgeX通信协议规范(MQTT-NATS).md](./EdgeX通信协议规范(MQTT-NATS).md)
+> **适用范围**: edgeCore Capability Runtime（本仓库）与 EdgeOS Coordination Platform（对端必须实现）  
+> **协议基线**: [edgeCore通信协议规范(MQTT-NATS).md](./edgeCore通信协议规范(MQTT-NATS).md)
 > **规划基线**: [AI协同组件规划.md](./AI协同组件规划.md)
 > **迁移评估**: [V1-to-EAN-Migration-Assessment.md](../TODO/V1-to-EAN-Migration-Assessment.md)
 
@@ -13,9 +13,9 @@
 
 ### 1.1 背景
 
-Edge Agent Network（EAN）2.0 在现有 EdgeX + EdgeOS 架构上增加统一 Agent 协作层：
+Edge Agent Network（EAN）2.0 在现有 edgeCore + EdgeOS 架构上增加统一 Agent 协作层：
 
-- **EdgeX**：Capability Runtime（能力注册、发现发布、Invoke 执行、Event 上报）
+- **edgeCore**：Capability Runtime（能力注册、发现发布、Invoke 执行、Event 上报）
 - **EdgeOS**：Coordination Platform（全局发现索引、跨节点编排、Invoke 发起、Event 订阅与规则）
 
 协议层统一为：`Agent` / `Capability` / `Discovery` / `Invoke` / `Event`，传输同时支持 **MQTT** 与 **NATS**，Topic/Subject 使用相同的 `$edgeos/...` 字符串形式。
@@ -36,13 +36,13 @@ Edge Agent Network（EAN）2.0 在现有 EdgeX + EdgeOS 架构上增加统一 Ag
 
 ### 1.3 非目标
 
-- 不替换 V1.0 `edgex/*`（MQTT）与 `edgex.*`（NATS）兼容层
+- 不替换 V1.0 `edgeCore/*`（MQTT）与 `edgeCore.*`（NATS）兼容层
 - AI 产出仍须 Human-in-the-loop 确认后落库（禁止自动写 config）
 - AI Invoke 不得进入 ScanEngine / Pipeline Worker 热路径
 
 ---
 
-## 2. EdgeX 侧已实现能力总览
+## 2. edgeCore 侧已实现能力总览
 
 ### 2.1 模块地图
 
@@ -91,22 +91,22 @@ MQTT/NATS/MCP/HTTP
 
 | 用途 | Topic/Subject | 方向 | QoS(MQTT) |
 |------|---------------|------|-----------|
-| Agent 发现 | `$edgeos/discovery/agent` | EdgeX → EdgeOS | 1 |
-| Agent 下线 | `$edgeos/discovery/agent/offline` | EdgeX → EdgeOS | 1 |
-| Capability 发现 | `$edgeos/discovery/capability` | EdgeX → EdgeOS | 1 |
-| 发现查询 | `$edgeos/discovery/query` | EdgeOS → EdgeX | 0 |
-| 发现响应 | `$edgeos/discovery/response` | EdgeX → EdgeOS | 0 |
-| Invoke 请求 | `$edgeos/invoke/{agent_id}` | EdgeOS → EdgeX | 1 |
-| Invoke 状态 | `$edgeos/invoke/{agent_id}/status` | EdgeX → EdgeOS | 1 |
-| Invoke 回复 | `$edgeos/reply/{source_agent_id}` | EdgeX → EdgeOS | 1 |
-| Event | `$edgeos/event/{agent_id}` | EdgeX → EdgeOS | 1 |
-| Event（设备） | `$edgeos/event/{agent_id}/{device_id}` | EdgeX → EdgeOS | 1 |
-| Event 广播 | `$edgeos/event/broadcast` | EdgeX → EdgeOS | 1 |
-| Heartbeat | `$edgeos/heartbeat/{agent_id}` | EdgeX → EdgeOS | 0 |
+| Agent 发现 | `$edgeos/discovery/agent` | edgeCore → EdgeOS | 1 |
+| Agent 下线 | `$edgeos/discovery/agent/offline` | edgeCore → EdgeOS | 1 |
+| Capability 发现 | `$edgeos/discovery/capability` | edgeCore → EdgeOS | 1 |
+| 发现查询 | `$edgeos/discovery/query` | EdgeOS → edgeCore | 0 |
+| 发现响应 | `$edgeos/discovery/response` | edgeCore → EdgeOS | 0 |
+| Invoke 请求 | `$edgeos/invoke/{agent_id}` | EdgeOS → edgeCore | 1 |
+| Invoke 状态 | `$edgeos/invoke/{agent_id}/status` | edgeCore → EdgeOS | 1 |
+| Invoke 回复 | `$edgeos/reply/{source_agent_id}` | edgeCore → EdgeOS | 1 |
+| Event | `$edgeos/event/{agent_id}` | edgeCore → EdgeOS | 1 |
+| Event（设备） | `$edgeos/event/{agent_id}/{device_id}` | edgeCore → EdgeOS | 1 |
+| Event 广播 | `$edgeos/event/broadcast` | edgeCore → EdgeOS | 1 |
+| Heartbeat | `$edgeos/heartbeat/{agent_id}` | edgeCore → EdgeOS | 0 |
 
-> NATS 侧 **不** 把 `/` 改成 `.`：EAN 2.0 统一使用 `$edgeos/...` 斜杠形式；V1.0 NATS 仍用 `edgex.*`。
+> NATS 侧 **不** 把 `/` 改成 `.`：EAN 2.0 统一使用 `$edgeos/...` 斜杠形式；V1.0 NATS 仍用 `edgeCore.*`。
 
-### 2.4 默认 Capability 清单（EdgeX 自动注册）
+### 2.4 默认 Capability 清单（edgeCore 自动注册）
 
 **MCP Runtime（统一模式，7 条）**：
 
@@ -125,7 +125,7 @@ MQTT/NATS/MCP/HTTP
 ### 2.5 Invoke 流程
 
 1. EdgeOS 向 `$edgeos/invoke/{agent_id}` 发布 `invoke_capability` 信封  
-2. EdgeX Runtime 校验 target / Capability / 权限  
+2. edgeCore Runtime 校验 target / Capability / 权限  
 3. `CapabilityMapper` → `DriverCommand`  
 4. `DriverExecutor` 或 `AIAdapter` 执行  
 5. 向 `$edgeos/reply/{source}` 回 `invoke_response`（含 `invoke_id` / `status` / `result`）  
@@ -136,7 +136,7 @@ MQTT/NATS/MCP/HTTP
 ```json
 {
   "invoke_id": "inv-ai-1",
-  "target": "edgex-node-001",
+  "target": "edgeCore-node-001",
   "capability": "ai.protocol_reverse",
   "arguments": {
     "payload": {
@@ -174,20 +174,20 @@ ShadowCore COW 写入时，在 **通知克隆** 中附加变更前值（不写�
 
 | 传输 | V1 Topic/Subject 示例 |
 |------|----------------------|
-| MQTT | `edgex/nodes/register`、`edgex/devices/report`、`edgex/heartbeat/{node}`、`edgex/cmd/{node}/{device}/write` |
-| NATS | `edgex.nodes.register`、`edgex.devices.report`、`edgex.heartbeat.{node}`、`edgex.cmd.{node}.{device}.write` |
+| MQTT | `edgeCore/nodes/register`、`edgeCore/devices/report`、`edgeCore/heartbeat/{node}`、`edgeCore/cmd/{node}/{device}/write` |
+| NATS | `edgeCore.nodes.register`、`edgeCore.devices.report`、`edgeCore.heartbeat.{node}`、`edgeCore.cmd.{node}.{device}.write` |
 
 EAN 与 V1 并行：新功能用 `$edgeos/*`；旧 EdgeOS 可继续用 V1。
 
-**设备清单 `device_report`（EdgeX 行为）**：
+**设备清单 `device_report`（edgeCore 行为）**：
 
 1. **连接成功后主动发布**（与重注册命令路径一致），不唯依赖 `register_response`  
 2. **`register_response` status=success** 时再发一次（EdgeOS 确认后对齐）  
 3. **5s 超时兜底**：若本连接周期内尚未成功发出过 report，再重试一次（覆盖 publish 丢失 / 从未收到 success 的空窗）  
 4. 重注册命令（`node_register`）路径同样立即 `publishDeviceReport`（节点已存在时 EdgeOS 可能不再回 `register_response`）
-5. **动态变更重新上报（v1.10）**：通道/设备**增删改**（`addChannel`/`updateChannel`/`removeChannel`/`addDevice`/`updateDevice`/`removeDevice`）或北向 `Devices` 映射变更时，EdgeX 重新发布 `edgex/devices/report`，EdgeOS `ReconcileDevices` 据此增删设备——设备列表无需重启即可同步（联机复测：新增设备 8→9、删除 9→8 自动更新）。
+5. **动态变更重新上报（v1.10）**：通道/设备**增删改**（`addChannel`/`updateChannel`/`removeChannel`/`addDevice`/`updateDevice`/`removeDevice`）或北向 `Devices` 映射变更时，edgeCore 重新发布 `edgeCore/devices/report`，EdgeOS `ReconcileDevices` 据此增删设备——设备列表无需重启即可同步（联机复测：新增设备 8→9、删除 9→8 自动更新）。
 
-EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/devices/report` 与 NATS `edgex.devices.report`（双传输对称）；漏订任一侧会导致该传输上的设备数空窗或滞后。
+EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgeCore/devices/report` 与 NATS `edgeCore.devices.report`（双传输对称）；漏订任一侧会导致该传输上的设备数空窗或滞后。
 
 ---
 
@@ -218,7 +218,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/d
 | OS-7 | 主动查询（可选增强） | Pub `$edgeos/discovery/query`，收 `$edgeos/discovery/response` |
 | OS-8 | 索引 API | 对外提供：`ListAgents` / `GetAgent` / `ListCapabilities(filter)` |
 
-**Agent Descriptor 关键字段**（EdgeX 发布）：`id`、`kind`、`version`、`status`、`transport`、`heartbeat_interval_sec`、`metadata`。
+**Agent Descriptor 关键字段**（edgeCore 发布）：`id`、`kind`、`version`、`status`、`transport`、`heartbeat_interval_sec`、`metadata`。
 
 **Capability Descriptor 关键字段**：`id`、`agent_id`、`description`、`category`、`input_schema`、`output_schema`、`timeout_sec`、`permission`、`metadata`。
 
@@ -238,7 +238,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/d
 ```json
 {
   "invoke_id": "uuid",
-  "target": "edgex-node-001",
+  "target": "edgeCore-node-001",
   "capability": "system.diagnostics",
   "arguments": {}
 }
@@ -277,11 +277,11 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/d
 | OS-20 | Agent 生命周期视图 | online/offline/heartbeat 超时判定（建议 2～3 个心跳周期） |
 | OS-21 | 权限与命名空间 | 按租户/项目限制可 Invoke 的 Capability（尤其 write/admin/AI） |
 | OS-22 | 审计 | 记录跨节点 Invoke 的 initiator、target、capability、结果 |
-| OS-23 | V1 兼容网关（过渡期） | 若仍有 V1 客户端：可保留 `edgex/*` 适配，但新功能禁止只做 V1；**V1 设备清单须订** MQTT `edgex/devices/report` **与** NATS `edgex.devices.report`（勿只订 MQTT） |
+| OS-23 | V1 兼容网关（过渡期） | 若仍有 V1 客户端：可保留 `edgeCore/*` 适配，但新功能禁止只做 V1；**V1 设备清单须订** MQTT `edgeCore/devices/report` **与** NATS `edgeCore.devices.report`（勿只订 MQTT） |
 
 ### 3.6 EdgeOS 侧「不要做」的事
 
-- 不要在 EdgeOS 直接驱动南向设备（读/写走 EdgeX Capability Invoke）
+- 不要在 EdgeOS 直接驱动南向设备（读/写走 edgeCore Capability Invoke）
 - 不要假设 AI Invoke 会自动写配置（必须等待人工 Confirm 或显式 apply API）
 - 不要把 NATS subject 擅自改成 `edgeos.discovery.agent` 这类点分形式（除非双方同时改规范）
 
@@ -295,7 +295,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/d
 | Invoke + Reply | ✅ | ✅ | 同 |
 | Event（含 previous_value） | ✅ | ✅ | 同 |
 | Offline / Heartbeat | ✅ | ✅ | 同 |
-| V1 兼容 | `edgex/...` | `edgex.*` | **仅 V1 路径分隔符不同** |
+| V1 兼容 | `edgeCore/...` | `edgeCore.*` | **仅 V1 路径分隔符不同** |
 | Bridge 代码 | `edgos_mqtt/ean_bridge.go` | `edgos_nats/ean_bridge.go` | `Bus` 接口对称 |
 | 执行器 | `NewWiredExecutor` | `NewWiredExecutor` | 同 Driver+AI |
 
@@ -304,7 +304,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgex/d
 - `internal/northbound/edgos_mqtt/ean_integration_test.go`
 - `internal/northbound/edgos_nats/ean_integration_test.go`
 
-> **NATS 订阅 V1 数据面警示（v1.6，联合调试发现）**：订阅 `edgex.*` 数据面时**勿用双 `>` 通配**（如 `edgex.data.>.>`）——nats-server（MQTT gateway 版）会拒绝并关闭连接（EdgeOS 曾因此 NATS 断连）。用单 `>`（`edgex.data.>`）即可匹配 `edgex.data.{node}.{device}`，语义与 MQTT `edgex/data/+/+` 一致。
+> **NATS 订阅 V1 数据面警示（v1.6，联合调试发现）**：订阅 `edgeCore.*` 数据面时**勿用双 `>` 通配**（如 `edgeCore.data.>.>`）——nats-server（MQTT gateway 版）会拒绝并关闭连接（EdgeOS 曾因此 NATS 断连）。用单 `>`（`edgeCore.data.>`）即可匹配 `edgeCore.data.{node}.{device}`，语义与 MQTT `edgeCore/data/+/+` 一致。
 
 ---
 
@@ -316,28 +316,28 @@ EdgeOS(MQTT/NATS) 北向通道是**两层协议**，由通道配置的 `ean_enab
 
 | 层 | 开关 | 默认 | 行为 |
 |---|---|---|---|
-| **V1 数据面（基础上报）** | 通道 `enable=true` 即生效 | ✅ 开启 | 设备注册（`edgex/devices/report`）、点位元数据（`edgex/points/*`）、实时数据（`edgex/data/{node}/{device}`）、设备状态（`edgex/devices/*`）、告警（`edgex/events/*`）。**与 EAN 无关，始终工作**。*V1 节点面（`edgex/nodes/*`）在 `v1_command_enabled=false`（v1.9 全面下线）时移除，节点由 EAN Discovery 替代* |
+| **V1 数据面（基础上报）** | 通道 `enable=true` 即生效 | ✅ 开启 | 设备注册（`edgeCore/devices/report`）、点位元数据（`edgeCore/points/*`）、实时数据（`edgeCore/data/{node}/{device}`）、设备状态（`edgeCore/devices/*`）、告警（`edgeCore/events/*`）。**与 EAN 无关，始终工作**。*V1 节点面（`edgeCore/nodes/*`）在 `v1_command_enabled=false`（v1.9 全面下线）时移除，节点由 EAN Discovery 替代* |
 | **EAN 能力层（读写/发现/编排）** | 通道内 `ean_enabled=true` | ❌ 关闭 | `$edgeos/discovery/*`（Agent/Capability 发现）、`$edgeos/invoke/*` + `$edgeos/reply/*`（Capability 读写调用）、`$edgeos/heartbeat/*`（Agent 心跳）、`$edgeos/event/*`（EAN Event，受 `ean_event_auto_publish` 控制） |
 
 **约定**：
 - EdgeOS 建北向通道时，**即使不开启 EAN**，也必须订阅 V1 数据面 Topic 以接收节点/设备/点位/实时数据。
-- **开启 `ean_enabled=true` 后**，EdgeOS 才可发现 Capability 并发起 Invoke（读写设备）。未开启时不应向 `$edgeos/invoke/*` 发调用——EdgeX 无 Runtime 订阅，消息将静默丢弃。
+- **开启 `ean_enabled=true` 后**，EdgeOS 才可发现 Capability 并发起 Invoke（读写设备）。未开启时不应向 `$edgeos/invoke/*` 发调用——edgeCore 无 Runtime 订阅，消息将静默丢弃。
 - `ean_event_auto_publish=false`（默认）时，EAN Runtime 正常收发 Invoke/Discovery/Heartbeat，但**不自动广播点位变化 Event**；置 `true` 才发布 `$edgeos/event/{agent}` 点位变化事件。
 - MCP Runtime 是进程内基础能力层，与北向通道无关，始终可用（供本地 LLM 调用，不走 MQTT/NATS）。
 
 > **EdgeOS 对接验收**：`ean_enabled=false` 时验证 V1 数据面贯通 + `$edgeos/#` 无 Discovery 流量；`ean_enabled=true` 时验证 63 条 Capability 发现 + Invoke/Reply 闭环 + Heartbeat。
 
-1. **并行运行**：EAN `$edgeos/*` 与 V1 `edgex/*`（MQTT）/`edgex.*`（NATS）同时可用。  
+1. **并行运行**：EAN `$edgeos/*` 与 V1 `edgeCore/*`（MQTT）/`edgeCore.*`（NATS）同时可用。  
 2. **新功能只加 EAN**：Capability / Discovery / Invoke / Event 新能力不回灌 V1。  
 3. **迁移建议**：EdgeOS 先实现 EAN Discovery+Invoke+Event，再逐步将 V1 控制面切到 Invoke。  
-4. **双写窗口**：过渡期 EdgeX 可同时发 V1 点位上报与 EAN Event；EdgeOS 应以 EAN Event 为准做新规则。
+4. **双写窗口**：过渡期 edgeCore 可同时发 V1 点位上报与 EAN Event；EdgeOS 应以 EAN Event 为准做新规则。
 
 **Phase 4（v1.7→v1.9）V1 命令面状态**：
 
-- **EdgeX 侧**：V1 命令 Topic（`edgex/cmd/*`）订阅已**全面下线**（v1.9 `v1_command_enabled=false`）：不再订阅/发布 `edgex/cmd/*`、不再发布 V1 节点注册、不运行 V1 心跳循环；命令统一走 EAN Invoke。
-- **EdgeOS 侧**：V1→EAN Bridge（轮询合成 Agent/心跳/点位 Event）已移除（OS-P4）；`edgex/cmd/responses/#` 订阅已移除，`PublishCommand` 跳过（`v1_command_enabled=false`）；命令统一 `$edgeos/invoke/*`。
-- **保留**：V1 数据面（`edgex/data/*`、`edgex/points/*`、`edgex/devices/*`）与告警（`edgex/events/*`）长期保留。
-- **全面下线开关（v1.8/1.9 `V1CommandEnabled`）**：EdgeX 北向通道（`EdgeOSMQTTConfig`/`EdgeOSNATSConfig`）与 EdgeOS `ean.v1_command_enabled` 开关——**v1.9 已置 `false`（全面下线）**：EdgeX 停止订阅/发布 `edgex/cmd/*` 与 `edgex/nodes/*`、V1 心跳循环，EdgeOS 跳过 `PublishCommand`/主动发现；V1 数据面/告警不受影响。
+- **edgeCore 侧**：V1 命令 Topic（`edgeCore/cmd/*`）订阅已**全面下线**（v1.9 `v1_command_enabled=false`）：不再订阅/发布 `edgeCore/cmd/*`、不再发布 V1 节点注册、不运行 V1 心跳循环；命令统一走 EAN Invoke。
+- **EdgeOS 侧**：V1→EAN Bridge（轮询合成 Agent/心跳/点位 Event）已移除（OS-P4）；`edgeCore/cmd/responses/#` 订阅已移除，`PublishCommand` 跳过（`v1_command_enabled=false`）；命令统一 `$edgeos/invoke/*`。
+- **保留**：V1 数据面（`edgeCore/data/*`、`edgeCore/points/*`、`edgeCore/devices/*`）与告警（`edgeCore/events/*`）长期保留。
+- **全面下线开关（v1.8/1.9 `V1CommandEnabled`）**：edgeCore 北向通道（`EdgeOSMQTTConfig`/`EdgeOSNATSConfig`）与 EdgeOS `ean.v1_command_enabled` 开关——**v1.9 已置 `false`（全面下线）**：edgeCore 停止订阅/发布 `edgeCore/cmd/*` 与 `edgeCore/nodes/*`、V1 心跳循环，EdgeOS 跳过 `PublishCommand`/主动发现；V1 数据面/告警不受影响。
 
 ---
 
@@ -356,10 +356,10 @@ nc -vz 127.0.0.1 4222
 nc -vz 127.0.0.1 18083
 ```
 
-### 6.2 跑 EdgeX 集成测试
+### 6.2 跑 edgeCore 集成测试
 
 ```bash
-cd d:/code/edgex
+cd d:/code/edgeCore
 
 # NATS：Discovery + Invoke(system.diagnostics) + Event(previous_value)
 go test ./internal/northbound/edgos_nats/ -run TestEANIntegrationNATSDiscoveryInvokeEvent -v -count=1
@@ -379,11 +379,11 @@ go build -o /dev/null ./cmd/
 
 ### 6.3 手工联调（NATS 示例）
 
-1. 启动 EdgeX，配置 `northbound.edgeos_nats`：`url=nats://127.0.0.1:4222`，`node_id=edgex-node-001`，`enable=true`  
+1. 启动 edgeCore，配置 `northbound.edgeos_nats`：`url=nats://127.0.0.1:4222`，`node_id=edgeCore-node-001`，`enable=true`  
 2. EdgeOS（或 nats CLI）订阅：  
    - `$edgeos/discovery/agent`  
    - `$edgeos/discovery/capability`  
-   - `$edgeos/event/edgex-node-001`  
+   - `$edgeos/event/edgeCore-node-001`  
    - `$edgeos/reply/edgeos-planner`  
 3. 发布 Invoke：
 
@@ -399,14 +399,14 @@ go build -o /dev/null ./cmd/
   },
   "body": {
     "invoke_id": "inv-1",
-    "target": "edgex-node-001",
+    "target": "edgeCore-node-001",
     "capability": "system.diagnostics",
     "arguments": {}
   }
 }
 ```
 
-Subject: `$edgeos/invoke/edgex-node-001`
+Subject: `$edgeos/invoke/edgeCore-node-001`
 
 4. 确认 Reply `status=completed`  
 5. 制造点位变化（或调用 Runtime Event），确认 Event 含 `previous_value`
@@ -417,7 +417,7 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 
 ## 7. 验收清单
 
-### 7.1 EdgeX
+### 7.1 edgeCore
 
 - [x] Capability Runtime 随 MQTT/NATS 连接自动 Start / OnConnected  
 - [x] Discovery 发布 agent + capability  
@@ -437,7 +437,7 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 - [x] Agent 心跳超时标记 offline，与 `discovery/agent/offline` 一致
 - [x] 权限：限制 write/admin/AI Capability 的调用方
 - [x] 与 V1 并存时无 Topic 冲突 / 双处理重复副作用
-- [x] V1 设备清单：MQTT 订 `edgex/devices/report`，NATS 订 `edgex.devices.report`（双传输对称）
+- [x] V1 设备清单：MQTT 订 `edgeCore/devices/report`，NATS 订 `edgeCore.devices.report`（双传输对称）
 
 > 以上 EdgeOS 验收项已于 **2026-08-03 两端联合联调** 在本机（192.168.3.104，MQTT 18083 + NATS 4222）全部验证通过，详见 [V1-to-EAN-Migration-Assessment §7.0](../TODO/V1-to-EAN-Migration-Assessment.md)。
 
@@ -453,12 +453,12 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 | State 同步 Topic | `$edgeos/state/*` 已预留 | EdgeOS 需要全量/增量状态时可再实现 |
 | Capability Planner | AI 规划输出仍以任务交付物为主 | EAN-增强阶段：Planner 直接产出 Capability Invoke 图 |
 | 全量 `internal/core` stress | 长时间压力测试可能触达超时 | 与本改造无关；CI 建议 `-short` 或拆分 stress |
-| V1 device_report 依赖 EdgeOS 订阅 | EdgeX 已连接即发 + 超时兜底；若 EdgeOS messaging 未订对应 Topic/Subject，清单仍无法入库 | EdgeOS 按 OS-23 补齐 MQTT/NATS 双订，并用 `ReconcileDevices` 对账 |
-| V1 命令面（已下线） | `v1_command_enabled=false`（v1.9）：EdgeX 不再订阅/发布 `edgex/cmd/*`、`edgex/nodes/*`；EdgeOS `PublishCommand` 跳过；命令统一 EAN Invoke | 已全面下线；V1 数据面/告警长期保留 |
+| V1 device_report 依赖 EdgeOS 订阅 | edgeCore 已连接即发 + 超时兜底；若 EdgeOS messaging 未订对应 Topic/Subject，清单仍无法入库 | EdgeOS 按 OS-23 补齐 MQTT/NATS 双订，并用 `ReconcileDevices` 对账 |
+| V1 命令面（已下线） | `v1_command_enabled=false`（v1.9）：edgeCore 不再订阅/发布 `edgeCore/cmd/*`、`edgeCore/nodes/*`；EdgeOS `PublishCommand` 跳过；命令统一 EAN Invoke | 已全面下线；V1 数据面/告警长期保留 |
 
 ---
 
-## 9. 附录：本轮 EdgeX 改动摘要
+## 9. 附录：本轮 edgeCore 改动摘要
 
 | 文件 | 变更 |
 |------|------|
@@ -479,6 +479,6 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 
 ---
 
-**维护者**: EdgeX / edgeOS 团队  
+**维护者**: edgeCore / edgeOS 团队  
 **下一步**: V1 命令面已全面下线（`v1_command_enabled=false`，v1.9）；命令路径完全由 EAN Invoke 承载，联机复测通过。V1 数据面与告警长期保留。  
-**关联文档**: [AI协同组件规划.md](./AI协同组件规划.md) · [V1-to-EAN-Migration-Assessment.md](../TODO/V1-to-EAN-Migration-Assessment.md) · [EdgeX通信协议规范(MQTT-NATS).md](./EdgeX通信协议规范(MQTT-NATS).md)
+**关联文档**: [AI协同组件规划.md](./AI协同组件规划.md) · [V1-to-EAN-Migration-Assessment.md](../TODO/V1-to-EAN-Migration-Assessment.md) · [edgeCore通信协议规范(MQTT-NATS).md](./edgeCore通信协议规范(MQTT-NATS).md)

@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent"
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 )
 
 // AICommandExecutor runs AI.* DriverCommands (protocol reverse / doc parse).
@@ -105,10 +105,10 @@ func buildCreateRequest(skill aitypes.Skill, args map[string]any) (aitypes.Creat
 	}
 
 	req := aitypes.CreateRequest{
-		Skill:      skill,
-		ProtocolID: firstStringAny(payload, "protocol_id", "protocol"),
-		Filename:   firstStringAny(payload, "filename", "file", "document"),
-		Scenario:   firstStringAny(payload, "scenario"),
+		Skill:       skill,
+		ProtocolID:  firstStringAny(payload, "protocol_id", "protocol"),
+		Filename:    firstStringAny(payload, "filename", "file", "document"),
+		Scenario:    firstStringAny(payload, "scenario"),
 		Description: firstStringAny(payload, "description", "prompt"),
 	}
 	if meta, ok := payload["meta"].(map[string]string); ok {
@@ -161,15 +161,15 @@ func (a *AIAdapter) waitTask(ctx context.Context, taskID string, timeout time.Du
 
 func taskResult(rec *aitypes.TaskRecord, waited bool) map[string]any {
 	out := map[string]any{
-		"task_id":   rec.ID,
-		"skill":     string(rec.Skill),
-		"status":    string(rec.Status),
-		"mode":      rec.Mode,
-		"waited":    waited,
-		"tokens":    rec.TokensUsed,
+		"task_id":    rec.ID,
+		"skill":      string(rec.Skill),
+		"status":     string(rec.Status),
+		"mode":       rec.Mode,
+		"waited":     waited,
+		"tokens":     rec.TokensUsed,
 		"created_at": rec.CreatedAt.UnixMilli(),
 		"updated_at": rec.UpdatedAt.UnixMilli(),
-		"message":   "AI task accepted via Capability Runtime; Human-in-the-loop confirm still required before config apply",
+		"message":    "AI task accepted via Capability Runtime; Human-in-the-loop confirm still required before config apply",
 	}
 	if rec.ProtocolID != "" {
 		out["protocol_id"] = rec.ProtocolID

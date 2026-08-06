@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestPointScheduler_markPointFailed_IllegalAddress(t *testing.T) {

@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"sync/atomic"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/execution"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/execution"
 
 	nats "github.com/nats-io/nats.go"
 	"go.uber.org/zap"
 )
 
 // natsBus adapts the edgeOS NATS client to capability.Bus for EAN 2.0 subjects.
-// V1.0 edgex.* subjects remain handled by existing Client methods unchanged.
+// V1.0 edgeCore.* subjects remain handled by existing Client methods unchanged.
 // EAN subjects keep the protocol `$edgeos/...` form (slash tokens) per EAN 2.0 spec.
 type natsBus struct {
 	client *Client
@@ -84,7 +84,7 @@ func (c *Client) AttachCapabilityRuntime(rt *capability.Runtime) {
 	}
 }
 
-// EnsureCapabilityRuntime creates a default EdgeX Capability Runtime if none is attached.
+// EnsureCapabilityRuntime creates a default edgeCore Capability Runtime if none is attached.
 // Returns (nil, nil) when EANEnabled is false — caller must check before calling startEANLocked.
 func (c *Client) EnsureCapabilityRuntime(agentVersion string) (*capability.Runtime, error) {
 	c.eanMu.Lock()

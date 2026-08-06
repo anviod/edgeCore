@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/testutil/fault"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/testutil/fault"
 )
 
 type healthyMockDriver struct{}

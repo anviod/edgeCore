@@ -2,8 +2,8 @@ package capability
 
 import "strings"
 
-// KnownDriverProtocols lists EdgeX driver protocol ids used for auto-generation.
-// Values use EdgeX driver registration names (hyphenated); they are normalized
+// KnownDriverProtocols lists edgeCore driver protocol ids used for auto-generation.
+// Values use edgeCore driver registration names (hyphenated); they are normalized
 // to Capability ID prefixes with underscores.
 var KnownDriverProtocols = []string{
 	"modbus-tcp",
@@ -148,7 +148,7 @@ func GenerateSystemCapabilities(agentID string) []Capability {
 		{
 			ID:      "system.diagnostics",
 			AgentID: agentID,
-			Description: "收集 EdgeX 系统诊断信息 | Collect EdgeX system diagnostics. " +
+			Description: "收集 edgeCore 系统诊断信息 | Collect edgeCore system diagnostics. " +
 				"参数 Params: 无 none. " +
 				"返回 Returns: diagnostics(object 诊断数据对象，包含通道状态、设备统计、资源使用等)",
 			Category:    CategorySystem,
@@ -203,7 +203,7 @@ func GenerateSystemCapabilities(agentID string) []Capability {
 	}
 }
 
-// GenerateDefaultCapabilities builds the full default Capability set for EdgeX.
+// GenerateDefaultCapabilities builds the full default Capability set for edgeCore.
 // Generates 63 capabilities (15 protocols x 4 ops + 3 system/AI).
 // Used by northbound EAN Runtime for EdgeOS cross-system discovery.
 func GenerateDefaultCapabilities(agentID string, protocols []string) []Capability {
@@ -225,44 +225,44 @@ func GenerateDefaultCapabilities(agentID string, protocols []string) []Capabilit
 func GenerateUnifiedCapabilities(agentID string) []Capability {
 	return []Capability{
 		{
-		ID:      "read_points",
-		AgentID: agentID,
-		Description: "统一点位读取 | Unified point read. " +
-			"Supports single point, batch (point_ids[]/addresses[]), and quantity-based reads. " +
-			"Protocol is auto-detected from device_id via ShadowCore channel lookup. " +
-			"⚠ 地址语义统一说明 | Address semantics (IMPORTANT): " +
-			"address/addresses 参数接受三种形式，系统自动解析为内部 point_id: " +
-			"(1) point_id — 推荐，list_points 返回的 id 字段，如 'pt_0723121000'; " +
-			"(2) address — 寄存器地址，如 Modbus PDU 偏移 '0' 或 PLC 地址 '40001'; " +
-			"(3) name — 点位名称（不区分大小写）. " +
-			"list_points 的输出可直接作为 read_points 的输入. " +
-			"The address/addresses parameter accepts three forms, auto-resolved to internal point_id: " +
-			"(1) point_id — preferred, the id field from list_points output; " +
-			"(2) address — register address (PDU offset or PLC address); " +
-			"(3) name — point name (case-insensitive). " +
-			"list_points output can be passed directly to read_points. " +
-			"参数 Params: device_id(string, required), " +
-			"point_id(string, optional 点位ID-推荐), " +
-			"address(string, optional 地址或point_id), " +
-			"point_ids(array[string], optional 点位ID数组-推荐), " +
-			"addresses(array[string], optional 地址数组), " +
-			"quantity(integer, default=1), " +
-			"protocol(string, optional), " +
-			"live(bool, default=true 是否实时读取), " +
-			"prefer_shadow(bool, optional 优先读影子缓存). " +
-			"返回 Returns: values(array 含 point_id/address/value/quality/timestamp/source), timestamp(integer)",
-		Category: CategoryDevice,
-		InputSchema: objectSchema(map[string]any{
-			"device_id":      map[string]any{"type": "string", "description": "设备ID | Device ID"},
-			"point_id":       map[string]any{"type": "string", "description": "点位ID（推荐，list_points 返回的 id 字段）| Point ID (preferred, from list_points output id field)"},
-			"address":        map[string]any{"type": "string", "description": "单个地址或 point_id，系统自动解析 | Single address or point_id, auto-resolved"},
-			"point_ids":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "点位ID数组（推荐）| Array of point IDs (preferred)"},
-			"addresses":      map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "地址数组，系统自动解析为 point_id | Array of addresses, auto-resolved to point_id"},
-			"quantity":       map[string]any{"type": "integer", "default": 1, "description": "读取数量，默认1 | Read quantity, default 1"},
-			"protocol":       map[string]any{"type": "string", "description": "显式协议类型（可选），不传则自动路由 | Optional explicit protocol, auto-routed if omitted"},
-			"live":           map[string]any{"type": "boolean", "default": true, "description": "是否实时读取（true=驱动直读, false=影子缓存）| Live read from driver (true) or shadow cache (false)"},
-			"prefer_shadow":  map[string]any{"type": "boolean", "default": false, "description": "优先读影子缓存（低延迟）| Prefer shadow cache (low latency)"},
-		}, []string{"device_id"}),
+			ID:      "read_points",
+			AgentID: agentID,
+			Description: "统一点位读取 | Unified point read. " +
+				"Supports single point, batch (point_ids[]/addresses[]), and quantity-based reads. " +
+				"Protocol is auto-detected from device_id via ShadowCore channel lookup. " +
+				"⚠ 地址语义统一说明 | Address semantics (IMPORTANT): " +
+				"address/addresses 参数接受三种形式，系统自动解析为内部 point_id: " +
+				"(1) point_id — 推荐，list_points 返回的 id 字段，如 'pt_0723121000'; " +
+				"(2) address — 寄存器地址，如 Modbus PDU 偏移 '0' 或 PLC 地址 '40001'; " +
+				"(3) name — 点位名称（不区分大小写）. " +
+				"list_points 的输出可直接作为 read_points 的输入. " +
+				"The address/addresses parameter accepts three forms, auto-resolved to internal point_id: " +
+				"(1) point_id — preferred, the id field from list_points output; " +
+				"(2) address — register address (PDU offset or PLC address); " +
+				"(3) name — point name (case-insensitive). " +
+				"list_points output can be passed directly to read_points. " +
+				"参数 Params: device_id(string, required), " +
+				"point_id(string, optional 点位ID-推荐), " +
+				"address(string, optional 地址或point_id), " +
+				"point_ids(array[string], optional 点位ID数组-推荐), " +
+				"addresses(array[string], optional 地址数组), " +
+				"quantity(integer, default=1), " +
+				"protocol(string, optional), " +
+				"live(bool, default=true 是否实时读取), " +
+				"prefer_shadow(bool, optional 优先读影子缓存). " +
+				"返回 Returns: values(array 含 point_id/address/value/quality/timestamp/source), timestamp(integer)",
+			Category: CategoryDevice,
+			InputSchema: objectSchema(map[string]any{
+				"device_id":     map[string]any{"type": "string", "description": "设备ID | Device ID"},
+				"point_id":      map[string]any{"type": "string", "description": "点位ID（推荐，list_points 返回的 id 字段）| Point ID (preferred, from list_points output id field)"},
+				"address":       map[string]any{"type": "string", "description": "单个地址或 point_id，系统自动解析 | Single address or point_id, auto-resolved"},
+				"point_ids":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "点位ID数组（推荐）| Array of point IDs (preferred)"},
+				"addresses":     map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "地址数组，系统自动解析为 point_id | Array of addresses, auto-resolved to point_id"},
+				"quantity":      map[string]any{"type": "integer", "default": 1, "description": "读取数量，默认1 | Read quantity, default 1"},
+				"protocol":      map[string]any{"type": "string", "description": "显式协议类型（可选），不传则自动路由 | Optional explicit protocol, auto-routed if omitted"},
+				"live":          map[string]any{"type": "boolean", "default": true, "description": "是否实时读取（true=驱动直读, false=影子缓存）| Live read from driver (true) or shadow cache (false)"},
+				"prefer_shadow": map[string]any{"type": "boolean", "default": false, "description": "优先读影子缓存（低延迟）| Prefer shadow cache (low latency)"},
+			}, []string{"device_id"}),
 			OutputSchema: objectSchema(map[string]any{
 				"values":    map[string]any{"type": "array", "description": "点位值数组 | Array of point values"},
 				"timestamp": map[string]any{"type": "integer", "description": "读取时间戳 | Read timestamp"},
@@ -275,45 +275,45 @@ func GenerateUnifiedCapabilities(agentID string) []Capability {
 			},
 		},
 		{
-		ID:      "write_points",
-		AgentID: agentID,
-		Description: "统一点位写入 | Unified point write. " +
-			"Supports single point and batch writes. Pre-validates device enabled state. " +
-			"⚠ 地址语义统一说明 | Address semantics (IMPORTANT): " +
-			"address 参数接受三种形式，系统自动解析为内部 point_id: " +
-			"(1) point_id — 推荐，list_points 返回的 id 字段; " +
-			"(2) address — 寄存器地址（PDU 偏移或 PLC 地址）; " +
-			"(3) name — 点位名称（不区分大小写）. " +
-			"The address parameter accepts three forms, auto-resolved to internal point_id: " +
-			"(1) point_id — preferred; (2) address — register address; (3) name — point name. " +
-			"参数 Params: device_id(string, required), " +
-			"address(string, required 单点-地址或point_id), " +
-			"value(number, required 单点-写入值), " +
-			"point_id(string, optional 点位ID-推荐替代address), " +
-			"writes(array[object], optional 批量写入，每项含 address+value 或 point_id+value), " +
-			"protocol(string, optional). " +
-			"返回 Returns: success(boolean), timestamp(integer), " +
-			"results(array 批量时每条含 point_id/address/value/success/error)",
-		Category: CategoryDevice,
-		InputSchema: objectSchema(map[string]any{
-			"device_id": map[string]any{"type": "string", "description": "设备ID | Device ID"},
-			"point_id":  map[string]any{"type": "string", "description": "点位ID（推荐，替代 address）| Point ID (preferred, replaces address)"},
-			"address":   map[string]any{"type": "string", "description": "地址或 point_id，系统自动解析 | Address or point_id, auto-resolved"},
-			"value":     map[string]any{"type": "number", "description": "写入值 | Value to write"},
-			"writes": map[string]any{
-				"type":        "array",
-				"description": "批量写入列表 | Batch write list",
-				"items": map[string]any{
-					"type": "object",
-					"properties": map[string]any{
-						"point_id": map[string]any{"type": "string", "description": "点位ID（推荐）| Point ID (preferred)"},
-						"address":  map[string]any{"type": "string", "description": "地址或 point_id，自动解析 | Address or point_id, auto-resolved"},
-						"value":    map[string]any{"type": "number", "description": "写入值 | Value to write"},
+			ID:      "write_points",
+			AgentID: agentID,
+			Description: "统一点位写入 | Unified point write. " +
+				"Supports single point and batch writes. Pre-validates device enabled state. " +
+				"⚠ 地址语义统一说明 | Address semantics (IMPORTANT): " +
+				"address 参数接受三种形式，系统自动解析为内部 point_id: " +
+				"(1) point_id — 推荐，list_points 返回的 id 字段; " +
+				"(2) address — 寄存器地址（PDU 偏移或 PLC 地址）; " +
+				"(3) name — 点位名称（不区分大小写）. " +
+				"The address parameter accepts three forms, auto-resolved to internal point_id: " +
+				"(1) point_id — preferred; (2) address — register address; (3) name — point name. " +
+				"参数 Params: device_id(string, required), " +
+				"address(string, required 单点-地址或point_id), " +
+				"value(number, required 单点-写入值), " +
+				"point_id(string, optional 点位ID-推荐替代address), " +
+				"writes(array[object], optional 批量写入，每项含 address+value 或 point_id+value), " +
+				"protocol(string, optional). " +
+				"返回 Returns: success(boolean), timestamp(integer), " +
+				"results(array 批量时每条含 point_id/address/value/success/error)",
+			Category: CategoryDevice,
+			InputSchema: objectSchema(map[string]any{
+				"device_id": map[string]any{"type": "string", "description": "设备ID | Device ID"},
+				"point_id":  map[string]any{"type": "string", "description": "点位ID（推荐，替代 address）| Point ID (preferred, replaces address)"},
+				"address":   map[string]any{"type": "string", "description": "地址或 point_id，系统自动解析 | Address or point_id, auto-resolved"},
+				"value":     map[string]any{"type": "number", "description": "写入值 | Value to write"},
+				"writes": map[string]any{
+					"type":        "array",
+					"description": "批量写入列表 | Batch write list",
+					"items": map[string]any{
+						"type": "object",
+						"properties": map[string]any{
+							"point_id": map[string]any{"type": "string", "description": "点位ID（推荐）| Point ID (preferred)"},
+							"address":  map[string]any{"type": "string", "description": "地址或 point_id，自动解析 | Address or point_id, auto-resolved"},
+							"value":    map[string]any{"type": "number", "description": "写入值 | Value to write"},
+						},
 					},
 				},
-			},
-			"protocol": map[string]any{"type": "string", "description": "显式协议类型（可选） | Optional explicit protocol"},
-		}, []string{"device_id"}),
+				"protocol": map[string]any{"type": "string", "description": "显式协议类型（可选） | Optional explicit protocol"},
+			}, []string{"device_id"}),
 			OutputSchema: objectSchema(map[string]any{
 				"success":   map[string]any{"type": "boolean", "description": "是否写入成功 | Whether write succeeded"},
 				"timestamp": map[string]any{"type": "integer", "description": "写入时间戳 | Write timestamp"},
@@ -350,28 +350,28 @@ func GenerateUnifiedCapabilities(agentID string) []Capability {
 			},
 		},
 		{
-		ID:      "list_points",
-		AgentID: agentID,
-		Description: "统一点位列表 | Unified point list. " +
-			"Lists all points of a device. Protocol auto-detected from device_id. " +
-			"⚠ 输出字段说明 | Output fields (IMPORTANT): " +
-			"返回的每个点位包含 id(point_id, 用于 read/write 的推荐标识), " +
-			"address(协议地址，如 Modbus PDU 偏移 '0' 或 PLC 地址 '40001'), " +
-			"name(点位名称), datatype(数据类型), value(当前值), quality(质量). " +
-			"调用 read_points/write_points 时，可直接传入此处的 id 字段作为 point_id 参数. " +
-			"Each returned point contains: id (point_id, the preferred identifier for read/write), " +
-			"address (protocol-specific address), name, datatype, value, quality. " +
-			"Pass the id field directly to read_points/write_points as point_id. " +
-			"参数 Params: device_id(string, required). " +
-			"返回 Returns: points(array 含 id/address/name/datatype/value/quality), count(integer)",
-		Category: CategoryDevice,
-		InputSchema: objectSchema(map[string]any{
-			"device_id": map[string]any{"type": "string", "description": "设备ID，必需 | Device ID, required"},
-		}, []string{"device_id"}),
-		OutputSchema: objectSchema(map[string]any{
-			"points": map[string]any{"type": "array", "description": "点位列表，每项含 id(point_id)/address/name/datatype/value/quality | Point list, each with id(point_id)/address/name/datatype/value/quality"},
-			"count":  map[string]any{"type": "integer", "description": "点位数量 | Point count"},
-		}, nil),
+			ID:      "list_points",
+			AgentID: agentID,
+			Description: "统一点位列表 | Unified point list. " +
+				"Lists all points of a device. Protocol auto-detected from device_id. " +
+				"⚠ 输出字段说明 | Output fields (IMPORTANT): " +
+				"返回的每个点位包含 id(point_id, 用于 read/write 的推荐标识), " +
+				"address(协议地址，如 Modbus PDU 偏移 '0' 或 PLC 地址 '40001'), " +
+				"name(点位名称), datatype(数据类型), value(当前值), quality(质量). " +
+				"调用 read_points/write_points 时，可直接传入此处的 id 字段作为 point_id 参数. " +
+				"Each returned point contains: id (point_id, the preferred identifier for read/write), " +
+				"address (protocol-specific address), name, datatype, value, quality. " +
+				"Pass the id field directly to read_points/write_points as point_id. " +
+				"参数 Params: device_id(string, required). " +
+				"返回 Returns: points(array 含 id/address/name/datatype/value/quality), count(integer)",
+			Category: CategoryDevice,
+			InputSchema: objectSchema(map[string]any{
+				"device_id": map[string]any{"type": "string", "description": "设备ID，必需 | Device ID, required"},
+			}, []string{"device_id"}),
+			OutputSchema: objectSchema(map[string]any{
+				"points": map[string]any{"type": "array", "description": "点位列表，每项含 id(point_id)/address/name/datatype/value/quality | Point list, each with id(point_id)/address/name/datatype/value/quality"},
+				"count":  map[string]any{"type": "integer", "description": "点位数量 | Point count"},
+			}, nil),
 			TimeoutSec: 5,
 			Permission: PermissionRead,
 			Metadata: map[string]any{
@@ -383,7 +383,7 @@ func GenerateUnifiedCapabilities(agentID string) []Capability {
 			ID:      "get_diagnostics",
 			AgentID: agentID,
 			Description: "系统诊断 | System diagnostics. " +
-				"Collects EdgeX system diagnostics including channel status, device statistics, " +
+				"Collects edgeCore system diagnostics including channel status, device statistics, " +
 				"resource usage, and invoke metrics. " +
 				"参数 Params: channel_id(string, optional 可选-通道ID，不填则返回全部通道摘要), " +
 				"device_id(string, optional 可选-设备ID，需配合 channel_id). " +

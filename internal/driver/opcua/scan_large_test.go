@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/driver/opcua"
-	"github.com/anviod/edgex/internal/model"
-	nbopcua "github.com/anviod/edgex/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver/opcua"
+	"github.com/anviod/edgeCore/internal/model"
+	nbopcua "github.com/anviod/edgeCore/internal/northbound/opcua"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

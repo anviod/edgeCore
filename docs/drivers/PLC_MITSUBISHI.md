@@ -6,7 +6,7 @@ layout: default
 
 ## 概述
 
-EdgeX 通过 `mitsubishi-slmp` 协议驱动与三菱 PLC 通信，实现 **MC Protocol 3E 二进制帧**（TCP），适用于 Q/L/iQ-R 系列等支持 SLMP / MELSEC Communication Protocol 的 CPU。
+edgeCore 通过 `mitsubishi-slmp` 协议驱动与三菱 PLC 通信，实现 **MC Protocol 3E 二进制帧**（TCP），适用于 Q/L/iQ-R 系列等支持 SLMP / MELSEC Communication Protocol 的 CPU。
 
 ## 通道配置
 
@@ -54,7 +54,7 @@ config:
 ## 架构
 
 ```
-MitsubishiDriver (EdgeX)
+MitsubishiDriver (edgeCore)
     ├── MCTransport   — TCP 连接、3E 帧收发
     ├── MCDecoder     — 地址解析、数值编解码
     └── MCScheduler   — 按设备区分组调度读写

@@ -3,7 +3,7 @@ package opcua
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestRequiresServerRestart(t *testing.T) {

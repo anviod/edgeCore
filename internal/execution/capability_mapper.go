@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/capability"
+	"github.com/anviod/edgeCore/internal/capability"
 )
 
 // DriverCommand is the lower-level command produced by Capability mapping.

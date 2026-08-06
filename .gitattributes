@@ -19,8 +19,8 @@ Dockerfile text eol=lf
 
 # Scripts explicitly LF
 scripts/** text eol=lf
-edgex.sh text eol=lf
-edgex.service text eol=lf
+edgeCore.sh text eol=lf
+edgeCore.service text eol=lf
 
 # Binary files
 *.png binary

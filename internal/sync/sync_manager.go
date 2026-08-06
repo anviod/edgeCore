@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/config"
+	"github.com/anviod/edgeCore/internal/config"
 
 	"github.com/google/uuid"
 	"github.com/libp2p/go-libp2p/core/peer"

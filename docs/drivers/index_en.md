@@ -1,10 +1,10 @@
 ---
 layout: section-index
 title: Device Drivers (English)
-description: EdgeX Southbound Driver Documentation — Modbus, BACnet, OPC UA, S7, EtherNet/IP, FINS, SNMP, IEC 104, DL/T645, Mitsubishi MC, Profinet IO, KNXnet/IP, EtherCAT
+description: edgeCore Southbound Driver Documentation — Modbus, BACnet, OPC UA, S7, EtherNet/IP, FINS, SNMP, IEC 104, DL/T645, Mitsubishi MC, Profinet IO, KNXnet/IP, EtherCAT
 hero_eyebrow: Southbound Drivers
 hero_title: Device Drivers
-hero_lead: Design docs, test reports, and optimization notes for EdgeX southbound drivers — Modbus, BACnet, OPC UA, S7, EtherNet/IP, Omron FINS, SNMP, IEC 104, DL/T645, Mitsubishi MC, Profinet IO, KNXnet/IP, and more.
+hero_lead: Design docs, test reports, and optimization notes for edgeCore southbound drivers — Modbus, BACnet, OPC UA, S7, EtherNet/IP, Omron FINS, SNMP, IEC 104, DL/T645, Mitsubishi MC, Profinet IO, KNXnet/IP, and more.
 hero_buttons:
   - text: Home
     url: ../index.html

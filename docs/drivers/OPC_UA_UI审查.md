@@ -1,7 +1,7 @@
 ---
 layout: default
 title: OPC-UA 前端功能测试与验收报告
-description: EdgeX OPC-UA 前端功能测试与验收报告
+description: edgeCore OPC-UA 前端功能测试与验收报告
 ---
 
 # OPC-UA 前端功能测试与验收报告模板

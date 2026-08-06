@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet/IP 通信模块设计说明
-description: EdgeX BACnet 设计说明
+description: edgeCore BACnet 设计说明
 ---
 
 # BACnet/IP 通信模块设计说明

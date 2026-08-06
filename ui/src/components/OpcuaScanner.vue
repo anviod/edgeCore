@@ -791,7 +791,7 @@ const addSelected = async () => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
   border: 1px solid #e9ecef;
   margin-bottom: 12px;
 }
@@ -821,7 +821,7 @@ const addSelected = async () => {
 .industrial-input :deep(.arco-input-wrapper) {
   border-radius: 0;
   border-color: #dee2e6;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
 }
 
 .industrial-input :deep(.arco-input-wrapper:hover) {
@@ -941,7 +941,7 @@ const addSelected = async () => {
 
 .table-wrapper {
   border: 1px solid #e9ecef;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
   display: flex;
   flex-direction: column;
   min-height: 450px;

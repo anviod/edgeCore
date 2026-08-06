@@ -487,7 +487,7 @@ function initHeroVisual() {
 
 // Theme toggle — dark/light switch with localStorage
 function initThemeToggle() {
-  var storageKey = 'edgex-docs-theme';
+  var storageKey = 'edgeCore-docs-theme';
   var root = document.documentElement;
   var button = document.querySelector('[data-theme-toggle]');
   var label = document.querySelector('[data-theme-label]');
@@ -511,7 +511,7 @@ function initThemeToggle() {
   }
 }
 
-// Typewriter effect — cycles through EdgeX key features
+// Typewriter effect — cycles through edgeCore key features
 function initTypewriter() {
   var tw = document.querySelector('.hero-typewriter .typewriter-text');
   var cursor = document.querySelector('.hero-typewriter .typewriter-cursor');

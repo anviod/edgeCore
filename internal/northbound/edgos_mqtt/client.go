@@ -13,10 +13,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/anviod/edgex/internal/capability"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/reconnect"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/reconnect"
+	"github.com/anviod/edgeCore/internal/storage"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -156,7 +156,7 @@ type Client struct {
 
 	reconnectSched reconnect.Scheduler
 
-	// EAN 2.0 Capability Runtime (optional; V1.0 edgex/* topics remain unchanged)
+	// EAN 2.0 Capability Runtime (optional; V1.0 edgeCore/* topics remain unchanged)
 	eanMu               sync.RWMutex
 	eanRuntime          *capability.Runtime
 	onEANRuntimeChanged func()
@@ -213,12 +213,12 @@ func (c *Client) GetStats() EdgeOSMQTTStats {
 
 // EdgeOSMQTTStats represents client statistics
 type EdgeOSMQTTStats struct {
-	SuccessCount    int64                          `json:"success_count"`
-	FailCount       int64                          `json:"fail_count"`
-	ReconnectCount  int64                          `json:"reconnect_count"`
-	PublishCount    int64                          `json:"publish_count"`
-	LastOfflineTime int64                          `json:"last_offline_time"`
-	LastOnlineTime  int64                          `json:"last_online_time"`
+	SuccessCount    int64                             `json:"success_count"`
+	FailCount       int64                             `json:"fail_count"`
+	ReconnectCount  int64                             `json:"reconnect_count"`
+	PublishCount    int64                             `json:"publish_count"`
+	LastOfflineTime int64                             `json:"last_offline_time"`
+	LastOnlineTime  int64                             `json:"last_online_time"`
 	EANMetrics      *capability.InvokeMetricsSnapshot `json:"ean_metrics,omitempty"`
 }
 
@@ -271,7 +271,7 @@ func (c *Client) UpdateConfig(cfg model.EdgeOSMQTTConfig) error {
 	// | EAN hot update: apply EAN field changes without reconnection
 	c.applyEANConfigChange(oldEANEnabled, cfg.EANEnabled, oldHeartbeat, cfg.EANHeartbeatSec, oldAutoPublish, cfg.EANEventAutoPublish)
 
-	// 设备映射变化：重新上报设备清单（edgex/devices/report），确保 EdgeOS 设备列表同步。
+	// 设备映射变化：重新上报设备清单（edgeCore/devices/report），确保 EdgeOS 设备列表同步。
 	// | Devices mapping changed: re-publish device inventory so EdgeOS device list stays in sync.
 	if !reflect.DeepEqual(oldDevices, cfg.Devices) && c.GetStatus() == StatusConnected {
 		zap.L().Info("Northbound Devices mapping changed; re-publishing device report",
@@ -367,7 +367,7 @@ func (c *Client) connectLoop() {
 	opts.SetConnectTimeout(30 * time.Second)
 
 	// Set LWT (Last Will Testament) for node status
-	lwtTopic := fmt.Sprintf("edgex/nodes/%s/offline", nodeID)
+	lwtTopic := fmt.Sprintf("edgeCore/nodes/%s/offline", nodeID)
 	opts.SetWill(lwtTopic, "", 1, true)
 
 	// Set connection handlers
@@ -402,7 +402,7 @@ func (c *Client) connectLoop() {
 		}
 
 		// EAN 2.0 Capability Runtime: auto-ensure + publish $edgeos/* descriptors.
-		// V1.0 edgex/* compatibility paths above are unchanged.
+		// V1.0 edgeCore/* compatibility paths above are unchanged.
 		// EnsureCapabilityRuntime returns (nil, nil) when EANEnabled=false — skip start in that case.
 		rt, err := c.EnsureCapabilityRuntime(capability.RuntimeVersion)
 		if err != nil {
@@ -464,7 +464,7 @@ func (c *Client) publishNodeOnline() {
 	// Phase 4 (EX-P4-02): V1 节点注册/心跳上报标记 deprecated——EAN Discovery($edgeos/discovery/agent)
 	// + Heartbeat($edgeos/heartbeat/{agent}) 已完全替代；此处仅保留 V1 兼容，不再维护。
 	// | V1 node register/heartbeat marked DEPRECATED; superseded by EAN Discovery + Heartbeat.
-	zap.L().Warn("DEPRECATED: publishing V1 node registration (edgex/nodes/*); use EAN $edgeos/discovery/agent",
+	zap.L().Warn("DEPRECATED: publishing V1 node registration (edgeCore/nodes/*); use EAN $edgeos/discovery/agent",
 		zap.String("node_id", nodeID))
 
 	// Publish node registration
@@ -478,8 +478,8 @@ func (c *Client) publishNodeOnline() {
 		},
 		Body: map[string]any{
 			"node_id":      nodeID,
-			"node_name":    "EdgeX Gateway Node",
-			"model":        "edgex",
+			"node_name":    "edgeCore Gateway Node",
+			"model":        "edgeCore",
 			"version":      "1.0.0",
 			"api_version":  "v1",
 			"capabilities": []string{"shadow-sync", "heartbeat", "device-control", "task-execution"},
@@ -491,7 +491,7 @@ func (c *Client) publishNodeOnline() {
 		},
 	}
 
-	if err := c.publishMessage("edgex/nodes/register", regMessage, 1); err != nil {
+	if err := c.publishMessage("edgeCore/nodes/register", regMessage, 1); err != nil {
 		zap.L().Error("Failed to publish node registration",
 			zap.Error(err),
 			zap.String("node_id", nodeID),
@@ -499,7 +499,7 @@ func (c *Client) publishNodeOnline() {
 	}
 
 	// Publish online status
-	topic := fmt.Sprintf("edgex/nodes/%s/online", nodeID)
+	topic := fmt.Sprintf("edgeCore/nodes/%s/online", nodeID)
 	payload := `{"status":"online","timestamp":` + fmt.Sprintf("%d", time.Now().UnixMilli()) + `}`
 	token := c.client.Publish(topic, 1, true, payload)
 	token.Wait()
@@ -526,13 +526,13 @@ func (c *Client) subscribeToCommands() {
 	c.cmdMu.Lock()
 	defer c.cmdMu.Unlock()
 
-	// V1 命令面（edgex/cmd/*）Phase 4 标记 deprecated，仅保留兼容订阅，不再维护。
-	// | V1 command plane (edgex/cmd/*) marked DEPRECATED in Phase 4; retained only for compat.
-	zap.L().Warn("DEPRECATED: subscribing V1 command topics (edgex/cmd/*); migrate to EAN Capability Invoke",
+	// V1 命令面（edgeCore/cmd/*）Phase 4 标记 deprecated，仅保留兼容订阅，不再维护。
+	// | V1 command plane (edgeCore/cmd/*) marked DEPRECATED in Phase 4; retained only for compat.
+	zap.L().Warn("DEPRECATED: subscribing V1 command topics (edgeCore/cmd/*); migrate to EAN Capability Invoke",
 		zap.String("node_id", nodeID))
 
 	// Subscribe to device discovery command
-	discoverTopic := fmt.Sprintf("edgex/cmd/%s/discover", nodeID)
+	discoverTopic := fmt.Sprintf("edgeCore/cmd/%s/discover", nodeID)
 	if token := c.client.Subscribe(discoverTopic, 0, c.handleDiscoverCommand); token.Wait() && token.Error() != nil {
 		zap.L().Error("Failed to subscribe to discover topic",
 			zap.Error(token.Error()),
@@ -545,7 +545,7 @@ func (c *Client) subscribeToCommands() {
 	}
 
 	// Subscribe to write commands for all devices
-	writeTopic := fmt.Sprintf("edgex/cmd/%s/+/write", nodeID)
+	writeTopic := fmt.Sprintf("edgeCore/cmd/%s/+/write", nodeID)
 	if token := c.client.Subscribe(writeTopic, 1, c.handleWriteCommand); token.Wait() && token.Error() != nil {
 		zap.L().Error("Failed to subscribe to write topic",
 			zap.Error(token.Error()),
@@ -558,7 +558,7 @@ func (c *Client) subscribeToCommands() {
 	}
 
 	// Subscribe to task control commands
-	taskTopic := fmt.Sprintf("edgex/cmd/%s/task/+/+", nodeID)
+	taskTopic := fmt.Sprintf("edgeCore/cmd/%s/task/+/+", nodeID)
 	if token := c.client.Subscribe(taskTopic, 1, c.handleTaskCommand); token.Wait() && token.Error() != nil {
 		zap.L().Error("Failed to subscribe to task topic",
 			zap.Error(token.Error()),
@@ -571,7 +571,7 @@ func (c *Client) subscribeToCommands() {
 	}
 
 	// Subscribe to global node register command (triggered by EdgeOS for proactive re-registration)
-	registerTopic := "edgex/cmd/nodes/register"
+	registerTopic := "edgeCore/cmd/nodes/register"
 	if token := c.client.Subscribe(registerTopic, 1, c.handleNodeRegisterCommand); token.Wait() && token.Error() != nil {
 		zap.L().Error("Failed to subscribe to register topic",
 			zap.Error(token.Error()),
@@ -584,7 +584,7 @@ func (c *Client) subscribeToCommands() {
 	}
 
 	// Subscribe to node registration response (EdgeOS responds to our registration request)
-	responseTopic := fmt.Sprintf("edgex/nodes/%s/response", nodeID)
+	responseTopic := fmt.Sprintf("edgeCore/nodes/%s/response", nodeID)
 	if token := c.client.Subscribe(responseTopic, 0, c.handleRegisterResponseCommand); token.Wait() && token.Error() != nil {
 		zap.L().Error("Failed to subscribe to response topic",
 			zap.Error(token.Error()),
@@ -1008,7 +1008,7 @@ func (c *Client) publishDeviceReport() {
 		},
 	}
 
-	if err := c.publishMessage("edgex/devices/report", reportMessage, 1); err != nil {
+	if err := c.publishMessage("edgeCore/devices/report", reportMessage, 1); err != nil {
 		zap.L().Error("Failed to publish device report",
 			zap.Error(err),
 			zap.String("node_id", nodeID),
@@ -1029,7 +1029,7 @@ func (c *Client) publishDeviceReport() {
 	}
 }
 
-// PublishDeviceReport republishes the device inventory (edgex/devices/report) to EdgeOS.
+// PublishDeviceReport republishes the device inventory (edgeCore/devices/report) to EdgeOS.
 // Used when channels/devices are added/updated or the northbound Devices mapping changes,
 // so EdgeOS stays in sync without requiring a re-connect.
 func (c *Client) PublishDeviceReport() {
@@ -1074,7 +1074,7 @@ func (c *Client) sendCommandResponse(header MessageHeader, msgType string, succe
 	}
 
 	// Use single topic for both success and error responses
-	topic := fmt.Sprintf("edgex/cmd/responses/%s/%s", nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/cmd/responses/%s/%s", nodeID, deviceID)
 
 	if err := c.publishMessage(topic, response, 1); err != nil {
 		zap.L().Error("Failed to send command response",
@@ -1184,7 +1184,7 @@ func (c *Client) heartbeatLoop() {
 
 	// Phase 4 (EX-P4-02): V1 心跳上报标记 deprecated——EAN $edgeos/heartbeat/{agent} 已替代。
 	// | V1 heartbeat publish marked DEPRECATED; superseded by EAN heartbeat.
-	c.logger.Warn("DEPRECATED: V1 heartbeat loop (edgex/heartbeat/{node}) retained for compat; use EAN $edgeos/heartbeat/{agent}",
+	c.logger.Warn("DEPRECATED: V1 heartbeat loop (edgeCore/heartbeat/{node}) retained for compat; use EAN $edgeos/heartbeat/{agent}",
 		zap.Duration("interval", interval))
 
 	for {
@@ -1253,7 +1253,7 @@ func (c *Client) publishAggregatedDevice(deviceID string, agg *deviceAggregator)
 
 // publishDeviceData publishes device-level data with all points
 func (c *Client) publishDeviceData(deviceID string, points map[string]any, quality string, ts time.Time) {
-	topic := fmt.Sprintf("edgex/data/%s/%s", c.nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/data/%s/%s", c.nodeID, deviceID)
 	dataMessage := Message{
 		Header: MessageHeader{
 			MessageID:   generateMessageID(),
@@ -1299,7 +1299,7 @@ func (c *Client) PublishDeviceStatus(deviceID string, status int) {
 		return
 	}
 
-	topic := fmt.Sprintf("edgex/devices/%s/%s/status", nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/devices/%s/%s/status", nodeID, deviceID)
 	statusStr := "online"
 	if status != 0 {
 		statusStr = "offline"
@@ -1398,7 +1398,7 @@ func (c *Client) PublishHeartbeat(metrics map[string]any) {
 		Body: heartbeatBody,
 	}
 
-	topic := fmt.Sprintf("edgex/heartbeat/%s", nodeID)
+	topic := fmt.Sprintf("edgeCore/heartbeat/%s", nodeID)
 	if err := c.publishMessage(topic, heartbeatMessage, 0); err != nil {
 		zap.L().Error("Failed to publish heartbeat",
 			zap.Error(err),
@@ -1669,7 +1669,7 @@ func (c *Client) Stop() {
 		c.configMu.RUnlock()
 
 		// Publish offline status (V1.0 compat)
-		topic := fmt.Sprintf("edgex/nodes/%s/offline", nodeID)
+		topic := fmt.Sprintf("edgeCore/nodes/%s/offline", nodeID)
 		payload := `{"status":"offline","timestamp":` + fmt.Sprintf("%d", time.Now().UnixMilli()) + `}`
 		token := c.client.Publish(topic, 1, true, payload)
 		token.WaitTimeout(2 * time.Second)
@@ -1787,7 +1787,7 @@ func (c *Client) PublishPointsMetadata() error {
 				},
 			}
 
-			if err := c.publishMessage("edgex/points/report", metadataMessage, 1); err != nil {
+			if err := c.publishMessage("edgeCore/points/report", metadataMessage, 1); err != nil {
 				zap.L().Error("Failed to publish points metadata for device",
 					zap.Error(err),
 					zap.String("node_id", nodeID),
@@ -1872,7 +1872,7 @@ func (c *Client) PublishPointsSync(channelID, deviceID string) error {
 		},
 	}
 
-	topic := fmt.Sprintf("edgex/points/%s/%s", nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/points/%s/%s", nodeID, deviceID)
 	if err := c.publishMessage(topic, syncMessage, 1); err != nil {
 		zap.L().Error("Failed to publish points sync",
 			zap.Error(err),
@@ -1917,7 +1917,7 @@ func (c *Client) PublishDeviceOnline(deviceID, deviceName string, details map[st
 		},
 	}
 
-	topic := fmt.Sprintf("edgex/devices/%s/%s/online", nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/devices/%s/%s/online", nodeID, deviceID)
 	if err := c.publishMessage(topic, onlineMessage, 2); err != nil {
 		atomic.AddInt64(&c.failCount, 1)
 		zap.L().Error("Failed to publish device online notification",
@@ -1968,7 +1968,7 @@ func (c *Client) PublishDeviceOffline(deviceID, deviceName, reason string, detai
 		},
 	}
 
-	topic := fmt.Sprintf("edgex/devices/%s/%s/offline", nodeID, deviceID)
+	topic := fmt.Sprintf("edgeCore/devices/%s/%s/offline", nodeID, deviceID)
 	if err := c.publishMessage(topic, offlineMessage, 2); err != nil {
 		atomic.AddInt64(&c.failCount, 1)
 		zap.L().Error("Failed to publish device offline notification",

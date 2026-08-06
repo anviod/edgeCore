@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算 API
-description: EdgeX 边缘计算 REST API — 规则、指标与日志接口
+description: edgeCore 边缘计算 REST API — 规则、指标与日志接口
 ---
 
 # 边缘计算 API
@@ -363,7 +363,7 @@ description: EdgeX 边缘计算 REST API — 规则、指标与日志接口
 | `data/runtime.db` | `DataCache` | 失败动作 |
 | `data/runtime.db` | `bblot` | 分钟错误日志 |
 | `data/runtime.db` | `edge_events` / `edge_failures` | 结构化事件 |
-| 文件系统 | `logs/gateway.edgex.log` | `[EdgeCompute]` / `[EdgeAction]` 系统日志 |
+| 文件系统 | `logs/gateway.edgeCore.log` | `[EdgeCompute]` / `[EdgeAction]` 系统日志 |
 
 ---
 

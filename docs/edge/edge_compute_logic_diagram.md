@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算逻辑图
-description: EdgeX 边缘计算逻辑图
+description: edgeCore 边缘计算逻辑图
 ---
 
 # 边缘计算逻辑图

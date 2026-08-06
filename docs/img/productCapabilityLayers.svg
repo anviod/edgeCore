@@ -42,7 +42,7 @@
 
   <!-- 顶部主标题大区 -->
   <g transform="translate(500, 55)" text-anchor="middle">
-    <text class="title-main">EdgeX 工业物联网网关产品能力分层架构</text>
+    <text class="title-main">edgeCore 工业物联网网关产品能力分层架构</text>
     <text y="24" class="title-sub">Industrial IoT Edge Gateway Capability Framework</text>
   </g>
 

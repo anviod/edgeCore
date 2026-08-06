@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 App Shell — Sidebar / Header / Main
+ * edgeCore v3.0 App Shell — Sidebar / Header / Main
  */
 
 /* ── base ── */
@@ -194,7 +194,7 @@ body {
   width: 6px;
   height: 6px;
   border-radius: var(--radius-full);
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   flex-shrink: 0;
 }
 
@@ -442,8 +442,8 @@ body {
   color: var(--text-primary);
 }
 
-.dropdown-item.text-warning { color: var(--edgex-warning); }
-.dropdown-item.text-error { color: var(--edgex-error); }
+.dropdown-item.text-warning { color: var(--edgeCore-warning); }
+.dropdown-item.text-error { color: var(--edgeCore-error); }
 
 .dropdown-divider {
   height: 1px;

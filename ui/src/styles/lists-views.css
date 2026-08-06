@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — List views (Channel, Device, Point, EdgeCompute)
+ * edgeCore v3.0 — List views (Channel, Device, Point, EdgeCompute)
  */
 
 /* ── List detail page layout ── */
@@ -104,7 +104,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   flex-shrink: 0;
 }
 
@@ -369,7 +369,7 @@
   font-weight: 600;
 }
 
-.status-text.enabled { color: var(--edgex-success); }
+.status-text.enabled { color: var(--edgeCore-success); }
 .status-text.disabled { color: var(--text-tertiary); }
 
 /* ── Point list cells ── */
@@ -492,7 +492,7 @@
 .terminal-dot {
   width: 6px;
   height: 6px;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   border-radius: 50%;
   animation: pulse-dot 2s infinite;
   flex-shrink: 0;
