@@ -56,13 +56,7 @@
 .arco-dropdown-option {
   transition:
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    color var(--motion-duration-fast) var(--motion-ease-standard),
-    padding-left var(--motion-duration-fast) var(--motion-ease-standard);
-}
-
-.arco-menu-item:hover,
-.arco-dropdown-option:hover {
-  padding-left: calc(var(--space-3) + 2px);
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 /* ── tooltip / popover ── */
@@ -145,12 +139,7 @@
 .arco-tag {
   transition:
     background-color var(--motion-duration-fast) var(--motion-ease-standard),
-    border-color var(--motion-duration-fast) var(--motion-ease-standard),
-    transform var(--motion-duration-fast) var(--motion-ease-standard);
-}
-
-.arco-tag:hover {
-  transform: translateY(-1px);
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 /* ── pagination ── */

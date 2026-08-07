@@ -18,9 +18,9 @@
   /* 非对称苹果级物理弹性缓动曲线 (Apple-like spring curves) */
   --ai-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --ai-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ai-transition-fast: 160ms var(--ai-ease-spring);
-  --ai-transition-smooth: 320ms var(--ai-ease-spring);
-  --ai-transition-elastic: 460ms var(--ai-ease-bounce);
+  --ai-transition-fast: 120ms var(--ai-ease-spring);
+  --ai-transition-smooth: 240ms var(--ai-ease-spring);
+  --ai-transition-elastic: 360ms var(--ai-ease-bounce);
 
   /* 主流配色自适应降级方案 */
   --primary: #6366f1;
@@ -1822,13 +1822,13 @@
 }
 
 .ai-suggestion-chip {
-  animation: ai-hint-in var(--ai-transition-smooth) backwards;
+  animation: ai-hint-in var(--ai-transition-fast) backwards;
 }
 
 .ai-suggestion-chip:nth-child(1) { animation-delay: 0ms; }
-.ai-suggestion-chip:nth-child(2) { animation-delay: 60ms; }
-.ai-suggestion-chip:nth-child(3) { animation-delay: 120ms; }
-.ai-suggestion-chip:nth-child(4) { animation-delay: 180ms; }
+.ai-suggestion-chip:nth-child(2) { animation-delay: 40ms; }
+.ai-suggestion-chip:nth-child(3) { animation-delay: 80ms; }
+.ai-suggestion-chip:nth-child(4) { animation-delay: 120ms; }
 
 /* ── 16. 高级输入控制台 (ChatGPT Desktop Input Core) ── */
 .ai-chat-input__box {

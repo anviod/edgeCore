@@ -242,6 +242,8 @@
                     :columns="tableColumns"
                     :data="zone.items"
                     :row-selection="selectionMode ? rowSelection : undefined"
+                    :selected-keys="selectionMode ? selectedChannels : undefined"
+                    @selection-change="onSelectionChange"
                     row-key="id"
                     size="small"
                     :bordered="false"
@@ -1334,10 +1336,13 @@ const tableColumns = [
 ]
 
 const rowSelection = {
-  selectedRowKeys: selectedChannels,
-  onChange: (keys) => {
-    selectedChannels.value = keys
-  }
+  type: 'checkbox',
+  showCheckedAll: true,
+  onlyCurrent: false,
+}
+
+const onSelectionChange = (keys) => {
+  selectedChannels.value = keys || []
 }
 
 const enabledChannels = computed(() =>

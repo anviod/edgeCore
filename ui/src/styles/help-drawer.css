@@ -581,23 +581,7 @@
 }
 
 /* ── help drawer motion polish ── */
-.help-drawer .help-doc,
-.help-drawer .help-doc__sections {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
-
-.help-drawer .help-doc-section {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.help-drawer .help-doc-section:nth-child(1) { animation-delay: 40ms; }
-.help-drawer .help-doc-section:nth-child(2) { animation-delay: 90ms; }
-.help-drawer .help-doc-section:nth-child(3) { animation-delay: 140ms; }
-.help-drawer .help-doc-section:nth-child(4) { animation-delay: 190ms; }
-.help-drawer .help-doc-section:nth-child(5) { animation-delay: 240ms; }
-.help-drawer .help-doc-section:nth-child(n+6) { animation-delay: 290ms; }
+/* 抽屉自身带滑入动画；文档区仅保留轻微淡入，不做逐段错开 */
 
 .help-doc-card,
 .help-doc-faq,

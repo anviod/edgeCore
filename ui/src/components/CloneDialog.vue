@@ -52,6 +52,8 @@
         :data="tableData"
         :pagination="false"
         :row-selection="rowSelection"
+        :selected-keys="selectedRowKeys"
+        @selection-change="onSelectionChange"
         :scroll="{ y: 360 }"
       />
 
@@ -102,8 +104,11 @@ const columns = [
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
-  selectedRowKeys
 })
+
+const onSelectionChange = (keys) => {
+  selectedRowKeys.value = keys || []
+}
 
 // 监听 search 和 points 变化，更新 tableData
 watch([search, points], () => {
@@ -195,9 +200,7 @@ const onDeviceChange = async (did) => {
 
 /* 确认 */
 const handleOk = () => {
-  // 从 rowSelection 中获取选中的键
-  const selectedKeys = rowSelection.selectedRowKeys || []
-  const set = new Set(selectedKeys)
+  const set = new Set(selectedRowKeys.value)
   const result = points.value.filter(p => set.has(p.id))
 
   if (!result.length) {

@@ -1545,45 +1545,7 @@
 }
 
 /* ── edge compute motion polish ── */
-.edge-compute-page.page-shell {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
-
-.edge-compute-zone {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.edge-compute-zone:nth-child(1) { animation-delay: 0ms; }
-.edge-compute-zone:nth-child(2) { animation-delay: 60ms; }
-.edge-compute-zone:nth-child(3) { animation-delay: 120ms; }
-.edge-compute-zone:nth-child(n+4) { animation-delay: 180ms; }
-
-.rule-flow-card,
-.edge-compute-footer-card,
-.edge-compute-metric-card,
-.edge-compute-stat-card {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.rule-flow-list .rule-flow-card:nth-child(1) { animation-delay: 40ms; }
-.rule-flow-list .rule-flow-card:nth-child(2) { animation-delay: 90ms; }
-.rule-flow-list .rule-flow-card:nth-child(3) { animation-delay: 140ms; }
-.rule-flow-list .rule-flow-card:nth-child(4) { animation-delay: 190ms; }
-.rule-flow-list .rule-flow-card:nth-child(5) { animation-delay: 240ms; }
-.rule-flow-list .rule-flow-card:nth-child(n+6) { animation-delay: 290ms; }
-
-.edge-compute-footer-grid .edge-compute-footer-card:nth-child(1) { animation-delay: 60ms; }
-.edge-compute-footer-grid .edge-compute-footer-card:nth-child(2) { animation-delay: 120ms; }
-.edge-compute-footer-grid .edge-compute-footer-card:nth-child(3) { animation-delay: 180ms; }
-.edge-compute-footer-grid .edge-compute-footer-card:nth-child(n+4) { animation-delay: 240ms; }
-
-.edge-compute-stats-row .edge-compute-stat-card:nth-child(1) { animation-delay: 40ms; }
-.edge-compute-stats-row .edge-compute-stat-card:nth-child(2) { animation-delay: 90ms; }
-.edge-compute-stats-row .edge-compute-stat-card:nth-child(3) { animation-delay: 140ms; }
-.edge-compute-stats-row .edge-compute-stat-card:nth-child(4) { animation-delay: 190ms; }
+/* 页面/区块入场由 App.vue 路由过渡统一处理 */
 
 .rule-flow-card {
   transition:
@@ -1599,15 +1561,14 @@
 
 .rule-flow-node {
   opacity: 0;
-  animation: scale-in var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+  animation: scale-in var(--motion-duration-fast) var(--motion-ease-decelerate) forwards;
 }
 
-.rule-flow-step:nth-child(1) .rule-flow-node { animation-delay: 80ms; }
-.rule-flow-step:nth-child(2) .rule-flow-node { animation-delay: 160ms; }
-.rule-flow-step:nth-child(3) .rule-flow-node { animation-delay: 240ms; }
-.rule-flow-step:nth-child(4) .rule-flow-node { animation-delay: 320ms; }
-.rule-flow-step:nth-child(5) .rule-flow-node { animation-delay: 400ms; }
-.rule-flow-step:nth-child(n+6) .rule-flow-node { animation-delay: 480ms; }
+.rule-flow-step:nth-child(1) .rule-flow-node { animation-delay: 40ms; }
+.rule-flow-step:nth-child(2) .rule-flow-node { animation-delay: 80ms; }
+.rule-flow-step:nth-child(3) .rule-flow-node { animation-delay: 120ms; }
+.rule-flow-step:nth-child(4) .rule-flow-node { animation-delay: 160ms; }
+.rule-flow-step:nth-child(n+5) .rule-flow-node { animation-delay: 200ms; }
 
 .rule-flow-node--active,
 .rule-flow-node--pending {
@@ -1616,13 +1577,13 @@
 
 .rule-flow-connector {
   opacity: 0;
-  animation: fade-in var(--motion-duration-fast) var(--motion-ease-standard) forwards;
+  animation: fade-in var(--motion-duration-instant) var(--motion-ease-standard) forwards;
 }
 
-.rule-flow-step:nth-child(1) .rule-flow-connector { animation-delay: 120ms; }
-.rule-flow-step:nth-child(2) .rule-flow-connector { animation-delay: 200ms; }
-.rule-flow-step:nth-child(3) .rule-flow-connector { animation-delay: 280ms; }
-.rule-flow-step:nth-child(n+4) .rule-flow-connector { animation-delay: 360ms; }
+.rule-flow-step:nth-child(1) .rule-flow-connector { animation-delay: 60ms; }
+.rule-flow-step:nth-child(2) .rule-flow-connector { animation-delay: 100ms; }
+.rule-flow-step:nth-child(3) .rule-flow-connector { animation-delay: 140ms; }
+.rule-flow-step:nth-child(n+4) .rule-flow-connector { animation-delay: 180ms; }
 
 .rule-flow-connector--active {
   animation: fade-in 1s var(--motion-ease-standard) infinite alternate;
@@ -1651,20 +1612,25 @@
 }
 
 .edge-compute-filter-chips .arco-tag {
-  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
-}
-
-.edge-compute-filter-chips .arco-tag:hover {
-  transform: translateY(-1px);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 /* 视图切换 radio */
 .edge-compute-view-toggle .arco-radio-button {
-  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .edge-compute-record-type-toggle .arco-radio-button {
-  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 /* 记录错误消息 expandable */
@@ -1674,7 +1640,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  transition: all var(--motion-duration-fast) var(--motion-ease-standard);
 }
 
 .edge-compute-records-table .arco-table-tr:hover .edge-compute-records-error {

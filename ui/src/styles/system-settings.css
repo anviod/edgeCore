@@ -512,18 +512,6 @@
   box-shadow: var(--shadow-md);
 }
 
-.database-management .overview-item:nth-child(1) {
-  animation-delay: 0ms;
-}
-
-.database-management .overview-item:nth-child(2) {
-  animation-delay: 60ms;
-}
-
-.database-management .overview-item:nth-child(3) {
-  animation-delay: 120ms;
-}
-
 .database-management .action-group .arco-btn {
   transition:
     transform var(--motion-duration-instant) var(--motion-ease-standard),
@@ -541,17 +529,7 @@
   animation: slide-in-down var(--motion-duration-normal) var(--motion-ease-decelerate);
 }
 
-.database-management .table-wrap .arco-table-tbody .arco-table-tr {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(1) { animation-delay: 30ms; }
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(2) { animation-delay: 70ms; }
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(3) { animation-delay: 110ms; }
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(4) { animation-delay: 150ms; }
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(5) { animation-delay: 190ms; }
-.database-management .table-wrap .arco-table-tbody .arco-table-tr:nth-child(n+6) { animation-delay: 230ms; }
+/* 表格行：即时可见，不做逐行错开入场 */
 
 .database-management .remote-pull-form .arco-input-wrapper,
 .database-management .remote-pull-form .arco-input-number {

@@ -355,47 +355,7 @@
 }
 
 /* ── dashboard motion polish ── */
-.dashboard-zone {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-slow) var(--motion-ease-decelerate) forwards;
-}
-
-.dashboard-zone:nth-child(1) { animation-delay: 0ms; }
-.dashboard-zone:nth-child(2) { animation-delay: 60ms; }
-.dashboard-zone:nth-child(3) { animation-delay: 120ms; }
-.dashboard-zone:nth-child(4) { animation-delay: 180ms; }
-
-.dashboard-page .stat-card,
-.dashboard-page .channel-card,
-.dashboard-page .northbound-card,
-.dashboard-page .edge-compute-card {
-  opacity: 0;
-  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
-}
-
-.dashboard-page .stats-grid--compact .stat-card:nth-child(1) { animation-delay: 80ms; }
-.dashboard-page .stats-grid--compact .stat-card:nth-child(2) { animation-delay: 140ms; }
-.dashboard-page .stats-grid--compact .stat-card:nth-child(3) { animation-delay: 200ms; }
-.dashboard-page .stats-grid--compact .stat-card:nth-child(4) { animation-delay: 260ms; }
-
-.dashboard-page .channels-grid .channel-card:nth-child(1) { animation-delay: 80ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(2) { animation-delay: 140ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(3) { animation-delay: 200ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(4) { animation-delay: 260ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(5) { animation-delay: 320ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(6) { animation-delay: 380ms; }
-.dashboard-page .channels-grid .channel-card:nth-child(n+7) { animation-delay: 420ms; }
-
-.dashboard-page .northbound-grid .northbound-card:nth-child(1) { animation-delay: 80ms; }
-.dashboard-page .northbound-grid .northbound-card:nth-child(2) { animation-delay: 140ms; }
-.dashboard-page .northbound-grid .northbound-card:nth-child(3) { animation-delay: 200ms; }
-.dashboard-page .northbound-grid .northbound-card:nth-child(4) { animation-delay: 260ms; }
-.dashboard-page .northbound-grid .northbound-card:nth-child(n+5) { animation-delay: 320ms; }
-
-.dashboard-page .edge-compute-card:nth-child(1) { animation-delay: 80ms; }
-.dashboard-page .edge-compute-card:nth-child(2) { animation-delay: 140ms; }
-.dashboard-page .edge-compute-card:nth-child(3) { animation-delay: 200ms; }
-.dashboard-page .edge-compute-card:nth-child(n+4) { animation-delay: 260ms; }
+/* 入场由 App.vue 路由过渡统一处理；此处仅保留交互反馈 */
 
 .dashboard-page .stat-card,
 .dashboard-page .channel-card,

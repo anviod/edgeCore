@@ -115,10 +115,10 @@ describe('NorthboundReportStrategyPanel batch linkage', () => {
     rows[1]._enable = true
     await nextTick()
 
-    // simulate selecting dev-1 + dev-2 via Arco row-selection onChange
+    // simulate selecting dev-1 + dev-2 via Arco selection-change event
     const tables = wrapper.findAllComponents(tableStub)
     const realTable = tables[0]
-    realTable.props('rowSelection').onChange(['dev-1', 'dev-2'])
+    realTable.vm.$emit('selection-change', ['dev-1', 'dev-2'])
     await nextTick()
 
     // simulate choosing 周期上报 in the batch-mode dropdown

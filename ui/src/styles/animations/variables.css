@@ -5,11 +5,11 @@
 
 :root {
   /* ── durations ── */
-  --motion-duration-instant: 100ms;
-  --motion-duration-fast: 160ms;
-  --motion-duration-normal: 240ms;
-  --motion-duration-slow: 360ms;
-  --motion-duration-slower: 480ms;
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 130ms;
+  --motion-duration-normal: 180ms;
+  --motion-duration-slow: 240ms;
+  --motion-duration-slower: 320ms;
 
   /* ── easings ── */
   --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -19,9 +19,9 @@
   --motion-ease-industrial: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* ── stagger intervals ── */
-  --motion-stagger-tight: 30ms;
-  --motion-stagger-base: 50ms;
-  --motion-stagger-loose: 80ms;
+  --motion-stagger-tight: 24ms;
+  --motion-stagger-base: 40ms;
+  --motion-stagger-loose: 60ms;
 
   /* ── transforms ── */
   --motion-translate-sm: 8px;

@@ -161,7 +161,11 @@
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-lg) !important;
   box-shadow: none !important;
-  transition: all var(--transition-fast) !important;
+  transition:
+    border-color var(--transition-fast) !important,
+    box-shadow var(--transition-fast) !important,
+    transform var(--transition-fast) !important,
+    background-color var(--transition-fast) !important;
 }
 
 .stat-card {

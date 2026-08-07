@@ -104,3 +104,58 @@ describe('NorthboundReportStrategyPanel real-Arco batch linkage', () => {
     wrapper.unmount()
   })
 })
+
+describe('NorthboundReportStrategyPanel select-all / half-select', () => {
+  const headerCheckbox = (wrapper) => wrapper.find('.arco-table-th.arco-table-checkbox .arco-checkbox')
+
+  it('row checkbox toggles realSelectedKeys and header shows half-select', async () => {
+    const wrapper = mountPanel([dev('dev-1', '电表A'), dev('dev-2', '电表B')])
+    await flushPromises()
+    await nextTick()
+
+    expect(wrapper.vm.realSelectedKeys).toEqual([])
+
+    const trs = wrapper.findAll('tr.arco-table-tr')
+    const targetTr = trs.find(tr => tr.text().includes('电表A'))
+    await targetTr.find('.arco-checkbox').trigger('click')
+    await nextTick()
+
+    expect(wrapper.vm.realSelectedKeys).toEqual(['dev-1'])
+    expect(headerCheckbox(wrapper).classes()).toContain('arco-checkbox-indeterminate')
+
+    // uncheck the same row → selection cleared
+    await targetTr.find('.arco-checkbox').trigger('click')
+    await nextTick()
+    expect(wrapper.vm.realSelectedKeys).toEqual([])
+
+    wrapper.unmount()
+  })
+
+  it('header select-all checks every row and batch enable applies to all', async () => {
+    const wrapper = mountPanel([dev('dev-1', '电表A'), dev('dev-2', '电表B')])
+    await flushPromises()
+    await nextTick()
+
+    await headerCheckbox(wrapper).trigger('click')
+    await nextTick()
+    expect(wrapper.vm.realSelectedKeys).toEqual(['dev-1', 'dev-2'])
+
+    const batchButton = wrapper.findAll('button').find(b => b.text().includes('批量启用'))
+    expect(batchButton).toBeTruthy()
+    await batchButton.trigger('click')
+    await nextTick()
+
+    const updates = wrapper.emitted('update:devices') || []
+    const merged = {}
+    for (const [payload] of updates) Object.assign(merged, payload)
+    expect(merged['dev-1']).toMatchObject({ enable: true, strategy: 'periodic', interval: '10s' })
+    expect(merged['dev-2']).toMatchObject({ enable: true, strategy: 'periodic', interval: '10s' })
+
+    // clicking select-all again clears the selection
+    await headerCheckbox(wrapper).trigger('click')
+    await nextTick()
+    expect(wrapper.vm.realSelectedKeys).toEqual([])
+
+    wrapper.unmount()
+  })
+})
