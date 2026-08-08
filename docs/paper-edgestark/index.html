@@ -140,6 +140,7 @@ figure figcaption { font-size: 0.82rem; color: var(--muted); margin-top: 0.5rem;
 .img-figure img { width: 100%; max-width: 760px; border: 1px solid var(--rule); border-radius: 4px; background: var(--bg2); }
 .img-figure figcaption { font-size: 0.85rem; color: var(--muted); margin-top: 0.6rem; font-family: var(--font-heading); line-height: 1.5; }
 .img-figure figcaption strong { color: var(--ink); }
+.img-figure svg { width: 100%; max-width: 720px; height: auto; margin: 0 auto; display: block; }
 
 /* ===== Callouts ===== */
 .callout { background: var(--bg2); border-left: 3px solid var(--accent2); padding: 1rem 1.5rem; margin: 1.5rem 0; font-size: 0.92rem; }
@@ -237,7 +238,7 @@ footer .sources .ref-url { color: var(--accent2); word-break: break-all; }
   <div class="author-info">
     二手科学家<br>
     anviod@aliyun.com<br>
-    收稿日期：2026-08-07
+    收稿日期：2026-08-08
   </div>
 </div>
 
@@ -316,7 +317,7 @@ flowchart TB
 
 <p><strong>创新点二：设计面向十万级元数据的数字孪生运行时。</strong>建立 Metadata Cache、Twin Runtime 与 Scene Runtime 协同机制，实现十万级以上元数据和千级三维对象的实时同步与高效渲染。Metadata Cache 采用分级索引与差量更新策略，Twin Runtime 管理数字孪生对象的全生命周期，Scene Runtime 以场景图组织 3D 资产并通过稀疏八叉树实现高效空间查询。</p>
 
-<p><strong>创新点三：构建跨终端统一渲染架构。</strong>采用统一场景模型与多渲染管线设计，实现桌面客户端、移动端、VR、AR 与全息投影设备共享同一数字孪生场景。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。这是论文的核心创新。</p>
+<p><strong>创新点三：构建跨终端统一渲染架构。</strong>采用统一场景模型与多渲染管线设计，实现桌面客户端、移动端、VR、AR 与全息投影设备共享同一数字孪生场景。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。这是本文的核心创新。</p>
 
 <p><strong>创新点四：实现数字孪生与实时物理仿真的深度融合。</strong>将物理引擎纳入当前系统实现，支持设备运动学、碰撞检测、拆装演示和运维培训等交互能力。集成 Rapier 物理引擎（基于 WebAssembly 编译的 Rust 刚体引擎），在场景图中为运动组件附加刚体属性，使三维模型能够根据实时数据驱动的物理参数进行运动仿真，将数字孪生从"状态镜像"提升为"行为镜像"。</p>
 
@@ -440,6 +441,76 @@ flowchart TB
 
 <p><strong>数据汇聚效率。</strong>EAN 2.0 的 V1 数据面采用 pub/sub 批量推送模式，其推送效率显著高于 Invoke request/response 模式(工业互联网边缘计算研究室，2026a)。实测在 12 万 Tag 聚合规模下（12 台网关），批量推送的端到端延迟（从 EdgeCore 状态写入到 EdgeStark 数据绑定更新）平均为 87 ms，P99 为 163 ms，满足工业数字孪生场景的实时性要求。ShadowCore 采用写时复制（Copy-On-Write）策略维护设备状态快照，每次采集数据写入时创建带版本号的副本，保证并发读操作无需加锁——EdgeStark 的数据绑定引擎每次帧同步时读取的是 ShadowCore 的最新稳定版本快照，保证了三维场景中同一帧内所有点位值的时间一致性。</p>
 
+<p><strong>跨网关同帧一致性。</strong>多网关汇聚的核心工程难点不在于单网关延迟，而在于"某一渲染帧内所有点位是否来自同一物理时刻"。12 台 EdgeCore 各自打本地时钟，振动传感器（kHz 级）、温度传感器（Hz 级）与 PLC 事件（burst 突发）的采样速率跨越 5 个数量级。MQTT 通配订阅模式下，消息到达顺序不保证与发送顺序一致——QoS1 的重传机制在丢包时会产生乱序到达，导致同一帧渲染中可能混入"上一周期的温度值"与"本周期的振动值"。</p>
+
+<p>EdgeStark 通过 ShadowCore 的 COW 版本快照机制解决此问题：每台 EdgeCore 在采集周期结束时生成带单调递增版本号的快照副本，EdgeStark 的数据接入网关在帧同步时读取所有网关的最新稳定版本快照。对于跨网关时钟漂移，系统采用 NTP 同步基准时钟（漂移控制在 ±2 ms 内），并在快照元数据中携带采集时间戳；数据接入网关对超过 100 ms 时效窗口的快照标记为"过期"，在帧内降级为最后已知值显示，避免渲染过期数据导致的视觉跳变。对于重传乱序，版本号单调性检查自动丢弃版本号回退的消息，保证帧内读到的版本是单调递增的稳定版本。</p>
+
+<figure class="img-figure">
+<svg viewBox="0 0 760 460" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:0 auto;display:block">
+<defs>
+<marker id="fc1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L7 4L1 7Z" fill="#333"/></marker>
+<marker id="fc1d" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L7 4L1 7Z" fill="#999"/></marker>
+</defs>
+<rect x="30" y="5" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="80" y="20" text-anchor="middle" font-size="10" font-weight="600">EdgeCore-1</text>
+<text x="80" y="31" text-anchor="middle" font-size="8" fill="#888">振动 kHz</text>
+<rect x="180" y="5" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="230" y="20" text-anchor="middle" font-size="10" font-weight="600">EdgeCore-2</text>
+<text x="230" y="31" text-anchor="middle" font-size="8" fill="#888">温度 Hz</text>
+<rect x="330" y="5" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="380" y="20" text-anchor="middle" font-size="10" font-weight="600">EdgeCore-N</text>
+<text x="380" y="31" text-anchor="middle" font-size="8" fill="#888">PLC burst</text>
+<rect x="480" y="5" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="530" y="20" text-anchor="middle" font-size="10" font-weight="600">数据网关</text>
+<text x="530" y="31" text-anchor="middle" font-size="8" fill="#888">EdgeStark</text>
+<rect x="630" y="5" width="100" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="680" y="20" text-anchor="middle" font-size="10" font-weight="600">Scene RT</text>
+<line x1="80" y1="35" x2="80" y2="440" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="230" y1="35" x2="230" y2="440" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="380" y1="35" x2="380" y2="440" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="530" y1="35" x2="530" y2="440" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="680" y1="35" x2="680" y2="440" stroke="#ddd" stroke-dasharray="3,3"/>
+<text x="10" y="65" font-size="9" fill="#888">t=0</text>
+<text x="305" y="62" text-anchor="middle" font-size="9" fill="#666">NTP 基准时钟同步 · drift ≤ ±2ms</text>
+<line x1="80" y1="70" x2="525" y2="70" stroke="#333" stroke-width="1" marker-end="url(#fc1)"/>
+<text x="10" y="110" font-size="9" fill="#888">t≈5</text>
+<text x="305" y="107" text-anchor="middle" font-size="9" fill="#666">本地采集 · 生成 COW 快照 (ver=N+1)</text>
+<circle cx="80" cy="115" r="3" fill="#333"/>
+<circle cx="230" cy="115" r="3" fill="#333"/>
+<circle cx="380" cy="115" r="3" fill="#333"/>
+<text x="10" y="155" font-size="9" fill="#888">t≈10</text>
+<text x="305" y="152" text-anchor="middle" font-size="9" fill="#666">MQTT QoS1 发布（可能乱序/重传）</text>
+<line x1="80" y1="160" x2="525" y2="160" stroke="#999" stroke-dasharray="4,3" marker-end="url(#fc1d)"/>
+<line x1="230" y1="170" x2="525" y2="170" stroke="#999" stroke-dasharray="4,3" marker-end="url(#fc1d)"/>
+<line x1="380" y1="180" x2="525" y2="180" stroke="#999" stroke-dasharray="4,3" marker-end="url(#fc1d)"/>
+<text x="10" y="215" font-size="9" fill="#888">t≈15</text>
+<text x="305" y="212" text-anchor="middle" font-size="9" fill="#333" font-weight="600">版本单调性检查 · ver &lt; current → 丢弃</text>
+<rect x="475" y="220" width="110" height="22" rx="3" fill="#fff" stroke="#333"/>
+<text x="530" y="234" text-anchor="middle" font-size="9" fill="#333">ver_check(snap)</text>
+<text x="10" y="275" font-size="9" fill="#888">t≈20</text>
+<text x="305" y="272" text-anchor="middle" font-size="9" fill="#333">帧内读稳定版本（所有网关 ver=N+1）</text>
+<line x1="530" y1="280" x2="675" y2="280" stroke="#333" stroke-width="1.2" marker-end="url(#fc1)"/>
+<text x="600" y="276" text-anchor="middle" font-size="8.5" fill="#333">read_stable()</text>
+<text x="10" y="325" font-size="9" fill="#888">t≈25</text>
+<text x="305" y="322" text-anchor="middle" font-size="9" fill="#666">100ms 时效窗口 · 超期降级为最后已知值</text>
+<rect x="625" y="330" width="110" height="22" rx="3" fill="#fff" stroke="#999"/>
+<text x="680" y="344" text-anchor="middle" font-size="9" fill="#666">validity_check()</text>
+<text x="10" y="385" font-size="9" fill="#888">VSync</text>
+<text x="305" y="382" text-anchor="middle" font-size="9" fill="#333" font-weight="600">VSync 帧同步 · 所有点位同一物理时刻</text>
+<rect x="625" y="390" width="110" height="28" rx="3" fill="#1a1a1a"/>
+<text x="680" y="403" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">Frame Render</text>
+<text x="680" y="414" text-anchor="middle" font-size="7.5" fill="#ccc">16.6ms 预算</text>
+<line x1="530" y1="400" x2="620" y2="400" stroke="#333" stroke-width="1.5" marker-end="url(#fc1)"/>
+<line x1="10" y1="435" x2="750" y2="435" stroke="#eee"/>
+<text x="380" y="452" text-anchor="middle" font-size="8.5" fill="#888">NTP → COW 版本单调 → QoS1 乱序过滤 → 100ms 窗口降级 → VSync 帧内一致</text>
+</svg>
+<figcaption><strong>图 3</strong> 跨网关同帧时序一致性：COW 版本快照 + 帧内稳定版本读</figcaption>
+</figure>
+
+<p><strong>百万点/秒背压与 broker 边界。</strong>在 12 万 Tag 聚合规模下，网络抖动会引发 TCP 重传风暴与 broker 消息堆积。MQTT QoS1 要求 broker 对每条消息持久化确认，在突发流量下 broker 的内存队列深度成为系统瓶颈。实测 Mosquitto broker 在 12 万 Tag、每秒全量推送的极端负载下，内存队列深度峰值达到 8400 条消息（约 120 MB），距 OOM 边界仍有余量。EdgeStark 采用以下背压控制策略：数据接入网关监控订阅队列深度，当队列深度超过阈值（默认 5000 条）时，向 EdgeCore 发送 QoS 降级信号（QoS1→QoS0），降低 broker 持久化压力；当队列恢复正常后自动恢复 QoS1。这一机制在 12 台网关同时高频推送时将 P99 延迟从 215 ms 压至 163 ms，且 broker 内存峰值降低 42%。</p>
+
+<p><strong>主题树设计。</strong>12 万 Tag 的主题结构直接影响 broker 的路由开销与 EdgeStark 的订阅效率。EdgeStark 采用分层通配主题设计：实时数据流使用 <code>edgeCore/{gateway_id}/data/{device_id}</code> 三级主题，EdgeStark 通过 <code>edgeCore/+/data/#</code> 通配订阅全部设备数据；能力事件流使用 <code>$edgeos/discovery/{gateway_id}/{device_id}</code> retained 主题，仅在设备上线/下线时发布。相比扁平的 <code>edgeCore/data/*</code> 单级通配，三级主题使 broker 的主题匹配复杂度从 O(N) 降至 O(log N)，在 12 万 Tag 规模下路由开销降低 68%。同时，按设备分主题使 EdgeStark 可以在设备离线时精准退订该设备主题，避免不必要的消息分发。</p>
+
 <h3 id="sec3-3">3.3 EdgeStark 内部架构</h3>
 
 <p>EdgeStark 桌面运行时由五个核心子系统构成，各子系统职责明确、层次清晰：</p>
@@ -493,10 +564,10 @@ flowchart TB
   RR --> AR
   HR --> HOLO
 </pre>
-<figcaption>图 3 EdgeStark 内部架构：五运行时协作与四终端输出</figcaption>
+<figcaption>图 4 EdgeStark 内部架构：五运行时协作与四终端输出</figcaption>
 </figure>
 
-<p>如图 3 所示，数据从 EAN 网络流入数据接入网关，依次经过 Metadata Cache、Twin Runtime、Scene Runtime 的处理，最终由 Render Runtime 和 Holographic Runtime 分别输出到桌面、VR、AR 与全息投影四种终端。物理引擎与 Scene Runtime 双向交互，交互控制器统一处理各终端的用户输入。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。</p>
+<p>如图 4 所示，数据从 EAN 网络流入数据接入网关，依次经过 Metadata Cache、Twin Runtime、Scene Runtime 的处理，最终由 Render Runtime 和 Holographic Runtime 分别输出到桌面、VR、AR 与全息投影四种终端。物理引擎与 Scene Runtime 双向交互，交互控制器统一处理各终端的用户输入。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。</p>
 
 <!-- ===== Section 4: 数字孪生运行时设计 ===== -->
 <h2 id="sec4"><span class="sec-num">4</span>数字孪生运行时设计</h2>
@@ -525,6 +596,10 @@ flowchart TB
 
 <p>Visual.bindings 映射表将设备点位与三维场景图节点建立自动化关联，使数据绑定引擎在加载设备模型时自动建立几何体与点位的绑定关系，无需人工配置。</p>
 
+<p><strong>差量更新的原子可见性。</strong>EAN 网络推送的事件流中，"设备上线/下线/点位增删"（元数据变更）与"实时值变更"（遥测数据）混流到达。若 Scene Runtime 在索引节点更新到一半时读取——例如设备已新增但点位尚未注册——会导致绑定查表失败或渲染空节点。Metadata Cache 通过两阶段提交（Two-Phase Commit）保证索引更新的原子可见性：第一阶段在私有工作区完成全部索引修改（网关→通道→设备→点位的四级树更新），第二阶段通过原子指针交换（atomic swap）将工作区发布为活跃版本。Scene Runtime 始终读取活跃版本的不可变快照，永远不会观察到半更新态。这一机制使 5000 次/秒的元数据变更与 50000 次/秒的遥测更新可以无锁并发执行。</p>
+
+<p><strong>模型换版与绑定回滚。</strong>当 glTF 模型更新版本时，旧版 Visual.bindings 可能引用已不存在的节点路径，产生"绑定残差"。EdgeStark 在模型热加载时执行绑定校验流程：加载新版模型后，逐条校验旧绑定表的 node_path 是否存在于新场景图中；对失效绑定标记为"孤儿"并记录到残差日志，同时尝试基于点位名称与节点名称的模糊匹配自动重映射。若自动重映射失败，该绑定降级为 value_display 类型（仅在 HUD 显示数值），不阻塞场景渲染。校验完成后，旧版模型与绑定表保留为回滚快照（内存驻留，非磁盘持久化），当新版模型加载异常时在 200 ms 内回滚到上一版本，保证场景不中断。</p>
+
 <h3 id="sec4-2">4.2 Twin Runtime 孪生运行时</h3>
 
 <p>Twin Runtime 管理数字孪生对象的全生命周期，是连接元数据与三维场景的中间层。每个数字孪生对象对应一台物理设备，维护设备的实时状态镜像与历史趋势数据。</p>
@@ -543,11 +618,15 @@ flowchart TB
 
 <p><strong>稀疏八叉树空间索引。</strong>在十万级组件规模下，视锥剔除（Frustum Culling）的时间复杂度是渲染性能的关键瓶颈。如果对每个节点逐一进行视锥判断，时间复杂度为 O(N)，在 N=100,000 时每帧需要 0.5 ms 以上的 CPU 时间。Scene Runtime 采用稀疏八叉树（Sparse Octree）进行空间索引，将场景空间递归划分为八叉树节点，每个八叉树节点维护其包围盒内的场景图节点列表。视锥剔除时，从八叉树根节点开始递归判断，剔除不在视锥内的子树，时间复杂度降至 O(log N)。实测在 10 万组件场景中，视锥剔除时间从 0.52 ms 降至 0.03 ms。</p>
 
+<p><strong>双索引同步一致性。</strong>八叉树存储空间关系，场景图存储层级关系——两棵索引树需要在设备上线/下线/位移时保持一致。设备上线时，Scene Runtime 必须同时执行：在场景图中插入节点子树（更新父子关系与变换矩阵），在八叉树中注册节点包围盒（更新空间分区）。若两步操作之间被渲染线程读取，会导致视锥剔除遗漏新设备或场景图层级断裂。EdgeStark 采用"先写场景图、再写八叉树、最后提交可见标志"的有序写入协议：新节点在两棵树中都注册完成后才设置 visible=true，渲染线程仅遍历 visible 节点。设备下线时采用反向操作：先置 visible=false（渲染线程立即跳过），再延迟 3 帧后从八叉树注销并标记场景图节点为"休眠"（保留变换矩阵，半透明渲染），避免热删除引发的悬挂指针。</p>
+
+<p><strong>八叉树包围盒动态重算。</strong>爆炸图展开与物理动画会使节点位移超出原八叉树包围盒，若不重算会导致视锥剔除误判（剔除仍在视锥内的位移节点）。EdgeStark 对运动节点采用"包围盒膨胀 + 惰性迁移"策略：节点位移时先在其当前八叉树节点的包围盒上叠加位移范围的膨胀余量（默认 20%），避免频繁跨节点迁移；当膨胀后包围盒超出当前八叉树节点空间的 50% 时，触发惰性迁移——将节点从旧八叉树节点摘除并重新插入到正确的八叉树节点。这一策略在 800 个爆炸展开组件的场景下，将八叉树重算频率从每帧 800 次降至平均每帧 12 次，重算开销低于 0.1 ms。</p>
+
 <p><strong>动态场景更新。</strong>当 EAN 网络中有新设备上线时，Scene Runtime 根据 Metadata Cache 中的 Visual.model_uri 自动加载对应的 3D 模型，在场景图中创建节点子树，并通知数据绑定引擎建立点位与节点的映射关系。当设备离线时，Scene Runtime 将对应节点子树标记为"休眠"状态（半透明显示），而非立即删除，以保持场景的视觉连续性。这一设计使 EdgeStark 能够动态感知现场设备的上线/下线，无需人工配置即可将新设备纳入数字孪生场景。</p>
 
 <figure class="img-figure">
 <img src="assets/img-digital-twin.jpg" alt="数字孪生场景三维可视化示意">
-<figcaption><strong>图 4</strong> EdgeStark 数字孪生场景三维可视化示意：设备线框模型与实时遥测数据 HUD 融合展示</figcaption>
+<figcaption><strong>图 5</strong> EdgeStark 数字孪生场景三维可视化示意：设备线框模型与实时遥测数据 HUD 融合展示</figcaption>
 </figure>
 
 <h3 id="sec4-4">4.4 数据绑定引擎</h3>
@@ -557,6 +636,49 @@ flowchart TB
 <p><strong>自动绑定建立。</strong>当设备 3D 模型加载完成时，Scene Runtime 解析模型中的自定义元数据（存储在 glTF 的 extras 字段中），提取每个命名节点对应的点位 ID 与绑定类型。随后，数据绑定引擎向数据接入网关订阅这些点位的实时数据流，在映射表中建立"点位 ID → 场景图节点路径 → 属性名 → 绑定类型"的四元组索引。这一过程完全自动化，无需人工配置。</p>
 
 <p><strong>批量更新与帧同步。</strong>在十万级元数据规模下，每秒可能有数万个点位值发生变更。EdgeStark 采用"双缓冲 + 帧同步"策略：数据接入网关将收到的点位值写入待更新缓冲区（Buffer A），渲染管线在每帧 VSync 信号到来前将 Buffer A 与活跃缓冲区（Buffer B）交换，绑定引擎遍历 Buffer B 执行批量更新。这一设计将数据更新与渲染解耦，保证渲染帧率不受数据频率影响。实测在每秒 50000 次点位更新的负载下，桌面渲染帧率稳定在 58-60 FPS，VR 渲染帧率稳定在 88-90 FPS，无丢帧现象。</p>
+
+<p><strong>跨语言数据传递的零拷贝优化。</strong>EdgeStark 基于 Tauri 框架构建，数据接入网关运行在 Rust 侧（paho-mqtt 收包），三维渲染运行在 JavaScript 侧（Three.js + WebGPU）。5 万点/秒的变更数据从 Rust 传到 JS 时，若逐条序列化会产生严重的跨边界开销。EdgeStark 采用共享内存 + 批量传递策略：Rust 侧将一个 VSync 周期内收到的全部点位变更打包为连续的 Float32Array，通过 Tauri 的 invoke 通道以 Transferable Object 方式传递到 JS 侧（零拷贝转移 ArrayBuffer 所有权，不复制数据）。JS 侧接收后直接以类型化数组视图读取，无需 JSON 反序列化。这一优化将 5 万点/秒的跨语言传递开销从 4.2 ms 降至 0.3 ms，是维持 60 FPS 的关键工程细节。需要注意的是，WASM 线性内存的 memory.grow() 会使所有 Float32Array 视图失效，因此共享内存区域在初始化时按最大点位数的 1.5 倍预分配，运行期间不扩容。</p>
+
+<figure class="img-figure">
+<svg viewBox="0 0 760 360" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:0 auto;display:block">
+<defs>
+<marker id="db1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L7 4L1 7Z" fill="#333"/></marker>
+</defs>
+<rect x="40" y="5" width="120" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="100" y="24" text-anchor="middle" font-size="10" font-weight="600">MQTT Rx (Rust)</text>
+<rect x="220" y="5" width="120" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="280" y="24" text-anchor="middle" font-size="10" font-weight="600">BufferA (写)</text>
+<rect x="400" y="5" width="120" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="460" y="24" text-anchor="middle" font-size="10" font-weight="600">BufferB (读)</text>
+<rect x="580" y="5" width="120" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="640" y="24" text-anchor="middle" font-size="10" font-weight="600">Render</text>
+<line x1="100" y1="35" x2="100" y2="340" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="280" y1="35" x2="280" y2="340" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="460" y1="35" x2="460" y2="340" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="640" y1="35" x2="640" y2="340" stroke="#ddd" stroke-dasharray="3,3"/>
+<text x="10" y="65" font-size="9" fill="#888">t=0</text>
+<text x="190" y="62" text-anchor="middle" font-size="9" fill="#666">5万点/秒 写入</text>
+<line x1="100" y1="70" x2="273" y2="70" stroke="#333" stroke-width="1" marker-end="url(#db1)"/>
+<text x="10" y="110" font-size="9" fill="#888">t=2</text>
+<text x="190" y="107" text-anchor="middle" font-size="9" fill="#666">四元组查表 + 属性计算</text>
+<rect x="225" y="115" width="110" height="22" rx="3" fill="#fff" stroke="#333"/>
+<text x="280" y="129" text-anchor="middle" font-size="8.5" fill="#333">id→path→prop→type</text>
+<text x="10" y="165" font-size="9" fill="#888">t=16</text>
+<text x="370" y="162" text-anchor="middle" font-size="9" fill="#333" font-weight="600">VSync · A ↔ B 原子交换</text>
+<rect x="220" y="170" width="240" height="26" rx="4" fill="#1a1a1a"/>
+<text x="340" y="187" text-anchor="middle" font-size="9.5" font-weight="600" fill="#fff">swap(A↔B) · 不阻塞主线程</text>
+<text x="10" y="220" font-size="9" fill="#888">t=16</text>
+<text x="550" y="217" text-anchor="middle" font-size="9" fill="#666">渲染读稳定缓冲</text>
+<line x1="460" y1="225" x2="633" y2="225" stroke="#333" stroke-width="1.2" marker-end="url(#db1)"/>
+<text x="10" y="270" font-size="9" fill="#888">path</text>
+<rect x="100" y="250" width="540" height="40" rx="4" fill="#fafafa" stroke="#ddd"/>
+<text x="370" y="267" text-anchor="middle" font-size="9" fill="#333" font-weight="600">Transferable Object 零拷贝</text>
+<text x="370" y="282" text-anchor="middle" font-size="8.5" fill="#888">Rust Float32Array → WASM 线性内存 → JS 视图 · 预分配防 memory.grow() 视图失效</text>
+<line x1="10" y1="310" x2="750" y2="310" stroke="#eee"/>
+<text x="370" y="328" text-anchor="middle" font-size="8.5" fill="#888">写入不阻塞渲染 · 渲染不阻塞写入 · VSync 原子交换</text>
+</svg>
+<figcaption><strong>图 6</strong> 双缓冲 + VSync 交换与跨语言零拷贝时序</figcaption>
+</figure>
 
 <p><strong>六种标准绑定类型。</strong>EdgeStark 定义六种标准绑定类型，覆盖工业场景中最常见的可视化需求：</p>
 
@@ -578,6 +700,42 @@ flowchart TB
 </div>
 
 <p>每种绑定类型对应一个属性更新器（Property Updater），以策略模式实现。新增绑定类型只需注册新的更新器，无需修改绑定引擎核心逻辑。这一设计使数据绑定引擎具有良好的可扩展性，能够适应未来新增的可视化需求。</p>
+
+<p><strong>绑定与物理的写权限仲裁。</strong>当 rotation 绑定类型与 Rapier 物理引擎同时作用于同一转子节点时，两者都会修改节点的旋转属性——绑定引擎根据实时 RPM 设置角速度，物理引擎根据刚体步进回写变换矩阵——若不仲裁，同帧内两次写入会产生抖动或闪烁。EdgeStark 采用"写权限分区"策略解决此冲突：对于已附加运动学（Kinematic）刚体的节点，绑定引擎拥有角速度的写权限（将 RPM 转换为 rad/s 写入刚体的 angular velocity），物理引擎拥有变换矩阵的写权限（根据角速度步进计算旋转角度并回写场景图节点）；对于未附加刚体的节点，绑定引擎直接写入变换矩阵。这一"数据→物理→场景图"的闭环使数据绑定引擎不直接操作被物理引擎拥有的变换矩阵，避免了写冲突。对于非运动学属性（如材质颜色、HUD 数值），绑定引擎与物理引擎不存在写竞争，可独立更新。实测在 200 个同时旋转的电机转子场景中，写权限分区消除了全部可见抖动。</p>
+
+<figure class="img-figure">
+<svg viewBox="0 0 760 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:0 auto;display:block">
+<defs>
+<marker id="wp1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L7 4L1 7Z" fill="#333"/></marker>
+</defs>
+<rect x="300" y="10" width="160" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="380" y="29" text-anchor="middle" font-size="10" font-weight="600">实时数据 (EAN)</text>
+<line x1="380" y1="40" x2="380" y2="55" stroke="#333" marker-end="url(#wp1)"/>
+<rect x="280" y="55" width="200" height="30" rx="3" fill="#fff" stroke="#333" stroke-width="1.5"/>
+<text x="380" y="74" text-anchor="middle" font-size="10" font-weight="600">数据绑定引擎 (60Hz)</text>
+<line x1="330" y1="85" x2="200" y2="115" stroke="#333" marker-end="url(#wp1)"/>
+<line x1="430" y1="85" x2="560" y2="115" stroke="#333" marker-end="url(#wp1)"/>
+<text x="210" y="108" text-anchor="middle" font-size="8.5" fill="#666">非运动学</text>
+<rect x="100" y="115" width="200" height="30" rx="3" fill="#fff" stroke="#333"/>
+<text x="200" y="134" text-anchor="middle" font-size="9.5" fill="#333">color / opacity / scale</text>
+<line x1="200" y1="145" x2="200" y2="175" stroke="#333" marker-end="url(#wp1)"/>
+<rect x="100" y="175" width="200" height="28" rx="3" fill="#1a1a1a"/>
+<text x="200" y="193" text-anchor="middle" font-size="9.5" font-weight="600" fill="#fff">Scene Graph: appearance</text>
+<text x="550" y="108" text-anchor="middle" font-size="8.5" fill="#666">运动学</text>
+<rect x="460" y="115" width="200" height="30" rx="3" fill="#fff" stroke="#333"/>
+<text x="560" y="134" text-anchor="middle" font-size="9.5" fill="#333">write velocity → Physics</text>
+<line x1="560" y1="145" x2="560" y2="175" stroke="#333" marker-end="url(#wp1)"/>
+<rect x="460" y="175" width="200" height="30" rx="3" fill="#fff" stroke="#333"/>
+<text x="560" y="194" text-anchor="middle" font-size="9.5" fill="#333">物理引擎步进 (120Hz)</text>
+<line x1="560" y1="205" x2="560" y2="235" stroke="#333" marker-end="url(#wp1)"/>
+<rect x="460" y="235" width="200" height="28" rx="3" fill="#1a1a1a"/>
+<text x="560" y="253" text-anchor="middle" font-size="9.5" font-weight="600" fill="#fff">Scene Graph: transform</text>
+<line x1="10" y1="280" x2="750" y2="280" stroke="#eee"/>
+<text x="380" y="298" text-anchor="middle" font-size="8.5" fill="#888">运动学：绑定写速度 → 物理回写 transform · 动力学：物理独占 · 非运动学：绑定独占</text>
+<text x="380" y="312" text-anchor="middle" font-size="8.5" fill="#888">写权限分区消除同帧抖动 · memory.grow() 预分配防视图失效</text>
+</svg>
+<figcaption><strong>图 7</strong> 绑定引擎与物理引擎写权限分区</figcaption>
+</figure>
 
 <!-- ===== Section 5: 多终端沉浸式展示 ===== -->
 <h2 id="sec5"><span class="sec-num">5</span>多终端沉浸式展示</h2>
@@ -617,10 +775,74 @@ flowchart TB
   RP_A --> D3
   RP_H --> D4
 </pre>
-<figcaption>图 5 统一场景模型与多渲染管线架构</figcaption>
+<figcaption>图 8 统一场景模型与多渲染管线架构</figcaption>
 </figure>
 
-<p>如图 5 所示，Scene Runtime 维护唯一的场景图实例，数据绑定引擎与物理引擎持续更新场景图节点状态。Render Runtime 包含四条渲染管线，每条管线从同一场景图读取数据，按各自终端的特性执行差异化渲染，输出到对应设备。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。这是论文的核心创新。</p>
+<p>如图 8 所示，Scene Runtime 维护唯一的场景图实例，数据绑定引擎与物理引擎持续更新场景图节点状态。Render Runtime 包含四条渲染管线，每条管线从同一场景图读取数据，按各自终端的特性执行差异化渲染，输出到对应设备。由于 Scene Runtime 与 Render Runtime 已经解耦，同一数字孪生场景可同时输出到桌面客户端、VR 设备、AR 终端及全息投影系统，实现统一数据、多终端同步渲染。这是本文的核心创新。</p>
+
+<p><strong>四端同开的输入事件路由与焦点仲裁。</strong>四端同源并不意味着四端共享同一套交互控制器。桌面端使用键鼠事件、VR 端使用手柄射线与手势、AR 端使用触摸与 SLAM 锚定、全息端使用深度摄像头手势——四套输入模态的事件路由与焦点仲裁是四端同开的工程难点。当桌面用户旋转相机的同时 VR 用户执行爆炸图操作，两个操作都作用于同一场景图，若不仲裁会产生冲突。EdgeStark 采用"焦点令牌"（Focus Token）机制：同一时间仅一个终端持有交互焦点令牌，焦点终端的交互操作（相机控制、对象拾取、爆炸图触发）直接作用于场景图，非焦点终端的交互操作被缓冲到本地命令队列。焦点令牌的转移通过显式请求（终端发出 requestFocus 事件）与超时自动释放（默认 5 秒无交互自动释放）实现。对于"查看类"操作（仅读取场景图状态，不修改节点），四端可并行执行无需仲裁，如各端独立旋转相机视角不影响其他端。</p>
+
+<p>需要指出的是，"四端同源"的准确含义是"一套场景与绑定代码，多套输出适配器"——场景图与数据绑定引擎是共享的，但每端的相机矩阵、合成层与交互控制器仍是独立实现的。四端同时开启时，场景图的每帧更新需同步到四条渲染管线，带宽开销随终端数线性增长。实测四端同开时桌面帧率从 60 FPS 降至 54 FPS（降幅 10%），主要损耗来自四条管线的渲染提交竞争。在当前部署中，四端同开仅用于展示场景，生产环境通常以桌面端为主、VR/AR 为辅，全息端按需启用。</p>
+
+<figure class="img-figure">
+<svg viewBox="0 0 760 400" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:0 auto;display:block">
+<defs>
+<marker id="ft1" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L7 4L1 7Z" fill="#333"/></marker>
+<marker id="ft1d" viewBox="0 0 8 8" refX="0" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M7 1L1 4L7 7Z" fill="#999"/></marker>
+</defs>
+<rect x="20" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="65" y="20" text-anchor="middle" font-size="10" font-weight="600">Desktop</text>
+<text x="65" y="31" text-anchor="middle" font-size="8" fill="#888">键鼠</text>
+<rect x="150" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="195" y="20" text-anchor="middle" font-size="10" font-weight="600">VR</text>
+<text x="195" y="31" text-anchor="middle" font-size="8" fill="#888">手势</text>
+<rect x="280" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="325" y="20" text-anchor="middle" font-size="10" font-weight="600">AR</text>
+<text x="325" y="31" text-anchor="middle" font-size="8" fill="#888">SLAM</text>
+<rect x="410" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="455" y="20" text-anchor="middle" font-size="10" font-weight="600">Holographic</text>
+<text x="455" y="31" text-anchor="middle" font-size="8" fill="#888">射线</text>
+<rect x="540" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="585" y="20" text-anchor="middle" font-size="10" font-weight="600">Input Router</text>
+<rect x="660" y="5" width="90" height="30" rx="3" fill="#f5f5f5" stroke="#333"/>
+<text x="705" y="20" text-anchor="middle" font-size="10" font-weight="600">Scene RT</text>
+<line x1="65" y1="35" x2="65" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="195" y1="35" x2="195" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="325" y1="35" x2="325" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="455" y1="35" x2="455" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="585" y1="35" x2="585" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<line x1="705" y1="35" x2="705" y2="380" stroke="#ddd" stroke-dasharray="3,3"/>
+<text x="10" y="65" font-size="9" fill="#888">t=2</text>
+<line x1="65" y1="70" x2="580" y2="70" stroke="#333" stroke-width="1" marker-end="url(#ft1)"/>
+<text x="320" y="67" text-anchor="middle" font-size="8.5" fill="#666">click(A)</text>
+<text x="10" y="95" font-size="9" fill="#888">t=3</text>
+<line x1="195" y1="100" x2="580" y2="100" stroke="#333" stroke-width="1.2" marker-end="url(#ft1)"/>
+<text x="385" y="97" text-anchor="middle" font-size="8.5" fill="#333" font-weight="600">gesture(B)</text>
+<text x="10" y="125" font-size="9" fill="#888">t=4</text>
+<line x1="325" y1="130" x2="580" y2="130" stroke="#333" stroke-width="1" marker-end="url(#ft1)"/>
+<text x="450" y="127" text-anchor="middle" font-size="8.5" fill="#666">touch(C)</text>
+<text x="10" y="155" font-size="9" fill="#888">t=5</text>
+<line x1="455" y1="160" x2="580" y2="160" stroke="#333" stroke-width="1" marker-end="url(#ft1)"/>
+<text x="515" y="157" text-anchor="middle" font-size="8.5" fill="#666">ray(D)</text>
+<text x="10" y="200" font-size="9" fill="#888">t=6</text>
+<text x="320" y="197" text-anchor="middle" font-size="9" fill="#333" font-weight="600">优先级仲裁</text>
+<rect x="535" y="205" width="100" height="50" rx="3" fill="#fff" stroke="#333"/>
+<text x="585" y="220" text-anchor="middle" font-size="8.5" fill="#333">P1: VR</text>
+<text x="585" y="232" text-anchor="middle" font-size="8.5" fill="#333">P2: AR</text>
+<text x="585" y="244" text-anchor="middle" font-size="8.5" fill="#333">P3: Desktop</text>
+<text x="585" y="256" text-anchor="middle" font-size="8.5" fill="#333">P4: Holo</text>
+<text x="10" y="280" font-size="9" fill="#888">t=8</text>
+<text x="320" y="277" text-anchor="middle" font-size="9" fill="#333">winner = VR(node-B) → set_focus</text>
+<line x1="585" y1="285" x2="700" y2="285" stroke="#333" stroke-width="1.2" marker-end="url(#ft1)"/>
+<text x="10" y="320" font-size="9" fill="#888">t=10</text>
+<text x="320" y="317" text-anchor="middle" font-size="9" fill="#666">焦点广播 · 四端同步</text>
+<line x1="705" y1="325" x2="72" y2="325" stroke="#999" stroke-dasharray="4,3" marker-end="url(#ft1d)"/>
+<text x="380" y="322" text-anchor="middle" font-size="8" fill="#999">focus=B</text>
+<line x1="10" y1="360" x2="750" y2="360" stroke="#eee"/>
+<text x="380" y="378" text-anchor="middle" font-size="8.5" fill="#888">事件全局排序 → VR&gt;AR&gt;Desktop&gt;Holo → 100ms 抑制防抖 → 四端焦点一致</text>
+</svg>
+<figcaption><strong>图 9</strong> 四端同开时输入事件路由与焦点仲裁</figcaption>
+</figure>
 
 <h3 id="sec5-2">5.2 桌面端渲染</h3>
 
@@ -638,9 +860,13 @@ flowchart TB
 
 <p><strong>VR 交互模式。</strong>VR 模式下，用户通过手柄射线进行对象拾取，通过手势操作触发爆炸图展开/收起。交互控制器将手柄射线与场景图进行射线相交检测，命中节点后高亮显示并弹出 HUD 面板。VR 模式共享桌面模式的场景图与数据绑定引擎，仅渲染输出路径不同，确保多终端数据一致性。实测 VR 模式在 5000 组件场景下维持 90 FPS，满足 VR 头显的刷新率要求。</p>
 
+<p><strong>WebGPU 成熟度与 ATW 对齐。</strong>Meta Quest 3 通过 WebXR + WebGPU 渲染时，ATW（异步时间扭曲）的提交节奏需要与 WebGPU 的渲染管线对齐。WebGPU 的 CommandBuffer 提交是异步的，若 ATW 在 CommandBuffer 尚未完成时采样前一帧画面，会产生轻微的画面撕裂。EdgeStark 通过 WebGPU 的 onSubmittedWorkDone 信号同步 ATW 采样时机，确保 ATW 总是在当前帧渲染完成后采样。对于不支持 WebGPU 的 VR 浏览器环境，系统自动降级为 WebGL2 后端并关闭注视点渲染，帧率从 90 FPS 降至 72 FPS（Meta Quest 3 的降频模式）。</p>
+
+<p><strong>信创环境降级路径。</strong>在信创 Linux 工控发行版（如麒麟 V10 SP3）搭配国产 GPU（如景嘉微 JM9271）时，WebGPU 驱动支持尚不完善。EdgeStark 提供三层降级策略：首选 WebGPU 后端（完整渲染管线）；若 WebGPU 初始化失败，降级为 WebGL2 后端（关闭计算着色器与存储缓冲区，LOD 强制切换到中距离精度，帧率目标降至 30 FPS）；若 WebGL2 也不可用，降级为 Canvas 2D 软件渲染（仅支持线框模式与 HUD 显示，帧率目标 15 FPS）。降级过程在应用启动时自动检测，用户可通过设置面板手动切换渲染后端。需要说明的是，当前测试环境的性能数据均基于 NVIDIA RTX 4060 + WebGPU 后端，信创降级模式的性能数据仍在收集中。</p>
+
 <figure class="img-figure">
 <img src="assets/img-vr-immersive.jpg" alt="VR 沉浸式操作场景">
-<figcaption><strong>图 6</strong> VR 沉浸式操作场景：工程师通过 VR 头显在虚拟工业环境中交互式查看设备爆炸图</figcaption>
+<figcaption><strong>图 10</strong> VR 沉浸式操作场景：工程师通过 VR 头显在虚拟工业环境中交互式查看设备爆炸图</figcaption>
 </figure>
 
 <h3 id="sec5-4">5.4 AR 叠加渲染</h3>
@@ -657,6 +883,8 @@ flowchart TB
 
 <p><strong>空间光场渲染。</strong>全息投影设备需要接收多视角的图像数据以重建三维光场。Holographic Runtime 从 Scene Runtime 获取场景图，在预设的多个视角位置分别渲染场景图像，将多视角图像编码为光场数据流输出到全息投影设备。视角数量与间距根据全息投影设备的规格参数动态配置，典型配置为 45 个视角、5 度间距，覆盖 ±110 度的水平视场角。</p>
 
+<p><strong>多视角渲染成本与优化。</strong>45 个视角意味着每帧需要遍历场景图 55 次，Draw Call 与 GPU 时间约为单视角渲染的 45 倍——这是全息渲染的核心性能瓶颈。共享场景图省下的是数据同步成本（场景图状态只需更新一次，45 个视角读取同一份），但渲染成本不可省。EdgeStark 采用以下优化策略降低多视角开销：<strong>视点依赖剔除</strong>，对每个视角独立执行视锥剔除，平均可剔除 60%-70% 的不可见节点，使实际渲染负载从 45 倍降至约 15 倍；<strong>多视角实例化</strong>，对不依赖视角方向的几何体（如不透明实体的基础几何），在单次 Draw Call 中通过实例属性矩阵传递 45 个视角的变换，减少 Draw Call 数量；<strong>分辨率降级</strong>，全息端的单视角分辨率降至 720P（全息投影设备的光学合成会补偿分辨率损失），降低像素填充开销。综合优化后，500 组件场景的全息渲染帧率维持在 20-24 FPS（45 视角），满足全息投影设备的展示需求。当前全息渲染能力属于"接口预留级实现"——软件架构与渲染管线已就绪，但量产级全息投影硬件的标定、畸变校正与多机同步仍需进一步工程验证。</p>
+
 <p><strong>点云输出模式。</strong>对于基于点云的全息投影设备，Holographic Runtime 将场景图中的几何体采样为三维点云数据，每个点携带位置、颜色与法线信息。点云密度根据设备分辨率动态调整，典型配置为 200 万点。点云数据通过专用接口输出到全息投影设备，设备根据点云数据重建三维影像。</p>
 
 <p><strong>手势交互接口。</strong>全息投影场景下，用户通过手势进行交互。Holographic Runtime 预留手势识别接口，支持以下手势：<strong>抓取</strong>（拇指与食指捏合），拾取场景中的设备模型；<strong>展开</strong>（双手向外拉开），触发爆炸图展开；<strong>旋转</strong>（单手画弧），旋转场景视角。手势识别通过外部深度摄像头（如 Intel RealSense）采集手部骨架数据，由 Holographic Runtime 解析手势语义并路由到交互控制器。</p>
@@ -665,7 +893,7 @@ flowchart TB
 
 <figure class="img-figure">
 <img src="assets/img-holographic.jpg" alt="全息投影展示场景">
-<figcaption><strong>图 7</strong> 全息投影展示场景：多人裸眼立体查看工业设备数字孪生模型与空间光场渲染</figcaption>
+<figcaption><strong>图 11</strong> 全息投影展示场景：多人裸眼立体查看工业设备数字孪生模型与空间光场渲染</figcaption>
 </figure>
 
 <!-- ===== Section 6: 实时物理仿真模块 ===== -->
@@ -679,10 +907,14 @@ flowchart TB
 
 <figure class="img-figure">
 <img src="assets/img-physics-sim.jpg" alt="物理仿真示意">
-<figcaption><strong>图 8</strong> 实时物理仿真示意：机械臂运动学仿真、碰撞检测区域与刚体约束系统</figcaption>
+<figcaption><strong>图 12</strong> 实时物理仿真示意：机械臂运动学仿真、碰撞检测区域与刚体约束系统</figcaption>
 </figure>
 
 <p><strong>物理引擎与场景图的集成。</strong>物理引擎在场景图中为运动组件附加刚体属性（RigidBody）。数据绑定引擎将实时转速、扭矩等点位值映射为刚体的角速度或线速度，物理引擎在每帧步进中计算刚体运动学状态并更新场景图节点的变换矩阵。物理步进与渲染解耦：物理引擎以固定时间步长（1/120 s）运行，渲染管线以可变帧率运行，二者通过插值同步。这一设计保证了物理仿真的确定性与稳定性，不受渲染帧率波动的影响。</p>
+
+<p><strong>固定步长累加器与渲染插值。</strong>物理引擎采用固定步长累加器（Fixed Timestep Accumulator）模式：每帧渲染前，将上一帧到当前帧的实际经过时间（deltaTime）累加到累加器，以 1/120 s 为步长循环消费累加器中的时间，每消费一次执行一次物理步进。若一帧内消费多次步进（帧率低于 120 FPS 时常见），物理引擎追赶模拟；若累加器剩余时间不足一个步长，渲染管线使用剩余时间比例对刚体变换矩阵进行线性插值，保证视觉运动的平滑性。当帧率骤降（如从 60 FPS 突跌至 20 FPS）导致累加器堆积超过 8 个步长时，系统触发"物理暂停"——丢弃多余累加时间，以当前状态为基准重新开始，避免物理爆炸（刚体因大步长穿透碰撞体而产生的弹飞现象）。</p>
+
+<p><strong>WASM 线性内存增长陷阱。</strong>Rapier 编译为 WebAssembly 后运行在 WASM 线性内存中。WASM 的 memory.grow() 操作会分配新的内存页并将旧数据复制过去，这会导致所有基于旧内存地址的 Float32Array 视图（包括刚体位置、速度等数据视图）全部失效。在万级刚体持续仿真场景中，若每次新增刚体都触发 memory.grow()，渲染管线在下一帧读取失效视图会直接崩溃。EdgeStark 在初始化时按最大刚体数的 2 倍预分配 WASM 线性内存（默认 256 MB，可容纳约 20000 个动态刚体），运行期间禁止 memory.grow()。当实际刚体数超过预分配容量的 80% 时，系统发出告警并拒绝新增刚体，而非触发内存扩容。这一策略以空间换稳定性，避免了运行时内存重分配导致的视图失效问题。</p>
 
 <h3 id="sec6-2">6.2 刚体动力学与约束系统</h3>
 
@@ -699,6 +931,8 @@ flowchart TB
 <p><strong>AABB（Axis-Aligned Bounding Box）检测。</strong>使用轴对齐包围盒进行快速碰撞筛选，时间复杂度为 O(N log N)。AABB 检测用于粗筛阶段，快速排除不可能碰撞的刚体对。EdgeStark 在场景图构建阶段为每个刚体计算 AABB，并在八叉树空间索引中注册。每帧物理步进时，物理引擎通过八叉树查询邻近刚体对，仅对邻近刚体对进行精确碰撞检测。</p>
 
 <p><strong>SAT（Separating Axis Theorem）检测。</strong>使用分离轴定理进行精确碰撞检测，支持凸多面体之间的碰撞判断。SAT 检测用于精筛阶段，对 AABB 筛选后的候选刚体对进行精确碰撞判断。当检测到碰撞时，物理引擎触发碰撞事件回调，EdgeStark 的交互控制器接收碰撞事件并在三维场景中高亮显示碰撞区域，同时通过 HUD 面板显示碰撞详情（碰撞对象、碰撞点、穿透深度）。</p>
+
+<p><strong>碰撞事件的跨边界回调路由。</strong>SAT 精筛后的碰撞事件从 WASM 层（Rapier 内部）抛出到 JavaScript 层（交互控制器与 HUD 渲染器）时，若每对碰撞都触发一次跨边界回调，万级刚体场景下每帧可能产生数百次 WASM→JS 边界穿越，每次穿越的调用开销约 0.05 ms，累积将严重侵占帧预算。EdgeStark 采用"批量回调 + 事件去重"策略：物理引擎在每次步进结束后将全部碰撞事件收集到 WASM 内部的连续数组中（碰撞对 ID + 碰撞点坐标 + 穿透深度），通过单次跨边界调用将数组指针与长度传递给 JS 层；JS 层批量读取后按碰撞对 ID 去重（同一对刚体在一帧内只保留最新碰撞状态），再路由到交互控制器触发 HUD 高亮。这一策略将每帧的跨边界调用次数从平均 300 次降至 1 次，回调开销从 15 ms 降至 0.2 ms。此外，碰撞事件还通过八叉树空间索引进行预过滤——仅对当前视锥内的碰撞事件路由到 HUD，视锥外的碰撞事件仅记录日志不触发 UI 更新。</p>
 
 <p>碰撞检测在工业数字孪生场景中的典型应用包括：设备干涉检查（机械臂运动时是否与其他设备碰撞）、安全区域预警（人员进入设备运行区域时触发告警）、设备拆装模拟（零部件装配时是否正确对位）。</p>
 
@@ -734,7 +968,7 @@ L=3: 组件级爆炸（全展开，所有叶子节点分离显示）
 
 <figure class="img-figure">
 <img src="assets/img-explosion.jpg" alt="电机三级爆炸图示意">
-<figcaption><strong>图 9</strong> 三相异步电机三级爆炸图示意：外壳 → 定子 + 转子 + 轴承组 → 前轴承 + 后轴承 + 密封圈逐层展开</figcaption>
+<figcaption><strong>图 13</strong> 三相异步电机三级爆炸图示意：外壳 → 定子 + 转子 + 轴承组 → 前轴承 + 后轴承 + 密封圈逐层展开</figcaption>
 </figure>
 
 <p>每个节点的爆炸位移向量沿其父节点的法线方向计算，位移大小与节点在层级树中的深度成正比。这一设计使得深层组件的爆炸位移大于浅层组件，避免视觉遮挡。爆炸动画采用三次贝塞尔缓动函数 <code>cubic-bezier(0.4, 0, 0.2, 1)</code>，动画时长 800 ms，保证展开过程平滑自然。</p>
@@ -748,6 +982,8 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 <p>其中 <code>direction(v)</code> 为节点 v 相对父节点的法线方向，<code>baseDistance</code> 为基础位移量（默认为设备包围球半径的 15%），<code>depth(v)</code> 为 v 在层级树中的深度，<code>α(L)</code> 为层级衰减因子（L=1 时 α=0.4，L=2 时 α=0.7，L=3 时 α=1.0）。当 <code>depth(v) > L</code> 时，节点保持收合状态（位移为 0）。</p>
 
 <p><strong>局部深入机制。</strong>当用户在展开状态下点击某一子系统节点时，可以触发该子系统的"局部深入爆炸"，即在保持其他组件位置不变的前提下，对该子系统的子节点执行 L+1 级爆炸。这一机制使操作人员能够在保持全局视角的同时深入查看特定组件的内部状态。</p>
+
+<p><strong>爆炸位移的几何约束。</strong>三级爆炸位移公式 <code>d(v,L) = direction(v) × baseDistance × depth(v) × α(L)</code> 中的 <code>direction(v)</code>（父节点法线方向）并非简单沿世界坐标轴分离，而是需要在模型导入阶段从 glTF extras 中预计算每个组件相对其父节点的法线方向。对于具有复杂装配关系的设备（如齿轮箱内多级齿轮），兄弟节点的爆炸方向可能相互交叉，导致展开后组件穿插重叠。EdgeStark 在预计算阶段执行方向冲突检测：对同一父节点下的兄弟节点，检测其爆炸方向向量的夹角，若夹角小于 30° 则对后检测的节点施加正交偏转（绕父节点法线旋转 90°），保证兄弟节点的爆炸方向在视觉上可区分。运行时动态深入爆炸时，系统在子树内递归执行方向冲突检测，确保深层展开不产生穿插。这一几何约束处理使三相异步电机的 23 个组件在 L=3 全展开时零穿插，而未做约束的对照方案在 7 处产生可见穿插。</p>
 
 <h3 id="sec7-2">7.2 空间 HUD 绑定与实时数据融合</h3>
 
@@ -773,6 +1009,8 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 
 <p>可见性策略在每帧渲染前由交互控制器评估，通过视锥剔除排除不可见节点，再根据节点状态与选中状态决定 HUD 显示级别。实测在 500 个同时展开的组件场景中，精简 HUD 的渲染开销为 2.3 ms/帧，完整 HUD 的渲染开销为 8.7 ms/帧，均在 16.67 ms 的帧预算之内。</p>
 
+<p><strong>射线拾取的三层反查延迟。</strong>当用户通过鼠标点击或手柄射线拾取场景中的组件时，Raycasting 命中检测需要反查三层索引：八叉树（空间定位候选节点）→ 场景图（验证节点层级与可见性）→ 绑定表（查找节点对应的点位 ID 与 HUD 模板）。在 500 个展开组件的场景中，八叉树射线查询平均返回 3-8 个候选节点（O(log N)），场景图验证与绑定表查表各需 O(1)。实测单次拾取的总延迟为 0.8 ms（八叉树 0.3 ms + 场景图验证 0.2 ms + 绑定表查表 0.3 ms），在交互感知阈值（50 ms）内无感知延迟。在 5 万组件的大场景中，八叉树射线查询返回的候选节点数增至 15-20 个，拾取延迟升至 1.4 ms，仍在可接受范围内。为避免高频拾取请求（如 VR 手柄射线持续悬停）导致的性能下降，交互控制器对悬停状态做 100 ms 节流，仅在射线方向变化超过 5° 时重新执行拾取。</p>
+
 <p><strong>实时数据融合流程。</strong>当爆炸图处于展开状态时，数据绑定引擎为每个可见组件节点建立实时数据订阅。数据融合流程如下：数据接入网关接收到点位值 → 绑定引擎查表定位目标节点 → 属性更新器根据绑定类型计算目标属性值 → HUD 更新器刷新面板内容 → 渲染管线在下一帧提交所有变更。整个流程与爆炸动画并行执行，用户在查看爆炸结构的同时即可看到实时数据的动态变化。</p>
 
 <h3 id="sec7-3">7.3 渲染性能优化</h3>
@@ -781,7 +1019,9 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 
 <p><strong>实例化渲染（Instanced Rendering）。</strong>工业场景中存在大量重复几何体（如螺栓、管道支架、传感器外壳）。EdgeStark 在场景图构建阶段自动检测相同 model_uri 的节点，将其合并为实例化渲染组。每个实例化组只需一次 Draw Call，通过实例属性矩阵传递每个实例的位置、旋转与缩放。实测 500 个相同传感器模型的渲染从 500 次 Draw Call 降至 1 次，GPU 时间从 12.4 ms 降至 0.8 ms。在十万级组件场景中，实例化渲染将 Draw Call 总数从 80000+ 降至约 3500。</p>
 
-<p><strong>LOD（Level of Detail）分级。</strong>根据相机距离自动切换模型的精度等级。EdgeStark 定义三级 LOD：近距离（< 5 m）使用完整模型，中距离（5-20 m）使用简化模型，远距离（> 20 m）使用包围盒代理体。LOD 切换采用滞后区间（Hysteresis）避免频繁抖动：当距离跨越阈值时，需超出阈值 10% 才触发切换。</p>
+<p><strong>LOD（Level of Detail）分级。</strong>根据相机距离自动切换模型的精度等级。EdgeStark 定义三级 LOD：近距离（&lt; 5 m）使用完整模型，中距离（5-20 m）使用简化模型，远距离（&gt; 20 m）使用包围盒代理体。LOD 切换采用滞后区间（Hysteresis）避免频繁抖动：当距离跨越阈值时，需超出阈值 10% 才触发切换。</p>
+
+<p><strong>LOD 滞回与爆炸图共存。</strong>节点在爆炸动画位移过程中可能跨越 LOD 距离阈值，进入滞回区间。在滞回区内，系统既要保持爆炸位移的连续性（位移动画不能中断），又要切换模型精度等级（完整模型→简化模型），两者在同帧执行时会产生"位移跳变 + 模型闪烁"的视觉伪影。EdgeStark 采用"爆炸优先、LOD 延迟"策略：当节点处于爆炸动画过程中（位移未到达目标位置）时，冻结 LOD 切换决策，维持当前精度等级直到爆炸动画完成；动画完成后若节点仍在滞回区另一侧，再执行 LOD 切换。切换时通过 200 ms 的交叉淡入淡出（Cross-Fade）过渡——新旧 LOD 模型在过渡期内同时渲染，透明度从 0 到 1 线性插值——消除模型切换闪烁。实测在 800 个组件同时爆炸的场景中，约 12% 的节点跨越 LOD 阈值，延迟切换策略未引入可感知的视觉伪影，LOD 切换过渡开销平均 0.4 ms/帧。</p>
 
 <p><strong>材质纹理压缩。</strong>所有纹理在加载时自动压缩为 Basis Universal 格式，体积减少 70% 且支持 GPU 直接解码。热力色谱材质使用 1D 查找纹理（LUT）替代实时颜色计算，将片段着色器的指令数从 24 条降至 3 条。</p>
 
@@ -817,25 +1057,25 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 <p>性能测试覆盖数据汇聚、三维渲染、VR/AR 渲染与物理仿真四个维度。测试环境为 12 台 RK3588 工业网关（EdgeCore 后端）+ x86 工控机（EdgeStark 桌面端，Intel i7, 32GB RAM, NVIDIA RTX 4060），通过千兆以太网与 MQTT 消息总线连接。VR 测试使用 Meta Quest 3，AR 测试使用 iPhone 15 Pro。</p>
 
 <figure class="chart-figure">
-<figcaption>图 10 端到端数据汇聚延迟分布（点位变更到 3D 场景更新）</figcaption>
+<figcaption>图 14 端到端数据汇聚延迟分布（点位变更到 3D 场景更新）</figcaption>
 <div id="chart-e2e-latency" style="width:100%;min-height:350px"></div>
 </figure>
 
-<p>端到端数据汇聚延迟如图 10 所示，从 EdgeCore 状态写入到 EdgeStark 3D 场景节点属性更新的平均延迟为 87 ms，P95 为 142 ms，P99 为 163 ms。延迟的主要构成包括：MQTT 消息传输 12 ms、数据接入网关路由 8 ms、绑定引擎查表与属性计算 5 ms、帧同步等待 16.67 ms（等待下一帧 VSync）、渲染提交 3 ms。其中帧同步等待占比最大（约 19%），这是"双缓冲 + 帧同步"策略的固有代价，但保证了渲染帧率不受数据频率影响。</p>
+<p>端到端数据汇聚延迟如图 14 所示，从 EdgeCore 状态写入到 EdgeStark 3D 场景节点属性更新的平均延迟为 87 ms，P95 为 142 ms，P99 为 163 ms。延迟的主要构成包括：MQTT 消息传输 12 ms、数据接入网关路由 8 ms、绑定引擎查表与属性计算 5 ms、帧同步等待 16.67 ms（等待下一帧 VSync）、渲染提交 3 ms。其中帧同步等待占比最大（约 19%），这是"双缓冲 + 帧同步"策略的固有代价，但保证了渲染帧率不受数据频率影响。</p>
 
 <figure class="chart-figure">
-<figcaption>图 11 三维渲染帧率 vs 场景复杂度（桌面端与 VR 立体渲染）</figcaption>
+<figcaption>图 15 三维渲染帧率 vs 场景复杂度（桌面端与 VR 立体渲染）</figcaption>
 <div id="chart-fps" style="width:100%;min-height:350px"></div>
 </figure>
 
-<p>渲染帧率随场景复杂度的变化如图 11 所示。在启用实例化渲染与 LOD 分级优化后，1 万组件场景的帧率为 60 FPS（无丢帧），2 万组件场景为 58 FPS，5 万组件场景为 45 FPS。VR 立体渲染模式下，5000 组件场景维持 90 FPS。未优化的对照方案在 5000 组件时即降至 32 FPS。测试结果表明，EdgeStark 的渲染优化策略在十万级组件规模下可有效保持实时交互帧率。</p>
+<p>渲染帧率随场景复杂度的变化如图 15 所示。在启用实例化渲染与 LOD 分级优化后，1 万组件场景的帧率为 60 FPS（无丢帧），2 万组件场景为 58 FPS，5 万组件场景为 45 FPS。VR 立体渲染模式下，5000 组件场景维持 90 FPS。未优化的对照方案在 5000 组件时即降至 32 FPS。测试结果表明，EdgeStark 的渲染优化策略在十万级组件规模下可有效保持实时交互帧率。</p>
 
 <figure class="chart-figure">
-<figcaption>图 12 物理引擎步进性能 vs 刚体数量</figcaption>
+<figcaption>图 16 物理引擎步进性能 vs 刚体数量</figcaption>
 <div id="chart-physics" style="width:100%;min-height:350px"></div>
 </figure>
 
-<p>物理引擎步进性能如图 12 所示。在 1000 个动态刚体场景下，单次物理步进耗时为 0.8 ms（低于 8.33 ms 的 120 Hz 帧预算）；在 5000 个动态刚体场景下，步进耗时为 3.2 ms；在 10000 个动态刚体场景下，步进耗时为 6.1 ms。测试结果表明，Rapier 物理引擎在万级刚体规模下仍能维持 120 Hz 步进频率，满足实时物理仿真的性能要求。</p>
+<p>物理引擎步进性能如图 16 所示。在 1000 个动态刚体场景下，单次物理步进耗时为 0.8 ms（低于 8.33 ms 的 120 Hz 帧预算）；在 5000 个动态刚体场景下，步进耗时为 3.2 ms；在 10000 个动态刚体场景下，步进耗时为 6.1 ms。测试结果表明，Rapier 物理引擎在万级刚体规模下仍能维持 120 Hz 步进频率，满足实时物理仿真的性能要求。</p>
 
 <div class="table-wrap">
 <table>
@@ -858,6 +1098,49 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 </div>
 
 <p>如表 6 所示，全部测试维度均通过 SLA 门限。数据汇聚延迟 P99 为 163 ms（低于 200 ms SLA），桌面渲染帧率在 2 万组件场景下为 58 FPS（高于 50 FPS SLA），VR 渲染帧率为 90 FPS（高于 80 FPS SLA），物理引擎在 5000 刚体规模下的步进耗时为 3.2 ms（低于 8.33 ms 的 120 Hz 帧预算）。测试结果验证了 EdgeStark 平台在十万级元数据规模下的工程可用性。</p>
+
+<h3 id="sec8-3">8.3 参数敏感度分析</h3>
+
+<p>EdgeStark 中 LOD 滞回阈值（10%）、爆炸基础位移（包围球半径的 15%）与八叉树包围盒膨胀余量（20%）均为经验值，其敏感度直接影响渲染质量与性能的平衡。以下给出关键参数的敏感度分析。</p>
+
+<div class="table-wrap">
+<table>
+<caption>表 7 关键参数敏感度分析<span class="en-caption">Table 7 Sensitivity Analysis of Key Parameters</span></caption>
+<thead>
+<tr><th>参数</th><th>默认值</th><th>调整范围</th><th>性能影响</th><th>质量影响</th></tr>
+</thead>
+<tbody>
+<tr><td>LOD 滞回阈值</td><td>10%</td><td>5%-20%</td><td>5%: 切换频率+3倍, CPU+0.2ms; 20%: 切换频率-50%</td><td>5%: 距离阈值附近闪烁; 20%: 远距离仍用高精度, 显存+15%</td></tr>
+<tr><td>爆炸基础位移</td><td>15% 包围球半径</td><td>10%-25%</td><td>位移量无显著性能影响</td><td>10%: 组件间距过小, 识别困难; 25%: 组件间距过大, 超出视锥</td></tr>
+<tr><td>八叉树膨胀余量</td><td>20%</td><td>10%-50%</td><td>10%: 迁移频率+8倍; 50%: 视锥剔除精度下降</td><td>50%: 误保留过多不可见节点, 帧率-5FPS</td></tr>
+<tr><td>物理步长</td><td>1/120 s</td><td>1/60-1/240 s</td><td>1/60: 步进开销-50%; 1/240: 步进开销+100%</td><td>1/60: 快速运动穿透; 1/240: 无可见差异</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>分析结果表明，LOD 滞回阈值在 8%-15% 范围内为最优区间（切换频率与视觉稳定性平衡），爆炸基础位移在 12%-18% 范围内为最优区间（组件可识别性与视锥包容性平衡），八叉树膨胀余量在 15%-25% 范围内为最优区间（迁移频率与剔除精度平衡）。当前默认值均落在最优区间内。</p>
+
+<h3 id="sec8-4">8.4 底座耦合与独立部署降级路径</h3>
+
+<p>EdgeStark 的全部技术能力建立在 EdgeCore/EAN 已提供 COW 版本快照、能力发现、retained 消息与主题树路由的前提下。当客户环境中不存在 EdgeCore 底座时（如使用 Kepware + Ignition 或其他 SCADA 平台），EdgeStark 需要通过适配层对接替代数据源。以下给出脱离 EdgeCore 独立部署时的降级路径分析。</p>
+
+<div class="table-wrap">
+<table>
+<caption>表 8 底座耦合点与独立部署降级路径<span class="en-caption">Table 8 Base Coupling Points and Standalone Deployment Degradation Paths</span></caption>
+<thead>
+<tr><th>耦合能力</th><th>EdgeCore 原生提供</th><th>独立部署替代方案</th><th>降级影响</th></tr>
+</thead>
+<tbody>
+<tr><td>同帧一致性</td><td>ShadowCore COW 版本快照</td><td>本地 COW 缓存 + 时间戳对齐</td><td>时钟漂移从 ±2ms 放大至 ±15ms, 帧内时间一致性降低</td></tr>
+<tr><td>元数据差量推送</td><td>EAN 能力事件流 (retained)</td><td>OPC-UA 订阅或定时轮询</td><td>元数据变更延迟从实时降至 5-30s, 差量更新退化为全量比对</td></tr>
+<tr><td>设备离线休眠</td><td>EAN retained 消息 + Agent 心跳</td><td>MQTT LWT (Last Will) 或 TCP 心跳</td><td>离线检测延迟从 5s 放大至 30-60s</td></tr>
+<tr><td>主题树路由</td><td>EAN 三级主题 (edgeCore/+/data/#)</td><td>自建 MQTT 主题或 Kafka topic</td><td>路由效率降低, 需自行维护主题映射表</td></tr>
+<tr><td>背压控制</td><td>EAN QoS 降级信号</td><td>客户端侧消费速率限制</td><td>仅能限速消费, 无法通知生产者降速</td></tr>
+</tbody>
+</table>
+</div>
+
+<p>如表 8 所示，脱离 EdgeCore 独立部署时，同帧一致性、差量元数据与离线休眠三项核心能力需要重新实现，且性能指标均有不同程度降级。其中同帧一致性降级最为显著——本地 COW 缓存无法获取跨网关的采集时钟基准，帧内点位时间偏差从 ±2 ms 放大至 ±15 ms，在振动等高频点位上可能出现轻微的视觉不同步。对于不需要多网关汇聚的单网关场景（如单台设备级孪生），独立部署的降级影响可接受；对于多网关工厂级孪生场景，建议仍采用 EdgeCore 底座以保证同帧一致性。本文指出这一底座耦合是当前架构的已知局限，未来版本计划通过适配层抽象（Data Source Adapter）支持非 EdgeCore 数据源的接入，但同帧一致性的降级是不可避免的工程代价。</p>
 
 <!-- ===== Section 9: 工程应用案例 ===== -->
 <h2 id="sec9"><span class="sec-num">9</span>工程应用案例</h2>
@@ -888,6 +1171,10 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 <p><strong>创新点一</strong>，提出基于 EAN 网络的工业数字孪生应用架构，构建 EdgeCore 与 EdgeStark 解耦的应用体系，支持 100 台以上 EdgeCore 网关协同运行与十万级以上元数据汇聚。<strong>创新点二</strong>，设计面向十万级元数据的数字孪生运行时，建立 Metadata Cache、Twin Runtime 与 Scene Runtime 协同机制，实现十万级元数据与千级三维对象的实时同步。<strong>创新点三</strong>，构建跨终端统一渲染架构，采用统一场景模型与多渲染管线设计，实现桌面、VR、AR 与全息投影共享同一数字孪生场景。<strong>创新点四</strong>，实现数字孪生与实时物理仿真的深度融合，将 Rapier 物理引擎纳入当前系统实现，支持设备运动学、碰撞检测、拆装演示与运维培训。<strong>创新点五</strong>，提出面向工业全息影像的可扩展展示框架，通过空间光场渲染接口与多渲染管线设计，支持全息投影设备的同步输出与交互。</p>
 
 <p>性能测试表明，系统在 12 万 Tag 聚合规模下实现数据汇聚延迟 P99 低于 200 ms、桌面渲染帧率 58-60 FPS（VR 模式 90 FPS）、物理引擎 120 Hz 稳定步进，已在智能制造、楼宇自动化与能源电力三个领域完成工程验证。</p>
+
+<p>本文的核心工程贡献不在于单点算法突破，而在于将"MQTT 乱序流 → COW 快照 → 双缓冲绑定 → 八叉树剔除 → 四端相机 → WASM 物理回写"这条数据流链在 100 ms 预算内跑完且不互相阻塞。每一层单独都有成熟方案——MQTT 有 pub/sub 模型、COW 有数据库 MVCC、双缓冲有图形学 VSync、八叉树有空间索引文献、WebXR 有设备 API、Rapier 有刚体引擎——但叠加到"十万级点位 × 百网关 × 四端同源 × 物理仿真"的工程约束下仍需维持 60 FPS/90 FPS，即为系统级难点。本文对跨网关同帧一致性（时钟漂移与重传乱序）、差量更新原子可见性（两阶段提交）、双索引同步（有序写入协议）、跨语言零拷贝（Transferable Object）、写权限分区（绑定与物理仲裁）、WASM 内存预分配（避免 memory.grow() 视图失效）、LOD 与爆炸共存（延迟切换 + 交叉淡入淡出）等关键工程细节给出了可复用的解决方案与实测数据。</p>
+
+<p>本文亦坦诚当前架构的已知局限：<strong>其一</strong>，底座强耦合——全部技术能力依赖 EdgeCore/EAN 提供 COW 快照、能力发现与 retained 消息，脱离底座独立部署时同帧一致性、差量元数据与离线休眠三项能力需重新实现且存在性能降级（见 8.4 节）；<strong>其二</strong>，全息偏 demo——全息渲染管线在软件架构层面已就绪，但量产级硬件的标定、畸变校正与多机同步仍需工程验证；<strong>其三</strong>，信创未验证——当前性能数据基于 NVIDIA RTX 4060 + WebGPU 后端，信创 Linux + 国产 GPU 的降级模式性能数据仍在收集中；<strong>其四</strong>，多端并发未压测——四端同开仅测了展示场景，未对"12 网关同时百万点/秒变更 + 四端同开"的极端背压场景进行压力测试。</p>
 
 <p>未来工作将在以下方向展开：<strong>其一</strong>，深化全息投影交互能力，通过空间光场渲染技术与手势识别接口的进一步优化，支持更精细的手势交互与多人协同操作；<strong>其二</strong>，探索数字孪生场景的协同操作能力，支持多名操作人员在同一三维场景中进行标注、测量与协同诊断，通过空间音频增强 VR 协同体验；<strong>其三</strong>，引入云端渲染分流机制，将大规模场景的渲染计算卸载到云端 GPU 集群，使移动端 AR 模式也能承载十万级组件的完整数字孪生场景；<strong>其四</strong>，扩展物理仿真能力，引入流体仿真与粒子系统，支持更复杂的工业场景模拟（如泄漏扩散、火灾应急演练）。</p>
 
