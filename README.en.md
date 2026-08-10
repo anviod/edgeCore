@@ -186,6 +186,12 @@ Test assets and maintenance rules: [test/README.md](test/README.md) · Reports: 
 
 ---
 
+## License
+
+This project is licensed under the [GNU General Public License v3.0](LICENSE).
+
+---
+
 ## Related Documents
 
 - **Product Guide (中文)**: [online](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [source](docs/guide/产品说明.md)

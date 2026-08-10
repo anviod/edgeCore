@@ -62,7 +62,7 @@ nfpms:
     homepage: https://github.com/anviod/edgeCore
     maintainer: anviod <anviod@aliyun.com>
     description: 边缘网关，基于 Go 语言的边缘网络通讯与同步服务
-    license: Apache-2.0
+    license: GPL-3.0
     bindir: /usr/local/bin/edgeCore
     contents:
       - src: ./edgeCore.service

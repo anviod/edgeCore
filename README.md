@@ -252,6 +252,12 @@ make test-short
 
 ---
 
+## 开源协议
+
+本项目采用 [GNU General Public License v3.0](LICENSE) 开源协议。
+
+---
+
 ## 相关文档
 
 - **产品说明**：[在线阅读](https://anviod.github.io/edgeCore/guide/%E4%BA%A7%E5%93%81%E8%AF%B4%E6%98%8E.html) · [源码](docs/guide/产品说明.md)
