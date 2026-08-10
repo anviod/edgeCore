@@ -872,3 +872,31 @@ func TestEANEventAutoPublishEnabled(t *testing.T) {
 		})
 	}
 }
+
+// TestMqttTopicToNatsSubject verifies the MQTT-to-NATS subject conversion.
+// NATS uses dot-separated hierarchical subjects; MQTT topics use slashes.
+// | 验证 MQTT 斜杠 Topic 到 NATS 点分隔 Subject 的转换规则。
+func TestMqttTopicToNatsSubject(t *testing.T) {
+	cases := []struct {
+		name     string
+		mqtt     string
+		natsWant string
+	}{
+		{"plain", "$edgeos/discovery/agent", "$edgeos.discovery.agent"},
+		{"with_id", "$edgeos/invoke/gw-001", "$edgeos.invoke.gw-001"},
+		{"multi_segment", "$edgeos/event/gw-001/dev-001", "$edgeos.event.gw-001.dev-001"},
+		{"single_level_wildcard", "$edgeos/invoke/+/status", "$edgeos.invoke.*.status"},
+		{"multi_level_wildcard", "$edgeos/event/#", "$edgeos.event.>"},
+		{"v1_compat", "edgeCore/nodes/register", "edgeCore.nodes.register"},
+		{"already_dot", "edgeCore.nodes.register", "edgeCore.nodes.register"},
+		{"no_separator", "discovery", "discovery"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := MqttTopicToNatsSubject(tc.mqtt)
+			if got != tc.natsWant {
+				t.Errorf("MqttTopicToNatsSubject(%q) = %q, want %q", tc.mqtt, got, tc.natsWant)
+			}
+		})
+	}
+}

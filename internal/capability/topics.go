@@ -3,6 +3,11 @@ package capability
 import "fmt"
 
 // EAN 2.0 Topic / Subject templates ($edgeos/*).
+// These use MQTT-style slash separators. The NATS bus adapter
+// (edgos_nats.MqttTopicToNatsSubject) converts them to NATS-native
+// dot-separated subjects before every Publish / Subscribe call.
+// | EAN 2.0 Topic 模板使用 MQTT 斜杠形式。
+// | NATS 适配器会自动将其转换为点分隔的 NATS Subject。
 const (
 	TopicDiscoveryAgent        = "$edgeos/discovery/agent"
 	TopicDiscoveryAgentOffline = "$edgeos/discovery/agent/offline"

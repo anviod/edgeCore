@@ -907,7 +907,7 @@ Phase 4（OS-P4）将 V1→EAN Bridge **完全移除**——原生 EAN Discovery
 
 ### 7.6 NATS 传输对称联调（v2.9；v2.10 复验 + 代码对称补齐；v2.11 端到端复验含 EAN Metrics 暴露）
 
-**目标**：验证 EdgeOS NATS 传输与 edgeCore NATS 北向通道的 EAN 2.0 协议对称性，确认 ``$edgeos/*`` Subject 在 NATS 上保持斜杠形式、Discovery/Invoke/Reply/Heartbeat 全链路贯通。
+**目标**：验证 EdgeOS NATS 传输与 edgeCore NATS 北向通道的 EAN 2.0 协议对称性，确认 ``$edgeos.*`` NATS 点分隔 Subject（由 ``MqttTopicToNatsSubject`` 从 MQTT 斜杠 Topic 自动转换）上 Discovery/Invoke/Reply/Heartbeat 全链路贯通。
 
 **配置**：
 
@@ -951,8 +951,8 @@ Phase 4（OS-P4）将 V1→EAN Bridge **完全移除**——原生 EAN Discovery
 
 **对称性结论**：
 
-- NATS Subject 保持 ``$edgeos/...`` 斜杠形式（``mqttTopicToNatsSubject`` 仅转换通配符 ``+ -> *`` / ``# -> >``，不转换分隔符）
-- edgeCore NATS 北向 ``natsBus``（``edgos_nats/ean_bridge.go``）正确实现 ``capability.Bus`` 接口，Publish/Subscribe 直接使用原始 Subject
+- NATS Subject 使用 ``$edgeos.*`` 点分隔形式（``MqttTopicToNatsSubject`` 将 MQTT 斜杠 Topic 的 ``/`` → ``.``、``+`` → ``*``、``#`` → ``>`` 转换为 NATS 原生层级 Token）
+- edgeCore NATS 北向 ``natsBus``（``edgos_nats/ean_bridge.go``）正确实现 ``capability.Bus`` 接口，Publish/Subscribe 在调用 NATS 前通过 ``MqttTopicToNatsSubject`` 转换为点分隔 Subject
 - EdgeOS ``DualTransport`` 同时向 MQTT + NATS 发布 Invoke，edgeCore 双 Runtime 均可响应；EdgeOS ``InvokeOrchestrator`` 通过 ``invoke_id`` 去重，仅接受首个 Reply
 - NATS 无 retained 消息机制，但 EdgeOS 主动 Discovery Query（2s 首发 -> 30s -> 5min 降频）+ edgeCore 60s 周期重发 capability 弥补了此差异
 - **EAN Metrics 对称暴露**：edgeCore 双北向通道 stats API 均返回 ``ean_metrics``，前端 ``StatsDialog.vue`` 统一展示；EdgeOS ``health`` API 返回 ``invoke_metrics`` 含 P50/P99 延迟和成功率

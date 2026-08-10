@@ -395,7 +395,7 @@ func (c *Client) doConnect() error {
 	c.publishDeviceReport()
 	c.scheduleDeviceReportFallback()
 
-	// EAN 2.0 Capability Runtime: auto-ensure + publish $edgeos/* descriptors.
+	// EAN 2.0 Capability Runtime: auto-ensure + publish $edgeos.* descriptors (NATS dot subjects).
 	// V1.0 edgeCore.* compatibility paths above are unchanged.
 	// EnsureCapabilityRuntime returns (nil, nil) when EANEnabled=false — skip start in that case.
 	rt, err := c.EnsureCapabilityRuntime(capability.RuntimeVersion)
@@ -526,10 +526,10 @@ func (c *Client) publishNodeOnline() {
 		return
 	}
 
-	// Phase 4 (EX-P4-02): V1 节点注册/心跳上报标记 deprecated——EAN Discovery($edgeos/discovery/agent)
-	// + Heartbeat($edgeos/heartbeat/{agent}) 已完全替代；此处仅保留 V1 兼容，不再维护。
+	// Phase 4 (EX-P4-02): V1 节点注册/心跳上报标记 deprecated——EAN Discovery($edgeos.discovery.agent)
+	// + Heartbeat($edgeos.heartbeat.{agent}) 已完全替代；此处仅保留 V1 兼容，不再维护。
 	// | V1 node register/heartbeat marked DEPRECATED; superseded by EAN Discovery + Heartbeat.
-	zap.L().Warn("DEPRECATED: publishing V1 node registration (edgeCore.nodes.*); use EAN $edgeos/discovery/agent",
+	zap.L().Warn("DEPRECATED: publishing V1 node registration (edgeCore.nodes.*); use EAN $edgeos.discovery.agent",
 		zap.String("node_id", nodeID))
 
 	// Publish node registration
@@ -1414,9 +1414,9 @@ func (c *Client) PublishHeartbeat(metrics map[string]interface{}) {
 		return
 	}
 
-	// Phase 4 (EX-P4-02): V1 心跳上报标记 deprecated——EAN $edgeos/heartbeat/{agent} 已替代。
+	// Phase 4 (EX-P4-02): V1 心跳上报标记 deprecated——EAN $edgeos.heartbeat.{agent} 已替代。
 	// | V1 heartbeat publish marked DEPRECATED; superseded by EAN heartbeat.
-	zap.L().Warn("DEPRECATED: V1 heartbeat publish (edgeCore.heartbeat.{node}) retained for compat; use EAN $edgeos/heartbeat/{agent}",
+	zap.L().Warn("DEPRECATED: V1 heartbeat publish (edgeCore.heartbeat.{node}) retained for compat; use EAN $edgeos.heartbeat.{agent}",
 		zap.String("node_id", nodeID))
 
 	heartbeatMessage := Message{

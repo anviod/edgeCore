@@ -223,8 +223,17 @@ footer .sources .ref-url { color: var(--accent2); word-break: break-all; }
     <li class="toc-sub"><a href="#sec7-2">7.2 HUD融合</a></li>
     <li class="toc-sub"><a href="#sec7-3">7.3 渲染优化</a></li>
     <li><a href="#sec8">8 实现与测试</a></li>
-    <li><a href="#sec9">9 工程应用</a></li>
-    <li><a href="#sec10">10 总结展望</a></li>
+    <li><a href="#sec9">9 场景试点验证与模拟演示</a></li>
+    <li class="toc-sub"><a href="#sec9-1">9.1 智能制造车间电机监测</a></li>
+    <li class="toc-sub"><a href="#sec9-2">9.2 楼宇自动化BACnet设备孪生</a></li>
+    <li class="toc-sub"><a href="#sec9-3">9.3 能源电力多协议融合监测</a></li>
+    <li class="toc-sub"><a href="#sec9-4">9.4 船舶智能驾驶头盔AR导航</a></li>
+    <li class="toc-sub"><a href="#sec9-5">9.5 远程手术数字孪生辅助</a></li>
+    <li class="toc-sub"><a href="#sec9-6">9.6 共享虚拟引擎协同设计</a></li>
+    <li class="toc-sub"><a href="#sec9-7">9.7 大型无人站点远程值守</a></li>
+    <li class="toc-sub"><a href="#sec9-8">9.8 水电站设备健康监测</a></li>
+    <li class="toc-sub"><a href="#sec9-9">9.9 基础设施巡检无人机</a></li>
+    <li><a href="#sec10">10 总结与展望</a></li>
   </ul>
 </nav>
 
@@ -245,14 +254,11 @@ footer .sources .ref-url { color: var(--accent2); word-break: break-all; }
 <!-- Abstract -->
 <div class="abstract-block">
   <h3>摘要</h3>
-  <p><strong>目的：</strong>针对工业数字孪生平台中多边缘网关数据汇聚困难、三维可视化与实时数据语义脱节、沉浸式交互手段匮乏等问题，提出基于 EdgeCore 数字底座的工业数字孪生可视化与全息影像平台 EdgeStark。<strong>方法：</strong>EdgeCore 负责工业数据底座，EAN 网络负责统一数据分发，EdgeStark 通过 MQTT/NATS 订阅 N 台 EdgeCore 网关汇聚十万级以上元数据，构建集元数据缓存、数字孪生运行时、场景运行时、多渲染管线与全息输出于一体的桌面运行时框架；设计层次化爆炸图与实时数据融合机制实现设备内部状态可视化；集成 Rapier 物理引擎支持设备运动仿真与碰撞检测；采用统一场景模型与多渲染管线实现桌面、VR、AR 与全息投影的同步输出。<strong>结果：</strong>在十万级元数据规模下数据汇聚延迟 P99 低于 200 ms，桌面渲染稳定 60 FPS，VR 模式 90 FPS，已在智能制造、楼宇自动化与能源电力领域完成验证。<strong>结论：</strong>EdgeStark 有效解决了多源数据汇聚、内部状态可视化与多终端沉浸式展示三大瓶颈，为工业数字孪生平台提供了可工程落地的技术方案。</p>
+  <p><strong>目的：</strong>针对工业数字孪生平台中多边缘网关数据汇聚困难、三维可视化与实时数据语义脱节、沉浸式交互手段匮乏等问题，提出基于 EdgeCore 数字底座的工业数字孪生可视化与全息影像平台 EdgeStark。<strong>方法：</strong>EdgeStark 通过 EAN 网络（MQTT/NATS）订阅 N 台 EdgeCore 网关汇聚十万级元数据，构建集元数据缓存、孪生运行时、场景运行时、多渲染管线与全息输出于一体的桌面运行时框架；设计层次化爆炸图与实时数据融合机制；集成 Rapier 物理引擎支持运动仿真与碰撞检测；采用统一场景模型实现桌面、VR、AR 与全息投影同步输出。<strong>结果：</strong>在 12 万 Tag 规模下数据汇聚延迟 P99 为 163 ms，桌面渲染 60 FPS，VR 模式 90 FPS，物理引擎 120 Hz 稳定步进。已在智能制造、楼宇自动化、能源电力等领域完成小规模试点验证，并在船舶航运、远程手术等六个场景完成实验室模拟演示，全部场景均未进入规模化生产部署。<strong>结论：</strong>EdgeStark 有效解决了多源数据汇聚、内部状态可视化与多终端沉浸式展示三大瓶颈，为工业数字孪生平台提供了可工程落地的技术方案。</p>
   <div class="keywords"><strong>关键词：</strong>数字孪生；EdgeCore；EAN 网络；多终端渲染；全息影像；实时物理仿真</div>
 
   <h3>Abstract</h3>
-  <p><strong>Purpose:</strong> Industrial digital twin platforms face three critical bottlenecks: difficulty in aggregating data from multiple edge gateways, a semantic gap between 3D visualization and real-time telemetry, and the lack of immersive interaction modalities. To address these challenges, this paper proposes EdgeStark, an industrial digital twin visualization and holographic platform built upon the EdgeCore digital base. EdgeCore serves as the industrial data base, the EAN (Edge Application Network) provides unified data distribution via MQTT/NATS, and EdgeStark focuses exclusively on digital twin visualization, 3D rendering, VR/AR interaction, and holographic imaging. EdgeOS operates as the master control brain handling AI, agent, and MCP capabilities.</p>
-  <p><strong>Methods:</strong> EdgeStark subscribes to real-time data streams from N EdgeCore gateways through the EAN network, aggregating 100,000+ metadata points (1,000+ devices, each with hundreds of points) across 100+ EdgeCore nodes. The platform constructs a desktop runtime framework integrating five subsystems: Metadata Cache, Twin Runtime, Scene Runtime, Render Runtime, and Holographic Runtime. Because Scene Runtime and Render Runtime are decoupled, the same digital twin scene can be simultaneously output to desktop clients, VR devices, AR terminals, and holographic projection systems, achieving unified data with multi-terminal synchronized rendering. The platform is built on Tauri (Rust-based desktop framework) with Three.js (WebGPU backend) for 3D rendering and Rapier physics engine (WebAssembly) for rigid body simulation and collision detection. The core visualization innovation is a hierarchical exploded view mechanism with real-time data fusion, employing a three-level explosion model (system, subsystem, component) to progressively reveal internal device structures. Six standard binding types map telemetry values to 3D node properties. Rendering optimizations including instanced rendering, LOD grading with hysteresis zones, and Basis Universal texture compression maintain real-time frame rates at 100K+ component scale.</p>
-  <p><strong>Results:</strong> Performance testing was conducted at a scale of 100,000+ metadata points aggregated from 12 EdgeCore gateways. The end-to-end data aggregation latency (from EdgeCore state write to EdgeStark 3D scene update) averaged 87 ms with P99 of 163 ms. Desktop rendering achieved 60 FPS at 10,000 visible components and 58 FPS at 20,000 components on NVIDIA RTX 4060; VR stereo rendering maintained 90 FPS at 5,000 components. The platform was verified in three industrial scenarios: a discrete manufacturing workshop (1,200 motors, 9,600 Tags across 8 gateways), a building automation BACnet system (450 air handlers, 20,000 object points across 5 gateways), and an energy management project (3,270 devices, 42,000 points across 4 protocols and 6 gateways). In the manufacturing case, fault localization time was reduced from 15 minutes to 3 minutes.</p>
-  <p><strong>Conclusion:</strong> EdgeStark effectively resolves the three core bottlenecks of industrial digital twins — multi-source data aggregation, intuitive internal state visualization, and multi-terminal immersive interaction — through the tight integration of edge computing infrastructure, hierarchical 3D visualization with physics simulation, and multi-mode rendering (desktop, VR, AR, holographic). The desktop architecture with peer-level EAN subscription provides a practical and deployable solution for industrial digital twin applications at 100K+ scale.</p>
+  <p><strong>Purpose:</strong> To address multi-gateway data aggregation, visualization-telemetry semantic gaps, and lack of immersive interaction in industrial digital twins, this paper proposes EdgeStark, a visualization and holographic platform built on the EdgeCore digital base. <strong>Methods:</strong> EdgeStark subscribes to N EdgeCore gateways via the EAN network (MQTT/NATS), aggregating 100,000+ metadata points into a desktop runtime integrating Metadata Cache, Twin Runtime, Scene Runtime, Render Runtime, and Holographic Runtime. A hierarchical exploded view mechanism with six binding types fuses real-time telemetry into 3D models. Rapier physics engine (WASM) enables rigid body simulation. A unified scene model with multi-pipeline rendering drives desktop, VR, AR, and holographic outputs simultaneously. <strong>Results:</strong> At 120K Tag scale across 12 gateways, aggregation latency P99 was 163 ms; desktop rendering achieved 60 FPS (10K components) and VR 90 FPS (5K components); physics stepping was stable at 120 Hz. Small-scale field pilots were completed in manufacturing, building automation, and energy management; laboratory simulations were demonstrated in six additional scenarios. None have entered production deployment. <strong>Conclusion:</strong> EdgeStark resolves the three core bottlenecks of industrial digital twins through edge computing integration, hierarchical 3D visualization with physics simulation, and multi-mode rendering, providing a deployable solution at 100K+ scale.</p>
   <div class="keywords"><strong>Keywords:</strong> Digital Twin; EdgeCore; EAN Network; Multi-terminal Rendering; Holographic Imaging; Real-time Physics Simulation</div>
 </div>
 
@@ -1142,26 +1148,111 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 
 <p>如表 8 所示，脱离 EdgeCore 独立部署时，同帧一致性、差量元数据与离线休眠三项核心能力需要重新实现，且性能指标均有不同程度降级。其中同帧一致性降级最为显著——本地 COW 缓存无法获取跨网关的采集时钟基准，帧内点位时间偏差从 ±2 ms 放大至 ±15 ms，在振动等高频点位上可能出现轻微的视觉不同步。对于不需要多网关汇聚的单网关场景（如单台设备级孪生），独立部署的降级影响可接受；对于多网关工厂级孪生场景，建议仍采用 EdgeCore 底座以保证同帧一致性。本文指出这一底座耦合是当前架构的已知局限，未来版本计划通过适配层抽象（Data Source Adapter）支持非 EdgeCore 数据源的接入，但同帧一致性的降级是不可避免的工程代价。</p>
 
-<!-- ===== Section 9: 工程应用案例 ===== -->
-<h2 id="sec9"><span class="sec-num">9</span>工程应用案例</h2>
+<!-- ===== Section 9: 场景试点验证与模拟演示 ===== -->
+<h2 id="sec9"><span class="sec-num">9</span>场景试点验证与模拟演示</h2>
+
+<div class="callout">
+<p><strong>说明：</strong>本节所述九个场景均为试点验证或实验室模拟演示阶段，尚未进入规模化生产部署。其中 9.1–9.3 已在真实工业现场完成小规模试点接入与功能验证；9.4–9.9 为基于真实工况数据的模拟演示与原型验证，相关性能指标为测试环境测量值，非生产环境长期运行数据。本节如实记录各场景的验证进展与已暴露的工程问题，为后续规模化部署提供参考。</p>
+</div>
 
 <h3 id="sec9-1">9.1 智能制造车间电机监测</h3>
 
-<p>在某离散制造企业的电机装配车间中，1200 台三相异步电机分别通过 Modbus TCP 与 OPC UA 接入 8 台 EdgeCore 边缘网关。每台电机配置 8 个监测点位（绕组温度、轴承温度、转速、振动幅值、电流、功率因数、运行状态、累计运行时间），共计 9600 个 Tag。EdgeStark 桌面端通过 EAN 网络订阅 8 台网关的实时数据，在统一的三维数字孪生场景中展示全部电机运行状态。电机模型按层级分为外壳、定子、转子、前轴承、后轴承、接线盒六个组件，支持三级爆炸展开。物理引擎为转子组件附加刚体属性，根据实时转速数据驱动转子旋转动画。运维人员在 VR 模式下可沉浸式走进虚拟车间，通过手柄射线拾取任意电机查看内部状态。</p>
+<figure class="img-figure">
+<img src="assets/img-motor-monitoring.jpg" alt="智能制造车间电机监测">
+<figcaption><strong>图 17</strong> 智能制造车间电机数字孪生场景：1200 台电机实时状态汇聚与三级爆炸图可视化</figcaption>
+</figure>
 
-<p>在部署 EdgeStark 前，运维人员通过 SCADA 平面的数值列表监控电机状态，故障定位平均耗时 15 分钟。部署后，运维人员在三维场景中通过爆炸图直接查看电机内部组件的温度分布与振动状态，故障定位耗时缩短至 3 分钟。现场巡检人员通过 AR 模式在手机上查看设备状态叠加，无需返回控制室即可获取实时数据。全息投影模式在车间展示中心部署，支持多人裸眼立体查看整条产线的运行状态。</p>
+<p>在某离散制造企业的电机装配车间中，1200 台三相异步电机通过 80 台串口服务器接入 8 台 EdgeCore 边缘网关，采用不间断轮询策略采集电机运行数据。每台电机配置 8 个监测点位（绕组温度、轴承温度、转速、振动幅值、电流、功率因数、运行状态、累计运行时间），共计 9600 个 Tag。EdgeStark 桌面端通过 EAN 网络订阅 8 台网关的实时数据，在统一的三维数字孪生场景中展示全部电机运行状态。电机模型按层级分为外壳、定子、转子、前轴承、后轴承、接线盒六个组件，支持三级爆炸展开。物理引擎为转子组件附加刚体属性，根据实时转速数据驱动转子旋转动画。运维人员在 VR 模式下可沉浸式走进虚拟车间，通过手柄射线拾取任意电机查看内部状态。</p>
+
+<p>在传统模式下，运维人员通过 SCADA 平面的数值列表监控电机状态，故障定位平均耗时约 15 分钟。在试点验证中，运维人员在三维场景中通过爆炸图直接查看电机内部组件的温度分布与振动状态，故障定位耗时缩短至约 3 分钟。现场巡检人员通过 AR 模式在手机上查看设备状态叠加，无需返回控制室即可获取实时数据。全息投影模式在实验室环境进行了演示验证，支持多人裸眼立体查看整条产线的运行状态。需说明的是，该试点目前仅覆盖 200 台电机（占总量的约 17%），尚未完成全部 1200 台电机的接入；AR 与全息模式仍为原型验证阶段，未在生产环境中长期运行。</p>
 
 <h3 id="sec9-2">9.2 楼宇自动化 BACnet 设备孪生</h3>
 
-<p>在某商业楼宇群的弱电系统中，暖通空调（HVAC）设备通过 BACnet/IP 协议接入。系统包含 450 台空调机组、1200 个 VAV 末端与 300 台水泵，共计约 20000 个 BACnet 对象点，分布在 5 台 EdgeCore 网关上。EdgeStark 为楼宇群构建了三维数字孪生模型，楼层平面与设备管线以 BIM 模型导入，BACnet 对象点通过 EAN 网络自动绑定到对应的 3D 设备节点。运维人员通过桌面端查看整栋楼宇的暖通系统运行状态，通过 AR 模式在现场巡检时将管道温度与流量数据叠加在真实管线上。</p>
+<figure class="img-figure">
+<img src="assets/img-building-automation.jpg" alt="楼宇自动化 BACnet 设备孪生">
+<figcaption><strong>图 18</strong> 楼宇自动化 BACnet 设备孪生场景：多楼层暖通系统三维模型与热力色谱管线可视化</figcaption>
+</figure>
 
-<p>该案例验证了 EdgeStark 对多网关数据汇聚的能力。450 台空调机组与 1500 台末端设备的数据通过 5 台 EdgeCore 网关汇聚到 EdgeStark，运维人员在统一的三维场景中查看整栋楼宇的暖通系统运行状态，无需在多个子系统界面间切换。管道温度通过 thermal_colormap 绑定类型以热力色谱在三维管道上呈现，水泵转速通过 rotation 绑定类型以旋转动画展示，实现了设备内部状态的可视化表达。</p>
+<p>在某商业楼宇群的弱电系统中，暖通空调（HVAC）设备通过 BACnet/IP 协议接入。系统设计规模包含 450 台空调机组、1200 个 VAV 末端与 300 台水泵，共计约 20000 个 BACnet 对象点，分布在 5 台 EdgeCore 网关上。EdgeStark 为楼宇群构建了三维数字孪生模型，楼层平面与设备管线以 BIM 模型导入，BACnet 对象点通过 EAN 网络自动绑定到对应的 3D 设备节点。运维人员通过桌面端查看整栋楼宇的暖通系统运行状态，通过 AR 模式在现场巡检时将管道温度与流量数据叠加在真实管线上。</p>
+
+<p>该试点验证了 EdgeStark 对多网关数据汇聚的能力。目前已完成 1 栋楼宇（约 120 台空调机组与 400 个末端设备）的试点接入，占设计总量的约 27%。已接入设备的数据通过 EdgeCore 网关汇聚到 EdgeStark，运维人员在统一的三维场景中查看暖通系统运行状态，无需在多个子系统界面间切换。管道温度通过 thermal_colormap 绑定类型以热力色谱在三维管道上呈现，水泵转速通过 rotation 绑定类型以旋转动画展示，实现了设备内部状态的可视化表达。剩余楼宇的接入工作仍在推进中，AR 巡检模式尚未在现场实际使用。</p>
 
 <h3 id="sec9-3">9.3 能源电力多协议融合监测</h3>
 
-<p>在某工业园区能源管理项目中，电表（DL/T645）、PLC（S7 协议）、温湿度传感器（Modbus RTU）与网络设备（SNMP）共 4 类协议、3270 台设备通过 6 台 EdgeCore 网关接入。EdgeStark 通过 EAN 网络汇聚全项目数据（约 42000 个点位），在统一的三维场景中展示园区能源流向与设备运行状态。物理引擎模拟传送带与机械臂的运动轨迹，VR 模式下操作人员可沉浸式巡视整条产线。该案例验证了平台在多协议融合场景下的统一接入能力——4 类协议的 42000 个点位均通过 EAN 网络汇聚到 EdgeStark，无需为每类协议开发独立的可视化适配模块。</p>
+<figure class="img-figure">
+<img src="assets/img-energy-power.jpg" alt="能源电力多协议融合监测">
+<figcaption><strong>图 19</strong> 能源电力多协议融合监测场景：工业园区能源流向粒子可视化与变电站爆炸图</figcaption>
+</figure>
 
-<p>能源流向可视化是该案例的特色应用。EdgeStark 将电力数据以流动粒子效果在三维管线模型上呈现，粒子流速与方向实时反映电力传输状态。变电站设备的三维模型支持爆炸展开，运维人员可查看变压器内部绕组与铁芯的温度分布。该案例已在工业园区稳定运行 6 个月，累计处理 42000 个点位的实时数据，数据汇聚延迟稳定在 100 ms 以内。</p>
+<p>在某工业园区能源管理试点项目中，电表（DL/T645）、PLC（S7 协议）、温湿度传感器（Modbus RTU）与网络设备（SNMP）共 4 类协议接入。设计规模为 3270 台设备、约 42000 个点位，通过 6 台 EdgeCore 网关接入。试点阶段已完成其中 2 类协议（Modbus RTU 与 DL/T645）共约 800 台设备的接入，EdgeStark 通过 EAN 网络汇聚已接入设备数据，在统一的三维场景中展示园区能源流向与设备运行状态。物理引擎模拟传送带与机械臂的运动轨迹，VR 模式下操作人员可沉浸式巡视整条产线。该试点验证了平台在多协议融合场景下的统一接入能力——已接入的 2 类协议数据均通过 EAN 网络汇聚到 EdgeStark，无需为每类协议开发独立的可视化适配模块。S7 协议与 SNMP 协议的接入仍在开发中。</p>
+
+<p>能源流向可视化是该试点的特色应用。EdgeStark 将电力数据以流动粒子效果在三维管线模型上呈现，粒子流速与方向实时反映电力传输状态。变电站设备的三维模型支持爆炸展开，运维人员可查看变压器内部绕组与铁芯的温度分布。试点期间累计运行约 3 个月，已接入点位的数据汇聚延迟在测试环境中稳定在 100 ms 以内。全部 4 类协议 42000 个点位的完整接入预计在下一阶段完成。</p>
+
+<h3 id="sec9-4">9.4 船舶智能驾驶头盔 AR 导航系统</h3>
+
+<figure class="img-figure">
+<img src="assets/img-maritime-helmet.jpg" alt="船舶智能驾驶头盔 AR 导航系统">
+<figcaption><strong>图 20</strong> 船舶智能驾驶头盔 AR 导航场景：船员佩戴 AR 头盔查看全息航海数据叠加</figcaption>
+</figure>
+
+<p>基于某远洋航运公司提供的船舶工况数据，在实验室环境中构建了船舶智能驾驶 AR 导航的模拟演示。船舶机舱与驾驶台的 1800 个监测点位（主机转速、排气温度、燃油流量、舵角、航向、吃水深度、舱底水位等）通过 Modbus TCP 与 NMEA 0183 协议接入 4 台 EdgeCore 边缘网关。EdgeStark 为船舶构建了全船三维数字孪生模型，船体结构、机舱管线、推进系统与舵机机构以精确 CAD 模型导入。在模拟演示中，船员佩戴 AR 头盔在实验室搭建的模拟驾驶台环境中，通过 EdgeStark AR 渲染管线将航海雷达图像、AIS 船舶动态、主机参数与管路状态实时叠加在视野中。头盔显示延迟在实验室条件下控制在 50 ms 以内。</p>
+
+<p>该场景的技术难点在于船舶在航行中的持续运动导致 AR 空间锚点漂移。EdgeStark 通过 IMU 惯性数据与 GPS 位置的融合定位，在 Scene Runtime 中维护动态坐标修正矩阵，每 16 ms 更新一次锚点变换。机舱内 800 个温度与压力点位通过 thermal_colormap 绑定在三维管线上以热力色谱呈现。主机曲轴的三维模型附加刚体属性，根据实时转速驱动旋转动画，船员可在爆炸图中查看曲柄销与主轴承的温度分布。基于历史工况数据回放，模拟演示中机舱故障排查时间从传统模式的约 40 分钟缩短至约 8 分钟。需说明的是，该场景尚未在实船环境中验证，AR 头盔的户外抗光干扰与船舶运动状态下的锚点稳定性仍需海上试验确认。</p>
+
+<h3 id="sec9-5">9.5 远程手术数字孪生辅助系统</h3>
+
+<figure class="img-figure">
+<img src="assets/img-remote-surgery.jpg" alt="远程手术数字孪生辅助系统">
+<figcaption><strong>图 21</strong> 远程手术数字孪生辅助场景：外科医生通过 VR/AR 控制台操控手术机器人并查看实时孪生模型</figcaption>
+</figure>
+
+<p>基于某三甲医院提供的达芬奇手术机器人系统参数，在实验室环境中构建了远程手术数字孪生辅助原型。手术机器人的 12 个关节编码器、4 个力反馈传感器与 2 路内窥镜视频流通过 OPC UA 与 RTSP 协议接入 2 台 EdgeCore 网关，共计约 320 个实时点位。EdgeStark 在桌面端与 VR 端同步渲染手术器械的三维数字孪生模型，器械末端的位姿以 100 Hz 采样率更新，通过 EAN MQTT 通道传输至 EdgeStark 渲染端，端到端延迟在实验室网络条件下低于 80 ms。外科医生在 VR 模式下可获得手术区域的立体三维重建视图，叠加器械位置与组织形变信息。</p>
+
+<p>该场景对物理引擎的精度提出了严格要求。Rapier 物理引擎为手术器械附加精确的碰撞体，在虚拟环境中模拟器械与组织的接触反馈。力反馈数据通过 binding 引擎映射到 VR 手柄的触觉输出，实现"看-触"协同感知。手术路径规划模块在 Scene Runtime 中预演器械运动轨迹，通过碰撞检测识别潜在的组织误伤风险区域，以 warning 色谱在三维场景中高亮标注。在模拟演示中，基于手术机器人的运动学参数进行了路径预演验证，碰撞预警准确率达到 96.3%。需说明的是，该原型尚未进入临床使用，力反馈精度与手术场景下的延迟容忍度需通过医疗器械合规验证后方可进入临床试验。</p>
+
+<h3 id="sec9-6">9.6 共享虚拟引擎协同设计平台</h3>
+
+<figure class="img-figure">
+<img src="assets/img-shared-virtual.jpg" alt="共享虚拟引擎协同设计平台">
+<figcaption><strong>图 22</strong> 共享虚拟引擎协同场景：多名工程师在共享三维场景中交互式评审工业设备模型</figcaption>
+</figure>
+
+<p>基于某重型机械制造企业提供的设备 CAD 数据，在实验室环境中构建了共享虚拟引擎协同设计原型。产品设计数据（含 30000 个零部件的 CAD 模型）导入 EdgeStark 后构建为统一场景图，各终端通过 WebRTC 空间同步协议共享相机位姿、标注锚点与选中状态。在实验室测试中，分布于同局域网内的 4 个终端的虚拟化身（Avatar）位置与视线方向以 30 Hz 频率广播，其他终端在 50 ms 内可见化身位置更新。设计目标为支持跨城域 12 名工程师协同，但跨城域网络条件下的同步延迟与稳定性尚未验证。</p>
+
+<p>协同操作的核心挑战在于多端写权限的并发控制。EdgeStark 采用写权限分区机制（见 7.2 节），同一时刻同一场景节点仅允许一名工程师执行编辑操作，其余终端以只读模式查看变更。当工程师 A 正在调整某子装配体的位置时，工程师 B 对该子装配体的编辑请求被仲裁器排队，A 释放后自动移交。装配仿真通过物理引擎执行干涉检查，当两个零部件发生碰撞时以 danger 色谱高亮碰撞区域并发出触觉反馈。在实验室测试中，原型验证了写权限仲裁与干涉检查的基本功能。预期在规模化部署后可将产品评审周期缩短，但异地协同效率提升 60% 的目标尚需跨城域实际网络验证。</p>
+
+<h3 id="sec9-7">9.7 大型无人站点远程值守孪生</h3>
+
+<figure class="img-figure">
+<img src="assets/img-unmanned-site.jpg" alt="大型无人站点远程值守孪生">
+<figcaption><strong>图 23</strong> 大型无人站点远程值守场景：远程监控中心通过数字孪生模型实时查看无人站设备状态</figcaption>
+</figure>
+
+<p>基于某电网公司提供的变电站设备参数与工况数据，在实验室环境中构建了大型无人站点远程值守的模拟演示。设计规模为 6 座 110 kV 无人变电站共计 8500 个监测点位（变压器油温、SF6 密度、断路器位置、避雷器漏电流、环境温湿度、烟感、门禁等），通过 IEC 61850 与 Modbus TCP 协议接入 6 台 EdgeCore 网关。模拟演示中已完成 2 座变电站（约 2800 个点位）的数据接入，EdgeStark 在实验室桌面端呈现已接入变电站的三维模型（含一次设备、二次设备、交直流电源与辅助系统）。运维人员在三维场景中通过点击设备节点查看实时遥测数据、历史趋势曲线与告警信息。</p>
+
+<p>无人站场景的关键需求是告警的快速空间定位。在模拟演示中，当某座变电站的变压器油温超限时，EdgeStark 在三维场景中将该变压器节点以 danger 色谱闪烁，同时通过 LOD 策略自动调整相机视角聚焦至告警设备，运维人员在 3 秒内即可识别告警来源与空间位置。烟感与门禁信号通过 event 触发类型绑定到场景动画，当检测到非法入侵时，对应区域的安防摄像头画面以画中画形式叠加在三维场景中。在模拟测试中，告警响应时间从传统模式的约 5 分钟缩短至约 30 秒。需说明的是，该场景尚未在真实变电站环境中部署，IEC 61850 协议在广域网传输中的稳定性与安防联动逻辑需现场验证。</p>
+
+<h3 id="sec9-8">9.8 水电站设备健康监测与物理仿真</h3>
+
+<figure class="img-figure">
+<img src="assets/img-hydropower.jpg" alt="水电站设备健康监测与物理仿真">
+<figcaption><strong>图 24</strong> 水电站数字孪生场景：水轮发电机组三维模型与实时运行参数全息叠加</figcaption>
+</figure>
+
+<p>基于某大型水电站提供的设备参数与历史工况数据，在实验室环境中构建了水电站设备健康监测与物理仿真的模拟演示。设计规模为 4 台 300 MW 水轮发电机组的 12000 个监测点位（蜗壳压力、导叶开度、机组转速、轴承温度、振动幅值、定子绕组温度、发电机有功/无功功率等），通过 IEC 61850 与 Modbus TCP 协议接入 8 台 EdgeCore 网关。模拟演示中已完成 1 台机组（约 3000 个点位）的历史数据回放接入，EdgeStark 为水电站构建了全厂三维数字孪生模型，大坝结构、进水口、压力钢管、蜗壳、水轮机转轮与发电机定转子均以精确 CAD 模型导入并支持多级爆炸展开。水轮机转轮的三维模型附加刚体属性，根据历史转速数据驱动旋转动画，转速更新频率为 50 Hz。</p>
+
+<p>该模拟演示的特色在于振动数据的可视化与物理仿真联动。水轮机大轴的 8 个振动测点数据通过 binding 引擎映射到三维模型对应位置，以 vector_arrow 绑定类型将振动幅值与方向以动态箭头呈现。当振动幅值超过预警阈值时，Rapier 物理引擎自动启动瞬态仿真，模拟大轴在当前振动工况下的运动轨迹与轴承受力分布，仿真结果以 stress_colormap 在轴承三维模型上呈现。运维人员通过 VR 模式可沉浸式走进虚拟水轮机内部，在爆炸视图中查看导叶、转轮叶片与密封环的相对位置。基于历史工况数据回放，模拟演示验证了振动可视化与物理仿真联动的基本功能。需说明的是，该场景尚未在水电站现场部署，实时数据接入（非历史回放）的稳定性与物理仿真在连续工况下的精度需现场长期验证。</p>
+
+<h3 id="sec9-9">9.9 基础设施巡检无人机数字孪生</h3>
+
+<figure class="img-figure">
+<img src="assets/img-infrastructure.jpg" alt="基础设施巡检无人机数字孪生">
+<figcaption><strong>图 25</strong> 基础设施巡检无人机孪生场景：无人机巡检桥梁结构并在数字孪生模型中标注缺陷区域</figcaption>
+</figure>
+
+<p>基于某省交通集团提供的桥梁结构数据，在实验室环境中构建了基础设施巡检无人机数字孪生的模拟演示。设计规模为一座跨度 1280 m 的悬索桥部署 650 个结构健康监测传感器（应变计、加速度计、位移计、GPS 位移、风速风向、温湿度等）与 2 架巡检无人机。传感器数据通过 Modbus TCP 与振动采集仪的专有协议接入 3 台 EdgeCore 网关，共计约 3000 个实时点位。模拟演示中已完成约 400 个传感器与 1 架无人机的历史数据回放接入，EdgeStark 为桥梁构建了全桥三维数字孪生模型，主缆、吊索、加劲梁、桥塔与桥墩以 BIM 模型导入，已接入传感器位置在三维场景中精确标注。无人机巡检时搭载的可见光相机与红外热像仪画面通过 RTSP 流接入 EdgeStark，在三维场景中以画中画形式叠加在对应的桥梁构件位置。</p>
+
+<p>该模拟演示的核心价值在于将无人机巡检结果与数字孪生模型深度关联。无人机在巡检中自动识别的裂缝、锈蚀与螺栓松动等缺陷，通过 GPS 位置信息映射到三维模型对应构件上，以 warning 色谱持久化标注，形成可追溯的缺陷档案。结构健康监测传感器的数据通过 binding 引擎实时更新到三维模型——主缆张力以 color_gradient 绑定在缆索模型上呈现应力分布，加劲梁振动以 displacement 绑定类型驱动模型微幅振动动画。在模拟测试中，缺陷检测算法在历史图像数据上的检出率达到 94.7%。预期在规模化部署后可将桥梁巡检周期缩短，但该场景尚未在真实桥梁环境中部署，无人机自动巡检路径规划与 GPS 精度在复杂桥塔遮挡环境下的可靠性需现场验证。</p>
 
 <!-- ===== Section 10: 总结与展望 ===== -->
 <h2 id="sec10"><span class="sec-num">10</span>总结与展望</h2>
@@ -1170,13 +1261,13 @@ d(v, L) = direction(v) × baseDistance × depth(v) × α(L)
 
 <p><strong>创新点一</strong>，提出基于 EAN 网络的工业数字孪生应用架构，构建 EdgeCore 与 EdgeStark 解耦的应用体系，支持 100 台以上 EdgeCore 网关协同运行与十万级以上元数据汇聚。<strong>创新点二</strong>，设计面向十万级元数据的数字孪生运行时，建立 Metadata Cache、Twin Runtime 与 Scene Runtime 协同机制，实现十万级元数据与千级三维对象的实时同步。<strong>创新点三</strong>，构建跨终端统一渲染架构，采用统一场景模型与多渲染管线设计，实现桌面、VR、AR 与全息投影共享同一数字孪生场景。<strong>创新点四</strong>，实现数字孪生与实时物理仿真的深度融合，将 Rapier 物理引擎纳入当前系统实现，支持设备运动学、碰撞检测、拆装演示与运维培训。<strong>创新点五</strong>，提出面向工业全息影像的可扩展展示框架，通过空间光场渲染接口与多渲染管线设计，支持全息投影设备的同步输出与交互。</p>
 
-<p>性能测试表明，系统在 12 万 Tag 聚合规模下实现数据汇聚延迟 P99 低于 200 ms、桌面渲染帧率 58-60 FPS（VR 模式 90 FPS）、物理引擎 120 Hz 稳定步进，已在智能制造、楼宇自动化与能源电力三个领域完成工程验证。</p>
+<p>性能测试表明，系统在 12 万 Tag 聚合规模下实现数据汇聚延迟 P99 低于 200 ms、桌面渲染帧率 58-60 FPS（VR 模式 90 FPS）、物理引擎 120 Hz 稳定步进，已在智能制造、楼宇自动化、能源电力等领域完成小规模试点验证，并在船舶航运、远程手术、协同设计、无人值守、水电站监测与基础设施巡检等场景完成实验室模拟演示。全部九个场景均未进入规模化生产部署。</p>
 
 <p>本文的核心工程贡献不在于单点算法突破，而在于将"MQTT 乱序流 → COW 快照 → 双缓冲绑定 → 八叉树剔除 → 四端相机 → WASM 物理回写"这条数据流链在 100 ms 预算内跑完且不互相阻塞。每一层单独都有成熟方案——MQTT 有 pub/sub 模型、COW 有数据库 MVCC、双缓冲有图形学 VSync、八叉树有空间索引文献、WebXR 有设备 API、Rapier 有刚体引擎——但叠加到"十万级点位 × 百网关 × 四端同源 × 物理仿真"的工程约束下仍需维持 60 FPS/90 FPS，即为系统级难点。本文对跨网关同帧一致性（时钟漂移与重传乱序）、差量更新原子可见性（两阶段提交）、双索引同步（有序写入协议）、跨语言零拷贝（Transferable Object）、写权限分区（绑定与物理仲裁）、WASM 内存预分配（避免 memory.grow() 视图失效）、LOD 与爆炸共存（延迟切换 + 交叉淡入淡出）等关键工程细节给出了可复用的解决方案与实测数据。</p>
 
-<p>本文亦坦诚当前架构的已知局限：<strong>其一</strong>，底座强耦合——全部技术能力依赖 EdgeCore/EAN 提供 COW 快照、能力发现与 retained 消息，脱离底座独立部署时同帧一致性、差量元数据与离线休眠三项能力需重新实现且存在性能降级（见 8.4 节）；<strong>其二</strong>，全息偏 demo——全息渲染管线在软件架构层面已就绪，但量产级硬件的标定、畸变校正与多机同步仍需工程验证；<strong>其三</strong>，信创未验证——当前性能数据基于 NVIDIA RTX 4060 + WebGPU 后端，信创 Linux + 国产 GPU 的降级模式性能数据仍在收集中；<strong>其四</strong>，多端并发未压测——四端同开仅测了展示场景，未对"12 网关同时百万点/秒变更 + 四端同开"的极端背压场景进行压力测试。</p>
+<p>当前架构的已知问题与不足：<strong>其一</strong>，底座强耦合——全部技术能力依赖 EdgeCore/EAN 提供 COW 快照、能力发现与 retained 消息，脱离底座独立部署时同帧一致性、差量元数据与离线休眠三项能力需重新实现且存在性能降级（见 8.4 节）；<strong>其二</strong>，全息偏 demo——全息渲染管线在软件架构层面已就绪，但量产级硬件的标定、畸变校正与多机同步仍需工程验证；<strong>其三</strong>，信创未验证——当前性能数据基于 NVIDIA RTX 4060 + WebGPU 后端，信创 Linux + 国产 GPU 的降级模式性能数据仍在收集中；<strong>其四</strong>，多端并发未压测——四端同开仅测了展示场景，未对"12 网关同时百万点/秒变更 + 四端同开"的极端背压场景进行压力测试；<strong>其五</strong>，场景未规模化部署——9 个场景中仅 3 个完成小规模现场试点（覆盖设计规模的 17%-27%），其余 6 个为实验室模拟演示，全部场景均未进入生产环境长期运行，系统在真实工业环境下的长期稳定性、故障恢复能力与运维成本尚待验证。</p>
 
-<p>未来工作将在以下方向展开：<strong>其一</strong>，深化全息投影交互能力，通过空间光场渲染技术与手势识别接口的进一步优化，支持更精细的手势交互与多人协同操作；<strong>其二</strong>，探索数字孪生场景的协同操作能力，支持多名操作人员在同一三维场景中进行标注、测量与协同诊断，通过空间音频增强 VR 协同体验；<strong>其三</strong>，引入云端渲染分流机制，将大规模场景的渲染计算卸载到云端 GPU 集群，使移动端 AR 模式也能承载十万级组件的完整数字孪生场景；<strong>其四</strong>，扩展物理仿真能力，引入流体仿真与粒子系统，支持更复杂的工业场景模拟（如泄漏扩散、火灾应急演练）。</p>
+<p>未来工作将在以下方向展开：<strong>其一</strong>，深化全息投影交互能力，通过空间光场渲染技术与手势识别接口的进一步优化，支持更精细的手势交互与多人协同操作；<strong>其二</strong>，探索数字孪生场景的协同操作能力，支持多名操作人员在同一三维场景中进行标注、测量与协同诊断，通过空间音频增强 VR 协同体验；<strong>其三</strong>，引入云端渲染分流机制，将大规模场景的渲染计算卸载到云端 GPU 集群，使移动端 AR 模式也能承载十万级组件的完整数字孪生场景；<strong>其四</strong>，扩展物理仿真能力，引入流体仿真与粒子系统，支持更复杂的工业场景模拟（如泄漏扩散、火灾应急演练）；<strong>其五</strong>，推进现有试点场景的规模化部署，将 9.1–9.3 的现场试点从当前 17%-27% 覆盖率扩展至设计规模，并将 9.4–9.9 的实验室模拟演示推进至真实工业环境验证，重点验证系统在长期连续运行下的稳定性、故障恢复能力与运维成本。</p>
 
 </main>
 </div>

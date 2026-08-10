@@ -59,17 +59,17 @@ func TestEANIntegrationNATSDiscoveryInvokeEvent(t *testing.T) {
 		}
 	}()
 
-	mustSub(capability.TopicDiscoveryAgent, func(payload []byte) {
+	mustSub(edgos_nats.MqttTopicToNatsSubject(capability.TopicDiscoveryAgent), func(payload []byte) {
 		mu.Lock()
 		discoveries = append(discoveries, "agent:"+string(payload))
 		mu.Unlock()
 	})
-	mustSub(capability.TopicDiscoveryCapability, func(payload []byte) {
+	mustSub(edgos_nats.MqttTopicToNatsSubject(capability.TopicDiscoveryCapability), func(payload []byte) {
 		mu.Lock()
 		discoveries = append(discoveries, "capability:"+string(payload))
 		mu.Unlock()
 	})
-	mustSub(capability.TopicEvent(nodeID), func(payload []byte) {
+	mustSub(edgos_nats.MqttTopicToNatsSubject(capability.TopicEvent(nodeID)), func(payload []byte) {
 		var msg capability.Message
 		if err := json.Unmarshal(payload, &msg); err != nil {
 			return
@@ -82,7 +82,7 @@ func TestEANIntegrationNATSDiscoveryInvokeEvent(t *testing.T) {
 		events = append(events, body)
 		mu.Unlock()
 	})
-	mustSub(capability.TopicReply("edgeos-planner"), func(payload []byte) {
+	mustSub(edgos_nats.MqttTopicToNatsSubject(capability.TopicReply("edgeos-planner")), func(payload []byte) {
 		var msg capability.Message
 		if err := json.Unmarshal(payload, &msg); err != nil {
 			return
@@ -146,7 +146,7 @@ func TestEANIntegrationNATSDiscoveryInvokeEvent(t *testing.T) {
 	req.Header.CorrelationID = "corr-nats-it"
 	payload, err := json.Marshal(req)
 	require.NoError(t, err)
-	require.NoError(t, nc.Publish(capability.TopicInvoke(nodeID), payload))
+	require.NoError(t, nc.Publish(edgos_nats.MqttTopicToNatsSubject(capability.TopicInvoke(nodeID)), payload))
 	require.NoError(t, nc.Flush())
 
 	require.Eventually(t, func() bool {

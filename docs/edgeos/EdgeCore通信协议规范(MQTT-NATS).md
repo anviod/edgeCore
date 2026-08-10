@@ -1,7 +1,7 @@
 ﻿# edgeCore端 通信协议规范 (MQTT/NATS) — EAN 2.0
 
-> **文档版本**: V2.0  
-> **最后更新**: 2026-07-27  
+> **文档版本**: V2.1  
+> **最后更新**: 2026-08-10  
 > **维护者**: edgeOS 团队  
 > **文档定位**: 本文档定义 **Edge Agent Network（EAN）2.0** 基于 MQTT v5 / NATS 2.x 的统一工业智能体协作协议。涵盖共性协议层（Agent / Capability / Discovery / Invoke / Event）、edgeCore Capability Runtime 接入规范、EdgeOS Coordination Platform 平台规范，以及 V1.0 兼容层 Topic 保留。  
 > **适用对象**: edgeCore 边缘网关（Capability Runtime）、EdgeOS 蜂群网络（Coordination Platform）、第三方 Runtime 实现者。
@@ -14,6 +14,7 @@
 |------|------|---------|
 | v1.0 | 2026-04-21 | 初始版本：edgeCore ↔ EdgeOS 专用 Topic/Subject 与消息体（节点注册、设备上报、下行控制等） |
 | **v2.0** | **2026-07-27** | **全面升级至 EAN 2.0**：新增统一 Agent 模型、Capability 模型、Discovery/Invoke/Event 协议；edgeCore 作为 Capability Runtime 接入；EdgeOS 作为 Coordination Platform；保留 V1.0 Topic 作为兼容层 |
+| **v2.1** | **2026-08-10** | **NATS Subject 约定修正**：NATS 采用标准点分 Subject（`/`→`.`、`+`→`*`、`#`→`>`），`$edgeos/discovery/agent`（MQTT）↔ `$edgeos.discovery.agent`（NATS），不再保留斜杠 |
 
 ---
 
@@ -26,6 +27,8 @@
 - **edgeCore 改动最小** — 复用已有 AI、MCP、Execution Mapper、ShadowCore
 - **EdgeOS 增加平台能力** — 发现、编排、治理
 - **协议统一** — Capability、Discovery、Invoke、Event
+
+> **全局约定（v2.1）**：本文档中所有 `$edgeos/...` 均指 **MQTT 斜杠 Topic 的规范命名**。NATS 侧使用标准点分 Subject，`/`→`.`、`+`→`*`、`#`→`>`（如 `$edgeos.discovery.agent`），语义与 MQTT 一一对应。NATS 不保留斜杠。
 
 ### 0.2 统一能力模型
 
@@ -942,9 +945,11 @@ $edgeos/discovery/agent/offline
 | `$edgeos/state/{agent_id}/get` | EdgeOS → edgeCore | 0 | Shadow 查询请求 |
 | `$edgeos/heartbeat/{agent_id}` | edgeCore → EdgeOS | 0 | 心跳 |
 
+> **NATS Subject 映射（v2.1）**：上表为 MQTT 斜杠 Topic 的规范命名。NATS 侧使用标准点分 Subject，`/`→`.`、`+`→`*`、`#`→`>`，语义与 MQTT 一一对应。例如 `$edgeos/discovery/agent` → `$edgeos.discovery.agent`、`$edgeos/event/{agent}` → `$edgeos.event.{agent}`、`$edgeos/event/#` → `$edgeos.event.>`。禁止在 NATS 上保留斜杠形式。
+
 ### 2.9.2 Transport 复用
 
-继续复用现有 MQTT/NATS 北向通道配置，仅需订阅/发布新增 Topic。
+继续复用现有 MQTT/NATS 北向通道配置，仅需订阅/发布新增 Topic（MQTT）或对应点分 Subject（NATS）。
 
 ---
 
@@ -1650,10 +1655,11 @@ retry:
 | edgeOS 版本 | 协议版本 | 支持中间件 | EAN 版本 | 状态 |
 |------------|---------|----------|---------|------|
 | v1.0 | v1.0 | MQTT 3.1.1/5.0, NATS 2.x | — | 已发布 |
-| **v2.0** | **v2.0** | **MQTT 5.0, NATS 2.x+** | **EAN 2.0** | **当前** |
+| **v2.0** | **v2.0** | **MQTT 5.0, NATS 2.x+** | **EAN 2.0** | **已发布** |
+| **v2.1** | **v2.1** | **MQTT 5.0, NATS 2.x+** | **EAN 2.0** | **当前**（NATS 点分 Subject） |
 
 ---
 
-**文档版本**: v2.0  
-**最后更新**: 2026-07-27  
+**文档版本**: v2.1  
+**最后更新**: 2026-08-10  
 **维护者**: edgeOS 团队

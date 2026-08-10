@@ -18,7 +18,7 @@ Edge Agent Network（EAN）2.0 在现有 edgeCore + EdgeOS 架构上增加统一
 - **edgeCore**：Capability Runtime（能力注册、发现发布、Invoke 执行、Event 上报）
 - **EdgeOS**：Coordination Platform（全局发现索引、跨节点编排、Invoke 发起、Event 订阅与规则）
 
-协议层统一为：`Agent` / `Capability` / `Discovery` / `Invoke` / `Event`，传输同时支持 **MQTT** 与 **NATS**，Topic/Subject 使用相同的 `$edgeos/...` 字符串形式。
+协议层统一为：`Agent` / `Capability` / `Discovery` / `Invoke` / `Event`，传输同时支持 **MQTT** 与 **NATS**，MQTT Topic 使用 `$edgeos/...` 斜杠形式，NATS Subject 映射为对应点分形式（`/`→`.`、`+`→`*`、`#`→`>`）。
 
 ### 1.2 本轮目标（已落地）
 
@@ -87,7 +87,7 @@ MQTT/NATS/MCP/HTTP
 
 > Shadow→Event 的 `EventPublisher` 列表在 **EAN Runtime 启停/连接生命周期**刷新（`SetOnEANRuntimeChanged` → `refreshEANEventPublishers`），**不**在每次 Shadow delta 热路径上刷新。通知回调同步执行；若北向管理器正在持写锁则延迟阻塞刷新，避免死锁并消除异步窗口内仍用旧 publisher 列表的竞态。
 
-### 2.3 EAN Topic / Subject（MQTT 与 NATS 相同字符串）
+### 2.3 EAN Topic / Subject（MQTT 斜杠 Topic / NATS 点分 Subject）
 
 | 用途 | Topic/Subject | 方向 | QoS(MQTT) |
 |------|---------------|------|-----------|
@@ -104,7 +104,7 @@ MQTT/NATS/MCP/HTTP
 | Event 广播 | `$edgeos/event/broadcast` | edgeCore → EdgeOS | 1 |
 | Heartbeat | `$edgeos/heartbeat/{agent_id}` | edgeCore → EdgeOS | 0 |
 
-> NATS 侧 **不** 把 `/` 改成 `.`：EAN 2.0 统一使用 `$edgeos/...` 斜杠形式；V1.0 NATS 仍用 `edgeCore.*`。
+> NATS 侧将 `/` 映射为 `.`（点分 Subject）：`$edgeos/discovery/agent` → `$edgeos.discovery.agent`；通配符 `+`→`*`、`#`→`>`。与 MQTT 斜杠 Topic 语义一一对应。V1.0 NATS 仍用 `edgeCore.*`。
 
 ### 2.4 默认 Capability 清单（edgeCore 自动注册）
 
@@ -200,7 +200,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgeCor
 | # | 功能 | 要求 |
 |---|------|------|
 | OS-1 | MQTT Broker 接入 | 支持订阅/发布 `$edgeos/#`；建议 QoS1 对 Discovery/Invoke/Event |
-| OS-2 | NATS 接入 | 订阅/发布相同 `$edgeos/...` subject（保留斜杠）；与 MQTT 语义对称 |
+| OS-2 | NATS 接入 | 订阅/发布 `$edgeos....` 点分 subject（MQTT `/`→`.`、`+`→`*`、`#`→`>`）；与 MQTT 语义对称 |
 | OS-3 | 双传输对称 | 同一业务逻辑应对 MQTT/NATS 复用编解码，仅替换 transport adapter |
 
 本机联调默认：
@@ -283,18 +283,20 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgeCor
 
 - 不要在 EdgeOS 直接驱动南向设备（读/写走 edgeCore Capability Invoke）
 - 不要假设 AI Invoke 会自动写配置（必须等待人工 Confirm 或显式 apply API）
-- 不要把 NATS subject 擅自改成 `edgeos.discovery.agent` 这类点分形式（除非双方同时改规范）
+- 不要把 NATS subject 重新改回 `$edgeos/discovery/agent` 这类斜杠形式——NATS 须用点分（`$edgeos.discovery.agent`），`/`→`.`、`+`→`*`、`#`→`>`
 
 ---
 
 ## 4. MQTT 与 NATS 对称说明
 
+NATS 使用标准点分 Subject，与 MQTT 斜杠 Topic 语义对称：`/`→`.`、`+`→`*`、`#`→`>`。例如 `$edgeos/discovery/agent`（MQTT）↔ `$edgeos.discovery.agent`（NATS）。
+
 | 能力 | MQTT | NATS | 对称性 |
 |------|------|------|--------|
-| Discovery agent/capability | ✅ | ✅ | 同 Topic 字符串 |
-| Invoke + Reply | ✅ | ✅ | 同 |
-| Event（含 previous_value） | ✅ | ✅ | 同 |
-| Offline / Heartbeat | ✅ | ✅ | 同 |
+| Discovery agent/capability | ✅ | ✅ | `/`↔`.` 映射 |
+| Invoke + Reply | ✅ | ✅ | `/`↔`.` 映射 |
+| Event（含 previous_value） | ✅ | ✅ | `/`↔`.` 映射 |
+| Offline / Heartbeat | ✅ | ✅ | `/`↔`.` 映射 |
 | V1 兼容 | `edgeCore/...` | `edgeCore.*` | **仅 V1 路径分隔符不同** |
 | Bridge 代码 | `edgos_mqtt/ean_bridge.go` | `edgos_nats/ean_bridge.go` | `Bus` 接口对称 |
 | 执行器 | `NewWiredExecutor` | `NewWiredExecutor` | 同 Driver+AI |
@@ -380,11 +382,11 @@ go build -o /dev/null ./cmd/
 ### 6.3 手工联调（NATS 示例）
 
 1. 启动 edgeCore，配置 `northbound.edgeos_nats`：`url=nats://127.0.0.1:4222`，`node_id=edgeCore-node-001`，`enable=true`  
-2. EdgeOS（或 nats CLI）订阅：  
-   - `$edgeos/discovery/agent`  
-   - `$edgeos/discovery/capability`  
-   - `$edgeos/event/edgeCore-node-001`  
-   - `$edgeos/reply/edgeos-planner`  
+2. EdgeOS（或 nats CLI）订阅（NATS 点分 Subject）：  
+   - `$edgeos.discovery.agent`  
+   - `$edgeos.discovery.capability`  
+   - `$edgeos.event.edgeCore-node-001`  
+   - `$edgeos.reply.edgeos-planner`  
 3. 发布 Invoke：
 
 ```json
@@ -406,7 +408,7 @@ go build -o /dev/null ./cmd/
 }
 ```
 
-Subject: `$edgeos/invoke/edgeCore-node-001`
+Subject: `$edgeos.invoke.edgeCore-node-001`
 
 4. 确认 Reply `status=completed`  
 5. 制造点位变化（或调用 Runtime Event），确认 Event 含 `previous_value`

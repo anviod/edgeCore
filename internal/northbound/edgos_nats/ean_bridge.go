@@ -3,6 +3,7 @@ package edgos_nats
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync/atomic"
 
 	"github.com/anviod/edgeCore/internal/capability"
@@ -12,9 +13,32 @@ import (
 	"go.uber.org/zap"
 )
 
+// MqttTopicToNatsSubject converts an MQTT-style slash-separated topic to a
+// NATS dot-separated subject, translating MQTT wildcards in the process:
+//
+//	"/" → "."   (token separator)
+//	"+" → "*"   (single-level wildcard)
+//	"#" → ">"   (multi-level wildcard)
+//
+// EAN 2.0 topic constants use the MQTT slash form so a single set of templates
+// works for both transports; the NATS bus adapter applies this conversion before
+// every Publish / Subscribe call, restoring NATS-native dot subjects.
+//
+// | 将 MQTT 风格的斜杠 Topic 转换为 NATS 点分隔 Subject。
+// | 遵循 NATS 消息队列约定：/ → .  + → *  # → >
+func MqttTopicToNatsSubject(topic string) string {
+	s := strings.ReplaceAll(topic, "/", ".")
+	s = strings.ReplaceAll(s, "+", "*")
+	s = strings.ReplaceAll(s, "#", ">")
+	return s
+}
+
 // natsBus adapts the edgeOS NATS client to capability.Bus for EAN 2.0 subjects.
 // V1.0 edgeCore.* subjects remain handled by existing Client methods unchanged.
-// EAN subjects keep the protocol `$edgeos/...` form (slash tokens) per EAN 2.0 spec.
+// EAN topic constants use MQTT slash form; natsBus converts them to NATS dot
+// subjects via MqttTopicToNatsSubject before every Publish / Subscribe call,
+// complying with NATS subject conventions (dot-separated hierarchical tokens).
+// | NATS 适配器：将 MQTT 斜杠 Topic 转换为 NATS 点分隔 Subject 后再发布/订阅。
 type natsBus struct {
 	client *Client
 }
@@ -27,7 +51,8 @@ func (b natsBus) Publish(topic string, payload []byte, _ byte) error {
 	if !b.IsConnected() {
 		return fmt.Errorf("client not connected")
 	}
-	if err := b.client.nc.Publish(topic, payload); err != nil {
+	subject := MqttTopicToNatsSubject(topic)
+	if err := b.client.nc.Publish(subject, payload); err != nil {
 		atomic.AddInt64(&b.client.failCount, 1)
 		return err
 	}
@@ -40,7 +65,8 @@ func (b natsBus) Subscribe(topic string, _ byte, handler func(topic string, payl
 	if !b.IsConnected() {
 		return nil
 	}
-	sub, err := b.client.nc.Subscribe(topic, func(msg *nats.Msg) {
+	subject := MqttTopicToNatsSubject(topic)
+	sub, err := b.client.nc.Subscribe(subject, func(msg *nats.Msg) {
 		handler(msg.Subject, msg.Data)
 	})
 	if err != nil {
@@ -114,8 +140,8 @@ func (c *Client) EnsureCapabilityRuntime(agentVersion string) (*capability.Runti
 		Transport:            capability.TransportNATS,
 		HeartbeatIntervalSec: heartbeatSec,
 		Metadata: map[string]any{
-			"northbound": "edgeos_nats",
-			"compat":     "v1_subjects_retained",
+			"northbound":   "edgeos_nats",
+			"subject_form": "nats_dot", // MQTT slash topics converted to NATS dot subjects
 		},
 	}, natsBus{client: c})
 	if err != nil {
@@ -134,8 +160,8 @@ func (c *Client) CapabilityRuntime() *capability.Runtime {
 }
 
 // EANEventAutoPublishEnabled reports whether the EAN capability layer should
-// auto-publish point-change events over $edgeos/event/*. Used by the
-// Shadow→Event bridge to gate EAN event publishing independent of the runtime.
+// auto-publish point-change events over $edgeos.event.* (NATS dot subjects).
+// Used by the Shadow→Event bridge to gate EAN event publishing independent of the runtime.
 func (c *Client) EANEventAutoPublishEnabled() bool {
 	c.configMu.RLock()
 	defer c.configMu.RUnlock()
@@ -166,7 +192,7 @@ func (c *Client) stopEAN() {
 	}
 }
 
-// StopCapabilityRuntime stops and clears the EAN Runtime, cleaning up $edgeos/invoke/* subscriptions.
+// StopCapabilityRuntime stops and clears the EAN Runtime, cleaning up $edgeos.invoke.* subscriptions.
 // Called when EANEnabled transitions from true→false or channel is disabled.
 func (c *Client) StopCapabilityRuntime() {
 	c.eanMu.Lock()
