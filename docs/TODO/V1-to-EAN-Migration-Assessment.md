@@ -1427,12 +1427,12 @@ ean:
 
 #### 设备管理（4 条，[全功能]）
 
-| # | 工具名 | 描述 | 必需参数 |
-|---|---|---|---|
-| 11 | `create_device` [全功能] | 在通道下创建设备 | `channel_id`, `name` |
-| 12 | `delete_device` [全功能] | 删除设备（含点位） | `channel_id`, `device_id` |
-| 13 | `update_device` [全功能] | 更新设备配置 | `channel_id`, `device_id` |
-| 14 | `enable_device` [全功能] | 启用/禁用设备 | `channel_id`, `device_id`, `enable` |
+| # | 工具名 | 描述 | 必需参数 | 可选参数 |
+|---|---|---|---|---|
+| 11 | `create_device` [全功能] | 在通道下创建设备 | `channel_id`, `name` | `station_name`, `station_code`, `room_name`, `room_code`, `interval`, `enable`, `config` |
+| 12 | `delete_device` [全功能] | 删除设备（含点位） | `channel_id`, `device_id` | - |
+| 13 | `update_device` [全功能] | 更新设备配置 | `channel_id`, `device_id` | `station_name`, `station_code`, `room_name`, `room_code`, `name`, `interval`, `enable`, `config` |
+| 14 | `enable_device` [全功能] | 启用/禁用设备 | `channel_id`, `device_id`, `enable` | - |
 
 #### 点位管理（3 条，[全功能]）
 
@@ -1661,7 +1661,78 @@ EdgeOS 通过 MQTT/NATS 总线调用 edgeCore 能力，消息信封使用 EAN 2.
 }
 ```
 
-### F.7 Invoke Metrics 指标
+### F.7 device_report 消息体格式
+
+edgeCore 通过 `edgeCore/devices/report`（MQTT）或 `edgeCore.devices.report`（NATS）向 EdgeOS 上报设备清单。消息体包含设备的基础信息、运行状态、空间属性和协议配置。
+
+**Topic**: `edgeCore/devices/report`（MQTT） / `edgeCore.devices.report`（NATS）
+
+**消息体结构**：
+
+```json
+{
+  "header": {
+    "message_id": "msg_uuid",
+    "timestamp": 1722672000000,
+    "source": "edgeCore-node-01",
+    "message_type": "device_report",
+    "version": "1.0"
+  },
+  "body": {
+    "node_id": "edgeCore-node-01",
+    "devices": [
+      {
+        "device_id": "dev_0723120134",
+        "device_name": "智能电表_01",
+        "device_profile": "modbus-tcp",
+        "service_name": "Modbus-TCP-通道1",
+        "labels": [],
+        "description": "",
+        "admin_state": "ENABLED",
+        "operating_state": "ENABLED",
+        "station_name": "海府一体化冷站",
+        "station_code": "HKO.HFJLZ",
+        "room_name": "海府动力机房/1楼/1号电力室",
+        "room_code": "HKO.HFJDD01",
+        "properties": {
+          "protocol": "modbus-tcp",
+          "channel_id": "ch-001",
+          "slave_id": 1
+        }
+      }
+    ]
+  }
+}
+```
+
+**字段定义**：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `device_id` | string | 是 | 设备唯一标识 |
+| `device_name` | string | 是 | 设备名称 |
+| `device_profile` | string | 是 | 设备协议（等于通道 Protocol） |
+| `service_name` | string | 是 | 服务名称（等于通道名称） |
+| `admin_state` | string | 是 | 管理状态：`ENABLED` / `DISABLED` |
+| `operating_state` | string | 是 | 运行状态：`ENABLED` / `DISABLED` / `UNSTABLE` / `QUARANTINE` |
+| `station_name` | string | 否 | 局站名称 / Station name — 设备所属局站（如"海府一体化冷站"） |
+| `station_code` | string | 否 | 局站编码 / Station code — 局站唯一标识（如"HKO.HFJLZ"） |
+| `room_name` | string | 否 | 机房名称 / Room name — 设备所在机房（如"海府动力机房/1楼/1号电力室"） |
+| `room_code` | string | 否 | 机房编码 / Room code — 机房唯一标识（如"HKO.HFJDD01"） |
+| `properties` | object | 是 | 协议特定属性（含 `protocol`、`channel_id` 及设备 Config 字段） |
+
+**空间属性共识（edgeCore ↔ EdgeOS）**：
+
+1. edgeCore 在 `Device` 结构体中新增 `StationName`/`StationCode`/`RoomName`/`RoomCode` 四个字段，通过 UI 设备表单录入，JSON tag 分别为 `station_name`/`station_code`/`room_name`/`room_code`，使用 `omitempty` 确保未配置时不发送。
+2. `device_report` 中空间属性作为设备顶级字段（与 `device_id`/`device_name` 同级），**不放在 `properties` 内**，便于 EdgeOS 直接索引。
+3. **EdgeOS 侧必须实现（OS-24）**：
+   - 解析四个空间属性字段并持久化到设备记录（BoltDB/数据库）
+   - `ReconcileDevices` 对账时保留并更新空间属性（不因设备 re-upsert 丢失）
+   - 提供按 `station_code` / `room_code` 维度的设备检索和分组 API
+   - 设备拓扑/列表 UI 展示局站→机房→设备的层级关系
+4. 空间属性为可选字段，向后兼容：EdgeOS 收到不含空间属性的 `device_report` 时不应报错，对应字段留空即可。
+
+### F.8 Invoke Metrics 指标
 
 edgeCore 通过 `GET /api/capability/agent/status` 返回 `invoke_metrics` 字段：
 
@@ -1692,3 +1763,5 @@ EdgeOS 侧通过 `GET /api/ean/health` 返回对称的 `invoke_metrics` 字段�
 ---
 
 *本文档基于 edgeCore (`d:\code\edgeCore`) 和 EdgeOS (`d:\code\edgeOS`) 代码库 2026-08-03 版本编制。*
+
+*更新记录（2026-08-11）：新增附录 F.7 device_report 消息体格式（含空间属性 `station_name`/`station_code`/`room_name`/`room_code`）；附录 E 设备管理工具新增可选参数列；EdgeOS 端新增 OS-24 空间属性解析与持久化要求。*

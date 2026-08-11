@@ -247,6 +247,11 @@ type Device struct {
 	Name             string         `json:"name" yaml:"name"`
 	Enable           bool           `json:"enable" yaml:"enable"`
 	Interval         Duration       `json:"interval" yaml:"interval"`
+	// Spatial attributes / 空间属性 - 物理位置信息，用于资产管理和设备定位
+	StationName      string         `json:"station_name,omitempty" yaml:"station_name,omitempty"`   // 局站名称 / Station name
+	StationCode      string         `json:"station_code,omitempty" yaml:"station_code,omitempty"`   // 局站编码 / Station code
+	RoomName         string         `json:"room_name,omitempty" yaml:"room_name,omitempty"`         // 机房名称 / Equipment room name
+	RoomCode         string         `json:"room_code,omitempty" yaml:"room_code,omitempty"`         // 机房编码 / Equipment room code
 	DegradeOnFailure *bool          `json:"degrade_on_failure,omitempty" yaml:"degrade_on_failure,omitempty"` // 默认 true；设为 false 关闭失败退避
 	DeviceFile       string         `json:"device_file,omitempty" yaml:"device_file,omitempty"`               // 设备配置文件路径
 	Config           map[string]any `json:"config" yaml:"config"`                                             // 设备特定配置（如 slave_id）

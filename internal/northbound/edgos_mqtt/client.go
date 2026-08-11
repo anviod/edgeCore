@@ -983,6 +983,20 @@ func (c *Client) publishDeviceReport() {
 				},
 			}
 
+			// Add spatial attributes / 空间属性
+			if device.StationName != "" {
+				deviceInfo["station_name"] = device.StationName
+			}
+			if device.StationCode != "" {
+				deviceInfo["station_code"] = device.StationCode
+			}
+			if device.RoomName != "" {
+				deviceInfo["room_name"] = device.RoomName
+			}
+			if device.RoomCode != "" {
+				deviceInfo["room_code"] = device.RoomCode
+			}
+
 			// Add config properties
 			if device.Config != nil {
 				for k, v := range device.Config {

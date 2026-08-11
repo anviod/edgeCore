@@ -70,6 +70,20 @@
               </div>
             </template>
 
+            <template #location="{ record }">
+              <div class="device-location-cell">
+                <span v-if="record.station_name || record.station_code" class="loc-line">
+                  {{ record.station_name || '-' }}
+                  <span v-if="record.station_code" class="loc-code">{{ record.station_code }}</span>
+                </span>
+                <span v-if="record.room_name || record.room_code" class="loc-line loc-sub">
+                  {{ record.room_name || '-' }}
+                  <span v-if="record.room_code" class="loc-code">{{ record.room_code }}</span>
+                </span>
+                <span v-if="!record.station_name && !record.station_code && !record.room_name && !record.room_code" class="loc-empty">-</span>
+              </div>
+            </template>
+
             <template #interval="{ record }">
               <span class="table-cell-semantic">
                 <a-tag size="small" bordered>
@@ -141,6 +155,33 @@
         <a-form-item field="enable" label="启用状态">
           <a-switch v-model="form.enable" />
         </a-form-item>
+
+        <a-divider orientation="left">空间属性</a-divider>
+
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item field="stationName" label="局站名称">
+              <a-input v-model="form.stationName" placeholder="例如: 海府一体化冷站" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="stationCode" label="局站编码">
+              <a-input v-model="form.stationCode" placeholder="例如: HKO.HFJLZ" />
+            </a-form-item>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16">
+          <a-col :span="12">
+            <a-form-item field="roomName" label="机房名称">
+              <a-input v-model="form.roomName" placeholder="例如: 海府动力机房/1楼/1号电力室" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item field="roomCode" label="机房编码">
+              <a-input v-model="form.roomCode" placeholder="例如: HKO.HFJDD01" />
+            </a-form-item>
+          </a-col>
+        </a-row>
         
         <a-divider orientation="left">通信配置</a-divider>
         
@@ -844,6 +885,10 @@ const defaultForm = {
   name: '',
   interval: '10s',
   enable: true,
+  stationName: '',
+  stationCode: '',
+  roomName: '',
+  roomCode: '',
   configStr: '{}',
   dlt645Address: '',
   dlt645AutoPointsEnabled: true,
@@ -1041,6 +1086,10 @@ const openDialog = async (item = null) => {
       ...source,
       config: config,
       configStr: JSON.stringify(config, null, 2),
+      stationName: source.station_name || source.stationName || '',
+      stationCode: source.station_code || source.stationCode || '',
+      roomName: source.room_name || source.roomName || '',
+      roomCode: source.room_code || source.roomCode || '',
       dlt645Address: config.station_address || config.address || '',
       dlt645AutoPointsEnabled: config.auto_points_enabled !== false,
       modbusSlaveId: config.slave_id || 1,
@@ -1169,6 +1218,10 @@ const saveDevice = async () => {
     name: form.value.name,
     interval: form.value.interval,
     enable: form.value.enable,
+    station_name: form.value.stationName || '',
+    station_code: form.value.stationCode || '',
+    room_name: form.value.roomName || '',
+    room_code: form.value.roomCode || '',
     config: config,
     storage: {
       enable: form.value.storageEnable,
@@ -1531,6 +1584,7 @@ const toggleDeviceStatus = async (record) => {
 const tableColumns = computed(() => {
   const columns = [
     { title: '设备名称 / 标识', slotName: 'name', width: 220 },
+    { title: '位置信息', slotName: 'location', width: 200 },
     { title: '状态', slotName: 'enable', width: 88 },
     { title: '通信状态', slotName: 'state', width: 108 },
     { title: '采集间隔', slotName: 'interval', width: 108 },

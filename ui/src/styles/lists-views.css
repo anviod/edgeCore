@@ -450,6 +450,39 @@
   color: var(--text-tertiary);
 }
 
+.device-location-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.device-location-cell .loc-line {
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-location-cell .loc-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.device-location-cell .loc-code {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  background: var(--fill-2);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.device-location-cell .loc-empty {
+  color: var(--text-tertiary);
+}
+
 .device-footer {
   margin-top: var(--space-6);
   padding: var(--space-3);

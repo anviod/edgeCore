@@ -189,6 +189,57 @@ EAN 与 V1 并行：新功能用 `$edgeos/*`；旧 EdgeOS 可继续用 V1。
 
 EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgeCore/devices/report` 与 NATS `edgeCore.devices.report`（双传输对称）；漏订任一侧会导致该传输上的设备数空窗或滞后。
 
+**`device_report` 消息体格式（edgeCore 发布，EdgeOS 必须解析）**：
+
+Topic: `edgeCore/devices/report`（MQTT） / `edgeCore.devices.report`（NATS）
+
+```json
+{
+  "header": {
+    "message_id": "msg_uuid",
+    "timestamp": 1722672000000,
+    "source": "edgeCore-node-01",
+    "message_type": "device_report",
+    "version": "1.0"
+  },
+  "body": {
+    "node_id": "edgeCore-node-01",
+    "devices": [
+      {
+        "device_id": "dev_0723120134",
+        "device_name": "智能电表_01",
+        "device_profile": "modbus-tcp",
+        "service_name": "Modbus-TCP-通道1",
+        "labels": [],
+        "description": "",
+        "admin_state": "ENABLED",
+        "operating_state": "ENABLED",
+        "station_name": "海府一体化冷站",
+        "station_code": "HKO.HFJLZ",
+        "room_name": "海府动力机房/1楼/1号电力室",
+        "room_code": "HKO.HFJDD01",
+        "properties": {
+          "protocol": "modbus-tcp",
+          "channel_id": "ch-001",
+          "slave_id": 1
+        }
+      }
+    ]
+  }
+}
+```
+
+**空间属性字段说明**：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `station_name` | string | 否 | 局站名称，描述设备所属局站（如"海府一体化冷站"） |
+| `station_code` | string | 否 | 局站编码，局站唯一标识（如"HKO.HFJLZ"） |
+| `room_name` | string | 否 | 机房名称，描述设备所在机房/房间（如"海府动力机房/1楼/1号电力室"） |
+| `room_code` | string | 否 | 机房编码，机房唯一标识（如"HKO.HFJDD01"） |
+
+> 空间属性为可选字段，未配置时不上报（`omitempty`）。EdgeOS 侧应将这四个字段持久化到设备记录中，用于设备资产管理、位置检索和拓扑展示。
+
 ---
 
 ## 3. EdgeOS 端必须实现的功能
@@ -278,6 +329,7 @@ EdgeOS 若仍依赖 V1 设备清单对账，**必须同时订阅** MQTT `edgeCor
 | OS-21 | 权限与命名空间 | 按租户/项目限制可 Invoke 的 Capability（尤其 write/admin/AI） |
 | OS-22 | 审计 | 记录跨节点 Invoke 的 initiator、target、capability、结果 |
 | OS-23 | V1 兼容网关（过渡期） | 若仍有 V1 客户端：可保留 `edgeCore/*` 适配，但新功能禁止只做 V1；**V1 设备清单须订** MQTT `edgeCore/devices/report` **与** NATS `edgeCore.devices.report`（勿只订 MQTT） |
+| OS-24 | 空间属性解析与持久化 | 解析 `device_report` 中 `station_name`/`station_code`/`room_name`/`room_code` 四个空间属性字段，持久化到设备记录；支持按局站/机房维度检索、分组展示和拓扑渲染 |
 
 ### 3.6 EdgeOS 侧「不要做」的事
 
@@ -467,16 +519,18 @@ MQTT 手工步骤相同，仅把 NATS Publish/Subscribe 换成 MQTT，Broker `12
 | `internal/execution/ai_adapter.go` | 新增 AIAdapter，对接 `ai_agent.Agent` |
 | `internal/execution/driver_executor.go` | AI 命令委托 AIAdapter；`NewWiredExecutor` |
 | `internal/execution/ai_adapter_test.go` | AI Invoke 单测 |
-| `internal/model/types.go` | `ShadowPoint.PreviousValue`（notify-only） |
+| `internal/model/types.go` | `ShadowPoint.PreviousValue`（notify-only）；`Device` 新增空间属性字段（`StationName`/`StationCode`/`RoomName`/`RoomCode`） |
 | `internal/core/shadow_pool.go` | `cloneShadowDeltaForNotify` |
 | `internal/core/shadow_core.go` | 写路径携带 previous |
 | `internal/core/northbound_manager_ext.go` | Event Bridge 传递 previous；publisher 生命周期刷新（同步 + 写锁下延迟） |
 | `internal/core/shadow_previous_value_test.go` | previous_value 单测 |
 | `internal/northbound/edgos_{mqtt,nats}/ean_bridge.go` | WiredExecutor；`notifyEANRuntimeChanged` 同步回调 |
-| `internal/northbound/edgos_{mqtt,nats}/client.go` | 连接/重注册/`register_response`/5s 超时 `device_report` 兜底 |
+| `internal/northbound/edgos_{mqtt,nats}/client.go` | 连接/重注册/`register_response`/5s 超时 `device_report` 兜底；`device_report` 消息体新增空间属性字段 |
 | `internal/northbound/edgos_nats/ean_integration_test.go` | NATS 真实联调 |
 | `internal/northbound/edgos_mqtt/ean_integration_test.go` | MQTT 校验 previous_value |
 | `internal/server/mcp_handler.go` | MCP Runtime 注入 AIAdapter |
+| `ui/src/views/DeviceList.vue` | 设备表单新增空间属性输入区；表格新增位置信息列 |
+| `ui/src/styles/lists-views.css` | 设备位置信息单元格样式 |
 | `docs/edgeos/AI协同组件规划.md` | 状态同步 |
 
 ---
