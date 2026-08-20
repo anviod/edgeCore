@@ -273,6 +273,56 @@ func (d Device) WithPointsSummary() Device {
 	return out
 }
 
+// DeepCopy returns a deep copy of a Device so callers may mutate the result
+// (Points, Config, DegradeOnFailure, NodeRuntime) without corrupting the
+// channel manager's internal state. Without this, the Points slice and Config
+// map share backing storage with the stored device, so MCP/API update handlers
+// mutate the live configuration before the change-diff / restart decision runs.
+func (d Device) DeepCopy() Device {
+	out := d
+	if d.Config != nil {
+		out.Config = cloneAnyMap(d.Config)
+	}
+	if d.DegradeOnFailure != nil {
+		v := *d.DegradeOnFailure
+		out.DegradeOnFailure = &v
+	}
+	if d.NodeRuntime != nil {
+		nr := *d.NodeRuntime
+		out.NodeRuntime = &nr
+	}
+	if d.Points != nil {
+		pts := make([]Point, len(d.Points))
+		for i, p := range d.Points {
+			pts[i] = p
+			if p.Threshold != nil {
+				th := *p.Threshold
+				pts[i].Threshold = &th
+			}
+		}
+		out.Points = pts
+	}
+	return out
+}
+
+// ClonePoint returns a deep copy of a Point (duplicates the Threshold pointer).
+func (p Point) Clone() Point {
+	out := p
+	if p.Threshold != nil {
+		th := *p.Threshold
+		out.Threshold = &th
+	}
+	return out
+}
+
+func cloneAnyMap(m map[string]any) map[string]any {
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
 // NodeRuntime defines runtime statistics for a node (device or channel)
 type NodeRuntime struct {
 	FailCount     int       `json:"fail_count"`

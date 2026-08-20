@@ -184,7 +184,7 @@
               <div class="input-group">
                 <a-input 
                   v-model="formData.gatewayLocation" 
-                  :placeholder="'例如：IDC-1栋-4楼-201机房'" 
+                  :placeholder="'例如：站点-1栋-4楼-201机房'" 
                   size="large"
                   :status="gatewayLocationStatus"
                 >

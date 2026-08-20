@@ -2270,7 +2270,7 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 | `ean_write_points` | 统一向点位写入控制值（跨协议，write 权限） | `device_id`, `point_id`/`address`+`value`, 或 `writes[]` |
 | `ean_get_diagnostics` | 统一获取诊断信息（跨协议，admin 权限） | `channel_id`（可选）, `device_id`（可选） |
 
-#### 全功能 CRUD 工具（20 个，需用户激活全功能）
+#### 全功能 CRUD 工具（22 个，需用户激活全功能）
 
 **通道管理（5 个）**
 
@@ -2282,16 +2282,24 @@ MCP 采用**独立于系统 JWT 的简化认证机制**：
 | `stop_channel` | 停止通道采集引擎 | `channel_id` |
 | `restart_channel` | 重启通道采集引擎 | `channel_id` |
 
-**设备管理（4 个）**
+**设备管理（5 个）**
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|
 | `create_device` | 在通道下创建设备 | `channel_id`, `name`, `config` |
+| `batch_create_devices` | 批量创建设备（适用于扫描结果导入） | `channel_id`, `devices[]` |
 | `delete_device` | 删除设备（含点位） | `channel_id`, `device_id` |
 | `update_device` | 更新设备配置 | `channel_id`, `device_id` |
 | `enable_device` | 启用/禁用设备 | `channel_id`, `device_id`, `enable` |
 
-**点位管理（3 个）**
+**点位管理（4 个）**
+
+| 工具名 | 功能 | 参数 |
+|--------|------|------|
+| `create_point` | 创建设备采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
+| `batch_create_points` | 批量创建点位（适用于扫描/对象浏览结果导入） | `channel_id`, `device_id`, `points[]` |
+| `delete_point` | 删除指定点位 | `channel_id`, `device_id`, `point_id` |
+| `update_point` | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
 
 | 工具名 | 功能 | 参数 |
 |--------|------|------|

@@ -787,6 +787,15 @@ func (cm *ChannelManager) GetChannel(channelID string) *model.Channel {
 
 	if ch, ok := cm.channels[channelID]; ok {
 		c := *ch
+		// Deep-copy devices so callers cannot mutate stored Points/Config
+		// through the shared slice/backing arrays.
+		if ch.Devices != nil {
+			devs := make([]model.Device, len(ch.Devices))
+			for i, dev := range ch.Devices {
+				devs[i] = dev.DeepCopy()
+			}
+			c.Devices = devs
+		}
 		if node := cm.stateManager.GetNode(c.ID); node != nil {
 			c.NodeRuntime = &model.NodeRuntime{
 				FailCount:     node.Runtime.FailCount,
@@ -808,10 +817,11 @@ func (cm *ChannelManager) GetChannelDevices(channelID string) []model.Device {
 
 	if ch, ok := cm.channels[channelID]; ok {
 		d := cm.drivers[channelID]
-		// Return a copy with state populated
+		// Return deep copies with state populated so callers may not mutate
+		// the stored device's Points/Config through the returned slice.
 		devices := make([]model.Device, len(ch.Devices))
 		for i, dev := range ch.Devices {
-			devices[i] = dev
+			devices[i] = dev.DeepCopy()
 			cm.applyDeviceRuntimeState(ch, d, &devices[i])
 			var metrics *model.DeviceMetrics
 			if mc := model.GetGlobalMetricsCollector(); mc != nil {
@@ -832,8 +842,9 @@ func (cm *ChannelManager) GetDevice(channelID, deviceID string) *model.Device {
 	if ch, ok := cm.channels[channelID]; ok {
 		for i, dev := range ch.Devices {
 			if dev.ID == deviceID {
-				// Return a copy with state populated
-				d := ch.Devices[i]
+				// Return a deep copy with state populated so callers may mutate
+				// Points/Config without corrupting the stored channel.
+				d := ch.Devices[i].DeepCopy()
 				driver := cm.drivers[channelID]
 				cm.applyDeviceRuntimeState(ch, driver, &d)
 				var metrics *model.DeviceMetrics

@@ -214,9 +214,9 @@ Topic: `edgeCore/devices/report`（MQTT） / `edgeCore.devices.report`（NATS）
         "description": "",
         "admin_state": "ENABLED",
         "operating_state": "ENABLED",
-        "station_name": "海府一体化冷站",
+        "station_name": "阿里云海一体化冷站",
         "station_code": "HKO.HFJLZ",
-        "room_name": "海府动力机房/1楼/1号电力室",
+        "room_name": "阿里云海动力机房/1楼/1号电力室",
         "room_code": "HKO.HFJDD01",
         "properties": {
           "protocol": "modbus-tcp",
@@ -233,9 +233,9 @@ Topic: `edgeCore/devices/report`（MQTT） / `edgeCore.devices.report`（NATS）
 
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
-| `station_name` | string | 否 | 局站名称，描述设备所属局站（如"海府一体化冷站"） |
+| `station_name` | string | 否 | 局站名称，描述设备所属局站（如"阿里云海一体化冷站"） |
 | `station_code` | string | 否 | 局站编码，局站唯一标识（如"HKO.HFJLZ"） |
-| `room_name` | string | 否 | 机房名称，描述设备所在机房/房间（如"海府动力机房/1楼/1号电力室"） |
+| `room_name` | string | 否 | 机房名称，描述设备所在机房/房间（如"阿里云海动力机房/1楼/1号电力室"） |
 | `room_code` | string | 否 | 机房编码，机房唯一标识（如"HKO.HFJDD01"） |
 
 > 空间属性为可选字段，未配置时不上报（`omitempty`）。EdgeOS 侧应将这四个字段持久化到设备记录中，用于设备资产管理、位置检索和拓扑展示。

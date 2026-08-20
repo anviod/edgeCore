@@ -4165,6 +4165,19 @@ body.dark-theme .ai-fab.mcp-glow {
   margin-top: 1px;
 }
 
+.ai-mcp-docs-tool-card__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 2px 0 8px;
+  line-height: 1.5;
+}
+
+.ai-mcp-docs-tool-card__sep {
+  margin: 0 6px;
+  color: var(--text-tertiary);
+}
+
 .ai-mcp-docs-tool-summary {
   flex: 1;
   font-size: 12px;
@@ -4252,6 +4265,15 @@ body.dark-theme .ai-fab.mcp-glow {
   font-weight: 600;
   color: var(--text-primary);
   margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ai-mcp-docs-tool-param__name code {
+  font-family: ui-monospace, SFMono-Regular, Monaco, Consolas, monospace;
+  font-size: 11.5px;
 }
 
 .ai-mcp-docs-tool-param__desc {
@@ -4272,6 +4294,11 @@ body.dark-theme .ai-fab.mcp-glow {
   background: color-mix(in srgb, var(--primary) 10%, transparent);
   color: var(--primary);
   font-weight: 500;
+}
+
+.ai-mcp-docs-tool-type--opt {
+  background: color-mix(in srgb, var(--text-tertiary) 12%, transparent);
+  color: var(--text-tertiary);
 }
 
 .ai-mcp-docs-tool-default {

@@ -136,63 +136,97 @@
     <a-modal
       v-model:visible="dialog"
       :title="form.id && isEdit ? '编辑设备' : '新增设备'"
-      width="760"
-      modal-class="channel-config-modal"
+      :width="960"
+      modal-class="device-config-modal channel-config-modal"
       :ok-loading="saving"
       @before-ok="saveDevice"
       @cancel="closeDialog"
     >
-      <a-form :model="form" layout="vertical" class="channel-config-form flow-form form-controls-md">
-        <a-form-item field="id" label="设备ID" required>
-          <a-input v-model="form.id" placeholder="设备唯一标识" :disabled="isEdit" />
-        </a-form-item>
-        <a-form-item field="name" label="设备名称" required>
-          <a-input v-model="form.name" placeholder="例如: 智能电表_01" />
-        </a-form-item>
-        <a-form-item field="interval" label="采集间隔" required>
-          <a-input v-model="form.interval" placeholder="例如: 5s, 1m" />
-        </a-form-item>
-        <a-form-item field="enable" label="启用状态">
-          <a-switch v-model="form.enable" />
-        </a-form-item>
-
-        <a-divider orientation="left">空间属性</a-divider>
-
+      <a-form :model="form" layout="vertical" class="device-config-form channel-config-form flow-form form-controls-md">
+        <div class="device-form-section">
+          <div class="device-section-title">
+            <span class="device-section-title__bar"></span>
+            <span class="device-section-title__text">基本信息</span>
+            <span class="device-section-title__line"></span>
+          </div>
         <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item field="stationName" label="局站名称">
-              <a-input v-model="form.stationName" placeholder="例如: 海府一体化冷站" />
+          <a-col :span="6">
+            <a-form-item field="id" label="设备ID" required>
+              <a-input v-model="form.id" placeholder="设备唯一标识" :disabled="isEdit" />
             </a-form-item>
           </a-col>
-          <a-col :span="12">
-            <a-form-item field="stationCode" label="局站编码">
-              <a-input v-model="form.stationCode" placeholder="例如: HKO.HFJLZ" />
+          <a-col :span="6">
+            <a-form-item field="name" label="设备名称" required>
+              <a-input v-model="form.name" placeholder="例如: 智能电表_01" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item field="interval" label="采集间隔" required>
+              <a-input v-model="form.interval" placeholder="例如: 5s, 1m" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item field="enable" label="启用状态">
+              <a-switch v-model="form.enable" />
             </a-form-item>
           </a-col>
         </a-row>
+
+        </div>
+
+        <div class="device-form-section">
+        <div class="device-section-title">
+          <span class="device-section-title__bar"></span>
+          <span class="device-section-title__text">空间属性</span>
+          <span class="device-section-title__line"></span>
+        </div>
+
         <a-row :gutter="16">
-          <a-col :span="12">
-            <a-form-item field="roomName" label="机房名称">
-              <a-input v-model="form.roomName" placeholder="例如: 海府动力机房/1楼/1号电力室" />
+          <a-col :span="6">
+            <a-form-item field="stationName" label="局站名称">
+              <a-input v-model="form.stationName" placeholder="例如: 一体化冷站" />
             </a-form-item>
           </a-col>
-          <a-col :span="12">
+          <a-col :span="6">
+            <a-form-item field="stationCode" label="局站编码">
+              <a-input v-model="form.stationCode" placeholder="例如: ST01.Z001" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
+            <a-form-item field="roomName" label="机房名称">
+              <a-input v-model="form.roomName" placeholder="例如: 动力机房/1楼/1号电力室" />
+            </a-form-item>
+          </a-col>
+          <a-col :span="6">
             <a-form-item field="roomCode" label="机房编码">
-              <a-input v-model="form.roomCode" placeholder="例如: HKO.HFJDD01" />
+              <a-input v-model="form.roomCode" placeholder="例如: ST01.R001" />
             </a-form-item>
           </a-col>
         </a-row>
         
-        <a-divider orientation="left">通信配置</a-divider>
+        </div>
+
+        <div class="device-form-section">
+        <div class="device-section-title">
+          <span class="device-section-title__bar"></span>
+          <span class="device-section-title__text">通信配置</span>
+          <span class="device-section-title__line"></span>
+        </div>
         
         <template v-if="channelProtocol === 'dlt645'">
-          <a-form-item field="dlt645Address" label="设备地址" required>
-            <a-input v-model="form.dlt645Address" placeholder="210220003011" />
-          </a-form-item>
-          <a-form-item field="dlt645AutoPointsEnabled" label="导入标准点位">
-            <a-switch v-model="form.dlt645AutoPointsEnabled" />
-            <template #extra>创建设备时按 DL/T 645-2007 标准 DI 模板自动生成常用采集点位</template>
-          </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item field="dlt645Address" label="设备地址" required>
+                <a-input v-model="form.dlt645Address" placeholder="210220003011" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item field="dlt645AutoPointsEnabled" label="导入标准点位">
+                <a-switch v-model="form.dlt645AutoPointsEnabled" />
+                <template #extra>按 DL/T 645-2007 标准 DI 模板自动生成常用采集点位</template>
+              </a-form-item>
+            </a-col>
+          </a-row>
         </template>
 
         <template v-if="channelProtocol === 'knxnet-ip'">
@@ -205,16 +239,18 @@
         </template>
 
         <template v-if="channelProtocol === 'profinet-io'">
-          <a-form-item field="pnioDeviceName" label="设备名称" required>
-            <a-input v-model="form.pnioDeviceName" placeholder="io-device-1" />
-          </a-form-item>
           <a-row :gutter="16">
-            <a-col :span="12">
+            <a-col :span="8">
+              <a-form-item field="pnioDeviceName" label="设备名称" required>
+                <a-input v-model="form.pnioDeviceName" placeholder="io-device-1" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
               <a-form-item field="pnioIp" label="设备 IP 地址" required>
                 <a-input v-model="form.pnioIp" placeholder="192.168.1.20" />
               </a-form-item>
             </a-col>
-            <a-col :span="12">
+            <a-col :span="8">
               <a-form-item field="pnioPort" label="设备端口">
                 <a-input-number v-model="form.pnioPort" :min="1" :max="65535" placeholder="34964" />
               </a-form-item>
@@ -316,17 +352,26 @@
         </template>
         
         <template v-if="channelProtocol && channelProtocol.includes('modbus')">
-          <a-form-item field="modbusSlaveId" label="从机ID" required>
-            <a-input-number v-model="form.modbusSlaveId" :min="1" placeholder="1" />
-          </a-form-item>
-          <a-form-item field="startAddressMode" label="地址模式">
-            <a-radio-group v-model="form.startAddressMode">
-              <a-radio :value="0">0-based</a-radio>
-              <a-radio :value="1">1-based</a-radio>
-            </a-radio-group>
-          </a-form-item>
+          <a-row :gutter="16">
+            <a-col :span="12">
+              <a-form-item field="modbusSlaveId" label="从机ID" required>
+                <a-input-number v-model="form.modbusSlaveId" :min="1" placeholder="1" />
+              </a-form-item>
+            </a-col>
+            <a-col :span="12">
+              <a-form-item field="startAddressMode" label="地址模式">
+                <a-radio-group v-model="form.startAddressMode">
+                  <a-radio :value="0">0-based</a-radio>
+                  <a-radio :value="1">1-based</a-radio>
+                </a-radio-group>
+              </a-form-item>
+            </a-col>
+          </a-row>
 
-          <a-divider orientation="left">寄存器区块（批量创建点位）</a-divider>
+          <div class="device-subsection-title">
+            <span class="device-subsection-title__bar"></span>
+            <span>寄存器区块（批量创建点位）</span>
+          </div>
           <a-form-item field="autoPointsEnabled" label="启用区块">
             <a-switch v-model="form.autoPointsEnabled" />
             <template #extra>创建设备时按区间自动生成保持寄存器点位（功能码 0x03）</template>
@@ -396,12 +441,12 @@
                 <a-input-number v-model="form.bacnet_device_id" placeholder="1001" />
               </a-form-item>
             </a-col>
-            <a-col :span="10">
+            <a-col :span="8">
               <a-form-item field="ip" label="IP地址">
                 <a-input v-model="form.ip" placeholder="192.168.1.100" />
               </a-form-item>
             </a-col>
-            <a-col :span="6">
+            <a-col :span="8">
               <a-form-item field="port" label="端口">
                 <a-input-number v-model="form.port" placeholder="47808" />
               </a-form-item>
@@ -481,12 +526,15 @@
           </template>
         </template>
         
-        <a-divider orientation="left">历史数据存储</a-divider>
-        
-        <a-form-item field="storageEnable" label="启用历史存储">
+        </div>
+
+        <div class="device-form-section">
+        <div class="device-section-title">
+          <span class="device-section-title__bar"></span>
+          <span class="device-section-title__text">历史数据存储</span>
+          <span class="device-section-title__line"></span>
           <a-switch v-model="form.storageEnable" />
-          <template #extra>保存设备全部点位的历史快照，供历史数据查询使用</template>
-        </a-form-item>
+        </div>
         
         <template v-if="form.storageEnable">
           <a-row :gutter="16">
@@ -498,29 +546,38 @@
                     { label: '定时间隔 (全量快照)', value: 'interval' }
                   ]"
                 />
-                <template #extra>定时保存该设备全部点位快照</template>
               </a-form-item>
             </a-col>
             <a-col :span="8" v-if="form.storageStrategy === 'interval'">
               <a-form-item field="storageInterval" label="存储间隔(分钟)">
-                <a-input-number v-model="form.storageInterval" :min="1" />
-                <template #extra>每 N 分钟一条快照</template>
+                <a-input-number v-model="form.storageInterval" :min="1" placeholder="1" />
               </a-form-item>
             </a-col>
             <a-col :span="8">
-              <a-form-item field="storageMaxRecords" label="最大记录数 (快照)">
+              <a-form-item field="storageMaxRecords" label="最大记录数">
                 <a-input-number v-model="form.storageMaxRecords" :min="1" placeholder="1000" />
-                <template #extra>快照条数上限，超出删除最早记录</template>
               </a-form-item>
             </a-col>
           </a-row>
         </template>
         
-        <a-divider orientation="left">高级配置</a-divider>
+        </div>
+
+        <div class="device-form-section">
+        <div class="device-section-title">
+          <span class="device-section-title__bar"></span>
+          <span class="device-section-title__text">高级配置</span>
+          <span class="device-section-title__line"></span>
+        </div>
         
-        <a-form-item field="configStr" label="JSON配置">
-          <a-textarea v-model="form.configStr" placeholder="{&quot;key&quot;: &quot;value&quot;}" :auto-size="{ minRows: 5, maxRows: 10 }" />
-        </a-form-item>
+        <a-collapse :bordered="false" expand-icon-position="right" class="device-json-collapse">
+          <a-collapse-item key="json" header="JSON 配置（可选，仅高级场景使用）">
+            <a-form-item field="configStr">
+              <a-textarea v-model="form.configStr" placeholder="{&quot;key&quot;: &quot;value&quot;}" :auto-size="{ minRows: 3, maxRows: 8 }" />
+            </a-form-item>
+          </a-collapse-item>
+        </a-collapse>
+        </div>
       </a-form>
     </a-modal>
 

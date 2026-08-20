@@ -1,0 +1,75 @@
+/* html-ppt :: decorations.css
+ * Ambient / atmosphere effects extracted from full-deck templates.
+ * Apply by adding class="deco-<name>" to a .slide element.
+ * Pseudo-element allocation: scanlines → ::before, grid → ::after.
+ * Parent .slide already has position:relative from base.css.
+ */
+
+/* ---------- SCANLINES (CRT horizontal lines) ---------- */
+.deco-scanlines::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:3;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 3px,rgba(255,255,255,.03) 3px,rgba(255,255,255,.03) 4px);
+  mix-blend-mode:screen}
+
+/* ---------- GRID (crosshatch overlay with radial fade) ---------- */
+.deco-grid::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;opacity:.35;
+  background-image:linear-gradient(var(--grid-color,rgba(255,255,255,.08)) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-color,rgba(255,255,255,.08)) 1px,transparent 1px);
+  background-size:var(--grid-size,56px) var(--grid-size,56px);
+  mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse at 50% 50%,black 30%,transparent 80%)}
+
+/* ---------- AMBIENT-PURPLE (dual radial glow) ---------- */
+.deco-ambient-purple::before{content:'';position:absolute;inset:0;pointer-events:none;z-index:2;
+  background:
+    radial-gradient(ellipse at 28% 38%,rgba(124,58,237,.25) 0%,transparent 60%),
+    radial-gradient(ellipse at 72% 62%,rgba(88,166,255,.18) 0%,transparent 60%)}
+
+/* ---------- ORBS (3 floating blurred circles) ---------- */
+/* Container: add .deco-orbs to the slide, then place 3 child <div class="deco-orb"></div> inside */
+.deco-orbs{/* no extra styles on container — children are absolutely positioned */}
+.deco-orb{position:absolute;border-radius:50%;filter:blur(110px);opacity:.35;pointer-events:none;z-index:0;
+  animation:deco-drift 22s ease-in-out infinite alternate}
+.deco-orb:nth-child(1){width:520px;height:520px;top:-12%;left:-6%;
+  background:radial-gradient(circle,rgba(126,184,218,.55),transparent 70%)}
+.deco-orb:nth-child(2){width:460px;height:460px;top:55%;right:-8%;animation-delay:-6s;
+  background:radial-gradient(circle,rgba(232,168,124,.45),transparent 70%)}
+.deco-orb:nth-child(3){width:420px;height:420px;bottom:-8%;left:30%;animation-delay:-11s;
+  background:radial-gradient(circle,rgba(184,164,214,.4),transparent 70%)}
+@keyframes deco-drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(25px,-20px) scale(1.08)}}
+
+/* ---------- BLOB (single large blurred gradient circle) ---------- */
+.deco-blob::before{content:'';position:absolute;pointer-events:none;z-index:0;
+  width:560px;height:560px;border-radius:50%;
+  right:-140px;top:-140px;
+  background:var(--blob-gradient,linear-gradient(135deg,#3b5bff 0%,#7a46ff 55%,#d94cff 100%));
+  filter:blur(8px);opacity:.35}
+
+/* ---------- RAINBOW-BAR (10-color top stripe, 5px) ---------- */
+.deco-rainbow-bar::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;
+  pointer-events:none;z-index:3;
+  background:linear-gradient(90deg,#6366f1,#8b5cf6,#a855f7,#ec4899,#f43f5e,#f97316,#eab308,#22c55e,#06b6d4,#6366f1)}
+
+/* ---------- DANGER-STRIPE (top 45° red/black diagonal) ---------- */
+.deco-danger-stripe::before{content:'';position:absolute;top:0;left:0;right:0;height:14px;
+  pointer-events:none;z-index:3;
+  background:repeating-linear-gradient(45deg,
+    var(--stripe-fg,#e0314a) 0 18px,
+    var(--stripe-bg,#111318) 18px 36px)}
+
+/* ---------- DANGER-STRIPE-BOTTOM (bottom diagonal) ---------- */
+.deco-danger-stripe-bottom::after{content:'';position:absolute;bottom:0;left:0;right:0;height:6px;
+  pointer-events:none;z-index:3;opacity:.6;
+  background:repeating-linear-gradient(45deg,
+    var(--stripe-fg,#e0314a) 0 10px,
+    var(--stripe-bg,#111318) 10px 20px)}
+
+/* ---------- SOFT-GRADIENT (full-slide gentle background) ---------- */
+.deco-soft-gradient{background:var(--grad-soft,linear-gradient(135deg,#eef1ff,#f4edff 55%,#fbedff))}
+
+/* ---------- GLASS-SURFACE (frosted glass) ---------- */
+.deco-glass-surface{backdrop-filter:blur(16px) saturate(160%);-webkit-backdrop-filter:blur(16px) saturate(160%);
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 8px 32px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.08)}
+
+/* ---------- GLOW-TEXT (neon text-shadow — apply to text elements) ---------- */
+.deco-glow-text{text-shadow:0 0 10px var(--accent,#7ed3a4),0 0 30px var(--accent,#7ed3a4),0 0 60px color-mix(in srgb,var(--accent,#7ed3a4) 40%,transparent)}

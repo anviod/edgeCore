@@ -32,7 +32,7 @@ Continue.dev                                 数据读写                 S7 / E
 
 LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的 `tools/call` 请求，edgeCore 网关收到后走 JWT 认证和 API Key 权限检查，再分发到对应工具处理器。处理器调用 ScanEngine、ShadowCore 或 Execution Mapper 拿到结果，原路返回。
 
-### 33 个原生工具
+### 35 个原生工具
 
 工具按权限分三级，从严到松：
 
@@ -40,9 +40,9 @@ LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的
 |---------|--------|---------|---------|
 | 只读查询 | 8 | 默认可用 | `edgeCore_list_channels` `edgeCore_read_point` `edgeCore_get_system_info` |
 | 写操作 | 1 | 需人工确认 | `edgeCore_write_point` |
-| 全功能 CRUD | 24 | 需 UI 显式激活 | `edgeCore_create_channel` `edgeCore_delete_device` `edgeCore_create_edge_rule` |
+| 全功能 CRUD | 26 | 需 UI 显式激活 | `edgeCore_create_channel` `edgeCore_delete_device` `edgeCore_create_edge_rule` |
 
-只读工具覆盖了通道列表、设备列表、点位实时值、系统诊断、协议特征分析。写操作工具 `edgeCore_write_point` 向 R/W 点位写入控制值，每次调用都需要人工确认，LLM 无法自动执行。全功能 CRUD 工具覆盖通道管理（4）、设备管理（4）、点位管理（5）、边缘规则（3）、虚拟设备（2）和扩展工具（6），用户必须在管理 UI 的「MCP 接入」面板里手动开启全功能开关才能解锁。
+只读工具覆盖了通道列表、设备列表、点位实时值、系统诊断、协议特征分析。写操作工具 `edgeCore_write_point` 向 R/W 点位写入控制值，每次调用都需要人工确认，LLM 无法自动执行。全功能 CRUD 工具覆盖通道管理（6）、设备管理（5）、点位管理（6）、边缘规则（3）、虚拟设备（2）和扩展工具（4），用户必须在管理 UI 的「MCP 接入」面板里手动开启全功能开关才能解锁。
 
 ### 6 个资源端点
 
@@ -53,7 +53,7 @@ LLM 客户端发起自然语言指令，MCP 协议层将其转化为结构化的
 | `edgeCore://channels` | 所有采集通道完整配置 |
 | `edgeCore://system` | 网关系统状态 |
 | `edgeCore://diagnostics` | 通道和设备诊断汇总 |
-| `edgeCore://protocols` | 12 种工业协议完整列表 |
+| `edgeCore://protocols` | 15 种工业协议完整列表 |
 | `edgeCore://edge-rules` | 所有边缘计算规则配置和状态 |
 | `edgeCore://config` | edgeCore 完整配置导出 |
 

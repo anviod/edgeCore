@@ -1400,7 +1400,7 @@ ean:
 
 `list_points` 的输出可直接作为 `read_points` / `write_points` 的输入。
 
-### E.2 Hand-written MCP 工具（25 条，无前缀）
+### E.2 Hand-written MCP 工具（27 条，无前缀）
 
 > 源码：`internal/server/mcp_handler.go` `registerMCPTools` + `registerMCPFullTools`
 > 标注 [全功能] 的工具需要 MCP 全功能激活（`POST /api/mcp/activate`）
@@ -1425,45 +1425,47 @@ ean:
 | 9 | `stop_channel` [全功能] | 停止通道采集引擎 | `channel_id` |
 | 10 | `restart_channel` [全功能] | 重启通道采集引擎 | `channel_id` |
 
-#### 设备管理（4 条，[全功能]）
+#### 设备管理（5 条，[全功能]）
 
 | # | 工具名 | 描述 | 必需参数 | 可选参数 |
 |---|---|---|---|---|
 | 11 | `create_device` [全功能] | 在通道下创建设备 | `channel_id`, `name` | `station_name`, `station_code`, `room_name`, `room_code`, `interval`, `enable`, `config` |
-| 12 | `delete_device` [全功能] | 删除设备（含点位） | `channel_id`, `device_id` | - |
-| 13 | `update_device` [全功能] | 更新设备配置 | `channel_id`, `device_id` | `station_name`, `station_code`, `room_name`, `room_code`, `name`, `interval`, `enable`, `config` |
-| 14 | `enable_device` [全功能] | 启用/禁用设备 | `channel_id`, `device_id`, `enable` | - |
+| 12 | `batch_create_devices` [全功能] | 批量创建设备（适用于扫描结果导入） | `channel_id`, `devices` | - |
+| 13 | `delete_device` [全功能] | 删除设备（含点位） | `channel_id`, `device_id` | - |
+| 14 | `update_device` [全功能] | 更新设备配置 | `channel_id`, `device_id` | `station_name`, `station_code`, `room_name`, `room_code`, `name`, `interval`, `enable`, `config` |
+| 15 | `enable_device` [全功能] | 启用/禁用设备 | `channel_id`, `device_id`, `enable` | - |
 
-#### 点位管理（3 条，[全功能]）
+#### 点位管理（4 条，[全功能]）
 
 | # | 工具名 | 描述 | 必需参数 |
 |---|---|---|---|
-| 15 | `create_point` [全功能] | 创建采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
-| 16 | `delete_point` [全功能] | 删除点位 | `channel_id`, `device_id`, `point_id` |
-| 17 | `update_point` [全功能] | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
+| 16 | `create_point` [全功能] | 创建采集点位 | `channel_id`, `device_id`, `name`, `address`, `datatype` |
+| 17 | `batch_create_points` [全功能] | 批量创建点位（适用于扫描/对象浏览结果导入） | `channel_id`, `device_id`, `points` |
+| 18 | `delete_point` [全功能] | 删除点位 | `channel_id`, `device_id`, `point_id` |
+| 19 | `update_point` [全功能] | 更新点位配置 | `channel_id`, `device_id`, `point_id` |
 
 #### 边缘规则（3 条）
 
 | # | 工具名 | 描述 | 必需参数 |
 |---|---|---|---|
-| 18 | `create_edge_rule` [全功能] | 创建边缘计算规则 | `name`, `type`, `condition`, `actions`, `sources` |
-| 19 | `delete_edge_rule` [全功能] | 删除边缘计算规则 | `rule_id` |
-| 20 | `list_edge_rules` | 列出所有边缘规则 | - |
+| 20 | `create_edge_rule` [全功能] | 创建边缘计算规则 | `name`, `type`, `condition`, `actions`, `sources` |
+| 21 | `delete_edge_rule` [全功能] | 删除边缘计算规则 | `rule_id` |
+| 22 | `list_edge_rules` | 列出所有边缘规则 | - |
 
 #### 虚拟设备（2 条，[全功能]）
 
 | # | 工具名 | 描述 | 必需参数 |
 |---|---|---|---|
-| 21 | `create_virtual_device` [全功能] | 创建虚拟设备（公式计算） | `virtual_device_id`, `formula_points` |
-| 22 | `delete_virtual_device` [全功能] | 删除虚拟设备 | `virtual_device_id` |
+| 23 | `create_virtual_device` [全功能] | 创建虚拟设备（公式计算） | `virtual_device_id`, `formula_points` |
+| 24 | `delete_virtual_device` [全功能] | 删除虚拟设备 | `virtual_device_id` |
 
 #### 扩展工具（3 条）
 
 | # | 工具名 | 描述 | 必需参数 |
 |---|---|---|---|
-| 23 | `get_channel_config` | 获取通道完整配置 | `channel_id` |
-| 24 | `get_point_history` | 获取点位历史数据 | `channel_id`, `device_id`, `point_id` |
-| 25 | `export_config` | 导出完整配置（JSON/YAML） | - |
+| 25 | `get_channel_config` | 获取通道完整配置 | `channel_id` |
+| 26 | `get_point_history` | 获取点位历史数据 | `channel_id`, `device_id`, `point_id` |
+| 27 | `export_config` | 导出完整配置（JSON/YAML） | - |
 
 ### E.3 工具合并历史
 
@@ -1471,7 +1473,8 @@ ean:
 |---|---|---|
 | v2.13 前 | 94 | 63 `ean_*` 协议级 + 6 重复 hand-written + 25 hand-written |
 | v2.14 后 | 32 | 7 `ean_*` 统一 + 25 hand-written（移除 6 条重复：`list_points`/`read_point`/`read_point_batch`/`write_point`/`write_point_batch`/`get_diagnostics`，由统一能力替代） |
-| 压缩率 | 66% | 94 → 32 |
+| 新增批量导入 | 34 | 7 `ean_*` 统一 + 27 hand-written（新增 `batch_create_devices`/`batch_create_points`） |
+| 压缩率 | 64% | 94 → 34 |
 
 ---
 
@@ -1690,9 +1693,9 @@ edgeCore 通过 `edgeCore/devices/report`（MQTT）或 `edgeCore.devices.report`
         "description": "",
         "admin_state": "ENABLED",
         "operating_state": "ENABLED",
-        "station_name": "海府一体化冷站",
+        "station_name": "阿里云海一体化冷站",
         "station_code": "HKO.HFJLZ",
-        "room_name": "海府动力机房/1楼/1号电力室",
+        "room_name": "阿里云海动力机房/1楼/1号电力室",
         "room_code": "HKO.HFJDD01",
         "properties": {
           "protocol": "modbus-tcp",
@@ -1715,9 +1718,9 @@ edgeCore 通过 `edgeCore/devices/report`（MQTT）或 `edgeCore.devices.report`
 | `service_name` | string | 是 | 服务名称（等于通道名称） |
 | `admin_state` | string | 是 | 管理状态：`ENABLED` / `DISABLED` |
 | `operating_state` | string | 是 | 运行状态：`ENABLED` / `DISABLED` / `UNSTABLE` / `QUARANTINE` |
-| `station_name` | string | 否 | 局站名称 / Station name — 设备所属局站（如"海府一体化冷站"） |
+| `station_name` | string | 否 | 局站名称 / Station name — 设备所属局站（如"阿里云海一体化冷站"） |
 | `station_code` | string | 否 | 局站编码 / Station code — 局站唯一标识（如"HKO.HFJLZ"） |
-| `room_name` | string | 否 | 机房名称 / Room name — 设备所在机房（如"海府动力机房/1楼/1号电力室"） |
+| `room_name` | string | 否 | 机房名称 / Room name — 设备所在机房（如"阿里云海动力机房/1楼/1号电力室"） |
 | `room_code` | string | 否 | 机房编码 / Room code — 机房唯一标识（如"HKO.HFJDD01"） |
 | `properties` | object | 是 | 协议特定属性（含 `protocol`、`channel_id` 及设备 Config 字段） |
 

@@ -129,7 +129,7 @@ API Key 为 64 字符十六进制字符串（256 位熵），在 UI 中生成和
 |--------|------|----------|
 | `edgeCore_write_point` | 向 R/W 点位写入控制值 | channel_id, device_id, point_id, value |
 
-### 全功能 CRUD 工具（24 个，需 UI 激活）
+### 全功能 CRUD 工具（26 个，需 UI 激活）
 
 **通道管理（4 个）**
 
@@ -140,20 +140,22 @@ API Key 为 64 字符十六进制字符串（256 位熵），在 UI 中生成和
 | `edgeCore_start_channel` | 启动通道采集引擎 |
 | `edgeCore_stop_channel` | 停止通道采集引擎 |
 
-**设备管理（4 个）**
+**设备管理（5 个）**
 
 | 工具名 | 功能 |
 |--------|------|
 | `edgeCore_create_device` | 创建设备 |
+| `edgeCore_batch_create_devices` | 批量创建设备（适用于扫描结果导入） |
 | `edgeCore_delete_device` | 删除设备（含点位） |
 | `edgeCore_update_device` | 更新设备配置 |
 | `edgeCore_enable_device` | 启用/禁用设备 |
 
-**点位管理（5 个）**
+**点位管理（6 个）**
 
 | 工具名 | 功能 |
 |--------|------|
 | `edgeCore_create_point` | 创建采集点位 |
+| `edgeCore_batch_create_points` | 批量创建点位（适用于扫描/对象浏览结果导入） |
 | `edgeCore_delete_point` | 删除点位 |
 | `edgeCore_update_point` | 更新点位配置 |
 | `edgeCore_read_point_batch` | 批量读取点位实时值 |
@@ -190,7 +192,7 @@ API Key 为 64 字符十六进制字符串（256 位熵），在 UI 中生成和
 | `edgeCore://channels` | 通道列表 | 所有采集通道完整配置 |
 | `edgeCore://system` | 系统信息 | 网关系统状态 |
 | `edgeCore://diagnostics` | 诊断快照 | 通道和设备诊断汇总 |
-| `edgeCore://protocols` | 协议支持列表 | 12 种工业协议完整列表 |
+| `edgeCore://protocols` | 协议支持列表 | 15 种工业协议完整列表 |
 | `edgeCore://edge-rules` | 边缘规则 | 所有边缘计算规则配置和状态 |
 | `edgeCore://config` | 完整配置 | edgeCore 完整配置导出 |
 

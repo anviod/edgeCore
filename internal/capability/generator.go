@@ -101,12 +101,14 @@ func GenerateProtocolCapabilities(agentID, protocol string) []Capability {
 			AgentID: agentID,
 			Description: "扫描/发现指定通道下的设备 | Scan/discover devices under a channel. " +
 				"参数 Params: channel_id(string, required 必需-通道ID), " +
-				"network(string, optional 可选-网络范围/网段，如 192.168.1.0/24). " +
-				"返回 Returns: devices(array 发现的设备列表)",
+				"network(string, optional 可选-网络范围/网段，如 192.168.1.0/24), " +
+				"device_id(string, optional 可选-设备ID；传入时扫描该设备上的点位/对象（如 OPC UA 地址空间、BACnet 对象），不传则扫描网段设备). " +
+				"返回 Returns: devices(array 发现的设备列表) 或 points(array 点位/对象列表)",
 			Category: CategoryDevice,
 			InputSchema: objectSchema(map[string]any{
 				"channel_id": map[string]any{"type": "string", "description": "通道ID，必需 | Channel ID, required"},
 				"network":    map[string]any{"type": "string", "description": "网络范围/网段，可选 | Network range, optional"},
+				"device_id":  map[string]any{"type": "string", "description": "设备ID，可选；传入时扫描该设备上的点位/对象 | Device ID, optional; scans points/objects of the device when provided"},
 			}, []string{"channel_id"}),
 			OutputSchema: objectSchema(map[string]any{
 				"devices": map[string]any{"type": "array", "description": "发现的设备列表 | Discovered device list"},
@@ -332,12 +334,14 @@ func GenerateUnifiedCapabilities(agentID string) []Capability {
 			Description: "统一设备扫描 | Unified device scan. " +
 				"Scans/discovers devices under a channel. Protocol auto-detected from channel_id. " +
 				"参数 Params: channel_id(string, required 必需-通道ID), " +
-				"network(string, optional 可选-网络范围/网段，如 192.168.1.0/24). " +
-				"返回 Returns: devices(array 发现的设备列表)",
+				"network(string, optional 可选-网络范围/网段，如 192.168.1.0/24), " +
+				"device_id(string, optional 可选-设备ID；传入时扫描该设备上的点位/对象（如 OPC UA 地址空间、BACnet 对象），不传则扫描网段设备). " +
+				"返回 Returns: devices(array 发现的设备列表) 或 points(array 点位/对象列表)",
 			Category: CategoryDevice,
 			InputSchema: objectSchema(map[string]any{
 				"channel_id": map[string]any{"type": "string", "description": "通道ID，必需 | Channel ID, required"},
 				"network":    map[string]any{"type": "string", "description": "网络范围/网段，可选 | Network range, optional"},
+				"device_id":  map[string]any{"type": "string", "description": "设备ID，可选；传入时扫描该设备上的点位/对象 | Device ID, optional; scans points/objects of the device when provided"},
 			}, []string{"channel_id"}),
 			OutputSchema: objectSchema(map[string]any{
 				"devices": map[string]any{"type": "array", "description": "发现的设备列表 | Discovered device list"},
