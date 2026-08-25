@@ -34,14 +34,15 @@ func (w *SerialWorker) run() {
 
 			w.ctx.mu.Lock()
 			w.ctx.Running = true
+			d := w.ctx.Driver
 			w.ctx.mu.Unlock()
 
 			var values map[string]model.Value
 			var err error
 			if task.ReadFunc != nil {
 				values, err = task.ReadFunc(task.Ctx, task.Points)
-			} else if w.ctx.Driver != nil {
-				values, err = w.ctx.Driver.ReadPoints(task.Ctx, task.Points)
+			} else if d != nil {
+				values, err = d.ReadPoints(task.Ctx, task.Points)
 			} else {
 				err = ErrDriverNotFound
 			}

@@ -91,7 +91,6 @@ func NewChannelManager(pipeline *DataPipeline, saveFunc func([]model.Channel) er
 	cm.scanEngineAdapter.scanEngine.SetIOProfileProvider(cm.deviceIOProfile)
 	cm.scanEngineAdapter.scanEngine.SetCircuitBreakerEventHandler(cm.recordCircuitBreakerEvent)
 	cm.soakMonitor = NewSoakMonitor(cm)
-	cm.soakMonitor.Start()
 
 	// Wire state manager events
 	cm.stateManager.OnStateChange = func(deviceID string, oldState, newState NodeState) {
@@ -102,12 +101,15 @@ func NewChannelManager(pipeline *DataPipeline, saveFunc func([]model.Channel) er
 			handler(deviceID, int(newState))
 		}
 	}
+	cm.soakMonitor.Start()
 
 	return cm
 }
 
 func (cm *ChannelManager) SetShadowCore(sc *ShadowCore) {
+	cm.mu.Lock()
 	cm.shadowCore = sc
+	cm.mu.Unlock()
 	cm.scanEngineAdapter.scanEngine.SetShadowCore(sc)
 }
 
@@ -115,7 +117,9 @@ func (cm *ChannelManager) SetShadowIngress(si *ShadowIngress) {
 	if si == nil {
 		return
 	}
+	cm.mu.Lock()
 	cm.shadowCore = si.shadowCore
+	cm.mu.Unlock()
 	cm.scanEngineAdapter.scanEngine.SetShadowIngress(si)
 }
 

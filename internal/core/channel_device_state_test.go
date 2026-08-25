@@ -31,6 +31,9 @@ func (s *stubChannelDriver) GetConnectionMetrics() (int64, int64, string, string
 
 func newTestChannelManager() *ChannelManager {
 	cm := NewChannelManager(NewDataPipeline(64), nil)
+	// The helper mutates private maps to build fixtures. Stop the production
+	// soak goroutine before those fixture writes so -race observes a happens-before edge.
+	cm.soakMonitor.Stop()
 	cm.channels["ch-1"] = &model.Channel{
 		ID:       "ch-1",
 		Name:     "modbus",

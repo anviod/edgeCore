@@ -113,7 +113,14 @@ func (wp *WorkerPool) Submit(task func()) bool {
 	}
 
 	select {
-	case wp.taskQueue <- task:
+	case wp.taskQueue <- func() {
+		defer func() {
+			wp.mu.Lock()
+			wp.activeCount--
+			wp.mu.Unlock()
+		}()
+		task()
+	}:
 		wp.activeCount++
 		return true
 	default:
@@ -161,7 +168,10 @@ func (wp *WorkerPool) WaitForIdle(timeout time.Duration) bool {
 	start := time.Now()
 
 	for {
-		if wp.PendingCount() == 0 && wp.activeCount == 0 {
+		wp.mu.Lock()
+		idle := len(wp.taskQueue) == 0 && wp.activeCount == 0
+		wp.mu.Unlock()
+		if idle {
 			return true
 		}
 

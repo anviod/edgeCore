@@ -59,12 +59,16 @@ func (sqm *SerialQueueManager) RegisterDriver(deviceKey string, d driver.Driver)
 	defer sqm.mu.Unlock()
 
 	if ctx, ok := sqm.contexts[deviceKey]; ok {
+		ctx.mu.Lock()
 		ctx.Driver = d
+		ctx.mu.Unlock()
 		return
 	}
 
 	ctx := sqm.createContext(deviceKey)
+	ctx.mu.Lock()
 	ctx.Driver = d
+	ctx.mu.Unlock()
 }
 
 func (sqm *SerialQueueManager) createContext(deviceKey string) *ExecutionContext {

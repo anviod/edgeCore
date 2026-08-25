@@ -75,7 +75,9 @@ func TestChannelManager_GetChannelScanEngineMetricsSnapshot(t *testing.T) {
 	t.Cleanup(se.Stop)
 
 	cm := newTestChannelManager()
+	cm.mu.Lock()
 	cm.scanEngineAdapter = NewScanEngineAdapter(se)
+	cm.mu.Unlock()
 	t.Cleanup(func() { cm.cancel() })
 
 	if snap := cm.GetChannelScanEngineMetricsSnapshot(""); len(snap) != 0 {

@@ -146,13 +146,13 @@ func TestEdgeComputeManager_ExecuteHttpWithoutNorthbound(t *testing.T) {
 
 func TestScanEngine_RunAndStop(t *testing.T) {
 	se := NewScanEngine(ScanEngineConfig{TickInterval: 50 * time.Millisecond})
-	se.AddTask("dev-run", "modbus-tcp", time.Second, 1, []string{"p1"}, nil)
 	el := NewExecutionLayer()
 	el.RegisterProtocol("modbus-tcp", ProtocolTypeSerial)
 	el.RegisterDriver("dev-run", &execStubDriver{})
 	se.executionLayer = el
+	se.AddTask("dev-run", "modbus-tcp", time.Second, 1, []string{"p1"}, nil)
 
-	go se.Run()
+	se.Run()
 	time.Sleep(80 * time.Millisecond)
 	se.Stop()
 	if se.IsRunning() {

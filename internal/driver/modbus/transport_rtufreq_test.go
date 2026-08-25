@@ -10,11 +10,10 @@ import (
 // 导致设备路径变成 "/dev/ttyS3?baudrate=4800&..."，串口永远打不开（通道 offline）。
 func TestRTUURLStripQuery(t *testing.T) {
 	cases := []struct {
-		name       string
-		raw        string
-		wantPath   string
-		wantQuery  map[string]string
-		wantSerial serialParams
+		name      string
+		raw       string
+		wantPath  string
+		wantQuery map[string]string
 	}{
 		{
 			name:     "legacy query params",

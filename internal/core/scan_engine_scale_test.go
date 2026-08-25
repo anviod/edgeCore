@@ -19,14 +19,20 @@ func TestScanEngine_EventDrivenDispatch(t *testing.T) {
 
 	deadline := time.Now().Add(500 * time.Millisecond)
 	for time.Now().Before(deadline) {
-		if task.ConsecutiveSuccess > 0 {
+		task.mu.RLock()
+		success := task.ConsecutiveSuccess
+		task.mu.RUnlock()
+		if success > 0 {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
 	se.Stop()
 
-	if task.ConsecutiveSuccess == 0 {
+	task.mu.RLock()
+	finalSuccess := task.ConsecutiveSuccess
+	task.mu.RUnlock()
+	if finalSuccess == 0 {
 		t.Fatal("expected at least one successful execution via event-driven dispatch")
 	}
 }

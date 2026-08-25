@@ -29,6 +29,10 @@ func newModbusDriver(t *testing.T, sim *mbsim.Simulator, channelID, deviceID str
 	if err := d.SetDeviceConfig(map[string]any{"slave_id": slaveID}); err != nil {
 		t.Fatalf("set device config: %v", err)
 	}
+	if err := d.Connect(context.Background()); err != nil {
+		t.Fatalf("connect modbus driver: %v", err)
+	}
+	t.Cleanup(func() { _ = d.Disconnect() })
 	_ = deviceID
 	return d
 }

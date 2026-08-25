@@ -128,8 +128,6 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 
 	d.connController = core.NewConnectionController("modbus", config.ChannelID, config.Protocol)
 
-	go d.performMTUProbe()
-
 	return nil
 }
 
@@ -155,7 +153,14 @@ func (d *ModbusDriver) Connect(ctx context.Context) error {
 	d.connectionStartTime = time.Now()
 	d.reconnectCount++
 
-	return d.transport.Connect(ctx)
+	if err := d.transport.Connect(ctx); err != nil {
+		return err
+	}
+	// Probe only after the transport is connected. Starting this from Init
+	// races with configuration/scheduler setup and can probe test hooks before
+	// the caller has finished wiring the driver.
+	go d.performMTUProbe()
+	return nil
 }
 
 func (d *ModbusDriver) Disconnect() error {

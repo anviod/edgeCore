@@ -8,6 +8,7 @@ import (
 // ==================== 设备节点模板 ====================
 // DeviceNodeTemplate 代表一个设备节点，包含设备信息和运行时状态
 type DeviceNodeTemplate struct {
+	mu       sync.RWMutex
 	DeviceID string            // 设备ID
 	Name     string            // 设备名称
 	Runtime  *NodeRuntimeState // 运行时状态
@@ -116,6 +117,8 @@ func (ctx *CollectContext) MarkSuccess() {
 //   - Online/Unstable状态: 始终允许采集
 //   - Offline/Quarantine状态: 只有在退避时间过后才允许采集
 func (c *CommunicationManageTemplate) ShouldCollect(node *DeviceNodeTemplate) bool {
+	node.mu.RLock()
+	defer node.mu.RUnlock()
 	now := time.Now()
 
 	switch node.Runtime.State {
@@ -143,6 +146,8 @@ func (c *CommunicationManageTemplate) ShouldCollect(node *DeviceNodeTemplate) bo
 //  2. 隔离状态避免频繁重试浪费资源
 //  3. 失败后重置成功计数
 func (c *CommunicationManageTemplate) onCollectFail(node *DeviceNodeTemplate) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
 	// 记录旧状态
 	oldState := node.Runtime.State
 
@@ -186,6 +191,8 @@ func (c *CommunicationManageTemplate) onCollectFail(node *DeviceNodeTemplate) {
 //  2. 降低恢复门槛（只需1次成功），避免设备长期处于不良状态
 //  3. 累计成功次数用于监控设备稳定性
 func (c *CommunicationManageTemplate) onCollectSuccess(node *DeviceNodeTemplate) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
 	// 记录旧状态
 	oldState := node.Runtime.State
 

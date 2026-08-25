@@ -661,11 +661,15 @@ func (sc *ShadowCore) ResolvePublishTarget(shadowDeviceID string) (channelID, de
 		virtualID := strings.TrimPrefix(shadowDeviceID, VirtualShadowPrefix)
 		sc.mu.RLock()
 		vd, ok := sc.virtualShadows[virtualID]
+		channelID = ""
+		if ok {
+			channelID = vd.ChannelID
+		}
 		sc.mu.RUnlock()
 		if !ok {
 			return "", "", fmt.Errorf("virtual shadow not found: %s", virtualID)
 		}
-		return vd.ChannelID, virtualID, nil
+		return channelID, virtualID, nil
 	}
 
 	sc.mu.RLock()

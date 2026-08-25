@@ -185,16 +185,16 @@ func NewMetricsCollector() *MetricsCollector {
 }
 
 // Global collector accessible across packages
-var globalMetricsCollector *MetricsCollector
+var globalMetricsCollector atomic.Pointer[MetricsCollector]
 
 // SetGlobalMetricsCollector sets the shared collector instance
 func SetGlobalMetricsCollector(mc *MetricsCollector) {
-	globalMetricsCollector = mc
+	globalMetricsCollector.Store(mc)
 }
 
 // GetGlobalMetricsCollector returns the shared collector instance
 func GetGlobalMetricsCollector() *MetricsCollector {
-	return globalMetricsCollector
+	return globalMetricsCollector.Load()
 }
 
 // RecordRequest 记录一次请求

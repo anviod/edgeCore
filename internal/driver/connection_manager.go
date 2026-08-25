@@ -114,10 +114,12 @@ func (cm *ConnectionManager) startDailyReset() {
 	nextMidnight := now.Truncate(24 * time.Hour).Add(24 * time.Hour)
 	duration := nextMidnight.Sub(now)
 
+	cm.mu.Lock()
 	cm.dailyResetTimer = time.AfterFunc(duration, func() {
 		cm.ResetDaily()
 		cm.startDailyReset()
 	})
+	cm.mu.Unlock()
 }
 
 func (cm *ConnectionManager) ResetDaily() {
@@ -312,8 +314,11 @@ func (cm *ConnectionManager) GetStatus() (state ConnState, retryCount int, maxRe
 
 func (cm *ConnectionManager) Close() {
 	cm.StopBackgroundLoop()
-	if cm.dailyResetTimer != nil {
-		cm.dailyResetTimer.Stop()
+	cm.mu.Lock()
+	t := cm.dailyResetTimer
+	cm.mu.Unlock()
+	if t != nil {
+		t.Stop()
 	}
 }
 

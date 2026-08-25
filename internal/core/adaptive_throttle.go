@@ -164,9 +164,11 @@ func (at *AdaptiveThrottle) ApplyInterval(task *ScanTask) bool {
 		return false
 	}
 
-	base := task.BaseInterval
+	task.mu.RLock()
+	base, current := task.BaseInterval, task.Interval
+	task.mu.RUnlock()
 	if base <= 0 {
-		base = task.Interval
+		base = current
 	}
 	if base <= 0 {
 		return false
@@ -174,11 +176,11 @@ func (at *AdaptiveThrottle) ApplyInterval(task *ScanTask) bool {
 
 	effective := at.effectiveIntervalForDevice(task.DeviceKey, base)
 	task.mu.Lock()
-	if effective < task.Interval {
+	if effective < current {
 		task.mu.Unlock()
 		return false
 	}
-	changed := effective != task.Interval
+	changed := effective != current
 	task.Interval = effective
 	task.mu.Unlock()
 
