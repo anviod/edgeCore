@@ -963,13 +963,14 @@ func (d *BACnetDriver) SetDeviceConfig(config map[string]any) error {
 				zap.L().Info("SetDeviceConfig: user provided IP+port+instanceID, skipping async discovery",
 					zap.Int("device_id", newID), zap.String("ip", ip), zap.Int("port", port))
 			} else if d.connected && d.client != nil {
+				client := d.client
 				// Synchronous discovery with timeout to avoid blocking channel startup.
 				// 同步发现（带超时），避免阻塞通道启动。
 				discovered := false
 				done := make(chan struct{})
 				go func() {
 					defer close(done)
-					if found, ok := d.locateDeviceAddress(d.client, newID, ip, port); ok {
+					if found, ok := d.locateDeviceAddress(client, newID, ip, port); ok {
 						d.applyDiscoveredDevice(newID, ip, port, found)
 						zap.L().Info("Sync discovery confirmed device",
 							zap.Int("device_id", newID),
@@ -985,7 +986,7 @@ func (d *BACnetDriver) SetDeviceConfig(config map[string]any) error {
 							zap.Int("device_id", newID))
 						// Fall back to async retry in background
 						go func() {
-							if found, ok := d.locateDeviceAddress(d.client, newID, ip, port); ok {
+							if found, ok := d.locateDeviceAddress(client, newID, ip, port); ok {
 								d.applyDiscoveredDevice(newID, ip, port, found)
 								zap.L().Info("Async retry discovery confirmed device",
 									zap.Int("device_id", newID))

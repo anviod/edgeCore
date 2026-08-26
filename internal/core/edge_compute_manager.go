@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/anviod/edgeCore/internal/model"
@@ -43,6 +44,7 @@ type EdgeComputeManager struct {
 	nbm        *NorthboundManager
 	cm         *ChannelManager
 	store      *storage.Storage
+	depMu      sync.RWMutex
 	mu         sync.RWMutex
 	saveFunc   func([]model.EdgeRule) error
 	ruleStates map[string]*model.RuleRuntimeState
@@ -61,6 +63,7 @@ type EdgeComputeManager struct {
 	wg          sync.WaitGroup
 	scheduler   *edgeRuleScheduler
 	events      *edgeEventRecorder
+	closed      atomic.Bool // prevents send on closed workerPool
 
 	// Metrics
 	statsMu        sync.RWMutex
@@ -69,7 +72,7 @@ type EdgeComputeManager struct {
 	rulesDropped   int64
 	rulesCoalesced int64
 	rulesDebounced int64
-	batchWindow    time.Duration
+	batchWindowNs  atomic.Int64 // nanoseconds; use atomic load/store
 
 	stopOnce sync.Once
 
@@ -118,7 +121,6 @@ func NewEdgeComputeManager(pipeline *DataPipeline, store *storage.Storage, saveF
 		cancel:      cancel,
 		rules:       make(map[string]model.EdgeRule),
 		pipeline:    pipeline,
-		store:       store,
 		saveFunc:    saveFunc,
 		ruleStates:  make(map[string]*model.RuleRuntimeState),
 		windows:     make(map[string][]model.Value),
@@ -127,9 +129,10 @@ func NewEdgeComputeManager(pipeline *DataPipeline, store *storage.Storage, saveF
 		ruleIndex:   make(map[string][]string),
 		workerPool:  make(chan *ruleTask, defaultEdgeQueueSize),
 		workerCount: defaultEdgeWorkerCount,
-		batchWindow: defaultEdgeBatchWindow,
 	}
-	em.scheduler = newEdgeRuleScheduler(em, em.batchWindow)
+	em.batchWindowNs.Store(int64(defaultEdgeBatchWindow))
+	em.store = store
+	em.scheduler = newEdgeRuleScheduler(em, defaultEdgeBatchWindow)
 	em.events = newEdgeEventRecorder(store)
 	return em
 }
@@ -171,7 +174,7 @@ func (em *EdgeComputeManager) GetMetrics() EdgeComputeMetrics {
 		MinuteCacheSize:       minuteCacheSize,
 		EventBufferSize:       eventCount,
 		FailureBufferSize:     failureCount,
-		BatchWindowMs:         em.batchWindow.Milliseconds(),
+		BatchWindowMs:         time.Duration(em.batchWindowNs.Load()).Milliseconds(),
 		RulesTriggered:        em.rulesTriggered,
 		RulesExecuted:         em.rulesExecuted,
 		RulesDropped:          em.rulesDropped,
@@ -193,10 +196,19 @@ func (em *EdgeComputeManager) incRulesDebounced(n int64) {
 }
 
 func (em *EdgeComputeManager) dispatchTask(task *ruleTask) {
+	defer func() {
+		_ = recover()
+	}()
+	if em.closed.Load() {
+		return
+	}
 	em.statsMu.Lock()
 	em.rulesTriggered++
 	em.statsMu.Unlock()
 
+	if em.closed.Load() {
+		return
+	}
 	select {
 	case em.workerPool <- task:
 	default:
@@ -234,33 +246,67 @@ func (em *EdgeComputeManager) onSchedulerDrop(task *ruleTask, reason string) {
 }
 
 func (em *EdgeComputeManager) SetBatchWindow(d time.Duration) {
-	em.batchWindow = d
+	em.batchWindowNs.Store(int64(d))
 	if em.scheduler != nil {
-		em.scheduler.batchWindow = d
+		em.scheduler.setBatchWindow(d)
 	}
 }
 
 func (em *EdgeComputeManager) SetNorthboundManager(nbm *NorthboundManager) {
+	em.depMu.Lock()
 	em.nbm = nbm
+	em.depMu.Unlock()
 }
 
 func (em *EdgeComputeManager) SetChannelManager(cm *ChannelManager) {
+	em.depMu.Lock()
 	em.cm = cm
 	if em.writer == nil {
 		em.writer = cm
 	}
+	em.depMu.Unlock()
 }
 
 func (em *EdgeComputeManager) SetDeviceWriter(w DeviceIO) {
+	em.depMu.Lock()
 	em.writer = w
+	em.depMu.Unlock()
 }
 
 func (em *EdgeComputeManager) SetStorage(s *storage.Storage) {
+	em.depMu.Lock()
 	em.store = s
+	em.depMu.Unlock()
 }
 
 func (em *EdgeComputeManager) SetActionHook(hook func(ruleID string, action model.RuleAction, val model.Value, env map[string]any, err error)) {
+	em.depMu.Lock()
 	em.actionHook = hook
+	em.depMu.Unlock()
+}
+
+func (em *EdgeComputeManager) storage() *storage.Storage {
+	em.depMu.RLock()
+	defer em.depMu.RUnlock()
+	return em.store
+}
+
+func (em *EdgeComputeManager) writerDevice() DeviceIO {
+	em.depMu.RLock()
+	defer em.depMu.RUnlock()
+	return em.writer
+}
+
+func (em *EdgeComputeManager) northbound() *NorthboundManager {
+	em.depMu.RLock()
+	defer em.depMu.RUnlock()
+	return em.nbm
+}
+
+func (em *EdgeComputeManager) action() func(string, model.RuleAction, model.Value, map[string]any, error) {
+	em.depMu.RLock()
+	defer em.depMu.RUnlock()
+	return em.actionHook
 }
 
 func (em *EdgeComputeManager) LoadRules(rules []model.EdgeRule) {
@@ -288,6 +334,7 @@ func (em *EdgeComputeManager) Start() {
 	em.pipeline.AddHandler(em.handleValue)
 
 	// Start retry loop
+	em.wg.Add(2)
 	go em.retryLoop()
 	go em.maintenanceLoop()
 
@@ -296,6 +343,7 @@ func (em *EdgeComputeManager) Start() {
 
 func (em *EdgeComputeManager) Stop() {
 	em.stopOnce.Do(func() {
+		em.closed.Store(true)
 		em.cancel() // Cancel context
 		if em.scheduler != nil {
 			em.scheduler.stop()
@@ -715,7 +763,8 @@ func (em *EdgeComputeManager) executeRule(rule model.EdgeRule, val model.Value) 
 }
 
 func (em *EdgeComputeManager) recordMinuteSnapshot(state *model.RuleRuntimeState) {
-	if em.store == nil || state == nil {
+	store := em.storage()
+	if store == nil || state == nil {
 		return
 	}
 	if !hasEdgeErrorMessage(state.ErrorMessage) {
@@ -752,7 +801,7 @@ func (em *EdgeComputeManager) recordMinuteSnapshot(state *model.RuleRuntimeState
 	go func(snapshot model.RuleMinuteSnapshot) {
 		// Use minuteKey as part of the key to ensure one record per minute per rule
 		key := fmt.Sprintf("%s_%s", snapshot.RuleID, snapshot.Minute)
-		if err := em.store.SaveData("bblot", key, snapshot); err != nil {
+		if err := store.SaveData("bblot", key, snapshot); err != nil {
 			log.Printf("Failed to save bblot snapshot: %v", err)
 		}
 	}(snapCopy)
@@ -769,7 +818,8 @@ func IsEdgeErrorMinuteSnapshot(snap model.RuleMinuteSnapshot) bool {
 
 // QueryLogs retrieves error logs based on time range and optional rule ID.
 func (em *EdgeComputeManager) QueryLogs(start, end time.Time, ruleID string) ([]model.RuleMinuteSnapshot, error) {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return nil, fmt.Errorf("storage not initialized")
 	}
 
@@ -783,7 +833,7 @@ func (em *EdgeComputeManager) QueryLogs(start, end time.Time, ruleID string) ([]
 		minKey := fmt.Sprintf("%s_%s", ruleID, startStr)
 		maxKey := fmt.Sprintf("%s_%s", ruleID, endStr)
 
-		err := em.store.LoadRange(bucket, minKey, maxKey, func(k, v []byte) error {
+		err := store.LoadRange(bucket, minKey, maxKey, func(k, v []byte) error {
 			var snap model.RuleMinuteSnapshot
 			if err := json.Unmarshal(v, &snap); err != nil {
 				return nil
@@ -797,7 +847,7 @@ func (em *EdgeComputeManager) QueryLogs(start, end time.Time, ruleID string) ([]
 		return logs, err
 	}
 
-	err := em.store.LoadAll(bucket, func(k, v []byte) error {
+	err := store.LoadAll(bucket, func(k, v []byte) error {
 		var snap model.RuleMinuteSnapshot
 		if err := json.Unmarshal(v, &snap); err != nil {
 			return nil
@@ -1291,7 +1341,11 @@ func (em *EdgeComputeManager) resolveValueTemplate(val any, env map[string]any) 
 
 func (em *EdgeComputeManager) calculateRMW(cid, did, pid string, bitIdx int, bitValRes any, expression string) (any, error) {
 	// Read current value
-	currentVal, err := em.writer.ReadPoint(cid, did, pid)
+	writer := em.writerDevice()
+	if writer == nil {
+		return model.Value{}, fmt.Errorf("device writer not initialized")
+	}
+	currentVal, err := writer.ReadPoint(cid, did, pid)
 	if err == nil {
 		// Modify bit
 		curInt, _ := toInt64(currentVal.Value)
@@ -1324,8 +1378,8 @@ func (em *EdgeComputeManager) calculateRMW(cid, did, pid string, bitIdx int, bit
 func (em *EdgeComputeManager) executeSingleAction(ctx context.Context, ruleID string, action model.RuleAction, val model.Value, env map[string]any) (err error) {
 	// Test Hook
 	defer func() {
-		if em.actionHook != nil {
-			em.actionHook(ruleID, action, val, env, err)
+		if hook := em.action(); hook != nil {
+			hook(ruleID, action, val, env, err)
 		}
 	}()
 
@@ -1359,7 +1413,8 @@ func (em *EdgeComputeManager) executeSingleAction(ctx context.Context, ruleID st
 }
 
 func (em *EdgeComputeManager) saveFailedAction(ruleID string, action model.RuleAction, val model.Value, env map[string]any, errStr string) {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return
 	}
 	// Only retry idempotent actions or safe ones
@@ -1378,12 +1433,13 @@ func (em *EdgeComputeManager) saveFailedAction(ruleID string, action model.RuleA
 		LastError:  errStr,
 		Env:        env,
 	}
-	if err := em.store.SaveData("DataCache", fa.ID, fa); err != nil {
+	if err := store.SaveData("DataCache", fa.ID, fa); err != nil {
 		//log.Printf("Failed to save failed action: %v", err)
 	}
 }
 
 func (em *EdgeComputeManager) retryLoop() {
+	defer em.wg.Done()
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -1396,44 +1452,57 @@ func (em *EdgeComputeManager) retryLoop() {
 	}
 }
 
+// processFailedActions 先在只读事务中收集失败动作，
+// 再在事务外逐条重试与写回，避免 db.View 回调内调用 db.Update 自死锁。
 func (em *EdgeComputeManager) processFailedActions() {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return
 	}
-	em.store.LoadAll("DataCache", func(k, v []byte) error {
+
+	type failedEntry struct {
+		key string
+		fa  model.FailedAction
+	}
+	var entries []failedEntry
+	_ = store.LoadAll("DataCache", func(k, v []byte) error {
 		var fa model.FailedAction
 		if err := json.Unmarshal(v, &fa); err != nil {
 			return nil
 		}
-
-		// Retry logic
-		// Use manager context
-		err := em.executeSingleAction(em.ctx, fa.RuleID, fa.Action, fa.Value, fa.Env)
-		if err == nil {
-			// Success, remove
-			em.store.DeleteData("DataCache", fa.ID)
-			log.Printf("Retry success for action %s", fa.ID)
-		} else {
-			// Fail, update count
-			fa.RetryCount++
-			fa.LastError = err.Error()
-			if fa.RetryCount > 10 { // Max retries
-				em.store.DeleteData("DataCache", fa.ID)
-				log.Printf("Max retries reached for action %s, dropping", fa.ID)
-			} else {
-				em.store.SaveData("DataCache", fa.ID, fa)
-			}
+		if fa.ID == "" {
+			fa.ID = string(k)
 		}
+		entries = append(entries, failedEntry{key: string(k), fa: fa})
 		return nil
 	})
+
+	for _, entry := range entries {
+		fa := entry.fa
+		err := em.executeSingleAction(em.ctx, fa.RuleID, fa.Action, fa.Value, fa.Env)
+		if err == nil {
+			_ = store.DeleteData("DataCache", fa.ID)
+			log.Printf("Retry success for action %s", fa.ID)
+		} else {
+			fa.RetryCount++
+			fa.LastError = err.Error()
+			if fa.RetryCount > 10 {
+				_ = store.DeleteData("DataCache", fa.ID)
+				log.Printf("Max retries reached for action %s, dropping", fa.ID)
+			} else {
+				_ = store.SaveData("DataCache", fa.ID, fa)
+			}
+		}
+	}
 }
 
 func (em *EdgeComputeManager) GetFailedActions() []model.FailedAction {
 	var result []model.FailedAction
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return result
 	}
-	em.store.LoadAll("DataCache", func(k, v []byte) error {
+	store.LoadAll("DataCache", func(k, v []byte) error {
 		var fa model.FailedAction
 		if err := json.Unmarshal(v, &fa); err == nil {
 			result = append(result, fa)
@@ -1525,7 +1594,11 @@ func (em *EdgeComputeManager) executeCheck(ctx context.Context, ruleID string, a
 		default:
 		}
 
-		currentVal, err := em.writer.ReadPoint(cid, did, pid)
+		writer := em.writerDevice()
+		if writer == nil {
+			return fmt.Errorf("device writer not initialized")
+		}
+		currentVal, err := writer.ReadPoint(cid, did, pid)
 		if err != nil {
 			checkErr = fmt.Errorf("read failed: %v", err)
 		} else {
@@ -1612,7 +1685,8 @@ func (em *EdgeComputeManager) convertToRuleActions(input []interface{}) ([]model
 }
 
 func (em *EdgeComputeManager) executeMqtt(ctx context.Context, ruleID string, action model.RuleAction, val model.Value, env map[string]any) error {
-	if em.nbm == nil {
+	nbm := em.northbound()
+	if nbm == nil {
 		return fmt.Errorf("NorthboundManager not available")
 	}
 	topic, _ := action.Config["topic"].(string)
@@ -1674,18 +1748,19 @@ func (em *EdgeComputeManager) executeMqtt(ctx context.Context, ruleID string, ac
 			// Let's update PublishMQTTClient in NorthboundManager?
 			// No, let's just pass it.
 		}
-		return em.nbm.PublishMQTTClient(configID, topic, payload)
+		return nbm.PublishMQTTClient(configID, topic, payload)
 	}
 
 	if topic == "" {
 		return nil
 	}
 
-	return em.nbm.PublishMQTT(clientID, topic, payload)
+	return nbm.PublishMQTT(clientID, topic, payload)
 }
 
 func (em *EdgeComputeManager) executeDatabase(ctx context.Context, ruleID string, action model.RuleAction, val model.Value, env map[string]any) error {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return fmt.Errorf("storage not available")
 	}
 	bucket, _ := action.Config["bucket"].(string)
@@ -1700,7 +1775,7 @@ func (em *EdgeComputeManager) executeDatabase(ctx context.Context, ruleID string
 		"time":    time.Now(),
 	}
 
-	return em.store.SaveData(bucket, key, data)
+	return store.SaveData(bucket, key, data)
 }
 
 func (em *EdgeComputeManager) executeHttp(ctx context.Context, ruleID string, action model.RuleAction, val model.Value, env map[string]any) error {
@@ -1740,10 +1815,11 @@ func (em *EdgeComputeManager) executeHttp(ctx context.Context, ruleID string, ac
 	// Check for Northbound Config Reference
 	configID, _ := action.Config["http_config_id"].(string)
 	if configID != "" {
-		if em.nbm == nil {
+		nbm := em.northbound()
+		if nbm == nil {
 			return fmt.Errorf("NorthboundManager not available")
 		}
-		return em.nbm.PublishHTTP(configID, payload)
+		return nbm.PublishHTTP(configID, payload)
 	}
 
 	// Legacy Inline HTTP
@@ -1771,7 +1847,8 @@ func (em *EdgeComputeManager) executeHttp(ctx context.Context, ruleID string, ac
 }
 
 func (em *EdgeComputeManager) executeDeviceControl(ctx context.Context, ruleID string, action model.RuleAction, val model.Value, env map[string]any) error {
-	if em.writer == nil {
+	writer := em.writerDevice()
+	if writer == nil {
 		return fmt.Errorf("DeviceWriter not available")
 	}
 
@@ -1880,7 +1957,7 @@ func (em *EdgeComputeManager) executeDeviceControl(ctx context.Context, ruleID s
 					}
 				}
 
-				if err := em.writer.WritePoint(cid, did, pid, valToWrite); err != nil {
+				if err := writer.WritePoint(cid, did, pid, valToWrite); err != nil {
 					errs = append(errs, fmt.Errorf("failed to write %s/%s/%s: %v", cid, did, pid, err))
 				}
 			}
@@ -1906,7 +1983,7 @@ func (em *EdgeComputeManager) executeDeviceControl(ctx context.Context, ruleID s
 		valToWrite = em.resolveValueTemplate(valToWrite, env)
 	}
 
-	return em.writer.WritePoint(channelID, deviceID, pointID, valToWrite)
+	return writer.WritePoint(channelID, deviceID, pointID, valToWrite)
 }
 
 // CRUD Operations
@@ -2013,11 +2090,12 @@ func (em *EdgeComputeManager) RuntimeLogStats() (eventsMem, failuresMem, minuteC
 }
 
 func (em *EdgeComputeManager) restoreState() {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return
 	}
 	// Restore Rule States
-	em.store.LoadAll(storage.BucketRuleState, func(k, v []byte) error {
+	store.LoadAll(storage.BucketRuleState, func(k, v []byte) error {
 		var state model.RuleRuntimeState
 		if err := json.Unmarshal(v, &state); err == nil {
 			em.stateMu.Lock()
@@ -2028,7 +2106,7 @@ func (em *EdgeComputeManager) restoreState() {
 	})
 
 	// Restore Windows
-	em.store.LoadAll(storage.BucketWindow, func(k, v []byte) error {
+	store.LoadAll(storage.BucketWindow, func(k, v []byte) error {
 		var data []model.Value
 		if err := json.Unmarshal(v, &data); err == nil {
 			em.stateMu.Lock()
@@ -2041,7 +2119,8 @@ func (em *EdgeComputeManager) restoreState() {
 }
 
 func (em *EdgeComputeManager) saveRuleState(ruleID string) {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return
 	}
 	em.stateMu.RLock()
@@ -2053,14 +2132,15 @@ func (em *EdgeComputeManager) saveRuleState(ruleID string) {
 	em.stateMu.RUnlock()
 
 	if ok && statePtr != nil {
-		if err := em.store.SaveData(storage.BucketRuleState, ruleID, stateCopy); err != nil {
+		if err := store.SaveData(storage.BucketRuleState, ruleID, stateCopy); err != nil {
 			log.Printf("Failed to save rule state for %s: %v", ruleID, err)
 		}
 	}
 }
 
 func (em *EdgeComputeManager) saveWindowData(ruleID string) {
-	if em.store == nil {
+	store := em.storage()
+	if store == nil {
 		return
 	}
 	em.stateMu.RLock()
@@ -2068,7 +2148,7 @@ func (em *EdgeComputeManager) saveWindowData(ruleID string) {
 	em.stateMu.RUnlock()
 
 	if ok {
-		em.store.SaveData(storage.BucketWindow, ruleID, data)
+		store.SaveData(storage.BucketWindow, ruleID, data)
 	}
 }
 
@@ -2091,6 +2171,7 @@ func (em *EdgeComputeManager) sanitizeRule(rule *model.EdgeRule) {
 }
 
 func (em *EdgeComputeManager) maintenanceLoop() {
+	defer em.wg.Done()
 	ticker := time.NewTicker(10 * time.Minute)
 	defer ticker.Stop()
 	for {

@@ -69,7 +69,7 @@ func TestGetEndpointsMultiplePolicies(t *testing.T) {
 		t.Fatalf("start server: %v", err)
 	}
 	defer srv.Stop()
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 
 	endpointURL := "opc.tcp://127.0.0.1:" + strconv.Itoa(port) + "/ipp/opcua/server"
 	res, err := client.GetEndpoints(context.Background(), &ua.GetEndpointsRequest{EndpointURL: endpointURL})

@@ -26,7 +26,7 @@ func TestUpsertSparkplugBConfig_Returns200WithWarningWhenBrokerUnreachable(t *te
 		Name:     "API Sparkplug Test",
 		Enable:   true,
 		Broker:   "127.0.0.1",
-		Port:     1883,
+		Port:     18884,
 		ClientID: "api-spb-client",
 		GroupID:  "group1",
 		NodeID:   "node1",

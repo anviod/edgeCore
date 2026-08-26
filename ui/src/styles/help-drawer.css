@@ -5,6 +5,12 @@
 
 .help-drawer.arco-drawer {
   box-shadow: var(--shadow-md);
+  max-width: calc(100vw - var(--space-8));
+}
+
+/* wider reading column for point-config help (parseType / datatype detail) */
+.help-drawer .help-doc-row__value {
+  max-width: none;
 }
 
 .help-drawer .arco-drawer-header {
@@ -28,9 +34,10 @@
 
 /* ── Document root ── */
 .help-doc {
+  counter-reset: help-section;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
   padding-bottom: 16px;
 }
 
@@ -38,43 +45,115 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 18px 20px;
+  background: color-mix(in srgb, var(--primary) 6%, var(--bg));
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
+  border-radius: var(--radius-lg);
 }
 
 .help-doc__lead {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.7;
+  font-size: 13.5px;
+  line-height: 1.75;
   color: var(--text-secondary);
 }
 
 .help-doc__sections {
+  counter-reset: help-section;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 36px;
 }
 
-/* ── Section ── */
+/* ── Section (numbered, accent-bar hierarchy) ── */
 .help-doc-section {
+  counter-increment: help-section;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .help-doc-section__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.help-doc-section__title::before {
+  content: "";
+  flex-shrink: 0;
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--primary);
+}
+
+.help-doc-section__title::after {
+  content: counter(help-section, decimal-leading-zero);
+  margin-left: auto;
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-family: var(--font-mono);
   color: var(--text-tertiary);
-  line-height: 1.4;
+  letter-spacing: 0.08em;
 }
 
 .help-doc-section__text {
   margin: 0;
   font-size: 14px;
-  line-height: 1.75;
+  line-height: 1.8;
   color: var(--text-secondary);
+}
+
+.help-doc-subtitle {
+  margin: 22px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+.help-doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.help-doc-table th,
+.help-doc-table td {
+  border: 1px solid var(--border);
+  padding: 7px 11px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.help-doc-table th {
+  background: var(--surface-2);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.help-doc-table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--primary) 4%, transparent);
+}
+
+.help-doc-table td code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
 }
 
 /* ── Spec card (single container, rows inside) ── */
@@ -82,7 +161,8 @@
   background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  padding: 18px 22px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
 }
 
 .help-doc-row {
@@ -90,7 +170,7 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 16px 0;
+  padding: 18px 0;
 }
 
 .help-doc-row:first-child {
@@ -108,28 +188,34 @@
 
 .help-doc-row__label {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   min-width: 0;
 }
 
 .help-doc-row__label strong {
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-primary);
   line-height: 1.5;
 }
 
 .help-doc-row__label span {
-  font-size: 12px;
+  font-size: 11px;
   font-family: var(--font-mono);
-  color: var(--text-tertiary);
-  line-height: 1.4;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.5;
+  white-space: nowrap;
 }
 
 .help-doc-row__value {
   flex-shrink: 0;
   margin: 0;
+  padding: 2px 0;
   font-size: 12px;
   font-family: var(--font-mono);
   color: var(--text-secondary);
@@ -310,19 +396,56 @@
 }
 
 .help-doc-row__desc {
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.78;
   color: var(--text-secondary);
+}
+
+/* ── Inline option list (breaks dense prose into readable rows) ── */
+.help-doc-optlist {
+  list-style: none;
+  margin: 10px 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.help-doc-optlist li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.help-doc-optlist li code {
+  flex-shrink: 0;
+  min-width: 96px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.help-doc-optlist li span {
+  min-width: 0;
 }
 
 .help-doc-row--stack {
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--space-2);
+  gap: var(--space-3);
 }
 
 .help-doc-row--stack .help-doc-row__desc {
-  margin-top: var(--space-1);
+  margin-top: 0;
 }
 
 .help-doc-steps {
@@ -398,10 +521,11 @@
 }
 
 .help-doc-example {
-  margin: 10px 0 14px;
-  padding: 10px 14px;
+  position: relative;
+  margin: 12px 0 16px;
+  padding: 12px 14px 12px 16px;
   font-size: 13px;
-  line-height: 1.65;
+  line-height: 1.75;
   color: var(--text-secondary);
   background: var(--surface-2);
   border-left: 3px solid var(--primary);

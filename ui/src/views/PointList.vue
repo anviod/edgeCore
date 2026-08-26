@@ -413,7 +413,8 @@
             <div class="advanced-block point-advanced-block">
               <div class="point-advanced-fields">
                 <div class="form-field">
-                  <div class="field-label">数据格式</div>
+                  <div class="field-label">数据格式（格式预设）</div>
+                  <div class="field-hint" title="常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设">常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设</div>
                   <a-select
                     v-model="formatPresetSelected"
                     :options="filteredFormatPresets"
@@ -423,19 +424,24 @@
                 </div>
                 <div class="batch-form-row">
                   <div class="form-field">
-                    <div class="field-label">解析类型</div>
+                    <div class="field-label">解析类型（字节解析 / UI 显示）</div>
+                    <div class="field-hint" title="原始字节如何被解读为数值，用于前端预览与校验（如 FLOAT32 / INT16）">原始字节如何被解读为数值，用于前端预览与校验（如 FLOAT32 / INT16）</div>
                     <a-select
                       v-model="pointDialog.parseType"
                       :options="filteredParseTypes"
                     />
                   </div>
                   <div class="form-field">
-                    <div class="field-label">数据类型 (存储)</div>
+                    <div class="field-label">数据类型（存储 / 北向）</div>
+                    <div class="field-hint" title="网关内部存储与北向接口（MQTT / OPC-UA / Sparkplug）对外类型，须与解析类型匹配">网关内部存储与北向接口（MQTT / OPC-UA / Sparkplug）对外类型，须与解析类型匹配</div>
                     <a-select
                       v-model="pointDialog.form.datatype"
                       :options="datatypeOptions"
                     />
                   </div>
+                </div>
+                <div v-if="parseTypeWarnings.length" class="field-warn-list">
+                  <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
                 </div>
                 <div class="batch-form-row">
                   <div class="form-field">
@@ -530,7 +536,7 @@
             <div class="advanced-block point-advanced-block">
               <a-row :gutter="[24, 16]" class="field-grid">
                 <a-col :span="24">
-                  <a-form-item field="formatPreset" label="数据格式">
+                  <a-form-item field="formatPreset" label="数据格式（格式预设）">
                     <a-select
                       v-model="formatPresetSelected"
                       :options="filteredFormatPresets"
@@ -557,7 +563,7 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="8">
-                  <a-form-item field="parseType" label="解析类型">
+                  <a-form-item field="parseType" label="解析类型（字节解析 / UI 显示）">
                     <a-select
                       v-model="pointDialog.parseType"
                       :options="parseTypesForBytes"
@@ -565,12 +571,17 @@
                   </a-form-item>
                 </a-col>
                 <a-col :span="12">
-                  <a-form-item field="datatype" label="数据类型(存储)">
+                  <a-form-item field="datatype" label="数据类型（存储 / 北向）">
                     <a-select
                       v-model="pointDialog.form.datatype"
                       :options="datatypeOptions"
                     ></a-select>
                   </a-form-item>
+                </a-col>
+                <a-col v-if="parseTypeWarnings.length" :span="24">
+                  <div class="field-warn-list">
+                    <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
+                  </div>
                 </a-col>
                 <a-col :span="12">
                   <a-form-item field="read_formula_template" label="读公式模板">
@@ -1389,12 +1400,16 @@ const mapDevicePoint = (p, now = new Date()) => enrichModbusPoint({
     id: p.id,
     name: p.name,
     address: p.address,
+    format: p.format || '',
     datatype: p.datatype || p.dataType,
     unit: p.unit || '',
     readwrite: p.readwrite || 'R',
     register_type: p.register_type,
     function_code: p.function_code,
     slave_id: p.slave_id,
+    word_order: p.word_order || '',
+    scale: p.scale ?? 1,
+    offset: p.offset ?? 0,
     value: p.value ?? null,
     quality: p.quality || 'Bad',
     timestamp: p.timestamp || p.collected_at || now,
@@ -1765,6 +1780,38 @@ const datatypeOptions = [
 
 const formatPresets = [
     {
+        id: 'UINT8',
+        label: 'UINT8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'UINT8',
+        wordOrder: 'AB',
+        datatype: 'uint8'
+    },
+    {
+        id: 'INT8',
+        label: 'INT8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'INT8',
+        wordOrder: 'AB',
+        datatype: 'int8'
+    },
+    {
+        id: 'BIT',
+        label: 'BIT (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'BIT',
+        wordOrder: 'AB',
+        datatype: 'bool'
+    },
+    {
+        id: 'BCD8',
+        label: 'BCD8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'BCD8',
+        wordOrder: 'AB',
+        datatype: 'uint8'
+    },
+    {
         id: 'Signed',
         label: 'Signed (2 字节 / 1 寄存器)',
         bytes: 2,
@@ -1904,7 +1951,61 @@ const wordOrderOptionsForBytes = computed(() => getWordOrderOptionsForBytes(poin
 
 const filteredParseTypes = computed(() => filterParseTypesByBytes(pointDialog.byteLength))
 
-const filteredFormatPresets = computed(() => formatPresets)
+// parseType 隐含的落库类型（_SWAP 只换字节序、不换类型）
+const parseTypeToDatatype = {
+    BIT: 'bool',
+    UINT8: 'uint8',
+    INT8: 'int8',
+    BCD8: 'uint8',
+    UINT16: 'uint16',
+    UINT16_SWAP: 'uint16',
+    INT16: 'int16',
+    INT16_SWAP: 'int16',
+    BCD16: 'uint16',
+    FLOAT16: 'float32',
+    UINT32: 'uint32',
+    UINT32_SWAP: 'uint32',
+    INT32: 'int32',
+    INT32_SWAP: 'int32',
+    FLOAT32: 'float32',
+    FLOAT32_SWAP: 'float32',
+    BCD32: 'uint32',
+    UINT64: 'uint64',
+    INT64: 'int64',
+    FLOAT64: 'float64',
+    FLOAT64_SWAP: 'float64',
+    STRING: 'string'
+}
+
+// 一致性告警：后端真正用于读取/解码的是 datatype，parseType 只影响前端预览
+const parseTypeWarnings = computed(() => {
+    const warnings = []
+    const pt = pointDialog.parseType
+    const dt = (pointDialog.form.datatype || '').toLowerCase()
+    if (!pt) return warnings
+
+    // 1) 解析类型要求的字节数 vs 当前字节数
+    const ptOpt = baseParseTypeOptions.find(o => o.value === pt)
+    if (ptOpt && ptOpt.bytes > 0 && ptOpt.bytes !== pointDialog.byteLength) {
+        warnings.push(`解析类型 ${pt} 需要 ${ptOpt.bytes} 字节，当前字节数为 ${pointDialog.byteLength}——后端按 ${pointDialog.byteLength} 字节读取，数值可能错乱（如浮点读成 0）`)
+    }
+
+    // 2) 解析类型隐含类型 vs 数据类型（落库/北向类型）
+    if (dt) {
+        const implied = parseTypeToDatatype[pt]
+        const special = ['word', 'dword', 'lword', 'bytestring', 'bool']
+        if (implied && !special.includes(dt) && implied !== dt) {
+            warnings.push(`解析类型 ${pt} 隐含 ${implied}，与数据类型 ${dt} 不一致——后端按 ${dt} 读取，北向会拿到错误类型（最常见配置错误）`)
+        }
+    }
+    return warnings
+})
+
+// Arco a-select 的 options 要求 {label, value}；formatPresets 只有 id/label，
+// 缺 value 会导致选中值恒为 undefined（点不中、回显空白、转换不触发），这里补上。
+const filteredFormatPresets = computed(() =>
+    formatPresets.map(p => ({ ...p, value: p.id }))
+)
 
 const quickValidate = reactive({
     visible: false,
@@ -2158,6 +2259,23 @@ const presetIdToFormat = (id) => {
     return id
 }
 
+// datatype → parseType 兜底映射（无格式预设可推断时使用，如 string/word 等）
+const datatypeToParseType = (dt) => {
+    const map = {
+        bool: 'BIT',
+        int8: 'INT8',
+        uint8: 'UINT8',
+        int16: 'INT16',
+        uint16: 'UINT16',
+        int32: 'INT32',
+        uint32: 'UINT32',
+        float32: 'FLOAT32',
+        float64: 'FLOAT64',
+        string: 'STRING'
+    }
+    return map[(dt || '').toLowerCase()] || null
+}
+
 const inferPresetFromPoint = (p) => {
     if (!p) return null
     const dt = (p.datatype || '').toLowerCase()
@@ -2166,6 +2284,13 @@ const inferPresetFromPoint = (p) => {
 
     if (fmt === 'hex') return 'Hex'
     if (fmt === 'binary') return 'Binary'
+
+    if (dt === 'bool') return 'BIT'
+    if (dt === 'int8') return 'INT8'
+    if (dt === 'uint8') {
+        if (fmt === 'bcd8') return 'BCD8'
+        return 'UINT8'
+    }
 
     if (dt === 'int16') return 'Signed'
     if (dt === 'uint16') return 'Unsigned'
@@ -2718,6 +2843,8 @@ const openAddDialog = () => {
     pointDialog.wordOrderOption = 'ABCD'
     pointDialog.parseType = 'FLOAT32'
     pointDialog.defaultValue = ''
+    // 重置格式预设，避免残留上一次编辑/新建的选择污染新点位
+    formatPresetSelected.value = null
 	
 	if (channelProtocol.value.startsWith('modbus')) {
 		// Get start_address from device config
@@ -2827,6 +2954,10 @@ const openEditDialog = (point) => {
     const presetId = inferPresetFromPoint(pointDialog.form)
     formatPresetSelected.value = presetId
 
+    // 同步恢复解析类型，避免残留上一次新建/编辑的脏值（如 FLOAT32）
+    const preset = presetId ? formatPresets.find(p => p.id === presetId) : null
+    pointDialog.parseType = preset ? preset.parseType : (datatypeToParseType(dt) || pointDialog.parseType)
+
     pointDialog.visible = true
 }
 
@@ -2842,6 +2973,13 @@ const submitPoint = async () => {
             : channelDeviceApiPath(channelId.value, deviceId.value, 'points')
         if (formatPresetSelected.value) {
             pointDialog.form.format = presetIdToFormat(formatPresetSelected.value)
+        } else if (!pointDialog.form.format) {
+            // 未显式选预设时，从 datatype/word_order 兜底推断设备协议类型，
+            // 保证"设备协议类型"列不出现空值（如 uint16 → Unsigned）
+            const inferredId = inferPresetFromPoint(pointDialog.form)
+            if (inferredId) {
+                pointDialog.form.format = presetIdToFormat(inferredId)
+            }
         }
         pointDialog.form.word_order = wordOrderToBackend(pointDialog.wordOrderOption)
         
@@ -3109,7 +3247,12 @@ const fetchPoints = async (options = {}) => {
                 if (Array.isArray(pts) && pts.length > 0) {
                     console.log('Background point fetch successful, updating points. Points:', pts.length)
                     console.log('First point data:', pts[0])
-                    points.value = pts.map(p => mapDevicePoint(p))
+                    // 接口可能缺失配置字段（format/word_order/scale/...），
+                    // 用设备信息缓存补齐，保证"设备协议类型"列与编辑回显不丢配置
+                    points.value = pts.map(p => {
+                        const cfg = (deviceInfo.value?.points || []).find(cp => cp.id === p.id) || {}
+                        return mapDevicePoint({ ...cfg, ...p })
+                    })
                     syncPointIndex()
                     loadError.value = ''
                 } else if (Array.isArray(pts)) {
@@ -3127,7 +3270,11 @@ const fetchPoints = async (options = {}) => {
                     request.get(channelDeviceApiPath(channelId.value, deviceId.value, 'points'))
                         .then(pts => {
                             if (Array.isArray(pts)) {
-                                points.value = pts.map(p => mapDevicePoint(p))
+                                // 与设备信息缓存合并，补齐接口缺失的配置字段（format 等）
+                                points.value = pts.map(p => {
+                                    const cfg = (deviceInfo.value?.points || []).find(cp => cp.id === p.id) || {}
+                                    return mapDevicePoint({ ...cfg, ...p })
+                                })
                                 syncPointIndex()
                                 loadError.value = ''
                                 if (pts.length === 0 && channelProtocol.value === 'opc-ua') {

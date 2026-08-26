@@ -234,8 +234,8 @@ func (s *Server) getDeviceMetrics(c *fiber.Ctx) error {
 		metrics.State = 2 // 离线
 	}
 
-	if s.shadowCore != nil {
-		if opt := s.shadowCore.GetDeviceOptimization(deviceID); opt != nil {
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		if opt := shadowCore.GetDeviceOptimization(deviceID); opt != nil {
 			metrics.CommunicationProfile = opt
 		}
 	}

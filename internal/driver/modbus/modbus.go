@@ -136,7 +136,12 @@ func (d *ModbusDriver) performMTUProbe() {
 	defer cancel()
 
 	if mtu, err := d.transport.DetectMTU(ctx); err == nil {
-		d.scheduler.SetMaxPacketSize(mtu)
+		d.mu.RLock()
+		scheduler := d.scheduler
+		if scheduler != nil {
+			scheduler.SetMaxPacketSize(mtu)
+		}
+		d.mu.RUnlock()
 		zap.L().Info("[Modbus] MTU探测成功",
 			zap.String("channelID", d.config.ChannelID),
 			zap.Uint16("maxRegisters", mtu),

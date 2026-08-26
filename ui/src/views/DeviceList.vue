@@ -774,7 +774,7 @@ import {
   IconClockCircle
 } from '@arco-design/web-vue/es/icon'
 import request from '@/utils/request'
-import { devicePointsRoutePath, channelDeviceApiPath } from '@/utils/deviceRoute'
+import { devicePointsRoutePath, channelDeviceApiPath, isPathSafeId } from '@/utils/deviceRoute'
 import { generateShortId } from '@/utils/shortId'
 import { formatProtocolTag } from '@/utils/protocolLabel'
 import { postScanAndWait } from '@/utils/asyncJob'
@@ -1348,7 +1348,18 @@ const executeDelete = async () => {
   deleting.value = true
   try {
     if (itemToDelete.value) {
-      await request.delete(channelDeviceApiPath(channelId, itemToDelete.value.id))
+      const devId = itemToDelete.value.id
+      if (isPathSafeId(devId)) {
+        await request.delete(channelDeviceApiPath(channelId, devId))
+      } else {
+        // ID contains path-unsafe characters (e.g. /); use batch endpoint to
+        // avoid URL path encoding issues that break the Fiber router.
+        await request({
+          url: `/api/channels/${encodeURIComponent(channelId)}/devices`,
+          method: 'delete',
+          data: [devId]
+        })
+      }
     } else {
       await request({
         url: `/api/channels/${channelId}/devices`,

@@ -83,7 +83,7 @@
           size="small"
           class="industrial-table-fluid modbus-group-table"
           :bordered="{ wrapper: true }"
-          :scroll="{ x: 1126 }"
+          :scroll="{ x: 1198 }"
           @selection-change="onSelectionChange"
           @page-change="onPageChange"
           @page-size-change="onPageSizeChange"
@@ -94,6 +94,12 @@
 
           <template #plc="{ record }">
             <span class="cell-numeric">{{ record.plc_address ?? formatPlcAddress(record.register_key, record.address) }}</span>
+          </template>
+
+          <template #pointType="{ record }">
+            <a-tooltip :content="`设备协议: ${record.format || inferFormatFromPoint(record) || '—'} | 存储/北向: ${record.datatype || '—'}`">
+              <span class="cell-text font-mono">{{ formatPointType(record) }}</span>
+            </a-tooltip>
           </template>
 
           <template #value="{ record }">
@@ -255,7 +261,7 @@ const columns = [
   { title: '名称', dataIndex: 'name', width: 110, ellipsis: true, tooltip: true },
   { title: 'PDU 偏移', slotName: 'offset', width: 82, align: 'right' },
   { title: 'PLC 地址', slotName: 'plc', width: 104, align: 'right' },
-  { title: '类型', dataIndex: 'datatype', width: 78, ellipsis: true },
+  { title: '类型', slotName: 'pointType', width: 150, ellipsis: true },
   { title: 'R/W', slotName: 'readwrite', width: 56, align: 'center' },
   { title: '数值', slotName: 'value', width: 132, align: 'right' },
   { title: '质量', slotName: 'quality', width: 92 },
@@ -335,6 +341,50 @@ const formatValue = (val) => {
   if (val === null || val === undefined) return 'N/A'
   if (typeof val === 'number') return Number.isInteger(val) ? String(val) : val.toFixed(2)
   return String(val)
+}
+
+// 类型列：设备协议类型（format，如 Unsigned）为主 + 本地解析类型（datatype，如 uint16）为辅
+// format 为空（存量旧点位/未选预设）时按 datatype+word_order 推断，保持列显示一致
+const inferFormatFromPoint = (record) => {
+  if (!record) return ''
+  const dt = (record.datatype || '').toLowerCase()
+  const fmt = (record.format || '').toLowerCase()
+  const wo = (record.word_order || '').toUpperCase()
+
+  if (fmt === 'hex') return 'hex'
+  if (fmt === 'binary') return 'binary'
+  if (dt === 'bool') return 'BIT'
+  if (dt === 'int8') return 'INT8'
+  if (dt === 'uint8') return fmt === 'bcd8' ? 'BCD8' : 'UINT8'
+  if (dt === 'int16') return 'Signed'
+  if (dt === 'uint16') return 'Unsigned'
+  if (dt === 'int32') {
+    if (wo === 'CDAB') return 'LongCDAB'
+    if (wo === 'BADC') return 'LongBADC'
+    if (wo === 'DCBA') return 'LongDCBA'
+    return 'LongABCD'
+  }
+  if (dt === 'float32') {
+    if (wo === 'CDAB') return 'FloatCDAB'
+    if (wo === 'BADC') return 'FloatBADC'
+    if (wo === 'DCBA') return 'FloatDCBA'
+    return 'FloatABCD'
+  }
+  if (dt === 'float64') {
+    if (wo === 'CDAB') return 'DoubleGHEFCDAB'
+    if (wo === 'BADC') return 'DoubleBADCFEHG'
+    if (wo === 'DCBA') return 'DoubleHGFEDCBA'
+    return 'DoubleABCDEFGH'
+  }
+  return ''
+}
+
+const formatPointType = (record) => {
+  const fmt = (record?.format || '').trim()
+  const dt = record?.datatype || ''
+  const displayFmt = fmt || inferFormatFromPoint(record)
+  if (displayFmt) return dt && dt.toLowerCase() !== displayFmt.toLowerCase() ? `${displayFmt} (${dt})` : displayFmt
+  return dt || 'N/A'
 }
 
 const formatDate = (ts) => {

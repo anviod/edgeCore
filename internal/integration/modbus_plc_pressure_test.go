@@ -151,9 +151,9 @@ func TestModbusPLC_PressureMultiSlaveIsolation(t *testing.T) {
 	gates := []productionGate{
 		{
 			Name:   "scan_lag_p95_under_200ms",
-			Passed: p95 <= prodGatePLCLagP95Ms,
+			Passed: p95 <= plcPressureLagP95Limit,
 			Value:  p95,
-			Limit:  prodGatePLCLagP95Ms,
+			Limit:  plcPressureLagP95Limit,
 			Detail: fmt.Sprintf("P95 lag %.2fms", p95),
 		},
 		{

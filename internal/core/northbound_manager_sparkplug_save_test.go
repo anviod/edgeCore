@@ -19,7 +19,7 @@ func TestNorthboundManager_UpsertSparkplugB_SavesWhenBrokerUnreachable(t *testin
 		Name:     "Test Sparkplug B",
 		Enable:   true,
 		Broker:   "127.0.0.1",
-		Port:     1883,
+		Port:     18884,
 		ClientID: "spb-test-client",
 		GroupID:  "group1",
 		NodeID:   "node1",

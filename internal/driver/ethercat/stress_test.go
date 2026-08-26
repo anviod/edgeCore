@@ -177,7 +177,7 @@ func TestStress_PDOCycleStability(t *testing.T) {
 
 	updates := updateCount.Load()
 	t.Logf("PDO cycle stability: %d TxPDO updates in 100ms", updates)
-	assert.Greater(t, updates, int64(10), "should have at least 10 updates in 100ms")
+	assert.GreaterOrEqual(t, updates, int64(10), "should have at least 10 updates in 100ms")
 
 	// Verify transport is still connected
 	assert.True(t, transport.IsConnected())

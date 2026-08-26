@@ -3,6 +3,7 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
 	"time"
 )
 
@@ -231,6 +232,17 @@ type PointData struct {
 	UpdatedAt    time.Time `json:"updated_at"`   // 影子更新时间
 	Unit         string    `json:"unit,omitempty"`
 	ReadWrite    string    `json:"readwrite"` // R / RW
+	// 点位配置字段（与 Point 对齐），供点位列表接口透传给前端，
+	// 避免"设备协议类型(format)"、编辑回显等依赖配置的展示丢失
+	Format       string  `json:"format,omitempty"`
+	WordOrder    string  `json:"word_order,omitempty"`
+	Scale        float64 `json:"scale,omitempty"`
+	Offset       float64 `json:"offset,omitempty"`
+	ReadFormula  string  `json:"read_formula,omitempty"`
+	WriteFormula string  `json:"write_formula,omitempty"`
+	Group        string  `json:"group,omitempty"`
+	ScanClass    string  `json:"scan_class,omitempty"`
+	ReportMode   string  `json:"report_mode,omitempty"`
 }
 
 // DeviceStorage defines data storage strategy for a device
@@ -243,15 +255,15 @@ type DeviceStorage struct {
 
 // Device represents a device configuration (within a channel)
 type Device struct {
-	ID               string         `json:"id" yaml:"id"`
-	Name             string         `json:"name" yaml:"name"`
-	Enable           bool           `json:"enable" yaml:"enable"`
-	Interval         Duration       `json:"interval" yaml:"interval"`
+	ID       string   `json:"id" yaml:"id"`
+	Name     string   `json:"name" yaml:"name"`
+	Enable   bool     `json:"enable" yaml:"enable"`
+	Interval Duration `json:"interval" yaml:"interval"`
 	// Spatial attributes / 空间属性 - 物理位置信息，用于资产管理和设备定位
-	StationName      string         `json:"station_name,omitempty" yaml:"station_name,omitempty"`   // 局站名称 / Station name
-	StationCode      string         `json:"station_code,omitempty" yaml:"station_code,omitempty"`   // 局站编码 / Station code
-	RoomName         string         `json:"room_name,omitempty" yaml:"room_name,omitempty"`         // 机房名称 / Equipment room name
-	RoomCode         string         `json:"room_code,omitempty" yaml:"room_code,omitempty"`         // 机房编码 / Equipment room code
+	StationName      string         `json:"station_name,omitempty" yaml:"station_name,omitempty"`             // 局站名称 / Station name
+	StationCode      string         `json:"station_code,omitempty" yaml:"station_code,omitempty"`             // 局站编码 / Station code
+	RoomName         string         `json:"room_name,omitempty" yaml:"room_name,omitempty"`                   // 机房名称 / Equipment room name
+	RoomCode         string         `json:"room_code,omitempty" yaml:"room_code,omitempty"`                   // 机房编码 / Equipment room code
 	DegradeOnFailure *bool          `json:"degrade_on_failure,omitempty" yaml:"degrade_on_failure,omitempty"` // 默认 true；设为 false 关闭失败退避
 	DeviceFile       string         `json:"device_file,omitempty" yaml:"device_file,omitempty"`               // 设备配置文件路径
 	Config           map[string]any `json:"config" yaml:"config"`                                             // 设备特定配置（如 slave_id）
@@ -305,6 +317,23 @@ func (d Device) DeepCopy() Device {
 	return out
 }
 
+// DeepCopy returns an independent copy of a Channel configuration.
+func (c Channel) DeepCopy() Channel {
+	out := c
+	out.Config = cloneAnyMap(c.Config)
+	if c.Devices != nil {
+		out.Devices = make([]Device, len(c.Devices))
+		for i, device := range c.Devices {
+			out.Devices[i] = device.DeepCopy()
+		}
+	}
+	if c.NodeRuntime != nil {
+		runtime := *c.NodeRuntime
+		out.NodeRuntime = &runtime
+	}
+	return out
+}
+
 // ClonePoint returns a deep copy of a Point (duplicates the Threshold pointer).
 func (p Point) Clone() Point {
 	out := p
@@ -316,11 +345,56 @@ func (p Point) Clone() Point {
 }
 
 func cloneAnyMap(m map[string]any) map[string]any {
+	if m == nil {
+		return nil
+	}
 	out := make(map[string]any, len(m))
 	for k, v := range m {
-		out[k] = v
+		out[k] = cloneAny(v)
 	}
 	return out
+}
+
+func cloneAny(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return cloneAnyMap(typed)
+	case []any:
+		out := make([]any, len(typed))
+		for i, item := range typed {
+			out[i] = cloneAny(item)
+		}
+		return out
+	}
+	valueRef := reflect.ValueOf(value)
+	if !valueRef.IsValid() {
+		return nil
+	}
+	if valueRef.Kind() == reflect.Slice {
+		out := reflect.MakeSlice(valueRef.Type(), valueRef.Len(), valueRef.Len())
+		reflect.Copy(out, valueRef)
+		for i := 0; i < out.Len(); i++ {
+			item := cloneAny(out.Index(i).Interface())
+			if item != nil {
+				out.Index(i).Set(reflect.ValueOf(item))
+			}
+		}
+		return out.Interface()
+	}
+	if valueRef.Kind() == reflect.Map && valueRef.Type().Key().Kind() == reflect.String {
+		out := reflect.MakeMapWithSize(valueRef.Type(), valueRef.Len())
+		iter := valueRef.MapRange()
+		for iter.Next() {
+			item := cloneAny(iter.Value().Interface())
+			if item == nil {
+				out.SetMapIndex(iter.Key(), reflect.Zero(valueRef.Type().Elem()))
+			} else {
+				out.SetMapIndex(iter.Key(), reflect.ValueOf(item))
+			}
+		}
+		return out.Interface()
+	}
+	return value
 }
 
 // NodeRuntime defines runtime statistics for a node (device or channel)

@@ -358,6 +358,11 @@ func main() {
 
 	zap.L().Info("Shutting down...")
 
+	// 有序关闭：HTTP → EdgeCompute → Channels → Pipeline，
+	// 之后再由 defer 依次关闭 Northbound、Shadow、Store。
 	srv.StopBackgroundTasks()
+	srv.Shutdown()
+	ecm.Stop()
 	cm.Shutdown()
+	pipeline.Stop()
 }

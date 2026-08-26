@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
+	"net"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -76,6 +77,7 @@ type Server struct {
 	listenAddr             string
 	serverMu               sync.Mutex
 	portSwitching          bool
+	shuttingDown           bool
 	aiAgent                *ai_agent.Agent
 	aiSettingsMem          *model.AICopilotSettings
 	mcpServer              *mcp.MCPServer // MCP 协议服务端（懒初始化）
@@ -130,12 +132,16 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 
 // SetVirtualShadowEngine 绑定虚拟影子引擎（公式点位增量计算）。
 func (s *Server) SetVirtualShadowEngine(vse *core.VirtualShadowEngine) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.virtualShadow = vse
 }
 
 // SetShadowCore 绑定影子设备核心，并订阅快照变更推送到 WebSocket。
 func (s *Server) SetShadowCore(sc *core.ShadowCore) {
+	s.serverMu.Lock()
 	s.shadowCore = sc
+	s.serverMu.Unlock()
 	if sc == nil {
 		return
 	}
@@ -173,17 +179,52 @@ func (s *Server) BroadcastShadowPoint(channelID, deviceID, pointID string, point
 
 // SetStorageAttachHook 注册存储绑定回调（安装流程创建 DB 后回传 main 等组件）。
 func (s *Server) SetStorageAttachHook(fn func(*storage.Storage)) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.storageAttachHook = fn
 }
 
 // SetRuntimeStartHook 注册数据采集/北向启动回调（安装完成后或正常启动时调用）。
 func (s *Server) SetRuntimeStartHook(fn func()) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.runtimeStartHook = fn
+}
+
+func (s *Server) shadowCoreRef() *core.ShadowCore {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.shadowCore
+}
+
+func (s *Server) virtualShadowRef() *core.VirtualShadowEngine {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.virtualShadow
+}
+
+func (s *Server) virtualShadowManagerRef() *core.VirtualShadowManager {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.vsm
+}
+
+func (s *Server) runtimeStartCallback() func() {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.runtimeStartHook
+}
+
+func (s *Server) storageAttachCallback() func(*storage.Storage) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.storageAttachHook
 }
 
 func (s *Server) Start(addr string) error {
 	s.serverMu.Lock()
 	s.listenAddr = addr
+	app := s.app
 	s.serverMu.Unlock()
 
 	// 启动时发布点位元数据
@@ -195,7 +236,7 @@ func (s *Server) Start(addr string) error {
 		s.startRuntimeCompactLoop()
 	}
 
-	err := s.app.Listen(addr)
+	err := app.Listen(addr)
 	if err == nil {
 		return nil
 	}
@@ -205,12 +246,31 @@ func (s *Server) Start(addr string) error {
 	if switching {
 		s.portSwitching = false
 	}
+	shuttingDown := s.shuttingDown
 	s.serverMu.Unlock()
 	if switching {
 		s.logger.Info("Web server stopped for port switch", zap.String("addr", addr))
 		return nil
 	}
+	if shuttingDown {
+		s.logger.Info("Web server stopped for shutdown")
+		return nil
+	}
 	return err
+}
+
+// Shutdown 优雅关闭 Fiber HTTP 服务器，停止接受新请求。
+func (s *Server) Shutdown() {
+	s.serverMu.Lock()
+	s.shuttingDown = true
+	app := s.app
+	s.serverMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		s.logger.Warn("Web server shutdown failed", zap.Error(err))
+	}
 }
 
 func (s *Server) SwitchPort(newPort int) error {
@@ -238,14 +298,17 @@ func (s *Server) SwitchPort(newPort int) error {
 	s.setupRoutes()
 	s.listenAddr = newAddr
 
-	go func() {
+	listener, err := net.Listen("tcp", newAddr)
+	if err != nil {
+		s.portSwitching = false
+		return err
+	}
+	go func(app *fiber.App, ln net.Listener) {
 		s.logger.Info("Web server restarting on new port", zap.String("addr", newAddr))
-		if err := s.app.Listen(newAddr); err != nil {
+		if err := app.Listener(ln); err != nil {
 			s.logger.Error("Web server failed on new port", zap.Error(err))
 		}
-	}()
-
-	time.Sleep(500 * time.Millisecond)
+	}(newApp, listener)
 	return nil
 }
 
@@ -1234,6 +1297,7 @@ func (s *Server) getDevicePoints(c *fiber.Ctx) error {
 			"unit":      p.Unit,
 			"readwrite": p.ReadWrite,
 			"protocol":  protocol, // 增加协议字段
+			"format":    p.Format, // 设备协议类型（如 Unsigned），供点位列表展示
 		}
 		if !p.CollectedAt.IsZero() {
 			m["collected_at"] = p.CollectedAt
@@ -1248,6 +1312,14 @@ func (s *Server) getDevicePoints(c *fiber.Ctx) error {
 			m["slave_id"] = p.SlaveID
 			m["register_type"] = p.RegisterType
 			m["function_code"] = p.FunctionCode
+			m["word_order"] = p.WordOrder
+			m["scale"] = p.Scale
+			m["offset"] = p.Offset
+			m["read_formula"] = p.ReadFormula
+			m["write_formula"] = p.WriteFormula
+			m["group"] = p.Group
+			m["scan_class"] = p.ScanClass
+			m["report_mode"] = p.ReportMode
 		case "bacnet-ip":
 			// BACnet 特定字段（如果有），当前 address 已包含必要信息
 		case "opc-ua":
@@ -1359,9 +1431,10 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 	channelID := c.Query("channel_id")
 	deviceID := c.Query("device_id")
 
-	if s.shadowCore != nil && deviceID != "" {
+	shadowCore := s.shadowCoreRef()
+	if shadowCore != nil && deviceID != "" {
 		shadowID := fmt.Sprintf("shadow-%s", deviceID)
-		shadow, err := s.shadowCore.GetShadowDevice(shadowID)
+		shadow, err := shadowCore.GetShadowDevice(shadowID)
 		if err == nil && shadow != nil {
 			if channelID == "" || shadow.ChannelID == "" || shadow.ChannelID == channelID {
 				filtered := make(map[string]any)
@@ -1382,7 +1455,7 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 			}
 		}
 
-		if vd, err := s.shadowCore.GetVirtualShadowDevice(deviceID); err == nil && vd != nil {
+		if vd, err := shadowCore.GetVirtualShadowDevice(deviceID); err == nil && vd != nil {
 			if channelID == "" || vd.ChannelID == "" || vd.ChannelID == channelID {
 				filtered := make(map[string]any)
 				for pid, pt := range vd.Points {
@@ -1482,7 +1555,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 func (s *Server) broadcastLoop() {
 	// 影子设备已挂载时，WebSocket 由 SetShadowCore 订阅推送；避免 Pipeline 重复广播。
-	if s.shadowCore != nil {
+	if s.shadowCoreRef() != nil {
 		return
 	}
 	s.pipeline.AddHandler(func(val model.Value) {
@@ -2523,8 +2596,8 @@ func (s *Server) enrichRuntimeBucketStats(stats []storage.BucketStats) []storage
 		addRuntimeCount("bblot", minuteCache)
 	}
 
-	if s.shadowCore != nil {
-		_, pointCount := s.shadowCore.RuntimePointStats()
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		_, pointCount := shadowCore.RuntimePointStats()
 		if pointCount > 0 {
 			if idx, ok := runtimeIndex["shadow_values"]; ok {
 				stats[idx].RecordCount = pointCount
@@ -2670,8 +2743,8 @@ func (s *Server) clearAllRuntime(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error(), "cleared": cleared})
 	}
 
-	if s.shadowCore != nil {
-		s.shadowCore.ClearAllShadowDevices()
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		shadowCore.ClearAllShadowDevices()
 	}
 
 	var edgeLogsCleared any

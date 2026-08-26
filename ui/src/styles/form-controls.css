@@ -62,6 +62,35 @@
   white-space: nowrap;
 }
 
+.field-hint {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-tertiary);
+  margin: -2px 0 1px;
+  /* single line: clip gracefully with ellipsis instead of wrapping */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+
+.field-warn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0 0 2px;
+}
+
+.field-warn {
+  font-size: 12px;
+  line-height: 1.55;
+  color: rgb(var(--danger-6));
+  background: color-mix(in srgb, rgb(var(--danger-6)) 8%, transparent);
+  border-left: 3px solid rgb(var(--danger-6));
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 5px 10px;
+}
+
 .field-error {
   font-size: 11px;
   color: rgb(var(--danger-6));

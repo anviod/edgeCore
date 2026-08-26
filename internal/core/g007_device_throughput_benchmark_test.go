@@ -162,7 +162,10 @@ func logG007BenchmarkResult(t *testing.T, r g007BenchmarkResult) {
 }
 
 func TestG007_DeviceThroughputBenchmark(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || raceDetectorEnabled {
+		if raceDetectorEnabled {
+			t.Skip("skipping throughput benchmark under race detector")
+		}
 		t.Skip("skipping G007 device throughput benchmark in short mode")
 	}
 

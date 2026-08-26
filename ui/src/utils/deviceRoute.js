@@ -3,6 +3,18 @@
  * OPC UA and other protocols may use IDs containing / : and other reserved characters.
  */
 
+/**
+ * Reports whether an ID is safe to use as a single URL path segment.
+ * IDs containing / \ ? # or spaces break Fiber's radix-tree router even
+ * when URL-encoded (%2F), because the proxy/router decodes them back to /.
+ * Such IDs must be sent via request body (batch endpoints) instead.
+ */
+export function isPathSafeId(id) {
+  if (id == null) return true
+  const s = String(id)
+  return !/[\/\\?#]/.test(s) && !s.includes(' ')
+}
+
 export function encodePathSegment(value) {
   if (value == null) return ''
   return encodeURIComponent(String(value))

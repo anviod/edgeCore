@@ -422,8 +422,8 @@ func (s *Server) executeInstall(cfg *model.InstallConfig) {
 	installStatusMutex.Unlock()
 	addLog("初始化安装流程完成")
 
-	if s.runtimeStartHook != nil {
-		s.runtimeStartHook()
+	if hook := s.runtimeStartCallback(); hook != nil {
+		hook()
 		addLog("数据采集与北向服务已启动")
 	}
 
@@ -454,8 +454,8 @@ func (s *Server) initStorage() error {
 	s.storage = store
 	s.cfgManager.AttachDB(store.GetConfigDB())
 
-	if s.storageAttachHook != nil {
-		s.storageAttachHook(store)
+	if hook := s.storageAttachCallback(); hook != nil {
+		hook(store)
 	}
 
 	return nil

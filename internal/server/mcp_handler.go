@@ -946,20 +946,20 @@ func (s *Server) mcpBatchCreateDevices(args json.RawMessage) (*mcp.CallToolResul
 			continue
 		}
 		created = append(created, map[string]any{
-			"device_id":  dev.ID,
-			"name":       dev.Name,
-			"config":     dev.Config,
-			"interval":   "1s",
-			"status":     "created",
+			"device_id": dev.ID,
+			"name":      dev.Name,
+			"config":    dev.Config,
+			"interval":  "1s",
+			"status":    "created",
 		})
 	}
 
 	result := map[string]any{
-		"channel_id": params.ChannelID,
-		"created":    created,
+		"channel_id":    params.ChannelID,
+		"created":       created,
 		"created_count": len(created),
-		"failed":     failed,
-		"failed_count": len(failed),
+		"failed":        failed,
+		"failed_count":  len(failed),
 	}
 	resultJSON, _ := json.MarshalIndent(result, "", "  ")
 	msg := fmt.Sprintf("## 批量创建设备完成\n\n成功 %d 个，失败 %d 个。\n\n```json\n%s\n```", len(created), len(failed), resultJSON)
@@ -1156,24 +1156,24 @@ func (s *Server) mcpBatchCreatePoints(args json.RawMessage) (*mcp.CallToolResult
 		pt, err := s.createPoint(params.ChannelID, params.DeviceID, p)
 		if err != nil {
 			failed = append(failed, map[string]any{
-				"name":   p.Name,
+				"name":    p.Name,
 				"address": p.Address,
-				"error":  err.Error(),
+				"error":   err.Error(),
 			})
 			continue
 		}
 		created = append(created, map[string]any{
-			"point_id":      pt.ID,
-			"name":          pt.Name,
-			"address":       pt.Address,
-			"datatype":      pt.DataType,
-			"scale":         pt.Scale,
-			"offset":        pt.Offset,
-			"unit":          pt.Unit,
-			"readwrite":     pt.ReadWrite,
-			"scan_class":    pt.ScanClass,
-			"word_order":    pt.WordOrder,
-			"status":        "created",
+			"point_id":   pt.ID,
+			"name":       pt.Name,
+			"address":    pt.Address,
+			"datatype":   pt.DataType,
+			"scale":      pt.Scale,
+			"offset":     pt.Offset,
+			"unit":       pt.Unit,
+			"readwrite":  pt.ReadWrite,
+			"scan_class": pt.ScanClass,
+			"word_order": pt.WordOrder,
+			"status":     "created",
 		})
 	}
 
@@ -1500,11 +1500,12 @@ func (s *Server) mcpCreateVirtualDevice(args json.RawMessage) (*mcp.CallToolResu
 		return mcp.NewErrorResult("参数解析失败: " + err.Error()), nil
 	}
 
-	if s.virtualShadow == nil {
+	virtualShadow := s.virtualShadowRef()
+	if virtualShadow == nil {
 		return mcp.NewErrorResult("虚拟影子引擎未初始化"), nil
 	}
 
-	if err := s.virtualShadow.CreateVirtualDevice(params.VirtualDeviceID, params.ChannelID, params.FormulaPoints); err != nil {
+	if err := virtualShadow.CreateVirtualDevice(params.VirtualDeviceID, params.ChannelID, params.FormulaPoints); err != nil {
 		return mcp.NewErrorResult("创建虚拟设备失败: " + err.Error()), nil
 	}
 
@@ -1533,11 +1534,12 @@ func (s *Server) mcpDeleteVirtualDevice(args json.RawMessage) (*mcp.CallToolResu
 		return mcp.NewErrorResult("参数解析失败: " + err.Error()), nil
 	}
 
-	if s.virtualShadow == nil {
+	virtualShadow := s.virtualShadowRef()
+	if virtualShadow == nil {
 		return mcp.NewErrorResult("虚拟影子引擎未初始化"), nil
 	}
 
-	if err := s.virtualShadow.DeleteVirtualDevice(params.VirtualDeviceID); err != nil {
+	if err := virtualShadow.DeleteVirtualDevice(params.VirtualDeviceID); err != nil {
 		return mcp.NewErrorResult("删除虚拟设备失败: " + err.Error()), nil
 	}
 

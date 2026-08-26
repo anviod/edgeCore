@@ -245,6 +245,8 @@ func (t *DLT645Transport) RecordFailure(err error) {
 }
 
 func (t *DLT645Transport) waitSendInterval() {
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	if t.cfg.sendInterval <= 0 {
 		return
 	}

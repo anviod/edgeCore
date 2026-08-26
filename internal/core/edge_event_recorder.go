@@ -354,7 +354,8 @@ func (em *EdgeComputeManager) recordFailure(rec model.EdgeFailureRecord, val mod
 }
 
 func (em *EdgeComputeManager) recordFailureMinuteSnapshot(rec model.EdgeFailureRecord) {
-	if em.store == nil || !hasEdgeErrorMessage(rec.Error) {
+	store := em.storage()
+	if store == nil || !hasEdgeErrorMessage(rec.Error) {
 		return
 	}
 	if rec.ErrorType == "" {
@@ -389,7 +390,7 @@ func (em *EdgeComputeManager) recordFailureMinuteSnapshot(rec model.EdgeFailureR
 
 	go func(snapshot model.RuleMinuteSnapshot) {
 		key := fmt.Sprintf("%s_%s", snapshot.RuleID, snapshot.Minute)
-		if err := em.store.SaveData("bblot", key, snapshot); err != nil {
+		if err := store.SaveData("bblot", key, snapshot); err != nil {
 			log.Printf("Failed to save bblot error snapshot: %v", err)
 		}
 	}(snapCopy)
@@ -423,9 +424,9 @@ func (em *EdgeComputeManager) ClearEdgeLogs() (EdgeLogsClearResult, error) {
 	em.minuteCache = make(map[string]*model.RuleMinuteSnapshot)
 	em.bblotMu.Unlock()
 
-	if em.store != nil {
+	if store := em.storage(); store != nil {
 		for _, bucket := range edgeLogBuckets {
-			if err := em.store.ClearBucket(bucket); err != nil {
+			if err := store.ClearBucket(bucket); err != nil {
 				if strings.Contains(err.Error(), "not found") {
 					continue
 				}
@@ -438,11 +439,12 @@ func (em *EdgeComputeManager) ClearEdgeLogs() (EdgeLogsClearResult, error) {
 }
 
 func (em *EdgeComputeManager) loadPersistedEvents() {
-	if em.events == nil || em.store == nil {
+	store := em.storage()
+	if em.events == nil || store == nil {
 		return
 	}
 	var loaded []model.EdgeRuleEvent
-	_ = em.store.LoadAll(edgeEventsBucket, func(k, v []byte) error {
+	_ = store.LoadAll(edgeEventsBucket, func(k, v []byte) error {
 		var evt model.EdgeRuleEvent
 		if err := json.Unmarshal(v, &evt); err != nil {
 			return nil
@@ -468,11 +470,12 @@ func (em *EdgeComputeManager) loadPersistedEvents() {
 }
 
 func (em *EdgeComputeManager) loadPersistedFailures() {
-	if em.events == nil || em.store == nil {
+	store := em.storage()
+	if em.events == nil || store == nil {
 		return
 	}
 	var loaded []model.EdgeFailureRecord
-	_ = em.store.LoadAll(edgeFailuresBucket, func(k, v []byte) error {
+	_ = store.LoadAll(edgeFailuresBucket, func(k, v []byte) error {
 		var rec model.EdgeFailureRecord
 		if err := json.Unmarshal(v, &rec); err != nil {
 			return nil

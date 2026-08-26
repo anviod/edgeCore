@@ -650,8 +650,12 @@ func (cm *ChannelManager) tryConnectChannel(channelID string) {
 // StartChannel 启动一个采集通道
 func (cm *ChannelManager) StartChannel(channelID string) error {
 	cm.mu.RLock()
-	ch, ok := cm.channels[channelID]
+	chPtr, ok := cm.channels[channelID]
 	d, okDrv := cm.drivers[channelID]
+	var ch model.Channel
+	if ok && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !ok || !okDrv {
@@ -688,7 +692,7 @@ func (cm *ChannelManager) StartChannel(channelID string) error {
 			continue
 		}
 
-		if err := cm.registerDeviceToScanEngine(ch, dev); err != nil {
+		if err := cm.registerDeviceToScanEngine(&ch, dev); err != nil {
 			zap.L().Error("Failed to register device to ScanEngine", zap.String("device", dev.Name), zap.Error(err))
 		}
 	}
@@ -702,8 +706,12 @@ func (cm *ChannelManager) StartChannel(channelID string) error {
 // StopChannel 停止一个采集通道
 func (cm *ChannelManager) StopChannel(channelID string) error {
 	cm.mu.RLock()
-	ch, ok := cm.channels[channelID]
+	chPtr, ok := cm.channels[channelID]
 	d, okDrv := cm.drivers[channelID]
+	var ch model.Channel
+	if ok && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !ok || !okDrv {
@@ -727,7 +735,7 @@ func (cm *ChannelManager) GetChannels() []model.Channel {
 	defer cm.mu.RUnlock()
 	channels := make([]model.Channel, 0, len(cm.channels))
 	for _, ch := range cm.channels {
-		c := *ch
+		c := ch.DeepCopy()
 		if node := cm.stateManager.GetNode(c.ID); node != nil {
 			c.NodeRuntime = &model.NodeRuntime{
 				FailCount:     node.Runtime.FailCount,
@@ -938,6 +946,15 @@ func (cm *ChannelManager) GetDevicePoints(channelID, deviceID string) ([]model.P
 			Quality:      "Uncertain",
 			Value:        nil,
 			ReadWrite:    point.ReadWrite,
+			Format:       point.Format,
+			WordOrder:    point.WordOrder,
+			Scale:        point.Scale,
+			Offset:       point.Offset,
+			ReadFormula:  point.ReadFormula,
+			WriteFormula: point.WriteFormula,
+			Group:        point.Group,
+			ScanClass:    point.ScanClass,
+			ReportMode:   point.ReportMode,
 		})
 	}
 	return points, nil
@@ -982,6 +999,15 @@ func (cm *ChannelManager) getDevicePointsFromShadow(dev *model.Device, slaveID u
 			Quality:      "Bad",
 			Value:        nil,
 			ReadWrite:    point.ReadWrite,
+			Format:       point.Format,
+			WordOrder:    point.WordOrder,
+			Scale:        point.Scale,
+			Offset:       point.Offset,
+			ReadFormula:  point.ReadFormula,
+			WriteFormula: point.WriteFormula,
+			Group:        point.Group,
+			ScanClass:    point.ScanClass,
+			ReportMode:   point.ReportMode,
 		}
 		if sp, exists := shadow.Points[point.ID]; exists {
 			pd.Value = sp.Value
@@ -1507,7 +1533,11 @@ func (cm *ChannelManager) ScanChannel(ctx context.Context, channelID string, par
 	}
 	cm.mu.RLock()
 	d, okDrv := cm.drivers[channelID]
-	ch, okCh := cm.channels[channelID]
+	chPtr, okCh := cm.channels[channelID]
+	var ch model.Channel
+	if okCh && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !okDrv {
@@ -1591,7 +1621,7 @@ func (cm *ChannelManager) ScanChannel(ctx context.Context, channelID string, par
 						zap.Stack("stack"))
 				}
 			}()
-			cm.autoUpdateBACnetAddresses(ch, result)
+			cm.autoUpdateBACnetAddresses(&ch, result)
 		}()
 	}
 
@@ -1755,7 +1785,11 @@ func (cm *ChannelManager) ScanDevice(ctx context.Context, channelID, deviceID st
 	}
 	cm.mu.RLock()
 	d, okDrv := cm.drivers[channelID]
-	ch, okCh := cm.channels[channelID]
+	chPtr, okCh := cm.channels[channelID]
+	var ch model.Channel
+	if okCh && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !okDrv || !okCh {
@@ -2543,7 +2577,7 @@ func (cm *ChannelManager) saveChannels() error {
 	// Copy channel data under caller's lock
 	channels := make([]model.Channel, 0, len(cm.channels))
 	for _, c := range cm.channels {
-		channels = append(channels, *c)
+		channels = append(channels, c.DeepCopy())
 	}
 
 	// Save asynchronously to avoid holding cm.mu during disk I/O.
