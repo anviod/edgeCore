@@ -3710,3 +3710,176 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   .tk-signal { grid-template-columns: 36px 56px 1fr auto; gap: 14px; padding: 16px 18px; }
   .tk-signal__amp { display: none; }
 }
+
+/* ============================================================
+   Tech Kit v3 — Overdrive Layer (炫酷增强)
+   Progressive enhancement. Every effect degrades gracefully:
+   - reduced-motion 完全关闭动画
+   - 未启用硬件特性的浏览器回退为静态构图
+   ============================================================ */
+
+/* ---------- 巨型水印氛围字 → 右下角微光铭牌 ----------
+   弱化为小尺寸 + 极低透明度 + 左上渐隐蒙版，
+   只留一隅弱影，保证永不与左侧正文 / 右侧粒子争视。 */
+.tk-hero__watermark {
+  position: absolute;
+  right: clamp(0px, 1vw, 16px);
+  bottom: clamp(-10px, -1vw, 0px);
+  z-index: 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(1.3rem, 2.6vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-align: right;
+  color: var(--gold);
+  opacity: 0.16;
+  -webkit-mask-image: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.25) 45%, #000 100%);
+  mask-image: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.25) 45%, #000 100%);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ---------- hero 沉浸：标题金色辉光 ---------- */
+.tk-hero__title {
+  font-size: clamp(3.6rem, 9vw, 7.5rem);
+  letter-spacing: -0.045em;
+}
+.tk-hero__title-accent {
+  display: inline-block;
+  color: var(--gold-bright);
+  text-shadow: 0 0 18px var(--gold-glow), 0 0 40px var(--gold-glow);
+  animation: tk-pulse-accent 3.2s ease-in-out infinite;
+}
+@keyframes tk-pulse-accent {
+  0%, 100% { opacity: 1; text-shadow: 0 0 14px var(--gold-glow), 0 0 34px var(--gold-glow); }
+  50% { opacity: 0.65; text-shadow: 0 0 6px var(--gold-glow), 0 0 14px var(--gold-glow); }
+}
+
+/* title 流光梯度（受支持时） */
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .tk-hero__title {
+    background: linear-gradient(120deg,
+      var(--text) 0%,
+      var(--text) 40%,
+      var(--gold-light) 75%,
+      var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+}
+
+/* ---------- 登记表行 hover：编号放大 + 金色点亮 ---------- */
+.tk-register__row { overflow: hidden; }
+.tk-register__num {
+  transition: opacity 0.3s var(--transition-slow), color 0.3s var(--transition-slow),
+    transform 0.3s var(--transition-slow);
+}
+.tk-register__row:hover .tk-register__num {
+  transform: scale(1.12);
+  opacity: 1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+/* ---------- 信号条柱 hover 跳动（音波感） ---------- */
+.tk-signal:hover .tk-signal__amp i { animation: tk-amp 0.7s ease-in-out infinite alternate; }
+.tk-signal:hover .tk-signal__amp i:nth-child(1) { animation-delay: 0s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(2) { animation-delay: 0.08s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(3) { animation-delay: 0.16s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(4) { animation-delay: 0.06s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(5) { animation-delay: 0.14s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(6) { animation-delay: 0.02s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(7) { animation-delay: 0.1s; }
+@keyframes tk-amp {
+  0% { transform: scaleY(0.35); }
+  100% { transform: scaleY(1.1); }
+}
+
+/* ---------- CTA 光晕脉冲 ---------- */
+.tk-btn--primary {
+  position: relative;
+  overflow: hidden;
+}
+.tk-btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 20% 20%, rgba(255, 214, 130, 0.0) 30%, rgba(255, 214, 130, 0.0) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+.tk-btn--primary:hover::after { opacity: 1; }
+
+/* ---------- 遥测数值 hover 提起 ---------- */
+.tk-metric { transition: transform var(--transition-base); }
+.tk-metric:hover { transform: translateY(-2px); }
+.tk-metric__value { transition: text-shadow var(--transition-base); }
+.tk-metric:hover .tk-metric__value { text-shadow: 0 0 18px var(--gold-glow); }
+
+/* ---------- 滚动驱动视差（渐进增强） ---------- */
+@supports (animation-timeline: scroll()) {
+  .tk-hero__copy {
+    animation: tk-parallax-copy linear both;
+    animation-timeline: scroll();
+    animation-range: 0 40vh;
+  }
+  @keyframes tk-parallax-copy {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0.55; transform: translateY(-26px); }
+  }
+}
+
+/* ---------- reduced-motion：全部静默 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tk-hero__title-accent,
+  .tk-signal:hover .tk-signal__amp i,
+  .tk-tele__dot,
+  .tk-chip__dot { animation: none !important; }
+  .tk-register__row:hover .tk-register__num,
+  .tk-metric:hover,
+  .tk-metric:hover .tk-metric__value,
+  .tk-btn--primary:hover::after { transform: none !important; text-shadow: none !important; }
+}
+
+/* ============================================================
+   Breathing Room — 左右文字留白 / 空气感
+   为 hero 两栏与各 section 增加横向呼吸间距，
+   文字不与容器边缘贴齐。
+   ============================================================ */
+
+/* hero 两栏：左右留白 + 更大中缝 */
+.tk-hero__inner {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  gap: clamp(48px, 9vw, 120px);
+  padding: 0 clamp(12px, 3vw, 48px);
+}
+
+/* 遥测面板同步收进留白，与 hero-inner 对齐 */
+.tk-hero__telemetry {
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+/* 各 section：左右内边距，文字与 shell 边缘留出空间 */
+.tk-section {
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+/* 子系统登记表、信号条整体内边距一致 */
+.tk-register__row { padding-right: clamp(10px, 2vw, 28px); }
+
+@media (max-width: 768px) {
+  .tk-hero__inner,
+  .tk-hero__telemetry,
+  .tk-section {
+    padding-right: clamp(6px, 2vw, 18px);
+    padding-left: clamp(6px, 2vw, 18px);
+  }
+  .tk-hero__inner { gap: 40px; }
+}
