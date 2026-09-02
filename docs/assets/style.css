@@ -2787,3 +2787,211 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
     transform: scale(1);
   }
 }
+
+/* =========================================
+   Module Cards — industrial-tech console
+   Precision layers over a clean structure: frosted panel,
+   faint radial sheen, metallic top edge, live status tick
+   on the tag, faint grid substrate. Restrained, not noisy.
+   ========================================= */
+.mod-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.mod-grid--four {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+.mod-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px 26px 22px;
+  border-radius: var(--radius-lg);
+  background: var(--glass);
+  backdrop-filter: var(--blur-xs);
+  -webkit-backdrop-filter: var(--blur-xs);
+  border: 1px solid var(--gold-border);
+  overflow: hidden;
+  transition: transform var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+/* Faint radial sheen — depth without noise */
+.mod-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 20% 0%,
+      var(--gold-ghost-strong) 0%,
+      rgba(0, 0, 0, 0) 55%);
+  pointer-events: none;
+}
+
+/* Precision grid substrate — barely there */
+.mod-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--gold-ghost) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gold-ghost) 1px, transparent 1px);
+  background-size: 26px 26px;
+  opacity: 0.5;
+  -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 78%);
+  pointer-events: none;
+}
+
+/* Metallic top edge — the key industrial accent */
+.mod-card__edge {
+  position: absolute;
+  top: 0; left: 18px; right: 18px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    var(--gold-light) 30%,
+    var(--gold-bright) 50%,
+    var(--gold-light) 70%,
+    transparent);
+  opacity: 0.7;
+  transition: opacity var(--transition-base);
+}
+
+/* Left status rail — live module indicator */
+.mod-card__rail {
+  position: absolute;
+  top: 22px; bottom: 22px; left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg,
+    var(--gold) 0%,
+    var(--gold-line) 100%);
+  opacity: 0.55;
+}
+
+.mod-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-border-hover);
+  box-shadow: 0 16px 40px -12px var(--gold-glow),
+    var(--shadow);
+}
+
+.mod-card:hover .mod-card__edge { opacity: 1; }
+.mod-card:hover .mod-card__rail { opacity: 1; }
+
+.mod-card__tag {
+  position: relative;
+  z-index: 1;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--gold);
+  padding: 2px 0 8px;
+}
+
+/* Live status tick */
+.mod-card__tag::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 0 var(--gold-glow);
+  animation: mod-tick 2.4s var(--transition-slow) infinite;
+}
+
+@keyframes mod-tick {
+  0%   { box-shadow: 0 0 0 0 var(--gold-glow); }
+  70%  { box-shadow: 0 0 0 6px rgba(200, 167, 91, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(200, 167, 91, 0); }
+}
+
+.mod-card h3, .mod-card p, .mod-card__links { position: relative; z-index: 1; }
+
+.mod-card h3 {
+  margin: 0;
+  font-size: 1.06rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.mod-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.72;
+}
+
+.mod-card__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--gold-line);
+}
+
+@media (max-width: 1180px) {
+  .mod-grid--four { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .mod-grid, .mod-grid--four { grid-template-columns: 1fr; }
+  .mod-card { padding: 22px; border-radius: var(--radius-md); }
+  .mod-card__rail { top: 18px; bottom: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mod-card__tag::before { animation: none; }
+  .mod-card:hover { transform: none; }
+}
+
+/* Industrial kicker mark — small gold rule before the eyebrow */
+.section-heading .section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-heading .section-kicker::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--gold) 0%,
+    var(--gold-line) 100%);
+}
+
+/* Mini links — underline reveal on hover */
+.mod-card .mini-link {
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.mod-card .mini-link::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold-light);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+
+.mod-card .mini-link:hover::after {
+  transform: scaleX(1);
+}
