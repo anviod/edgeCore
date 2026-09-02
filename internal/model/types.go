@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -180,9 +181,10 @@ type Point struct {
 	ID           string           `json:"id" yaml:"id"`
 	Name         string           `json:"name" yaml:"name"`
 	RegisterType RegisterType     `json:"register_type" yaml:"register_type"`
-	FunctionCode byte             `json:"function_code" yaml:"function_code"` // 允许非标准功能码 (当前会将配置初始化值设置为0)
-	Address      string           `json:"address" yaml:"address"`             // 地址字符串，支持不同协议格式
-	DataType     string           `json:"datatype" yaml:"datatype"`           // int16, float32, bool, bit.0
+	FunctionCode byte             `json:"function_code" yaml:"function_code"`               // 允许非标准功能码 (当前会将配置初始化值设置为0)
+	Address      string           `json:"address" yaml:"address"`                           // 地址字符串，支持不同协议格式
+	DataType     string           `json:"datatype" yaml:"datatype"`                         // int16, float32, bool, bit.0
+	ParseType    string           `json:"parse_type,omitempty" yaml:"parse_type,omitempty"` // 原始字节解析类型，如 INT16、FLOAT32
 	Scale        float64          `json:"scale" yaml:"scale"`
 	Offset       float64          `json:"offset" yaml:"offset"`
 	Format       string           `json:"format,omitempty" yaml:"format,omitempty"`
@@ -196,6 +198,37 @@ type Point struct {
 	ReportMode   string           `json:"report_mode" yaml:"report_mode"`                   // cycle / cov / event
 	Threshold    *ThresholdConfig `json:"threshold" yaml:"threshold"`
 	DeviceID     string           `json:"-" yaml:"-"` // Runtime field, not persisted
+}
+
+// RawDataType returns the protocol payload type. ParseType is authoritative for
+// byte-oriented protocols; DataType remains the converted output type.
+func RawDataType(point Point) string {
+	if point.ParseType == "" {
+		return strings.ToLower(point.DataType)
+	}
+	switch strings.ToUpper(point.ParseType) {
+	case "INT8":
+		return "int8"
+	case "UINT8", "BCD8":
+		return "uint8"
+	case "INT16", "INT16_SWAP":
+		return "int16"
+	case "UINT16", "UINT16_SWAP", "BCD16":
+		return "uint16"
+	case "INT32", "INT32_SWAP":
+		return "int32"
+	case "UINT32", "UINT32_SWAP", "BCD32":
+		return "uint32"
+	case "FLOAT32", "FLOAT32_SWAP":
+		return "float32"
+	case "INT64":
+		return "int64"
+	case "UINT64":
+		return "uint64"
+	case "FLOAT64", "FLOAT64_SWAP":
+		return "float64"
+	}
+	return strings.ToLower(point.DataType)
 }
 
 // ThresholdConfig defines alarm thresholds for a point
@@ -225,6 +258,7 @@ type PointData struct {
 	FunctionCode byte      `json:"function_code"`
 	Address      string    `json:"address"`
 	DataType     string    `json:"datatype"`
+	ParseType    string    `json:"parse_type,omitempty"`
 	Value        any       `json:"value"`
 	Quality      string    `json:"quality"`
 	Timestamp    time.Time `json:"timestamp"`    // 采集时间（兼容旧字段）

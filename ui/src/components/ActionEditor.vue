@@ -42,9 +42,9 @@
       <a-col :span="24">
         <!-- 1. Sequence -->
         <div v-if="action.type === 'sequence'" class="pl-2">
-          <div class="d-flex align-center mb-2">
-            <span class="text-subtitle-2 mr-2">执行步骤 (Steps)</span>
-            <a-tag size="small" color="blue">{{ (action.config.steps || []).length }}</a-tag>
+          <div class="flex items-center mb-2">
+            <span class="text-sm font-semibold mr-2">执行步骤 (Steps)</span>
+            <a-tag size="small" color="arcoblue">{{ (action.config.steps || []).length }}</a-tag>
           </div>
           <div class="pl-3 border-s-md" style="border-color: #eee;">
             <div v-for="(step, idx) in (action.config.steps || [])" :key="idx" class="mb-2">
@@ -140,7 +140,7 @@
            
           <!-- On Fail -->
           <div class="mt-2">
-            <div class="text-subtitle-2 text-error mb-2">失败回退 (On Fail):</div>
+            <div class="text-sm font-semibold text-red-600 mb-2">失败回退 (On Fail):</div>
             <div class="pl-3 border-s-md border-error" style="border-color: #ff5252;">
               <div v-for="(step, idx) in (action.config.on_fail || [])" :key="idx" class="mb-2">
                 <ActionEditor 
@@ -199,9 +199,9 @@
 
         <!-- 5. Device Control -->
         <div v-if="action.type === 'device_control'" class="pl-2">
-          <div class="d-flex align-center justify-end mb-2">
-            <a-switch 
-              v-model="isBatchMode" 
+          <div class="flex items-center justify-end mb-2">
+            <a-switch
+              v-model="isBatchMode"
               type="round"
               class="mr-4"
               @change="toggleBatchMode"
@@ -262,9 +262,9 @@
 
           <!-- Batch Mode -->
           <div v-else>
-            <div v-for="(target, tIdx) in (action.config.targets || [])" :key="tIdx" class="mb-2 pa-2 border rounded">
-              <div class="d-flex justify-space-between mb-1">
-                <span class="text-caption">目标 {{ tIdx + 1 }}</span>
+            <div v-for="(target, tIdx) in (action.config.targets || [])" :key="tIdx" class="mb-2 px-2 py-2 border border-gray-200 rounded">
+              <div class="flex justify-between mb-1">
+                <span class="text-xs text-gray-500">目标 {{ tIdx + 1 }}</span>
                 <a-button type="text" size="mini" @click="removeTarget(tIdx)">
                   <template #icon><IconClose /></template>
                 </a-button>

@@ -233,14 +233,6 @@ body {
   white-space: nowrap;
 }
 
-.version-commit {
-  font-size: 9px;
-  color: var(--text-tertiary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .collapse-btn {
   display: flex;
   align-items: center;

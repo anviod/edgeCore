@@ -53,7 +53,6 @@
         <div v-if="!drawerRail" class="version-info">
           <span class="version-value">{{ systemVersion }}</span>
           <span v-if="buildTime" class="version-buildtime">{{ buildTime }}</span>
-          <span v-if="commitID" class="version-commit">{{ commitID }}</span>
         </div>
         <button class="collapse-btn" @click="drawerRail = !drawerRail">
           <icon-arrow-left
@@ -203,7 +202,6 @@ const openAiAssistant = () => {
 
 const systemVersion = ref('dev')
 const buildTime = ref('')
-const commitID = ref('')
 
 const isLoginPage = computed(() => route.path === '/login' || route.path === '/install')
 
@@ -222,7 +220,6 @@ const fetchSystemInfo = async () => {
     if (res.code === '0' && res.data) {
       systemVersion.value = `v${res.data.softVer || 'dev'}`
       buildTime.value = res.data.buildTime || ''
-      commitID.value = res.data.commitID || ''
     }
   } catch (e) {
     console.error('获取系统信息失败:', e)

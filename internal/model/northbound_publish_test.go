@@ -27,8 +27,8 @@ func TestLookupNorthboundPublishConfig(t *testing.T) {
 	if _, ok := LookupNorthboundPublishConfig("unknown", real, virtual); ok {
 		t.Fatal("expected unknown device to be rejected when maps are non-empty")
 	}
-	if cfg, ok := LookupNorthboundPublishConfig("any", nil, nil); !ok || !cfg.Enable {
-		t.Fatal("expected allow-all when both maps empty")
+	if _, ok := LookupNorthboundPublishConfig("any", nil, nil); ok {
+		t.Fatal("expected no implicit allow-all when both maps empty")
 	}
 }
 

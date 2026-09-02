@@ -58,6 +58,14 @@ func (c *CommunicationManageTemplate) GetNode(deviceID string) *DeviceNodeTempla
 	return c.nodes[deviceID]
 }
 
+// UnregisterNode 注销指定设备/通道节点，释放内存中的运行时状态。
+// 在删除设备或通道时调用，避免残留节点长期积累。
+func (c *CommunicationManageTemplate) UnregisterNode(nodeID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.nodes, nodeID)
+}
+
 // ==================== 节点运行状态定义 ====================
 // NodeState 定义设备节点的运行状态
 type NodeState int

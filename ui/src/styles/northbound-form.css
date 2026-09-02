@@ -1041,3 +1041,34 @@
 .northbound-page .empty-icon-muted {
   color: var(--text-tertiary);
 }
+
+/* ---- 北向上报策略：树形通道分组 ---- */
+.nb-tree-channel-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.nb-tree-channel-badge {
+  display: inline-block;
+  min-width: 52px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--edgeCore-surface-inset, rgba(128, 128, 128, 0.12));
+}
+
+.nb-tree-dash {
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+/* 通道父行启用列：使用复选框样式，与设备行开关区分 */
+.nb-report-strategy-panel .arco-table-tr:not(.arco-tr-expand) .arco-checkbox {
+  margin-left: 8px;
+}

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 
 	"github.com/anviod/gos7"
 	"go.uber.org/zap"
@@ -27,6 +28,44 @@ type S7Scheduler struct {
 	successCount  int64
 	failureCount  int64
 	mu            sync.Mutex
+}
+
+func numericFloat(value any) (float64, bool) {
+	switch v := value.(type) {
+	case int8:
+		return float64(v), true
+	case uint8:
+		return float64(v), true
+	case int16:
+		return float64(v), true
+	case uint16:
+		return float64(v), true
+	case int32:
+		return float64(v), true
+	case uint32:
+		return float64(v), true
+	case float32:
+		return float64(v), true
+	case float64:
+		return v, true
+	default:
+		return 0, false
+	}
+}
+
+func effectiveScale(scale float64) float64 {
+	if scale == 0 {
+		return 1
+	}
+	return scale
+}
+
+func reverseScaleOffset(point model.Point, value any) any {
+	f, ok := numericFloat(value)
+	if !ok {
+		return value
+	}
+	return (f - point.Offset) / effectiveScale(point.Scale)
 }
 
 // NewS7Scheduler 创建S7调度器
@@ -232,7 +271,7 @@ func (s *S7Scheduler) readGroup(ctx context.Context, group PointGroup, results m
 			continue
 		}
 
-		val, err := s.decoder.DecodeValue(item.Data, pwa.Area, pwa.Point.DataType)
+		val, err := s.decoder.DecodeValue(item.Data, pwa.Area, model.RawDataType(pwa.Point))
 		if err != nil {
 			zap.L().Debug("[S7] Decode value failed",
 				zap.String("point", pwa.Point.Name),
@@ -248,6 +287,16 @@ func (s *S7Scheduler) readGroup(ctx context.Context, group PointGroup, results m
 			continue
 		}
 
+		if pwa.Point.ReadFormula != "" {
+			val, err = dataformat.ApplyFormula(pwa.Point.ReadFormula, val)
+			if err != nil {
+				continue
+			}
+		} else if pwa.Point.Scale != 0 || pwa.Point.Offset != 0 {
+			if f, ok := numericFloat(val); ok {
+				val = f*effectiveScale(pwa.Point.Scale) + pwa.Point.Offset
+			}
+		}
 		results[pwa.Point.ID] = model.Value{
 			PointID: pwa.Point.ID,
 			Value:   val,
@@ -292,7 +341,7 @@ func (s *S7Scheduler) readSinglePoint(client gos7.Client, pwa pointWithArea) (in
 		return nil, err
 	}
 
-	return s.decoder.DecodeValue(buffer, area, pwa.Point.DataType)
+	return s.decoder.DecodeValue(buffer, area, model.RawDataType(pwa.Point))
 }
 
 // WritePoint 写入单个点位
@@ -312,7 +361,16 @@ func (s *S7Scheduler) WritePoint(ctx context.Context, p model.Point, value inter
 	writeSize := s.decoder.ReadSizeForArea(area)
 	buffer := make([]byte, writeSize)
 
-	if err := s.decoder.EncodeValue(buffer, area, p.DataType, value); err != nil {
+	if p.WriteFormula != "" {
+		var formulaErr error
+		value, formulaErr = dataformat.ApplyFormula(p.WriteFormula, value)
+		if formulaErr != nil {
+			return formulaErr
+		}
+	} else {
+		value = reverseScaleOffset(p, value)
+	}
+	if err := s.decoder.EncodeValue(buffer, area, model.RawDataType(p), value); err != nil {
 		return fmt.Errorf("encode value failed: %w", err)
 	}
 

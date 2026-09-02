@@ -79,7 +79,7 @@ func TestOPCUAConfig_UnmarshalJSON_FrontendPayload(t *testing.T) {
 	if !cfg.Devices.AllowsDevice("slave-1") {
 		t.Fatal("slave-1 should be allowed")
 	}
-	if !cfg.Devices.AllowsDevice("slave-2") {
-		t.Fatal("slave-2 should be allowed when not explicitly disabled")
+	if cfg.Devices.AllowsDevice("slave-2") {
+		t.Fatal("slave-2 should not be allowed when not explicitly enabled")
 	}
 }

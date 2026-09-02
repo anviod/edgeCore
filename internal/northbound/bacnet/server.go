@@ -429,8 +429,8 @@ func (s *Server) buildAddressSpace() error {
 		sort.Slice(devices, func(i, j int) bool { return devices[i].ID < devices[j].ID })
 
 		for _, dev := range devices {
-			// 设备过滤
-			if len(s.config.Devices) > 0 && !s.config.Devices.AllowsDevice(dev.ID) {
+			// 设备过滤：仅显式启用的设备暴露到 BACnet 地址空间
+			if !s.config.Devices.AllowsDevice(dev.ID) {
 				continue
 			}
 

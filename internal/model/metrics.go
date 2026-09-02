@@ -1,6 +1,8 @@
 package model
 
 import (
+	"fmt"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -515,41 +517,52 @@ func (mc *MetricsCollector) RecordError(channelID string, errType, code, message
 }
 
 // RecordPointDebug 保存点位调试信息（原始字节 + 解析后值）。
-// 热路径按 1% 采样写入，RawValue 截断至 pointDebugMaxRawBytes，map 有上限。
+// 原始字节（RawValue）与最新解析值每次读取都保存，保证按需调试（如点击点位值查看原始报文）
+// 能反映真实设备报文；聚合计数按 pointDebugSampleRate 采样写入以降低热路径锁竞争。
+// RawValue 截断至 pointDebugMaxRawBytes，map 有上限（evictPointMetricsIfNeeded）。
 func (mc *MetricsCollector) RecordPointDebug(channelID, pointID string, raw []byte, parsed any, quality string) {
 	if mc == nil || pointID == "" {
 		return
 	}
-	if pointDebugCounter.Add(1)%pointDebugSampleRate != 0 {
-		return
-	}
 
+	now := time.Now()
 	mc.mu.Lock()
-	defer mc.mu.Unlock()
-
-	pm := &PointMetrics{
-		PointID:        pointID,
-		LastUpdateTime: time.Now(),
-		Quality:        quality,
-		ParsedValue:    parsed,
-		UpdateCount:    1,
+	pm := mc.pointMetrics[pointID]
+	if pm == nil {
+		pm = &PointMetrics{PointID: pointID}
+		mc.pointMetrics[pointID] = pm
 	}
+	// 每次读取都刷新最新原始报文与解析值，开销极小（字节数 <= pointDebugMaxRawBytes）。
 	if n := len(raw); n > 0 {
 		if n > pointDebugMaxRawBytes {
 			n = pointDebugMaxRawBytes
 		}
 		pm.RawValue = append([]byte(nil), raw[:n]...)
+		// 诊断日志：定位原始字节来源，确认后可在稳定后降级或移除此行
+		hex := fmt.Sprintf("%X", raw[:n])
+		log.Printf("[DEBUG-RAW] point=%s channel=%s rawHex=%s len=%d quality=%s", pointID, channelID, hex, n, quality)
 	}
-
-	if existing, ok := mc.pointMetrics[pointID]; ok {
-		pm.UpdateCount = existing.UpdateCount + 1
-		pm.ErrorCount = existing.ErrorCount
-		pm.LastError = existing.LastError
-		pm.LastErrorTime = existing.LastErrorTime
+	if quality != "" {
+		pm.Quality = quality
 	}
-
-	mc.pointMetrics[pointID] = pm
+	pm.LastUpdateTime = now
+	pm.ParsedValue = parsed
+	// 每次读取都执行有界淘汰，使新创建的点位条目也能被及时回收，保持 map 有界。
 	mc.evictPointMetricsIfNeeded()
+	mc.mu.Unlock()
+
+	// 聚合计数按采样写入，限制热路径锁竞争。
+	if pointDebugCounter.Add(1)%pointDebugSampleRate != 0 {
+		return
+	}
+	mc.mu.Lock()
+	defer mc.mu.Unlock()
+	epm := mc.pointMetrics[pointID]
+	if epm == nil {
+		epm = &PointMetrics{PointID: pointID}
+		mc.pointMetrics[pointID] = epm
+	}
+	epm.UpdateCount++
 }
 
 func (mc *MetricsCollector) evictPointMetricsIfNeeded() {

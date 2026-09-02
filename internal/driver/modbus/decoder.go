@@ -17,6 +17,7 @@ type Decoder interface {
 	Encode(point model.Point, value any) ([]uint16, error)
 	ParseAddress(addr string) (model.RegisterType, uint16, error)
 	GetRegisterCount(dataType string) uint16
+	GetPointRegisterCount(point model.Point) uint16
 }
 
 // PointDecoder 实现 Decoder 接口
@@ -119,6 +120,23 @@ func (d *PointDecoder) GetRegisterCount(dataType string) uint16 {
 	}
 }
 
+// GetPointRegisterCount returns the register width of the raw value.
+// ParseType takes precedence so newly saved points cannot read a different width
+// from the type shown in the point configuration.
+func (d *PointDecoder) GetPointRegisterCount(point model.Point) uint16 {
+	if point.ParseType != "" {
+		switch strings.ToUpper(point.ParseType) {
+		case "FLOAT32", "INT32", "UINT32", "BCD32":
+			return 2
+		case "FLOAT64", "INT64", "UINT64":
+			return 4
+		case "INT16", "UINT16", "BCD16", "FLOAT16":
+			return 1
+		}
+	}
+	return d.GetRegisterCount(point.DataType)
+}
+
 // Decode 解码原始字节数据
 func (d *PointDecoder) Decode(point model.Point, raw []byte) (any, string, error) {
 	if d.useDataformat {
@@ -129,8 +147,14 @@ func (d *PointDecoder) Decode(point model.Point, raw []byte) (any, string, error
 		return nil, "Bad", err
 	}
 
-	// 应用缩放和偏移
-	val = d.applyScaleOffset(point, val)
+	if point.ReadFormula != "" {
+		val, err = d.applyFormula(point.ReadFormula, val)
+		if err != nil {
+			return nil, "Bad", err
+		}
+	} else {
+		val = d.applyScaleOffset(point, val)
+	}
 
 	// TODO: 可以添加范围检查以确定 Quality
 	return val, "Good", nil
@@ -141,7 +165,25 @@ func (d *PointDecoder) decodeRaw(point model.Point, b []byte) (any, error) {
 		return nil, fmt.Errorf("not enough bytes")
 	}
 
-	switch point.DataType {
+	dataType := point.DataType
+	if point.ParseType != "" {
+		switch strings.ToUpper(point.ParseType) {
+		case "INT16":
+			dataType = "int16"
+		case "UINT16":
+			dataType = "uint16"
+		case "INT32":
+			dataType = "int32"
+		case "UINT32":
+			dataType = "uint32"
+		case "FLOAT32":
+			dataType = "float32"
+		case "FLOAT64":
+			dataType = "float64"
+		}
+	}
+
+	switch dataType {
 	case "int16":
 		return int16(binary.BigEndian.Uint16(b)), nil
 	case "uint16":
@@ -173,9 +215,6 @@ func (d *PointDecoder) decodeRaw(point model.Point, b []byte) (any, error) {
 func (d *PointDecoder) decodeWithDataformat(point model.Point, b []byte) (any, string, error) {
 	cfg := dataformat.ResolvePointFormat(point, d.byteOrder4)
 	order := cfg.Order
-	if len(b) == 2 {
-		order = binary.BigEndian
-	}
 
 	s, err := dataformat.FormatPoint(b, order, cfg.Type, cfg.ReadExpr)
 	if err != nil {
@@ -187,7 +226,7 @@ func (d *PointDecoder) decodeWithDataformat(point model.Point, b []byte) (any, s
 		return nil, "Bad", convErr
 	}
 
-	if point.Scale != 0 || point.Offset != 0 {
+	if point.ReadFormula == "" && (point.Scale != 0 || point.Offset != 0) {
 		val = d.applyScaleOffset(point, val)
 	}
 
@@ -196,6 +235,22 @@ func (d *PointDecoder) decodeWithDataformat(point model.Point, b []byte) (any, s
 
 func (d *PointDecoder) convertFormattedValue(point model.Point, fmtType dataformat.FormatType, s string, byteLen int) (any, error) {
 	dt := strings.ToLower(point.DataType)
+	if point.ParseType != "" {
+		switch strings.ToUpper(point.ParseType) {
+		case "INT16":
+			dt = "int16"
+		case "UINT16":
+			dt = "uint16"
+		case "INT32":
+			dt = "int32"
+		case "UINT32":
+			dt = "uint32"
+		case "FLOAT32":
+			dt = "float32"
+		case "FLOAT64":
+			dt = "float64"
+		}
+	}
 
 	switch fmtType {
 	case dataformat.FormatHexString, dataformat.FormatBinaryString:
@@ -299,54 +354,49 @@ func (d *PointDecoder) applyByteOrder(b []byte) []byte {
 
 // Encode 将值编码为寄存器数组（用于写入）
 func (d *PointDecoder) Encode(point model.Point, value any) ([]uint16, error) {
-	rawValue := d.reverseScaleOffset(point, value)
-
+	rawValue := value
 	if point.WriteFormula != "" {
-		switch v := rawValue.(type) {
-		case float64:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case float32:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case int:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case int16:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case int32:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case int64:
-			n, err := dataformat.EvalExpression(point.WriteFormula, v)
-			if err == nil {
-				rawValue = n
-			}
-		case uint16:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
-		case uint32:
-			n, err := dataformat.EvalExpression(point.WriteFormula, int64(v))
-			if err == nil {
-				rawValue = int64(n)
-			}
+		var err error
+		rawValue, err = d.applyFormula(point.WriteFormula, value)
+		if err != nil {
+			return nil, err
 		}
+	} else {
+		rawValue = d.reverseScaleOffset(point, value)
 	}
 
 	return d.encodeRaw(point, rawValue)
+}
+
+func (d *PointDecoder) applyFormula(expr string, value any) (any, error) {
+	var number int64
+	switch v := value.(type) {
+	case int:
+		number = int64(v)
+	case uint:
+		number = int64(v)
+	case float64:
+		number = int64(v)
+	case float32:
+		number = int64(v)
+	case int16:
+		number = int64(v)
+	case uint16:
+		number = int64(v)
+	case int32:
+		number = int64(v)
+	case uint32:
+		number = int64(v)
+	case int64:
+		number = v
+	default:
+		return nil, fmt.Errorf("formula requires numeric value, got %T", value)
+	}
+	result, err := dataformat.EvalExpression(expr, number)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (d *PointDecoder) reverseScaleOffset(point model.Point, value any) any {
@@ -386,8 +436,30 @@ func (d *PointDecoder) reverseScaleOffset(point model.Point, value any) any {
 	return fVal - point.Offset
 }
 
+func rawDataType(point model.Point) string {
+	if point.ParseType == "" {
+		return strings.ToLower(point.DataType)
+	}
+
+	switch strings.ToUpper(point.ParseType) {
+	case "INT16", "INT16_SWAP":
+		return "int16"
+	case "UINT16", "UINT16_SWAP", "BCD16":
+		return "uint16"
+	case "INT32", "INT32_SWAP":
+		return "int32"
+	case "UINT32", "UINT32_SWAP", "BCD32":
+		return "uint32"
+	case "FLOAT32", "FLOAT32_SWAP":
+		return "float32"
+	}
+
+	return strings.ToLower(point.DataType)
+}
+
 func (d *PointDecoder) encodeRaw(point model.Point, value any) ([]uint16, error) {
-	switch point.DataType {
+	rawType := rawDataType(point)
+	switch rawType {
 	case "int16", "uint16":
 		var intVal uint16
 		switch v := value.(type) {
@@ -473,5 +545,5 @@ func (d *PointDecoder) encodeRaw(point model.Point, value any) ([]uint16, error)
 		return []uint16{reg1, reg2}, nil
 	}
 
-	return nil, fmt.Errorf("encode not supported for type: %s", point.DataType)
+	return nil, fmt.Errorf("encode not supported for type: %s", rawType)
 }

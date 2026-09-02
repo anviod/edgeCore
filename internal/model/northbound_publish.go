@@ -1,17 +1,15 @@
 package model
 
 // LookupNorthboundPublishConfig resolves publish settings for a device ID across
-// real-device and virtual-device northbound maps. When both maps are empty, all
-// devices are allowed (legacy default).
+// real-device and virtual-device northbound maps. A device is published only when
+// it is explicitly enabled in the mapping; empty maps do NOT imply allow-all, so
+// new devices are not auto-mapped until they are enabled in the tree.
 func LookupNorthboundPublishConfig(deviceID string, devices, virtualDevices OpcUaDeviceMap) (DevicePublishConfig, bool) {
 	if cfg, ok := devices[deviceID]; ok {
 		return normalizePublishConfig(cfg), cfg.Enable
 	}
 	if cfg, ok := virtualDevices[deviceID]; ok {
 		return normalizePublishConfig(cfg), cfg.Enable
-	}
-	if len(devices) == 0 && len(virtualDevices) == 0 {
-		return DevicePublishConfig{Enable: true, Strategy: "realtime"}, true
 	}
 	return DevicePublishConfig{}, false
 }

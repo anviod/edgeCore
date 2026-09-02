@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand/v2"
 	"net"
 	"net/url"
@@ -173,6 +174,17 @@ func (s *Server) BroadcastShadowPoint(channelID, deviceID, pointID string, point
 		"timestamp":    collectedAt,
 		"collected_at": collectedAt,
 		"updated_at":   point.UpdatedAt,
+	}
+	// 随报文广播原始寄存器字节（base64），前端点击值即可看到真实设备报文，
+	// 免去再发一次 /api/points/:id/debug 的 HTTP 请求。
+	// 原始字节来自 MetricsCollector（每次读取都捕获，见 RecordPointDebug）。
+	if mc := model.GetGlobalMetricsCollector(); mc != nil {
+		if pm := mc.GetPointMetrics(pointID); pm != nil && len(pm.RawValue) > 0 {
+			msg["raw_value"] = pm.RawValue
+			log.Printf("[WS-RAW] point=%s rawHex=%X len=%d", pointID, pm.RawValue, len(pm.RawValue))
+		} else {
+			log.Printf("[WS-RAW] point=%s noRawValue (pm==%v)", pointID, pm != nil)
+		}
 	}
 	s.BroadcastValue(msg)
 }
@@ -651,6 +663,12 @@ func (s *Server) setupRoutes() {
 
 	// 静态资源（优先相对可执行文件目录，兼容未设置 WorkingDirectory 的部署）
 	uiDist := uiDistDir()
+	// 反缓存 Service Worker：必须在 Static / SPA 回退之前精确命中 /sw.js，
+	// 返回合法 SW 脚本并禁用 HTTP 缓存，确保发布后浏览器能拉到最新脚本清理旧缓存。
+	s.app.Get("/sw.js", func(c *fiber.Ctx) error {
+		c.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		return c.SendFile(filepath.Join(uiDist, "sw.js"))
+	})
 	s.app.Static("/", uiDist)
 
 	// SPA Fallback: 所有未匹配的路由都返回 index.html
@@ -807,9 +825,24 @@ func (s *Server) updateChannel(c *fiber.Ctx) error {
 
 func (s *Server) removeChannel(c *fiber.Ctx) error {
 	id := c.Params("channelId")
+
+	// 收集该通道下的设备，删除通道时一并清理每个设备的历史存储数据
+	var deviceIDs []string
+	for _, d := range s.cm.GetChannelDevices(id) {
+		deviceIDs = append(deviceIDs, d.ID)
+	}
+
 	if err := s.cm.RemoveChannel(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	// 级联删除通道下所有设备的历史数据，与单设备删除行为保持一致
+	for _, did := range deviceIDs {
+		if s.dsm != nil {
+			s.dsm.RemoveDevice(did)
+		}
+	}
+
 	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
 	if s.nbm != nil {
 		s.nbm.PublishDeviceReport()
@@ -1287,17 +1320,18 @@ func (s *Server) getDevicePoints(c *fiber.Ctx) error {
 	result := make([]map[string]any, 0, len(points))
 	for _, p := range points {
 		m := map[string]any{
-			"id":        p.ID,
-			"name":      p.Name,
-			"address":   p.Address,
-			"datatype":  p.DataType,
-			"value":     p.Value,
-			"quality":   p.Quality,
-			"timestamp": p.Timestamp,
-			"unit":      p.Unit,
-			"readwrite": p.ReadWrite,
-			"protocol":  protocol, // 增加协议字段
-			"format":    p.Format, // 设备协议类型（如 Unsigned），供点位列表展示
+			"id":         p.ID,
+			"name":       p.Name,
+			"address":    p.Address,
+			"datatype":   p.DataType,
+			"parse_type": p.ParseType,
+			"value":      p.Value,
+			"quality":    p.Quality,
+			"timestamp":  p.Timestamp,
+			"unit":       p.Unit,
+			"readwrite":  p.ReadWrite,
+			"protocol":   protocol, // 增加协议字段
+			"format":     p.Format, // 设备协议类型（如 Unsigned），供点位列表展示
 		}
 		if !p.CollectedAt.IsZero() {
 			m["collected_at"] = p.CollectedAt
@@ -1511,6 +1545,32 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 	return c.JSON(filtered)
 }
 
+// writeErrorStatus 将写入错误映射为合适的 HTTP 状态码与友好提示。
+// BACnet 底层库会把设备返回的 Error APDU 格式化为 "error class X code Y"，
+// 其中 WriteAccessDenied 表示该点位在设备侧为只读、不可写（协议栈最佳实践.md 8.5）。
+func writeErrorStatus(err error) (int, string) {
+	if err == nil {
+		return fiber.StatusInternalServerError, "unknown error"
+	}
+	msg := err.Error()
+	lower := strings.ToLower(msg)
+	switch {
+	case strings.Contains(lower, "writeaccessdenied"):
+		if strings.Contains(lower, "propertyerror") {
+			return fiber.StatusUnprocessableEntity, "该点位属性不支持写入（WriteAccessDenied），请确认点位类型可写"
+		}
+		return fiber.StatusUnprocessableEntity, "该点位为只读，设备拒绝写入（WriteAccessDenied）。如确需写入，请选择可写点位或检查设备侧对象属性"
+	case strings.Contains(lower, "unknownobject") || strings.Contains(lower, "unknown object"):
+		return fiber.StatusNotFound, "点位对象不存在（UnknownObject），可能已被删除或地址有误"
+	case strings.Contains(lower, "read-only") || strings.Contains(lower, "readonly"):
+		return fiber.StatusUnprocessableEntity, "该点位被配置为只读，无法写入"
+	case strings.Contains(lower, "timeout") || strings.Contains(lower, "timed out") || strings.Contains(lower, "deadline"):
+		return fiber.StatusGatewayTimeout, "写入超时，请检查设备连接与网络"
+	default:
+		return fiber.StatusInternalServerError, msg
+	}
+}
+
 // writePoint 写入点位值
 func (s *Server) writePoint(c *fiber.Ctx) error {
 	var req struct {
@@ -1527,7 +1587,8 @@ func (s *Server) writePoint(c *fiber.Ctx) error {
 	// 调用 ChannelManager 执行写入
 	err := s.cm.WritePoint(req.ChannelID, req.DeviceID, req.PointID, req.Value)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		status, msg := writeErrorStatus(err)
+		return c.Status(status).JSON(fiber.Map{"error": msg})
 	}
 
 	return c.JSON(fiber.Map{"message": "write success"})

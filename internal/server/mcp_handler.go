@@ -248,6 +248,7 @@ func (s *Server) registerMCPFullTools(mcpSrv *mcp.MCPServer) {
 				"name":          {Type: "string", Description: "点位名称"},
 				"address":       {Type: "string", Description: "点位地址（协议相关）：Modbus 如 40001/0x0064；S7 如 DB1.DBD0；BACnet 如 analog-input:1 或 analog-input:1:0；OPC UA 如 ns=2;i=1000 或 ns=2;s=Tag1；SNMP 如 1.3.6.1.2.1.1.1.0；EtherNet/IP 如 0:1:0；Profinet 如 3:1:0；EtherCAT 如 1:Tx:0 或 1:SDO:0x6041:0；IEC104 如 1/IOA=0；DLT645 如 000000000001/00010000；KNX 如 1/2/3；Omron 如 D100；Mitsubishi 如 D100"},
 				"datatype":      {Type: "string", Description: "数据类型：int16, uint16, int32, uint32, float32, float64, bool, string"},
+				"parse_type":    {Type: "string", Description: "原始字节解析类型：INT16, UINT16, INT32, UINT32, FLOAT32, FLOAT64"},
 				"register_type": {Type: "string", Description: "寄存器类型（Modbus 协议）：holding, coil, discrete, input"},
 				"function_code": {Type: "number", Description: "功能码（Modbus：1/2/3/4）"},
 				"scale":         {Type: "number", Description: "缩放系数（默认 1）"},
@@ -799,8 +800,20 @@ func (s *Server) mcpDeleteChannel(args json.RawMessage) (*mcp.CallToolResult, er
 		return mcp.NewErrorResult("通道不存在: " + params.ChannelID), nil
 	}
 
+	// 收集通道下设备，删除通道时一并清理每个设备的历史存储数据
+	var deviceIDs []string
+	for _, d := range s.cm.GetChannelDevices(params.ChannelID) {
+		deviceIDs = append(deviceIDs, d.ID)
+	}
+
 	if err := s.cm.RemoveChannel(params.ChannelID); err != nil {
 		return mcp.NewErrorResult("删除通道失败: " + err.Error()), nil
+	}
+
+	for _, did := range deviceIDs {
+		if s.dsm != nil {
+			s.dsm.RemoveDevice(did)
+		}
 	}
 
 	return mcp.NewSuccessResult(fmt.Sprintf("## 通道已删除\n\n通道 `%s` (%s) 及其下所有设备和点位已成功删除。", params.ChannelID, ch.Name)), nil
@@ -1008,6 +1021,7 @@ type pointCreateSpec struct {
 	ReadWrite    string  `json:"readwrite"`
 	ScanClass    string  `json:"scan_class"`
 	WordOrder    string  `json:"word_order"`
+	ParseType    string  `json:"parse_type"`
 }
 
 // createPoint 校验并创建单个点位，返回创建后的点位对象
@@ -1063,6 +1077,7 @@ func (s *Server) createPoint(channelID, deviceID string, spec pointCreateSpec) (
 		Name:         spec.Name,
 		Address:      spec.Address,
 		DataType:     spec.Datatype,
+		ParseType:    spec.ParseType,
 		RegisterType: regType,
 		FunctionCode: byte(spec.FunctionCode),
 		Scale:        spec.Scale,

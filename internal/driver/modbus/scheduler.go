@@ -356,7 +356,7 @@ func (s *PointScheduler) groupPoints(points []model.Point) ([]PointGroup, error)
 			Point:         p,
 			RegType:       regType,
 			Offset:        offset,
-			RegisterCount: s.decoder.GetRegisterCount(p.DataType),
+			RegisterCount: s.decoder.GetPointRegisterCount(p),
 		}
 	}
 
@@ -522,7 +522,7 @@ func (s *PointScheduler) readGroup(ctx context.Context, group PointGroup) (map[s
 				return result, nil
 			default:
 				_, offset, _ := s.decoder.ParseAddress(point.Address)
-				regCount := s.decoder.GetRegisterCount(point.DataType)
+				regCount := s.decoder.GetPointRegisterCount(point)
 
 				b, perr := s.transport.ReadRegisters(ctx, group.RegType.ShortString(), offset, regCount)
 				if perr != nil || len(b) < int(regCount*2) {
@@ -570,7 +570,7 @@ func (s *PointScheduler) readGroup(ctx context.Context, group PointGroup) (map[s
 	// Distribute data to points
 	for _, point := range group.Points {
 		_, offset, _ := s.decoder.ParseAddress(point.Address)
-		regCount := s.decoder.GetRegisterCount(point.DataType)
+		regCount := s.decoder.GetPointRegisterCount(point)
 
 		byteOffset := (offset - group.StartOffset) * 2
 		byteLength := regCount * 2

@@ -13,9 +13,16 @@ const dev = (id, name, overrides = {}) => ({
 })
 
 const tableStub = {
-  props: ['data', 'selectedKeys', 'rowSelection'],
-  emits: ['selection-change', 'update:selectedKeys'],
+  props: ['data', 'selectedKeys', 'rowSelection', 'defaultExpandedKeys'],
+  provides: {},
+  emits: ['selection-change', 'update:selectedKeys', 'expand-change'],
   template: '<div class="table-stub"><slot /></div>',
+}
+
+const checkboxStub = {
+  props: ['modelValue', 'indeterminate'],
+  emits: ['update:modelValue', 'change'],
+  template: '<input class="checkbox-stub" type="checkbox" :checked="modelValue" @change="$emit(\'change\', !modelValue)" />',
 }
 
 const selectStub = {
@@ -76,6 +83,7 @@ const mountPanel = () => mount(NorthboundReportStrategyPanel, {
   global: {
     stubs: {
       'a-table': tableStub,
+      'a-checkbox': checkboxStub,
       'a-select': selectStub,
       'a-option': optionStub,
       'a-input': inputStub,
@@ -89,8 +97,22 @@ const mountPanel = () => mount(NorthboundReportStrategyPanel, {
   },
 })
 
-describe('NorthboundReportStrategyPanel batch linkage', () => {
-  it('prompts when batch mode is clicked with no selection', async () => {
+describe('NorthboundReportStrategyPanel batch linkage (tree grouped by channel)', () => {
+  it('builds a tree with one channel parent row containing both devices', async () => {
+    const wrapper = mountPanel()
+    await flushPromises()
+    await nextTick()
+
+    const rows = wrapper.vm.realDeviceTableData
+    expect(rows).toHaveLength(1)
+    const channel = rows[0]
+    expect(channel.channelName).toBe('Ch-1')
+    expect(channel.children).toHaveLength(2)
+    expect(channel.count).toBe(2)
+    expect(channel.enabledCount).toBe(0)
+  })
+
+  it('prompts when batch mode is clicked with no enabled device', async () => {
     const wrapper = mountPanel()
     await flushPromises()
     await nextTick()
@@ -101,27 +123,31 @@ describe('NorthboundReportStrategyPanel batch linkage', () => {
     await nextTick()
 
     expect(globalState.snackbar.show).toBe(true)
-    expect(globalState.snackbar.text).toContain('没有勾选设备')
+    expect(globalState.snackbar.text).toContain('已启用')
   })
 
-  it('batch mode changes period and strategy for selected devices', async () => {
+  it('channel parent toggle enables all its devices and batch period/strategy apply to them', async () => {
     const wrapper = mountPanel()
     await flushPromises()
     await nextTick()
 
-    // enable both devices first (direct row state, mirrors switch ON)
-    const rows = wrapper.vm.realDeviceTableData
-    rows[0]._enable = true
-    rows[1]._enable = true
+    // 勾选通道父行 → 批量启用该通道下全部设备（走 setChannelAll）
+    const channel = wrapper.vm.realDeviceTableData[0]
+    wrapper.vm.setChannelAll(channel, true)
     await nextTick()
 
-    // simulate selecting dev-1 + dev-2 via Arco selection-change event
-    const tables = wrapper.findAllComponents(tableStub)
-    const realTable = tables[0]
-    realTable.vm.$emit('selection-change', ['dev-1', 'dev-2'])
-    await nextTick()
+    expect(channel.enabledCount).toBe(2)
+    const updatesAfterChannel = wrapper.emitted('update:devices') || []
+    const mergedAfterChannel = {}
+    for (const [payload] of updatesAfterChannel) {
+      Object.assign(mergedAfterChannel, payload)
+    }
+    expect(mergedAfterChannel['dev-1']).toMatchObject({ enable: true, strategy: 'periodic', interval: '10s' })
+    expect(mergedAfterChannel['dev-2']).toMatchObject({ enable: true, strategy: 'periodic', interval: '10s' })
 
-    // simulate choosing 周期上报 in the batch-mode dropdown
+    // 模拟批量下拉选择 周期上报
+    globalState.snackbar.show = false
+    globalState.snackbar.text = ''
     const dropdowns = wrapper.findAll('.dropdown-stub')
     dropdowns[0].trigger('click')
     await nextTick()
@@ -129,7 +155,7 @@ describe('NorthboundReportStrategyPanel batch linkage', () => {
     expect(globalState.snackbar.show).toBe(true)
     expect(globalState.snackbar.text).toContain('周期上报（全量）')
 
-    // the batch operation emits update:devices for each selected device
+    // 已启用设备的批量操作通过 update:devices 逐设备发出
     const updates = wrapper.emitted('update:devices') || []
     const merged = {}
     for (const [payload] of updates) {

@@ -156,16 +156,16 @@
       <a-tab-pane key="real-devices">
         <template #title>映射真实设备</template>
         <div class="table-header">
-          <span class="table-header__hint">选择在 OPC UA 地址空间中暴露的南向采集设备</span>
-          <a-button type="outline" size="small" @click="autoFillDevices">
-            <template #icon><icon-check /></template>全部启用
-          </a-button>
+          <span class="table-header__hint">按通道树形选择 OPC UA 地址空间中暴露的南向采集设备</span>
         </div>
         <div class="table-container saas-table nb-device-table">
           <a-table
-            row-key="id"
+            ref="realTreeRef"
+            row-key="rowKey"
             :columns="deviceColumns"
-            :data="deviceTableData"
+            :data="deviceTableTree"
+            :expanded-keys="expandedKeys"
+            @expand-change="onExpandChange"
             size="small"
             :pagination="false"
             class="industrial-table-inline"
@@ -173,13 +173,31 @@
             <template #empty>
               <a-empty description="暂无南向设备，请先在通道管理中创建设备" />
             </template>
+            <template #name="{ record }">
+              <span v-if="record.children" class="nb-tree-channel-name">
+                <span class="nb-tree-channel-badge">{{ record.enabledCount }}/{{ record.count }} 已启用</span>
+                {{ record.channelName }}
+              </span>
+              <span v-else>{{ record.name || record.id }}</span>
+            </template>
+            <template #channel="{ record }">
+              <span v-if="record.children">—</span>
+              <span v-else>{{ record.channelName }}</span>
+            </template>
             <template #state="{ record }">
-              <a-tag v-if="record.state === 0" color="green" size="small">在线</a-tag>
+              <a-tag v-if="record.children" color="arcoblue" size="small">通道</a-tag>
+              <a-tag v-else-if="record.state === 0" color="green" size="small">在线</a-tag>
               <a-tag v-else-if="record.state === 1" color="orangered" size="small">不稳定</a-tag>
               <a-tag v-else color="red" size="small">离线</a-tag>
             </template>
             <template #enable="{ record }">
-              <a-switch v-model="record._enable" size="small" />
+              <a-checkbox
+                v-if="record.children"
+                :model-value="record.enabledCount > 0 && record.enabledCount >= record.count"
+                :indeterminate="record.enabledCount > 0 && record.enabledCount < record.count"
+                @change="(checked) => setChannelAll(record, checked)"
+              />
+              <a-switch v-else v-model="record._enable" size="small" @change="onDeviceToggle" />
             </template>
           </a-table>
         </div>
@@ -256,7 +274,7 @@ import {
   resolveNorthboundSaveError,
   validateNorthboundChannelName
 } from '@/utils/northboundSave'
-import { buildNorthboundVirtualDeviceRows, syncNorthboundVirtualDevicesFromRows } from '@/utils/southboundDevices'
+import { buildNorthboundDeviceTree, buildNorthboundVirtualDeviceRows, syncNorthboundDevicesFromTree, syncNorthboundVirtualDevicesFromRows } from '@/utils/southboundDevices'
 import { listVirtualShadows } from '@/api/virtualShadow'
 
 const props = defineProps({
@@ -276,8 +294,10 @@ const loading = ref(false)
 const syncing = ref(false)
 const form = ref({})
 const userList = ref([])
-const deviceTableData = ref([])
+const deviceTableTree = ref([])
 const virtualDeviceTableData = ref([])
+const expandedKeys = ref([])
+const realTreeRef = ref(null)
 const activeTab = ref('basic')
 const isNewMode = ref(false)
 const serverCertInput = ref(null)
@@ -289,10 +309,10 @@ const trustedCertList = ref([])
 const trustedCertsModified = ref(false)
 
 const deviceColumns = [
-  { title: '设备名称', dataIndex: 'name' },
-  { title: '采集通道', dataIndex: 'channelName', width: 120 },
-  { title: '状态', slotName: 'state', width: 80, align: 'center' },
-  { title: '暴露', slotName: 'enable', width: 70, align: 'center' }
+  { title: '设备名称', slotName: 'name', width: 260, ellipsis: true, tooltip: true },
+  { title: '采集通道', slotName: 'channel', width: 120 },
+  { title: '状态', slotName: 'state', width: 84, align: 'center' },
+  { title: '暴露', slotName: 'enable', width: 90, align: 'center' }
 ]
 
 const virtualDeviceColumns = [
@@ -407,20 +427,13 @@ const clearTrustedCerts = () => {
   trustedCertsModified.value = true
 }
 
+const onExpandChange = (keys) => {
+  expandedKeys.value = keys || []
+}
+
 const buildDeviceTable = () => {
-  const allowAll = !form.value.devices || Object.keys(form.value.devices).length === 0
-  deviceTableData.value = props.allDevices.map(dev => {
-    const current = form.value.devices[dev.id]
-    let _enable = allowAll
-    if (current === undefined || current === null) {
-      _enable = allowAll
-    } else if (typeof current === 'boolean') {
-      _enable = current
-    } else if (typeof current === 'object') {
-      _enable = !!current.enable
-    }
-    return { ...dev, _enable }
-  })
+  deviceTableTree.value = buildNorthboundDeviceTree(props.allDevices, form.value.devices)
+  expandedKeys.value = deviceTableTree.value.map((r) => r.rowKey)
 }
 
 const buildVirtualDeviceTable = async () => {
@@ -435,20 +448,7 @@ const buildVirtualDeviceTable = async () => {
 }
 
 const syncDevicesFromTable = () => {
-  if (deviceTableData.value.length === 0) {
-    form.value.devices = {}
-    return
-  }
-  const devices = {}
-  let allEnabled = true
-  for (const record of deviceTableData.value) {
-    if (!record._enable) {
-      allEnabled = false
-    }
-    devices[record.id] = { enable: record._enable }
-  }
-  // 全部启用时使用空 map，保持默认"全部暴露"语义
-  form.value.devices = allEnabled ? {} : devices
+  form.value.devices = syncNorthboundDevicesFromTree(deviceTableTree.value)
 }
 
 const syncVirtualDevicesFromTable = () => {
@@ -459,11 +459,20 @@ const addUser = () => {
   userList.value.push({ username: '', password: '' })
 }
 
-const autoFillDevices = () => {
-  deviceTableData.value.forEach(record => {
-    record._enable = true
-  })
-  showMessage('已启用全部真实设备', 'success')
+// 单个设备开关切换后联动父行启用计数
+const onDeviceToggle = () => {
+  for (const g of deviceTableTree.value) {
+    g.enabledCount = g.children.filter((c) => c._enable).length
+  }
+}
+
+// 通道父勾选：批量启用/禁用该通道下全部设备
+const setChannelAll = (channel, checked) => {
+  const enable = !!checked
+  for (const child of channel.children) {
+    child._enable = enable
+  }
+  channel.enabledCount = enable ? channel.count : 0
 }
 
 const autoFillVirtualDevices = () => {

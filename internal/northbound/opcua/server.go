@@ -641,10 +641,10 @@ func (s *Server) Update(v model.Value) {
 
 	_, isVirtual := s.virtualDeviceIDs[v.DeviceID]
 	if isVirtual {
-		if len(s.config.VirtualDevices) > 0 && !s.config.VirtualDevices.AllowsDevice(v.DeviceID) {
+		if !s.config.VirtualDevices.AllowsDevice(v.DeviceID) {
 			return
 		}
-	} else if len(s.config.Devices) > 0 && !s.config.Devices.AllowsDevice(v.DeviceID) {
+	} else if !s.config.Devices.AllowsDevice(v.DeviceID) {
 		return
 	}
 
@@ -787,17 +787,13 @@ func (s *Server) buildAddressSpace() error {
 		for _, dev := range ch.Devices {
 			//zap.L().Info("Processing Device", zap.String("device_id", dev.ID), zap.String("device_name", dev.Name), zap.Int("point_count", len(dev.Points)))
 
-			// Check if device is enabled in config
-			// If config.Devices is empty, we assume "Allow All" for better UX.
-			// If config.Devices is populated, we apply strict filtering.
-			if len(s.config.Devices) > 0 {
-				if !s.config.Devices.AllowsDevice(dev.ID) {
-					zap.L().Debug("OPC UA device excluded by mapping",
-						zap.String("device_id", dev.ID),
-						zap.String("channel_id", ch.ID),
-					)
-					continue
-				}
+			// Only explicitly enabled devices are exposed to the address space.
+			if !s.config.Devices.AllowsDevice(dev.ID) {
+				zap.L().Debug("OPC UA device excluded by mapping",
+					zap.String("device_id", dev.ID),
+					zap.String("channel_id", ch.ID),
+				)
+				continue
 			}
 
 			// Generate compact device node ID: G/{channelNum}/D/{deviceNum}
@@ -957,7 +953,7 @@ func (s *Server) buildVirtualDevicesForChannel(
 		if model.InferVirtualShadowChannel(vcfg.Points) != ch.ID {
 			continue
 		}
-		if len(s.config.VirtualDevices) > 0 && !s.config.VirtualDevices.AllowsDevice(vcfg.ID) {
+		if !s.config.VirtualDevices.AllowsDevice(vcfg.ID) {
 			continue
 		}
 

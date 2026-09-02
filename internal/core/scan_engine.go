@@ -638,6 +638,11 @@ func (se *ScanEngine) executeTaskAsync(task *ScanTask) {
 		se.collectFinalize(task.DeviceKey, result)
 	}
 
+	// 检查执行期间是否已被 RemoveTasksByDeviceKey 停止，若是则不再重新入队。
+	if task.GetStatus() == ScanTaskStatusStopped {
+		return
+	}
+
 	task.SetStatus(ScanTaskStatusIdle)
 
 	se.mu.RLock()
@@ -1129,6 +1134,17 @@ func (se *ScanEngine) RemoveTasksByDeviceKey(deviceKey string) {
 				zap.String("taskID", taskID),
 				zap.String("deviceKey", deviceKey),
 			)
+		}
+	}
+
+	// 同步从优先队列中清除残留任务指针，防止 processReadyTasks 再次弹出执行。
+	pq := se.priorityQueue
+	for i := 0; i < pq.Len(); {
+		t := (*pq)[i]
+		if t.DeviceKey == deviceKey {
+			heap.Remove(pq, i)
+		} else {
+			i++
 		}
 	}
 }

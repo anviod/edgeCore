@@ -434,6 +434,24 @@ func (d *BACnetDriver) Disconnect() error {
 	return nil
 }
 
+// ResetDeviceCollection 清理已删除设备的内部状态，防止残留 deviceContexts 持续触发 auto-recovery。
+// 实现 driver.DeviceCollectionResetter 接口。
+func (d *BACnetDriver) ResetDeviceCollection(deviceID string) {
+	parts := strings.Split(deviceID, "-")
+	if len(parts) == 0 {
+		return
+	}
+	devID, err := strconv.Atoi(parts[len(parts)-1])
+	if err != nil {
+		return
+	}
+	d.mu.Lock()
+	delete(d.deviceContexts, devID)
+	d.mu.Unlock()
+}
+
+var _ drv.DeviceCollectionResetter = (*BACnetDriver)(nil)
+
 func (d *BACnetDriver) ReadPoints(ctx context.Context, points []model.Point) (map[string]model.Value, error) {
 	if len(points) == 0 {
 		return map[string]model.Value{}, nil

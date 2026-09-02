@@ -56,11 +56,11 @@
             </div>
             <div class="help-doc-row help-doc-row--stack">
               <div class="help-doc-row__label">
-                <strong>解析类型（UI 显示）</strong>
+                <strong>解析类型（字节解析）</strong>
                 <span>parseType</span>
               </div>
               <div class="help-doc-row__desc">
-                决定"<strong>原始字节如何被解读为数值</strong>"，用于前端预览与校验。选项随字节数变化：
+                决定"<strong>原始字节如何被解读为原始数值</strong>"，用于前端预览与校验。选项随字节数变化：
                 <ul class="help-doc-optlist">
                   <li><code>1B</code><span>BIT / UINT8 / INT8 / BCD8</span></li>
                   <li><code>2B</code><span>UINT16 / INT16 及其 _SWAP、BCD16、FLOAT16</span></li>
@@ -72,11 +72,11 @@
             </div>
             <div class="help-doc-row help-doc-row--stack">
               <div class="help-doc-row__label">
-                <strong>数据类型（设备协议 / 存储）</strong>
+                <strong>数据类型（显示 / 存储 / 北向）</strong>
                 <span>datatype</span>
               </div>
               <div class="help-doc-row__desc">
-                决定点位值在网关内部与<strong>北向接口</strong>（MQTT / OPC-UA / Sparkplug 等）中的存储与对外类型。<strong>必须与"解析类型"匹配</strong>：
+                决定经过缩放和公式后的工程值在网关内部、UI 与<strong>北向接口</strong>（MQTT / OPC-UA / Sparkplug 等）中的输出类型。它可以与原始解析类型不同：
                 <ul class="help-doc-optlist">
                   <li><code>FLOAT32</code><span>→ float32</span></li>
                   <li><code>INT16</code><span>→ int16</span></li>
@@ -84,7 +84,7 @@
                   <li><code>FLOAT64</code><span>→ float64</span></li>
                   <li><code>STRING</code><span>→ string</span></li>
                 </ul>
-                两者不一致（如解析选 FLOAT32 但 datatype 选 int32）会导致北向拿到错误类型，是最常见的配置错误。
+                例如原始寄存器按 INT16 解析，经过 <code>scale=0.1</code> 得到小数时，可以将数据类型设为 <code>float32</code>；这不是配置错误。
               </div>
             </div>
             <div class="help-doc-row help-doc-row--stack">
@@ -108,7 +108,7 @@
                 <span>scale / offset</span>
               </div>
               <div class="help-doc-row__desc">
-                最终值 = <code>原始值 × scale + offset</code>。用于工程量转换，例如温湿度变送器原始 <code>707</code> 表示 <code>70.7%RH</code>，设 <strong>scale=0.1</strong>。两者在解析之后、公式之前生效。
+                没有读公式时，最终值 = <code>原始值 × scale + offset</code>。用于工程量转换，例如温湿度变送器原始 <code>707</code> 表示 <code>70.7%RH</code>，设 <strong>scale=0.1</strong>。如果配置了读公式，则读公式优先，跳过 scale/offset。
               </div>
             </div>
             <div class="help-doc-row help-doc-row--stack">
@@ -117,7 +117,7 @@
                 <span>read_formula / write_formula</span>
               </div>
               <div class="help-doc-row__desc">
-                在缩放之后对变量 <code>v</code> 做任意表达式，如 <code>v * 0.1</code>、<code>Math.round(v)</code>、<code>(v - 32) * 5 / 9</code>。读公式作用于采集方向，写公式作用于下发方向。
+                读公式直接作用于原始解析值，配置读公式时跳过 scale/offset；写公式直接作用于写入工程值，配置写公式时同样跳过 scale/offset。公式优先级高于缩放，读写公式需要自行包含完整换算逻辑。
               </div>
             </div>
             <div class="help-doc-row help-doc-row--stack">
@@ -136,6 +136,46 @@
             以及该协议的<strong>通道连接参数</strong>。通用字段与协议地址相互配合，才能正确采到值。
           </p>
         </section>
+
+        <ChannelHelpBlock title="解析与显示过程">
+          <p class="help-doc-section__text">
+            点位处理分为两个类型层次：<strong>解析类型</strong>只负责把设备传来的原始字节读对，<strong>数据类型</strong>负责把换算后的工程值以合适的类型提供给 UI、存储和北向。两者职责不同，不要求名称相同。
+          </p>
+          <HelpDocFlow :steps="pointValueFlowSteps" aria-label="点位解析与显示过程" />
+          <div class="help-doc-card">
+            <div class="help-doc-row help-doc-row--stack">
+              <div class="help-doc-row__label"><strong>原始解析</strong><span>解析类型（字节解析）</span></div>
+              <div class="help-doc-row__desc">根据字节数、字节序和解析类型读取原始值。INT16 读取 1 个寄存器并保留有符号补码语义；FLOAT32 则读取 2 个寄存器并按浮点位模式解释。</div>
+            </div>
+            <div class="help-doc-row help-doc-row--stack">
+              <div class="help-doc-row__label"><strong>工程量换算</strong><span>scale / offset / read_formula</span></div>
+              <div class="help-doc-row__desc">没有读公式时，<code>scale</code> 和 <code>offset</code> 将原始值转换为工程值；有读公式时直接执行读公式并跳过 scale/offset。小数来自换算过程，不要求原始解析类型是浮点。</div>
+            </div>
+            <div class="help-doc-row help-doc-row--stack">
+              <div class="help-doc-row__label"><strong>输出类型</strong><span>数据类型（显示 / 存储 / 北向）</span></div>
+              <div class="help-doc-row__desc">定义工程值的输出类型。例如 INT16 原始值经 <code>scale=0.1</code> 后，可用 <code>float32</code> 输出 <code>26.4</code>，避免北向接口丢失小数。</div>
+            </div>
+          </div>
+          <p class="help-doc-example">
+            <strong>温度示例</strong>：设备寄存器 40002 返回 <code>0x0108</code>（十进制 264）→ 解析类型 <code>INT16</code> → <code>scale=0.1</code> → 工程值 <code>26.4</code> → 数据类型 <code>float32</code> → UI 显示 <strong>26.40 ℃</strong>。
+          </p>
+        </ChannelHelpBlock>
+
+        <ChannelHelpBlock title="不同协议的类型边界">
+          <p class="help-doc-section__text">
+            字节型协议（Modbus、S7、Profinet、EtherCAT 等）按 <code>parse_type</code> 读取原始字节，再按 <code>scale / offset / 公式</code> 转换，并按 <code>datatype</code> 输出。协议原生类型协议（BACnet、OPC UA、IEC 104 等）由设备对象或 ASDU 类型直接定义原始类型，不能用 FLOAT32 等字节预设替代协议类型；此类协议仍按其对象类型完成显示、存储和北向输出。
+          </p>
+          <div class="help-doc-card">
+            <div class="help-doc-row help-doc-row--stack">
+              <div class="help-doc-row__label"><strong>字节型协议</strong><span>parse_type → scale/offset → datatype</span></div>
+              <div class="help-doc-row__desc">原始宽度、端序、解析、缩放和回写反算使用同一条配置链。比如 INT16 + scale=0.1 + float32，读写都以 16 位整数寄存器为准。</div>
+            </div>
+            <div class="help-doc-row help-doc-row--stack">
+              <div class="help-doc-row__label"><strong>协议原生类型</strong><span>设备对象 / 节点 / ASDU 类型</span></div>
+              <div class="help-doc-row__desc">BACnet、OPC UA、IEC 104 等协议的类型由协议数据模型决定。配置 datatype 应与设备对象类型一致，parse_type 仅适用于明确提供原始字节映射的协议。</div>
+            </div>
+          </div>
+        </ChannelHelpBlock>
 
         <!-- Modbus -->
         <template v-if="channelProtocol.includes('modbus')">
@@ -196,12 +236,12 @@
           </section>
 
           <section class="help-doc-section">
-            <h2 class="help-doc-section__title">解析类型 ↔ 数据类型 对照</h2>
+            <h2 class="help-doc-section__title">解析类型与输出类型示例</h2>
             <div class="help-doc-card">
               <div v-for="item in modbusParseTypeMap" :key="item.parse" class="help-doc-row help-doc-row--stack">
                 <div class="help-doc-row__label">
                   <strong>{{ item.parse }}</strong>
-                  <span>→ datatype: {{ item.datatype }}</span>
+                  <span>常见输出：datatype {{ item.datatype }}</span>
                 </div>
                 <div class="help-doc-row__desc">{{ item.usage }}</div>
               </div>
@@ -312,7 +352,8 @@
                 <tr><td>address</td><td>0</td><td>1</td><td>寄存器 0000H/0001H（零基偏移）</td></tr>
                 <tr><td>byteLength</td><td>2</td><td>2</td><td>16 位 = 1 寄存器</td></tr>
                 <tr><td>parseType</td><td>UINT16</td><td>INT16</td><td>无符号 / 有符号补码</td></tr>
-                <tr><td>datatype</td><td>uint16</td><td>int16</td><td>落库与北向类型</td></tr>
+                <tr><td>parse_type</td><td>UINT16</td><td>INT16</td><td>原始字节解析类型</td></tr>
+                <tr><td>datatype</td><td>float32</td><td>float32</td><td>显示、存储与北向输出类型</td></tr>
                 <tr><td>word_order</td><td>AB</td><td>AB</td><td>单字大端，应答帧高位在前</td></tr>
                 <tr><td>scale</td><td>0.1</td><td>0.1</td><td>"实际值 ×10" → 实际 = 原始 ×0.1</td></tr>
                 <tr><td>offset</td><td>0</td><td>0</td><td>—</td></tr>
@@ -323,21 +364,20 @@
 
             <h3 class="help-doc-subtitle">③ 本地转换与 UI 显示</h3>
             <p class="help-doc-section__text">
-              <strong>解析类型（parseType）</strong>就是"设备协议原始值 → <strong>本地转换后用于 UI 显示</strong>"的字段：
-              它决定原始字节如何被解读为数值，再经 <code>scale</code> 缩放后直接呈现给用户（文档中标注为"UI 显示"）。
-              <code>datatype</code> 则是该值落库、对外（北向）暴露的类型，两者必须一致。
+              <strong>解析类型（parse_type）</strong>只负责"设备协议原始字节 → 原始数值"：
+              它决定原始字节如何被解读。<code>scale</code>、<code>offset</code> 和读公式完成工程量换算，<code>datatype</code> 再定义工程值的显示、落库和北向输出类型，两者可以不同。
             </p>
             <div class="help-doc-card">
               <div class="help-doc-row help-doc-row--stack">
                 <div class="help-doc-row__label"><strong>湿度</strong><span>本地转换链</span></div>
                 <div class="help-doc-row__desc">
-                  原始报文 <code>02 92</code> → <code>parseType=UINT16</code> 解读为 <code>658</code> → <code>scale=0.1</code> → <strong>UI 显示 65.8 %RH</strong>
+                  原始报文 <code>02 92</code> → <code>parse_type=UINT16</code> 解读为 <code>658</code> → <code>scale=0.1</code> → <code>datatype=float32</code> → <strong>UI 显示 65.8 %RH</strong>
                 </div>
               </div>
               <div class="help-doc-row help-doc-row--stack">
                 <div class="help-doc-row__label"><strong>温度</strong><span>本地转换链</span></div>
                 <div class="help-doc-row__desc">
-                  原始报文 <code>FF 9B</code> → <code>parseType=INT16</code> 按补码解读为 <code>-101</code> → <code>scale=0.1</code> → <strong>UI 显示 -10.1 ℃</strong>
+                  原始报文 <code>FF 9B</code> → <code>parse_type=INT16</code> 按补码解读为 <code>-101</code> → <code>scale=0.1</code> → <code>datatype=float32</code> → <strong>UI 显示 -10.1 ℃</strong>
                   （负数补码无需任何公式，选对 INT16 即可）
                 </div>
               </div>
@@ -366,8 +406,8 @@
                 确认 ABCD 等排列方式是否与设备一致；多寄存器数值切勿用两个独立 16 位点位自行拼装。
               </a-collapse-item>
               <a-collapse-item header="解析类型与数据类型要怎么配?" key="4">
-                两者需一一对应：FLOAT32→float32、INT16→int16、UINT16→uint16、FLOAT64→float64、STRING→string。
-                解析类型决定"怎么读"，数据类型决定"对外是什么类型"，不匹配会导致北向订阅方类型错误。
+                不要求一一对应。解析类型决定"怎么读"，数据类型决定换算后"对外是什么类型"。
+                例如 INT16 原始值经 <code>scale=0.1</code> 产生小数时，可以使用 <code>datatype=float32</code>；FLOAT32 原始值也可以根据业务需要转换为其他数值输出类型。
               </a-collapse-item>
               <a-collapse-item header="Modbus-RTU 通道一直 offline?" key="5">
                 串口参数（波特率/校验/停止位/数据位）必须与设备完全一致；确认 /dev/ttySx 等设备文件存在且进程有读权限。
@@ -583,7 +623,7 @@
                 用 OPC UA 客户端（UA Expert 等）浏览地址空间，找到目标节点后复制其 NodeID；注意命名空间索引 ns= 应与服务器一致。
               </a-collapse-item>
               <a-collapse-item header="读到的类型不对?" key="3">
-                在"通用点位配置字段"中选择与服务器节点一致的数据类型（如 Double/Float/String），解析类型与数据类型需匹配，避免北向类型错误。
+                在"通用点位配置字段"中选择与服务器节点一致的工程值数据类型（如 Double/Float/String）。对于字节型协议，解析类型负责原始字节，数据类型负责换算后的输出，两者可以不同；协议原生类型则以服务器节点类型为准。
               </a-collapse-item>
             </a-collapse>
           </section>
@@ -985,6 +1025,8 @@
 
 <script setup>
 import { formatProtocolTag } from '@/utils/protocolLabel'
+import ChannelHelpBlock from '@/components/channel-help/ChannelHelpBlock.vue'
+import HelpDocFlow from '@/components/channel-help/HelpDocFlow.vue'
 
 defineProps({
   visible: { type: Boolean, default: false },
@@ -992,6 +1034,18 @@ defineProps({
 })
 
 const emit = defineEmits(['update:visible', 'cancel'])
+
+const pointValueFlowSteps = [
+  { type: 'node', text: '设备原始字节\n264 / 0x0108' },
+  { type: 'arrow' },
+  { type: 'node', text: '解析类型\nINT16', variant: 'cond' },
+  { type: 'arrow' },
+  { type: 'node', text: '缩放 / 公式\n264 × 0.1 = 26.4', variant: 'cond' },
+  { type: 'arrow' },
+  { type: 'node', text: '数据类型\nfloat32', variant: 'action' },
+  { type: 'arrow' },
+  { type: 'node', text: '显示 / 存储 / 北向\n26.40 ℃', variant: 'action' },
+]
 
 const modbusRegisterSpecs = [
   { name: '保持寄存器', meta: 'Holding Register', range: '40001 – 49999' },

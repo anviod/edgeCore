@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 	"go.uber.org/zap"
 )
 
@@ -93,7 +94,11 @@ func (s *DLT645Scheduler) readPoint(ctx context.Context, p model.Point, addr *Pa
 		return nil, err
 	}
 
-	return DecodeValue(raw, p.DataType, p.Scale, p.Offset)
+	value, err := DecodeValue(raw, p.DataType, p.Scale, p.Offset)
+	if err != nil || p.ReadFormula == "" {
+		return value, err
+	}
+	return dataformat.ApplyFormula(p.ReadFormula, value)
 }
 
 // WritePoint writes a single point when the meter supports it.
@@ -103,7 +108,16 @@ func (s *DLT645Scheduler) WritePoint(ctx context.Context, p model.Point, value a
 		return err
 	}
 
-	payload, err := encodeWritePayload(value, p.DataType)
+	var payload []byte
+	if p.WriteFormula != "" {
+		value, err = dataformat.ApplyFormula(p.WriteFormula, value)
+		if err != nil {
+			return err
+		}
+		payload, err = encodeWritePayload(value, p.DataType, 1, 0)
+	} else {
+		payload, err = encodeWritePayload(value, p.DataType, p.Scale, p.Offset)
+	}
 	if err != nil {
 		return err
 	}
@@ -117,13 +131,17 @@ func (s *DLT645Scheduler) WritePoint(ctx context.Context, p model.Point, value a
 	return nil
 }
 
-func encodeWritePayload(value any, dataType string) ([]byte, error) {
+func encodeWritePayload(value any, dataType string, scale float64, offset float64) ([]byte, error) {
 	_ = dataType
+	factor := scale
+	if factor == 0 {
+		factor = 1
+	}
 	switch v := value.(type) {
 	case float64:
-		return encodeBCDFromInt(int64(v * 100)), nil
+		return encodeBCDFromInt(int64((v - offset) / factor)), nil
 	case float32:
-		return encodeBCDFromInt(int64(v * 100)), nil
+		return encodeBCDFromInt(int64((float64(v) - offset) / factor)), nil
 	case int:
 		return encodeBCDFromInt(int64(v)), nil
 	case int64:

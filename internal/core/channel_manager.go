@@ -575,16 +575,30 @@ func (cm *ChannelManager) UpdateChannel(ch *model.Channel) error {
 	return nil
 }
 
-// RemoveChannel 删除采集通道
+// RemoveChannel 删除采集通道，并级联清理该通道下的所有设备
 func (cm *ChannelManager) RemoveChannel(channelID string) error {
-	// 1. Stop channel
+	// 1. Stop channel (注销通道下所有设备的 ScanEngine 任务并断开驱动)
 	_ = cm.StopChannel(channelID)
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
-	if _, exists := cm.channels[channelID]; !exists {
+	ch, exists := cm.channels[channelID]
+	if !exists {
 		return fmt.Errorf("channel not found")
+	}
+
+	// 2. 级联清理通道下所有设备的状态数据（shadow / tag / stateManager），避免删除通道后残留
+	cm.stateManager.UnregisterNode(channelID)
+	for _, dev := range ch.Devices {
+		cm.stateManager.UnregisterNode(dev.ID)
+		if sc := cm.shadowCore; sc != nil {
+			// 设备可能从未建立影子状态，忽略"不存在"错误
+			_ = sc.DeleteShadowDevice(dev.ID)
+		}
+		if tr := cm.tagRegistry; tr != nil {
+			tr.UnregisterDevice(channelID, dev.ID)
+		}
 	}
 
 	delete(cm.channels, channelID)
@@ -592,7 +606,10 @@ func (cm *ChannelManager) RemoveChannel(channelID string) error {
 	delete(cm.driverMus, channelID)
 
 	_ = cm.saveChannels()
-	zap.L().Info("Channel removed", zap.String("channel_id", channelID))
+	zap.L().Info("Channel removed",
+		zap.String("channel_id", channelID),
+		zap.Int("devices_removed", len(ch.Devices)),
+	)
 	cm.notifyTopologyChange()
 	return nil
 }
@@ -941,6 +958,7 @@ func (cm *ChannelManager) GetDevicePoints(channelID, deviceID string) ([]model.P
 			FunctionCode: point.FunctionCode,
 			Address:      point.Address,
 			DataType:     point.DataType,
+			ParseType:    point.ParseType,
 			Unit:         point.Unit,
 			Timestamp:    now,
 			Quality:      "Uncertain",
@@ -995,6 +1013,7 @@ func (cm *ChannelManager) getDevicePointsFromShadow(dev *model.Device, slaveID u
 			FunctionCode: point.FunctionCode,
 			Address:      point.Address,
 			DataType:     point.DataType,
+			ParseType:    point.ParseType,
 			Unit:         point.Unit,
 			Quality:      "Bad",
 			Value:        nil,
@@ -2512,6 +2531,7 @@ func (cm *ChannelManager) RemoveDevice(channelID, deviceID string) error {
 	// 停止设备
 	oldDev := &ch.Devices[idx]
 	cm.scanEngineAdapter.UnregisterDevice(oldDev.ID)
+	cm.stateManager.UnregisterNode(oldDev.ID)
 
 	// 从切片移除
 	ch.Devices = append(ch.Devices[:idx], ch.Devices[idx+1:]...)
@@ -2539,6 +2559,7 @@ func (cm *ChannelManager) RemoveDevices(channelID string, deviceIDs []string) er
 	for _, d := range ch.Devices {
 		if toRemove[d.ID] {
 			cm.scanEngineAdapter.UnregisterDevice(d.ID)
+			cm.stateManager.UnregisterNode(d.ID)
 		} else {
 			newDevices = append(newDevices, d)
 		}

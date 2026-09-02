@@ -321,7 +321,7 @@
       </div>
 
       <a-alert v-if="detectedFile" type="info" class="mt-4">
-        <div class="d-flex justify-space-between align-items-center">
+        <div class="flex justify-between items-center">
           <span>检测到文件格式: <strong>{{ detectedFile.name }} ({{ detectedFile.ext }})</strong></span>
           <a-button type="primary" size="small" @click="downloadDetectedFile">
             <template #icon><IconDownload /></template>
@@ -688,7 +688,7 @@
           :auto-size="{ minRows: 3, maxRows: 6 }"
         />
                         
-        <div class="d-flex justify-center my-4 gap-4">
+        <div class="flex justify-center my-4 gap-4">
           <a-button type="text" @click="docsDialog = true">
             <template #icon><IconBook /></template>
             查看函数文档 (View Docs)
