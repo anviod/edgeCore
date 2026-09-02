@@ -2954,7 +2954,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   position: relative;
   width: 100%;
   padding: clamp(56px, 7vw, 96px) 0 clamp(40px, 5vw, 64px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* faint engineering grid backdrop */
@@ -3745,6 +3745,8 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .tk-hero__title {
   font-size: clamp(3.6rem, 9vw, 7.5rem);
   letter-spacing: -0.045em;
+  padding: 0.06em 0;
+  line-height: 1.08;
 }
 .tk-hero__title-accent {
   display: inline-block;
@@ -3762,13 +3764,17 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   .tk-hero__title {
     background: linear-gradient(120deg,
       var(--text) 0%,
-      var(--text) 40%,
-      var(--gold-light) 75%,
+      var(--text) 35%,
+      var(--gold-light) 70%,
       var(--gold) 100%);
+    background-size: 100% 100%;
+    background-position: 0 0;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
