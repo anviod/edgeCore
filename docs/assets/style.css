@@ -2953,7 +2953,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .tk-hero {
   position: relative;
   width: 100%;
-  padding: clamp(56px, 7vw, 96px) 0 clamp(40px, 5vw, 64px);
+  padding: clamp(64px, 8vw, 112px) 0 clamp(48px, 6vw, 72px);
   overflow: visible;
 }
 
@@ -3071,7 +3071,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .tk-tag::before { content: "·"; color: var(--gold); margin-right: 8px; }
 
 /* actions */
-.tk-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.tk-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
 
 .tk-btn {
   display: inline-flex;
@@ -3606,7 +3606,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   padding: 20px 24px;
   border-bottom: 1px solid var(--gold-line);
   overflow: hidden;
-  transition: background var(--transition-base), padding var(--transition-base);
+  transition: background var(--transition-base);
 }
 .tk-signal::before {
   content: "";
@@ -3616,7 +3616,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   background: var(--gold-bg);
   transition: width var(--transition-slow);
 }
-.tk-signal:hover { padding-left: 34px; }
 .tk-signal:hover::before { width: 100%; }
 
 .tk-signal__idx {
@@ -3762,19 +3761,25 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 /* title 流光梯度（受支持时） */
 @supports (-webkit-background-clip: text) or (background-clip: text) {
   .tk-hero__title {
-    background: linear-gradient(120deg,
+    background: linear-gradient(110deg,
       var(--text) 0%,
-      var(--text) 35%,
-      var(--gold-light) 70%,
+      var(--text) 28%,
+      var(--gold-light) 60%,
       var(--gold) 100%);
-    background-size: 100% 100%;
+    background-size: 220% 100%;
     background-position: 0 0;
+    background-repeat: no-repeat;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    animation: tk-title-flow 14s ease-in-out infinite alternate;
+  }
+  @keyframes tk-title-flow {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 45% 0%; }
   }
 }
 
@@ -3956,7 +3961,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   box-shadow: 0 0 0 3px var(--gold-glow);
   border-color: var(--gold-bright);
 }
-.tk-signal:focus-visible { padding-left: 34px; }
+.tk-signal:focus-visible { padding-left: 24px; }
 
 /* ---------- HUD 读数精致化 ---------- */
 .tk-hud {
@@ -4034,9 +4039,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .tk-signal::before {
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.tk-signal:hover {
-  padding-left: 40px;
-}
 .tk-signal__go {
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -4089,15 +4091,14 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
     transition: none !important;
   }
   .tk-register__row:hover { transform: none !important; }
-  .tk-signal:hover { padding-left: 24px !important; }
   .tk-signal:hover .tk-signal__go { transform: none !important; text-shadow: none !important; }
   .tk-hud__val--ok::before { animation: none !important; }
   .tk-btn--primary { box-shadow: none !important; }
+  .tk-hero__title { animation: none !important; }
 }
 
 /* ---------- 移动端打磨 ---------- */
 @media (max-width: 768px) {
   .tk-hud { display: none; }
   .tk-hero__ruler { display: none; }
-  .tk-signal:hover { padding-left: 24px; }
 }
