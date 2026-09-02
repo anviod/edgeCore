@@ -249,16 +249,36 @@ func (s *PointScheduler) Read(ctx context.Context, points []model.Point) (map[st
 
 ### 5️⃣ 点位失败隔离机制（核心）
 
+> ⚠️ 更新（2026-09-02）：失败已做**两点因分离**——
+> 连接级错误（timeout / not connected / 链路故障）视为**设备级故障**，
+> 点位**解冻保持 OK、不计冷却**，避免设备恢复后被 SKIPPED 点位饿死；
+> 仅点位级错误（如非法地址）进入冷却阶梯。详见
+> [modbus_冷却防饿死机制](./modbus冷却防饿死机制.md)。
+
 ```go
-func (s *PointScheduler) markPointFailed(pointID string) {
+func (s *PointScheduler) markPointFailed(pointID string, err error) {
     s.mu.Lock()
     defer s.mu.Unlock()
 
     rt := s.pointStates[pointID]
+    if err != nil && isConnectionError(err) {
+        // 设备级故障：解冻点位，恢复即全量可读（防饿死）
+        rt.FailCount = 0
+        rt.State = "OK"
+        rt.CooldownUntil = time.Time{}
+        return
+    }
+
     rt.FailCount++
-    if rt.FailCount >= 3 {
+    if isIllegalAddress(err) {
         rt.State = "SKIPPED"
-        rt.CooldownUntil = time.Now().Add(30 * time.Second)
+        rt.CooldownUntil = time.Now().Add(24 * time.Hour) // 非法地址长隔离
+    } else if rt.FailCount >= 10 {
+        rt.State = "SKIPPED"
+        rt.CooldownUntil = time.Now().Add(5 * time.Minute)
+    } else if rt.FailCount >= 3 {
+        rt.State = "SKIPPED"
+        rt.CooldownUntil = time.Now().Add(60 * time.Second)
     }
 }
 ```

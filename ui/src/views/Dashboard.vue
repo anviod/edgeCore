@@ -1,5 +1,20 @@
 <template>
   <div class="page-shell dashboard-page">
+
+    <!-- Tech status bar -->
+    <div class="dashboard-statusbar">
+      <div class="dashboard-statusbar__brand">
+        <span class="dashboard-statusbar__brand-mark">EC</span>
+        <span class="dashboard-statusbar__brand-name">edgeCore</span>
+        <span class="dashboard-statusbar__mode">边缘节点 · 数据中台</span>
+      </div>
+      <div class="dashboard-statusbar__meta">
+        <span class="dashboard-statusbar__live"><span class="status-dot"></span>实时监控</span>
+        <span class="dashboard-statusbar__conn"><span class="conn-dot" :class="dashboardError ? 'off' : 'on'"></span>{{ dashboardError ? '连接异常' : '系统正常' }}</span>
+        <span class="dashboard-statusbar__clock">{{ nowText }}</span>
+      </div>
+    </div>
+
     <!-- Primary: ScanEngine SLA / Soak monitoring -->
 
     <section class="dashboard-zone dashboard-zone--primary" aria-label="运行监控">
@@ -22,12 +37,17 @@
 
     <section class="dashboard-zone dashboard-zone--secondary" aria-label="系统资源">
       <div class="dashboard-zone-header">
-        <h3 class="dashboard-zone-title">系统资源</h3>
+        <div class="dashboard-zone-title-wrap">
+          <span class="zone-accent"></span>
+          <h3 class="dashboard-zone-title">系统监控</h3>
+          <span class="zone-tech-tag">TELEMETRY</span>
+        </div>
         <a-spin v-if="!firstLoaded" :size="14" />
       </div>
 
       <div class="stats-grid stats-grid--compact">
         <div class="stat-card">
+          <div class="tel-icon" style="color: var(--edgeCore-info);"><icon-command /></div>
           <div class="stat-label">CPU 使用率</div>
 
           <div class="stat-value" :style="{ color: getCpuColor(system.cpu_usage) }">
@@ -40,6 +60,7 @@
         </div>
 
         <div class="stat-card">
+          <div class="tel-icon" style="color: var(--edgeCore-primary);"><icon-storage /></div>
           <div class="stat-label">内存使用</div>
 
           <div class="stat-value" :style="{ color: getMemoryColor(system.memory_usage) }">
@@ -52,9 +73,10 @@
         </div>
 
         <div class="stat-card">
+          <div class="tel-icon" style="color: var(--edgeCore-success);"><icon-thunderbolt /></div>
           <div class="stat-label">协程数量</div>
 
-          <div class="stat-value" style="color: var(--edgeCore-info);">
+          <div class="stat-value" style="color: var(--edgeCore-success);">
             {{ system.goroutines || 0 }}
           </div>
 
@@ -64,6 +86,7 @@
         </div>
 
         <div class="stat-card">
+          <div class="tel-icon" style="color: var(--edgeCore-warning);"><icon-dashboard /></div>
           <div class="stat-label">磁盘使用率</div>
 
           <div class="stat-value" :style="{ color: getDiskColor(system.disk_usage) }">
@@ -79,40 +102,57 @@
 
 
 
-    <!-- Tertiary: data collection & reporting -->
+    <!-- Tertiary: data flow — collection (ingress / 向下采集) v.s. northbound (egress / 向上共享) -->
 
     <section class="dashboard-zone dashboard-zone--tertiary" aria-label="数据采集与上报">
-      <div class="dashboard-zone-header">
-        <h3 class="dashboard-zone-title">数据采集与上报</h3>
+      <div class="dashboard-zone-header dashboard-zone-header--flow">
+        <div class="dashboard-zone-title-wrap">
+          <span class="zone-accent zone-accent--flow"></span>
+          <h3 class="dashboard-zone-title">数据采集与上报</h3>
+          <span class="zone-tech-tag">DATA-FLOW</span>
+        </div>
+
+        <span class="flow-legend">
+          <span class="flow-legend__item flow-legend__item--ingress"><span class="flow-legend__dot"></span>采集 · 向下</span>
+          <span class="flow-legend__sep">/</span>
+          <span class="flow-legend__item flow-legend__item--egress"><span class="flow-legend__dot"></span>上报 · 向上</span>
+        </span>
       </div>
 
 
 
-      <!-- Collection channels — full-width block -->
+      <!-- Collection channels — ingress panel (向下采集设备数据) -->
 
-      <div class="dashboard-tertiary-block dashboard-tertiary-block--channels">
-        <div class="section">
-          <div class="section-header">
-            <h3 class="section-title">采集通道</h3>
-
-            <div class="section-status">
-              <span class="status-badge online">
-
-                <span class="status-dot"></span>
-
-                在线: {{ totalOnlineDevices }}
-
-              </span>
-
-              <span class="status-badge offline">
-
-                <span class="status-dot"></span>
-
-                离线: {{ totalOfflineDevices }}
-
-              </span>
+      <div class="flow-panel flow-panel--ingress">
+        <div class="flow-panel__head">
+          <div class="flow-panel__identity">
+            <span class="flow-panel__mark">
+              <icon-download :size="14" />
+            </span>
+            <div class="flow-panel__titles">
+              <span class="flow-panel__direction flow-panel__direction--ingress">向下采集</span>
+              <h3 class="flow-panel__name">采集通道</h3>
             </div>
           </div>
+
+          <div class="section-status">
+            <span class="status-badge online">
+
+              <span class="status-dot"></span>
+
+              在线: {{ totalOnlineDevices }}
+
+            </span>
+
+            <span class="status-badge offline">
+
+              <span class="status-dot"></span>
+
+              离线: {{ totalOfflineDevices }}
+
+            </span>
+          </div>
+        </div>
 
 
 
@@ -214,22 +254,29 @@
             </div>
           </div>
         </div>
-      </div>
 
 
 
-      <!-- Northbound + edge compute — separate row below channels -->
+      <!-- Northbound + edge compute — separate row (向上共享 / 边缘推理) -->
 
       <div class="dashboard-tertiary-row">
-        <div class="dashboard-tertiary-block dashboard-tertiary-block--northbound">
-          <div class="section">
-            <div class="section-header">
-              <h3 class="section-title">北向数据上报</h3>
+        <div class="flow-panel flow-panel--egress">
+          <div class="flow-panel__head">
+            <div class="flow-panel__identity">
+              <span class="flow-panel__mark">
+                <icon-upload :size="14" />
+              </span>
+              <div class="flow-panel__titles">
+                <span class="flow-panel__direction flow-panel__direction--egress">向上共享</span>
+                <h3 class="flow-panel__name">北向数据上报</h3>
+              </div>
             </div>
+          </div>
 
-            <div class="northbound-grid">
+          <div class="northbound-grid">
               <div v-for="nb in northbound" :key="nb.id" class="northbound-card">
                 <div class="northbound-header">
+                  <span class="northbound-card__mark"><icon-arrow-up :size="13" /></span>
                   <h4 class="northbound-name">{{ nb.name }}</h4>
 
                   <span class="status-badge" :class="nb.status === 'Running' ? 'online' : (nb.status === 'Disabled' ? 'disabled' : 'offline')">
@@ -255,15 +302,21 @@
               </div>
             </div>
           </div>
-        </div>
 
 
 
-        <div class="dashboard-tertiary-block dashboard-tertiary-block--edge">
-          <div class="section">
-            <div class="section-header">
-              <h3 class="section-title">边缘计算</h3>
+        <div class="flow-panel flow-panel--edge">
+          <div class="flow-panel__head">
+            <div class="flow-panel__identity">
+              <span class="flow-panel__mark">
+                <icon-thunderbolt :size="14" />
+              </span>
+              <div class="flow-panel__titles">
+                <span class="flow-panel__direction flow-panel__direction--edge">边缘推理</span>
+                <h3 class="flow-panel__name">边缘计算</h3>
+              </div>
             </div>
+          </div>
 
             <div class="edge-compute-card" @click="$router.push({ path: '/edge-compute', query: { tab: 'metrics' } })">
               <div class="edge-stats">
@@ -294,7 +347,6 @@
                 </div>
               </div>
             </div>
-          </div>
         </div>
       </div>
     </section>
@@ -314,13 +366,10 @@ import ScanEngineSoakPanel from '@/components/dashboard/ScanEngineSoakPanel.vue'
 import { formatProtocolTag } from '@/utils/protocolLabel'
 
 import {
-
   IconRefresh,
-
   IconApps, IconLink, IconSettings, IconTool,
-
-  IconArrowRight
-
+  IconArrowRight, IconArrowUp, IconDownload, IconUpload, IconThunderbolt,
+  IconCommand, IconDashboard, IconStorage
 } from '@arco-design/web-vue/es/icon'
 
 
@@ -347,9 +396,13 @@ const dashboardError = ref('')
 
 const firstLoaded = ref(false)
 
+const now = ref(new Date())
+
 
 
 let timer = null
+
+let clockTimer = null
 
 
 
@@ -368,6 +421,12 @@ const totalOfflineDevices = computed(() => {
 })
 
 
+
+const nowText = computed(() => {
+  const d = now.value
+  const p = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+})
 
 const getCpuColor = (val) => {
 
@@ -620,19 +679,17 @@ const fetchData = async () => {
 
 
 onMounted(() => {
-
     fetchData()
-
     timer = setInterval(fetchData, 2000)
-
+    now.value = new Date()
+    clockTimer = setInterval(() => { now.value = new Date() }, 1000)
 })
 
 
 
 onUnmounted(() => {
-
     if (timer) clearInterval(timer)
-
+    if (clockTimer) clearInterval(clockTimer)
 })
 
 </script>

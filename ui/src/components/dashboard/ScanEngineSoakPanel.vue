@@ -17,6 +17,10 @@
         <p class="soak-panel__subtitle">ScanEngine 运行监控 · SLA / Soak · Release Gate</p>
       </div>
       <div class="soak-panel__meta">
+        <span class="dashboard-status-chip is-live">
+          <span class="status-dot"></span>
+          实时
+        </span>
         <div class="soak-panel__status-strip">
           <span class="dashboard-status-chip is-online">
             <span class="status-dot"></span>
@@ -67,15 +71,28 @@
               <span v-if="scanClasses.length">· {{ scanClasses.length }} 种间隔</span>
             </p>
           </div>
-          <span
-            v-if="snapshot.scan_class_late > 0"
-            class="soak-scan-classes__alert"
-          >
-            {{ snapshot.scan_class_late }} 迟到
-          </span>
+          <div class="soak-scan-classes__actions">
+            <span
+              v-if="snapshot.scan_class_late > 0"
+              class="soak-scan-classes__alert"
+            >
+              {{ snapshot.scan_class_late }} 迟到
+            </span>
+            <button
+              v-if="scanClasses.length"
+              class="soak-collapse-toggle"
+              :aria-expanded="!effectiveScanCollapsed"
+              aria-controls="scan-class-list"
+              @click="scanCollapsed = !effectiveScanCollapsed"
+            >
+              {{ effectiveScanCollapsed ? '展开' : '收起' }}
+              <icon-down v-if="effectiveScanCollapsed" :size="12" />
+              <icon-up v-else :size="12" />
+            </button>
+          </div>
         </div>
 
-        <div v-if="scanClasses.length" class="soak-scan-class-grid">
+        <div v-if="scanClasses.length" id="scan-class-list" class="soak-scan-class-grid" :class="{ 'is-collapsed': effectiveScanCollapsed }">
           <div class="soak-scan-class-grid__head" aria-hidden="true">
             <span>周期</span>
             <span>任务</span>
@@ -134,10 +151,20 @@
           <div class="soak-gate-summary__counts" v-if="releaseGateItems.length">
             <span class="soak-gate-count is-pass">{{ passCount }} 达标</span>
             <span class="soak-gate-count is-fail" v-if="failCount">{{ failCount }} 未达标</span>
+            <button
+              class="soak-collapse-toggle"
+              :aria-expanded="!effectiveGateCollapsed"
+              aria-controls="gate-list"
+              @click="gateCollapsed = !effectiveGateCollapsed"
+            >
+              {{ effectiveGateCollapsed ? '展开' : '收起' }} 明细
+              <icon-down v-if="effectiveGateCollapsed" :size="12" />
+              <icon-up v-else :size="12" />
+            </button>
           </div>
         </div>
 
-        <div class="soak-gate-list">
+        <div id="gate-list" class="soak-gate-list" :class="{ 'is-collapsed': effectiveGateCollapsed }">
           <div
             v-for="item in releaseGateItems"
             :key="item.id"
@@ -154,44 +181,87 @@
       </div>
 
       <!-- Metrics snapshot row -->
-      <div class="soak-grid">
-        <div class="soak-card">
-          <h4 class="soak-card__title">当前快照</h4>
-          <div class="soak-kv-grid">
-            <div class="soak-kv"><span>任务数</span><strong>{{ snapshot.task_count ?? 0 }}</strong></div>
-            <div class="soak-kv"><span>总积压</span><strong>{{ snapshot.total_backlog ?? 0 }}</strong></div>
-            <div class="soak-kv"><span>断路器打开</span><strong>{{ snapshot.circuit_breaker_open ?? 0 }}</strong></div>
-            <div class="soak-kv"><span>节流状态</span><strong>{{ snapshot.throttle_status || '正常' }}</strong></div>
-            <div class="soak-kv"><span>全局队列</span><strong>{{ snapshot.global_queue ?? 0 }} / {{ snapshot.global_queue_limit ?? 10000 }}</strong></div>
-            <div class="soak-kv"><span>Scan Class 迟到</span><strong>{{ snapshot.scan_class_late ?? 0 }}</strong></div>
-          </div>
+      <div class="soak-card soak-card--merged">
+        <div class="metric-head">
+          <h4 class="soak-card__title">运行指标</h4>
+          <p class="soak-card__subtitle">当前运行 · 会话峰值 · 迷你趋势</p>
         </div>
 
-        <div class="soak-card">
-          <h4 class="soak-card__title">会话汇总</h4>
-          <div class="soak-kv-grid">
-            <div class="soak-kv"><span>最大积压</span><strong>{{ sessionSummary.max_backlog ?? 0 }}</strong></div>
-            <div class="soak-kv"><span>最大断路器打开</span><strong>{{ sessionSummary.max_circuit_breaker_open ?? 0 }}</strong></div>
-            <div class="soak-kv"><span>曾出现节流</span><strong>{{ sessionSummary.ever_throttled ? '是' : '否' }}</strong></div>
-            <div class="soak-kv"><span>最低点位成功率</span><strong>{{ formatRate(sessionSummary.min_point_success_rate) }}</strong></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="soak-trends">
-        <h4 class="soak-card__title">Soak 趋势（会话内采样）</h4>
-        <div class="soak-trend-grid">
-          <div v-for="trend in trendCards" :key="trend.key" class="soak-trend-card">
-            <div class="soak-trend-card__label">{{ trend.label }}</div>
-            <div class="soak-sparkline">
-              <div
-                v-for="(value, idx) in trend.values"
-                :key="idx"
-                class="soak-sparkline__bar"
-                :style="{ height: barHeight(value, trend.values) + '%' }"
-              />
+        <div class="soak-metric-split">
+          <div class="soak-metric-group">
+            <div class="soak-metric-group__head">
+              <span class="soak-metric-label"><i class="metric-dot metric-dot--ingress"></i>当前</span>
             </div>
-            <div class="soak-trend-card__value">{{ trend.latest }}</div>
+            <div class="soak-metric-grid">
+              <div class="soak-kv">
+                <span class="soak-kv__label">任务数</span>
+                <strong class="soak-kv__txt">{{ snapshot.task_count ?? 0 }}</strong>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">总积压</span>
+                <div class="soak-kv__row">
+                  <strong class="soak-kv__txt" :class="(snapshot.total_backlog ?? 0) > 0 ? 'is-warn' : 'is-pass'">{{ snapshot.total_backlog ?? 0 }}</strong>
+                  <span v-if="trendMap.total_backlog && trendMap.total_backlog.length" class="soak-inline-spark">
+                    <span v-for="(v, i) in trendMap.total_backlog" :key="i" class="soak-inline-spark__bar" :style="{ height: barHeight(v, trendMap.total_backlog) + '%' }" />
+                  </span>
+                </div>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">断路器打开</span>
+                <div class="soak-kv__row">
+                  <strong class="soak-kv__txt" :class="(snapshot.circuit_breaker_open ?? 0) > 0 ? 'is-fail' : 'is-pass'">{{ snapshot.circuit_breaker_open ?? 0 }}</strong>
+                  <span v-if="trendMap.circuit_breaker_open && trendMap.circuit_breaker_open.length" class="soak-inline-spark">
+                    <span v-for="(v, i) in trendMap.circuit_breaker_open" :key="i" class="soak-inline-spark__bar" :style="{ height: barHeight(v, trendMap.circuit_breaker_open) + '%' }" />
+                  </span>
+                </div>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">节流状态</span>
+                <strong class="soak-kv__txt" :class="throttleTone(snapshot.throttle_status)">{{ snapshot.throttle_status || '正常' }}</strong>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">全局队列</span>
+                <div class="soak-kv__row">
+                  <strong class="soak-kv__txt" :class="globalQueueTone()">{{ snapshot.global_queue ?? 0 }} / {{ snapshot.global_queue_limit ?? 10000 }}</strong>
+                  <span v-if="trendMap.global_queue && trendMap.global_queue.length" class="soak-inline-spark">
+                    <span v-for="(v, i) in trendMap.global_queue" :key="i" class="soak-inline-spark__bar" :style="{ height: barHeight(v, trendMap.global_queue) + '%' }" />
+                  </span>
+                </div>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">Scan Class 迟到</span>
+                <div class="soak-kv__row">
+                  <strong class="soak-kv__txt" :class="(snapshot.scan_class_late ?? 0) > 0 ? 'is-fail' : 'is-pass'">{{ snapshot.scan_class_late ?? 0 }}</strong>
+                  <span v-if="trendMap.scan_class_late && trendMap.scan_class_late.length" class="soak-inline-spark">
+                    <span v-for="(v, i) in trendMap.scan_class_late" :key="i" class="soak-inline-spark__bar" :style="{ height: barHeight(v, trendMap.scan_class_late) + '%' }" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="soak-metric-group">
+            <div class="soak-metric-group__head">
+              <span class="soak-metric-label"><i class="metric-dot metric-dot--egress"></i>会话峰值</span>
+            </div>
+            <div class="soak-metric-grid">
+              <div class="soak-kv">
+                <span class="soak-kv__label">最大积压</span>
+                <strong class="soak-kv__txt" :class="(sessionSummary.max_backlog ?? 0) > 0 ? 'is-warn' : 'is-pass'">{{ sessionSummary.max_backlog ?? 0 }}</strong>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">最大断路器打开</span>
+                <strong class="soak-kv__txt" :class="(sessionSummary.max_circuit_breaker_open ?? 0) > 0 ? 'is-fail' : 'is-pass'">{{ sessionSummary.max_circuit_breaker_open ?? 0 }}</strong>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">曾出现节流</span>
+                <strong class="soak-kv__txt" :class="sessionSummary.ever_throttled ? 'is-fail' : 'is-pass'">{{ sessionSummary.ever_throttled ? '是' : '否' }}</strong>
+              </div>
+              <div class="soak-kv">
+                <span class="soak-kv__label">最低点位成功率</span>
+                <strong class="soak-kv__txt" :class="minRateTone()">{{ formatRate(sessionSummary.min_point_success_rate) }}</strong>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -203,7 +273,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { IconQuestionCircle } from '@arco-design/web-vue/es/icon'
+import { IconQuestionCircle, IconDown, IconUp } from '@arco-design/web-vue/es/icon'
 import request from '@/utils/request'
 import ScanEngineSoakHelpDrawer from '@/components/dashboard/ScanEngineSoakHelpDrawer.vue'
 
@@ -242,6 +312,12 @@ const releaseGateItems = computed(() => releaseGate.value.items || [])
 const passCount = computed(() => releaseGateItems.value.filter(i => i.passed).length)
 const failCount = computed(() => releaseGateItems.value.filter(i => !i.passed).length)
 
+// 折叠状态：默认收起，可手动切换
+const gateCollapsed = ref(null)
+const scanCollapsed = ref(null)
+const effectiveGateCollapsed = computed(() => (gateCollapsed.value !== null) ? gateCollapsed.value : true)
+const effectiveScanCollapsed = computed(() => (scanCollapsed.value !== null) ? scanCollapsed.value : true)
+
 const gateSummaryClass = computed(() => {
   if (releaseGate.value.all_passed === true) return 'is-pass'
   if (releaseGate.value.partial_failed) return 'is-partial'
@@ -264,6 +340,12 @@ const trendCards = computed(() => {
     { key: 'global_queue', label: '全局队列', values: t.global_queue || [], latest: lastValue(t.global_queue) },
     { key: 'scan_class_late', label: 'Scan Class 迟到', values: t.scan_class_late || [], latest: lastValue(t.scan_class_late) }
   ]
+})
+
+const trendMap = computed(() => {
+  const out = {}
+  trendCards.value.forEach(t => { out[t.key] = t.values || [] })
+  return out
 })
 
 const scanClassRowClass = (row) => {
@@ -322,6 +404,22 @@ const barHeight = (value, series) => {
 const formatRate = (rate) => {
   if (rate === undefined || rate === null) return '-'
   return (rate * 100).toFixed(1) + '%'
+}
+
+/* 运行指标语义着色：超阈值时给出警示/异常色 */
+const throttleTone = (status) => (status && status !== '正常' ? 'is-warn' : 'is-pass')
+const globalQueueTone = () => {
+  const q = snapshot.value.global_queue ?? 0
+  const lim = snapshot.value.global_queue_limit ?? 10000
+  const r = lim > 0 ? q / lim : 0
+  return r >= 0.7 ? 'is-warn' : r > 0 ? 'is-pass' : ''
+}
+const minRateTone = () => {
+  const v = sessionSummary.value.min_point_success_rate
+  if (v === undefined || v === null) return ''
+  if (v < 0.95) return 'is-fail'
+  if (v < 0.99) return 'is-warn'
+  return 'is-pass'
 }
 
 /** 扫描间隔标签：整秒/整毫秒保持整数，小数间隔保留两位 */

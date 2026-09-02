@@ -172,6 +172,7 @@ func TestWriteViaOPCUA(t *testing.T) {
 		Port:        4850,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -220,6 +221,7 @@ func TestBatchWrite(t *testing.T) {
 		Port:        4851,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -288,6 +290,7 @@ func TestGetWriteHistory(t *testing.T) {
 		Port:        4852,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -332,6 +335,7 @@ func TestWriteHistoryLimit(t *testing.T) {
 		Port:        4853,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -545,6 +549,7 @@ func TestServerUpdate(t *testing.T) {
 		Port:        4842,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -565,7 +570,7 @@ func TestServerUpdate(t *testing.T) {
 	server.Update(value)
 
 	nodeKey := "ch1/dev1/point1"
-	if _, exists := server.nodeMap[nodeKey]; exists {
+	if server.HasNode(nodeKey) {
 		t.Logf("Update test passed: point1 updated successfully")
 	} else {
 		t.Fatalf("Node %s not found in nodeMap", nodeKey)
@@ -587,6 +592,7 @@ func BenchmarkServerRead(b *testing.B) {
 		Port:        4843,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -599,7 +605,7 @@ func BenchmarkServerRead(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		nodeKey := "ch1/dev1/point1"
-		if _, exists := server.nodeMap[nodeKey]; !exists {
+		if !server.HasNode(nodeKey) {
 			b.Fatalf("Node %s not found in nodeMap", nodeKey)
 		}
 	}
@@ -651,6 +657,7 @@ func BenchmarkServerUpdate(b *testing.B) {
 		Port:        4845,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -690,6 +697,7 @@ func TestServerStress(t *testing.T) {
 		Port:        4846,
 		Endpoint:    "/",
 		AuthMethods: []string{"Anonymous"},
+		Devices:     model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	server := NewServer(config, sb, nil)
@@ -712,7 +720,7 @@ func TestServerStress(t *testing.T) {
 
 			for j := 0; j < operationsPerClient; j++ {
 				nodeKey := "ch1/dev1/point1"
-				if _, exists := server.nodeMap[nodeKey]; !exists {
+				if !server.HasNode(nodeKey) {
 					errorCh <- fmt.Errorf("client %d: node %s not found", clientID, nodeKey)
 					return
 				}

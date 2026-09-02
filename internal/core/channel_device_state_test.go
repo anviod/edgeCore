@@ -248,6 +248,34 @@ func TestCollectContextFromExecuteResult_CountsPointQuality(t *testing.T) {
 	}
 }
 
+// TestCollectContextFromExecuteResult_AllSkippedIdleDoesNotOffline: when the link is
+// healthy (nil error) but every point is in point-level cooldown, no I/O actually ran.
+// Thread result must be treated as an idle success (device stays online), NOT as an
+// unreachable failure — otherwise a cooled device is stuck offline until restart.
+func TestCollectContextFromExecuteResult_AllSkippedIdleDoesNotOffline(t *testing.T) {
+	idle := collectContextFromExecuteResult(&ExecuteResult{Success: true}, 3)
+	if idle.SuccessCmd != 1 || idle.FailCmd != 0 {
+		t.Fatalf("expected idle collect success=1 fail=0, got success=%d fail=%d",
+			idle.SuccessCmd, idle.FailCmd)
+	}
+}
+
+// TestFinalizeScanCollect_AllSkippedKeepsDeviceOnline verifies a device whose points
+// are all cooled (empty idle result) recovers to Online from Offline without a restart.
+func TestFinalizeScanCollect_AllSkippedKeepsDeviceOnline(t *testing.T) {
+	cm := newTestChannelManager()
+	cm.scanEngineAdapter.scanEngine.AddTask("dev-1", "modbus-tcp", 1*time.Second, 5, []string{"p1", "p2", "p3"}, nil)
+
+	node := cm.stateManager.GetNode("dev-1")
+	node.Runtime.State = NodeStateOffline
+
+	cm.finalizeScanCollect("dev-1", &ExecuteResult{Success: true})
+
+	if node.Runtime.State == NodeStateOffline {
+		t.Fatal("device whose points are all cooled (idle success) must not remain offline")
+	}
+}
+
 func TestFinalizeScanCollect_LinkErrorWithLinkUpOnlyFailsDevice(t *testing.T) {
 	cm := newTestChannelManager()
 

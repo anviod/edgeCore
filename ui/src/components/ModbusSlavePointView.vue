@@ -86,7 +86,6 @@
           :scroll="{ x: 1198 }"
           @selection-change="onSelectionChange"
           @page-change="onPageChange"
-          @page-size-change="onPageSizeChange"
         >
           <template #offset="{ record }">
             <span class="cell-numeric">{{ formatOffsetAddress(record.address) }}</span>
@@ -185,6 +184,11 @@ const props = defineProps({
   loadError: {
     type: String,
     default: ''
+  },
+  // 统一分页来源：由父级"每页"选择器驱动，组件不再自带条目切换器
+  pageSize: {
+    type: Number,
+    default: 20
   }
 })
 
@@ -272,16 +276,17 @@ const columns = [
 const paginationByGroup = reactive(Object.fromEntries(
   MODBUS_REGISTER_GROUPS.map(group => [
     group.key,
-    { current: 1, pageSize: 10 },
+    { current: 1 },
   ])
 ))
 
 const activePagination = computed(() => ({
-  ...paginationByGroup[activeTab.value],
+  current: paginationByGroup[activeTab.value].current,
+  pageSize: props.pageSize,
   total: activeGroup.value.points.length,
-  pageSizeOptions: [10, 20, 50, 100],
-  showPageSize: true,
+  showPageSize: false,
   showTotal: true,
+  showJumper: true,
   size: 'small',
 }))
 
@@ -289,11 +294,12 @@ const onPageChange = (current) => {
   paginationByGroup[activeTab.value].current = current
 }
 
-const onPageSizeChange = (pageSize) => {
-  const pagination = paginationByGroup[activeTab.value]
-  pagination.pageSize = pageSize
-  pagination.current = 1
-}
+// 页码随供给页大小变化自动收敛（如切换到较小分页时）
+watch(() => props.pageSize, () => {
+  for (const group of MODBUS_REGISTER_GROUPS) {
+    paginationByGroup[group.key].current = 1
+  }
+})
 
 const groupIdSignature = computed(() =>
   MODBUS_REGISTER_GROUPS.map(group =>
@@ -311,7 +317,7 @@ watch(groupIdSignature, () => {
   for (const group of MODBUS_REGISTER_GROUPS) {
     const total = (groupedFilteredPoints.value[group.key] || []).length
     const pagination = paginationByGroup[group.key]
-    const maxPage = Math.max(1, Math.ceil(total / pagination.pageSize))
+    const maxPage = Math.max(1, Math.ceil(total / props.pageSize))
     if (pagination.current > maxPage) {
       pagination.current = maxPage
     }
@@ -547,6 +553,89 @@ button.modbus-action-btn:focus-visible {
 /* 行悬停与选中反馈 */
 .modbus-group-table :deep(.arco-table-tr:hover .arco-table-td) {
   background: var(--edgeCore-surface-muted, #f8fafc) !important;
+}
+
+/* 分页栏整体居中：悬停出现引导提示，顶部虚线分隔与表格区隔，底部留 1.5px 空隙 */
+.modbus-group-table :deep(.arco-table-pagination) {
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1.5px;
+  border-top: 1px dashed var(--border, rgba(15, 23, 42, 0.16));
+  padding-top: 14px;
+}
+.modbus-group-table :deep(.arco-table-pagination)::after {
+  content: '支持翻页 / 输入页码跳转';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.modbus-group-table :deep(.arco-table-pagination:hover)::after {
+  opacity: 1;
+}
+
+/* ── 分页控件精修：圆角胶囊 + 主题高亮 + 等宽计数 ── */
+.modbus-group-table :deep(.arco-pagination-item) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  border-radius: 8px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.modbus-group-table :deep(.arco-pagination-item-previous),
+.modbus-group-table :deep(.arco-pagination-item-next) {
+  border-radius: 8px;
+}
+.modbus-group-table :deep(.arco-pagination-item:hover) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.modbus-group-table :deep(.arco-pagination-item-active),
+.modbus-group-table :deep(.arco-pagination-item-active:hover) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover, var(--primary)));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.modbus-group-table :deep(.arco-pagination-item-disabled),
+.modbus-group-table :deep(.arco-pagination-item-disabled:hover) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--border, #d0d5dd);
+  cursor: not-allowed;
+}
+.modbus-group-table :deep(.arco-pagination-item:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
+  outline-offset: 2px;
+}
+.modbus-group-table :deep(.arco-pagination-total) {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  color: var(--text-secondary, #4b5563);
+}
+.modbus-group-table :deep(.arco-pagination-jumper .arco-input-inner-wrapper) {
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .modbus-group-table :deep(.arco-pagination-item),
+  .modbus-group-table :deep(.arco-table-pagination)::after {
+    transition: none;
+  }
 }
 
 .modbus-group-table :deep(.arco-table-tr.arco-table-tr-selected .arco-table-td) {

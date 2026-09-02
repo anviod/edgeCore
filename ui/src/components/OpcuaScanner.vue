@@ -64,7 +64,8 @@
             :loading="loading"
             @click="startScan"
             :disabled="!effectiveEndpoint"
-            class="scan-btn"
+            class="scan-btn rescan-btn"
+            :class="{ 'is-scanning': loading }"
           >
             <template #icon><IconScan /></template>
             重新扫描
@@ -894,15 +895,106 @@ const addSelected = async () => {
 }
 
 .scan-btn {
-  background: #212529 !important;
-  border: none;
-  border-radius: 0;
+  border-radius: 8px;
   padding: 4px 16px;
   font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
-.scan-btn:hover {
-  background: #343a40 !important;
+/* 重新扫描：深色底高对比白字 + 动效 */
+.rescan-btn {
+  position: relative;
+  overflow: hidden;
+  background: #12151c !important;
+  border: none;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, background 0.18s ease;
+}
+.rescan-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #262b38 !important;
+  box-shadow: 0 4px 14px rgba(18, 21, 28, 0.35);
+}
+.rescan-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.rescan-btn:disabled {
+  opacity: 0.6;
+  color: #fff !important;
+}
+/* 悬停流光扫过 */
+.rescan-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rescan-btn:hover:not(:disabled)::after {
+  left: 140%;
+}
+/* 扫描中：呼吸 + 波纹扩散 */
+.rescan-btn.is-scanning {
+  animation: rescanPulse 1.4s ease-in-out infinite;
+}
+.rescan-btn.is-scanning::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  animation: rescanRing 1.4s ease-out infinite;
+  pointer-events: none;
+}
+.rescan-btn.is-scanning .arco-icon-loading {
+  animation: rescanPulse 1.4s ease-in-out infinite;
+}
+@keyframes rescanPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px) scale(1.02); }
+}
+@keyframes rescanRing {
+  0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.45); }
+  100% { box-shadow: 0 0 0 8px rgba(14, 165, 233, 0); }
+}
+/* 无障碍兜底：系统开启“减弱动态效果”时关闭所有扫描按钮动效 */
+@media (prefers-reduced-motion: reduce) {
+  .rescan-btn {
+    transition: none;
+    animation: none;
+  }
+  .rescan-btn::after,
+  .rescan-btn::before {
+    display: none;
+    animation: none;
+  }
+  .rescan-btn.is-scanning .arco-icon-loading {
+    animation: none;
+  }
+}
+
+/* 扫描结果表格：收紧行内垂直间距，适配宽表阅读 */
+.scanner-content :deep(.arco-table-td),
+.scanner-content :deep(.arco-table-th) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+/* 尽量禁止文字换行：超出列宽以省略号截断 */
+.scanner-content :deep(.arco-table-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stats-bar {

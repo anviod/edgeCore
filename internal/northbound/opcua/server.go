@@ -635,6 +635,15 @@ func (s *Server) rebuildAddressSpaceInPlaceLocked() error {
 	return nil
 }
 
+// HasNode reports whether the node for the given key (channelID/deviceID/pointID)
+// currently exists in the address space. Thread-safe.
+func (s *Server) HasNode(key string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.nodeMap[key]
+	return ok
+}
+
 func (s *Server) Update(v model.Value) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

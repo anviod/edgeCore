@@ -118,6 +118,7 @@ func TestScanLargeNumberOfPoints(t *testing.T) {
 		Endpoint: "/test",
 		CertFile: filepath.Join(tmpDir, "server.crt"),
 		KeyFile:  filepath.Join(tmpDir, "server.key"),
+		Devices:  model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	srv := nbopcua.NewServer(cfg, mockSB, nil)

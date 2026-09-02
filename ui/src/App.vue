@@ -54,6 +54,19 @@
           <span class="version-value">{{ systemVersion }}</span>
           <span v-if="buildTime" class="version-buildtime">{{ buildTime }}</span>
         </div>
+        <button
+          class="check-update-btn"
+          :class="{ 'is-collapsed': drawerRail }"
+          :title="checkingUpdate ? '正在检查更新...' : '检查更新'"
+          @click="handleCheckUpdate"
+        >
+          <icon-refresh
+            class="check-update-icon"
+            :class="{ spinning: checkingUpdate }"
+            :size="drawerRail ? 16 : 13"
+          />
+          <span v-if="!drawerRail">检查更新</span>
+        </button>
         <button class="collapse-btn" @click="drawerRail = !drawerRail">
           <icon-arrow-left
             class="collapse-icon"
@@ -125,6 +138,7 @@
     </main>
 
     <change-password-dialog ref="changePwdRef" />
+    <update-dialog ref="updateDialogRef" />
     <AiAssistantPanel ref="aiAssistantRef" />
 
     <a-modal
@@ -159,7 +173,9 @@ import { useRoute, useRouter } from 'vue-router'
 import { globalState, showMessage } from './composables/useGlobalState'
 import { userStore } from '@/stores/user'
 import LoginApi from '@/api/login'
+import UpdateApi from '@/api/update'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import UpdateDialog from '@/components/UpdateDialog.vue'
 import AiAssistantIcon from '@/components/ai-assistant/AiAssistantIcon.vue'
 import AiAssistantPanel from '@/components/ai-assistant/AiAssistantPanel.vue'
 import { useAiAssistant } from './composables/useAiAssistant'
@@ -191,6 +207,7 @@ watch(
   }
 )
 const changePwdRef = ref(null)
+const updateDialogRef = ref(null)
 const restartModalVisible = ref(false)
 const isDarkTheme = ref(false)
 const aiAssistantRef = ref(null)
@@ -226,6 +243,36 @@ const fetchSystemInfo = async () => {
   }
 }
 
+// —— 软件更新 ——
+const checkingUpdate = ref(false)
+let autoCheckTriggered = false
+
+// 手动检查更新：始终弹出结果弹窗
+const handleCheckUpdate = async () => {
+  if (checkingUpdate.value) return
+  checkingUpdate.value = true
+  try {
+    await updateDialogRef.value?.checkNow(true)
+  } finally {
+    checkingUpdate.value = false
+  }
+}
+
+// 登录进入系统时自动检测新版本（仅触发一次），发现有新版则弹窗提示
+const maybeAutoCheckUpdate = async () => {
+  if (autoCheckTriggered || !updateDialogRef.value) return
+  autoCheckTriggered = true
+  await fetchSystemInfo()
+  try {
+    const res = await UpdateApi.checkUpdate()
+    if (res.code === '0' && res.data?.hasUpdate && res.data.latest) {
+      updateDialogRef.value?.checkNow(false)
+    }
+  } catch (e) {
+    console.error('自动检查更新失败:', e)
+  }
+}
+
 const applyTheme = (dark) => {
   document.body.classList.toggle('dark-theme', dark)
   document.documentElement.classList.toggle('dark-theme', dark)
@@ -255,6 +302,14 @@ const handleClickOutside = (event) => {
   }
 }
 
+// 仅在进入登录后页面时自动检测新版本
+watch(
+  () => isLoginPage.value,
+  async (isLogin) => {
+    if (!isLogin) await maybeAutoCheckUpdate()
+  }
+)
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   const savedTheme = localStorage.getItem('theme')
@@ -273,7 +328,7 @@ onMounted(() => {
       console.error('Failed to restore user info', e)
     }
   }
-  fetchSystemInfo()
+  if (!isLoginPage.value) maybeAutoCheckUpdate()
 })
 
 onUnmounted(() => {
@@ -358,6 +413,50 @@ const confirmRestart = () => {
 
 .dropdown-icon.is-open {
   transform: rotate(180deg);
+}
+
+.check-update-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--color-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.check-update-btn:hover {
+  color: var(--color-primary-6);
+  background-color: var(--color-fill-1);
+  border-color: var(--color-border-2);
+}
+
+.check-update-btn.is-collapsed {
+  width: auto;
+  margin-top: 6px;
+}
+
+.check-update-icon {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.check-update-icon.spinning {
+  animation: update-spin 1s linear infinite;
+}
+
+@keyframes update-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .user-avatar {

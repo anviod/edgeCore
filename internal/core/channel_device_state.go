@@ -66,6 +66,15 @@ func collectContextFromExecuteResult(result *ExecuteResult, pointCount int) *Col
 	}
 
 	if len(result.Values) == 0 {
+		if result.Success {
+			// 驱动成功但零值返回：点位全部处于点位级冷却（未做任何实际 I/O），
+			// 链路实测健康。这是"空闲采集"而非"设备不可达"。
+			// 若按全部失败裁决，冷却位点会反复把设备判为 Unreachable → Offline，
+			// 且冷却门控让它无法自恢复，只有重启进程清空内存态才会重新上线。
+			// 因此按一次成功对待，设备保持在线；失败点仍在点位列表单独展示。
+			ctx.SuccessCmd = 1
+			return ctx
+		}
 		if pointCount > 0 {
 			ctx.FailCmd = pointCount
 		} else {

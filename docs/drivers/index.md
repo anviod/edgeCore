@@ -88,6 +88,7 @@ hero_buttons:
 - [Modbus 心跳优化](MODBUS_HEARTBEAT_OPTIMIZATION.html) — 索引
 - [Modbus 智能探测](Modbus智能探测.html)
 - [边缘网关 Modbus 优化](边缘网关Modbus优化.html)
+- [Modbus 冷却防饿死机制](modbus冷却防饿死机制.html) — 设备级故障 vs 点位冷却（两点因分离）
 
 ### OPC UA
 - [OPC UA 设计](OPC_UA_Design.html)

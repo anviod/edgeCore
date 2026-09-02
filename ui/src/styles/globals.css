@@ -411,3 +411,12 @@
   border-left: none !important;
   background: rgba(14, 165, 233, 0.06) !important;
 }
+
+/* 可自由拖拽调整大小的扫描弹窗（modal 被 teleport 到 body，故全局声明） */
+.industrial-white-modal {
+  resize: both;
+  overflow: auto;
+  min-width: 880px;
+  max-width: 96vw;
+  min-height: 540px;
+}

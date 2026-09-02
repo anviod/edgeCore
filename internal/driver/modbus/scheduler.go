@@ -29,6 +29,11 @@ type PointRuntime struct {
 	CooldownUntil time.Time
 }
 
+// permanentSkipUntil 协议显式非法地址(Illegal Data Address / 异常码2)的永久跳过
+// 哨兵时间。点位被判非法地址后不再自动重试，仅当点位配置被人工修改（见
+// prepareRuntimes 的配置变更检测）或进程重启重建 pointStates 时才解除。
+var permanentSkipUntil = time.Unix(1<<62, 0)
+
 // PointGroup 表示一组连续的点位及其地址信息
 type PointGroup struct {
 	RegType        model.RegisterType // 寄存器类型
@@ -149,9 +154,11 @@ func (s *PointScheduler) Read(ctx context.Context, points []model.Point) (map[st
 		}
 		if err != nil {
 			log.Printf("Error reading group starting at offset %d: %v", group.StartOffset, err)
-			// Mark group failed
+			// Mark group failed. pointLevel 仅在单点组时为 true：多点点位的批量
+			// 失败属于整组/设备级问题，不得据此把点位判为永久非法地址。
+			groupLevel := len(group.Points) > 1
 			for _, p := range group.Points {
-				s.markPointFailed(p.ID, err)
+				s.markPointFailed(p.ID, err, !groupLevel)
 				result[p.ID] = model.Value{
 					PointID: p.ID,
 					Value:   nil,
@@ -173,7 +180,8 @@ func (s *PointScheduler) Read(ctx context.Context, points []model.Point) (map[st
 
 			if val == nil {
 				quality = "Bad"
-				s.markPointFailed(id, pointErr)
+				// 单点隔离回退读错误：可精确判定是否协议显式非法地址
+				s.markPointFailed(id, pointErr, true)
 				allSuccess = false
 			} else {
 				s.markPointSuccess(id, now)
@@ -254,6 +262,13 @@ func (s *PointScheduler) prepareRuntimes(points []model.Point) []model.Point {
 				State: "OK",
 			}
 			s.pointStates[p.ID] = rt
+		} else if isPointConfigChanged(rt.Point, p) {
+			// 人工重置信号：点位的关键配置（地址/寄存器类型/数据类型）被修改，
+			// 清除永久跳过与冷却，立即重新采集（参照 Kepware：改配置即恢复）。
+			rt.Point = p
+			rt.State = "OK"
+			rt.FailCount = 0
+			rt.CooldownUntil = time.Time{}
 		}
 
 		// Check if skipped
@@ -272,27 +287,32 @@ func (s *PointScheduler) prepareRuntimes(points []model.Point) []model.Point {
 	return active
 }
 
-func (s *PointScheduler) markPointFailed(pointID string, err error) {
+func (s *PointScheduler) markPointFailed(pointID string, err error, pointLevel bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if rt, ok := s.pointStates[pointID]; ok {
-		rt.FailCount++
-
-		// Check for specific Modbus protocol errors that indicate permanent invalid address
-		isIllegalAddress := false
-		if err != nil {
-			errMsg := strings.ToLower(err.Error())
-			if strings.Contains(errMsg, "illegal") || strings.Contains(errMsg, "exception 2") {
-				isIllegalAddress = true
-			}
+		// Connection/transport-level failures (timeout, not connected, link reset)
+		// are device-level faults, not point faults. Per Kepware's model, a device
+		// outage must not cool its points down — otherwise on recovery every point
+		// would remain SKIPPED and the device starves (防饿死). Thaw the point so
+		// the whole tag set is immediately readable once the link is back.
+		if err != nil && isConnectionError(err) {
+			rt.FailCount = 0
+			rt.State = "OK"
+			rt.CooldownUntil = time.Time{}
+			return
 		}
 
-		if isIllegalAddress {
-			// Immediately mark as skipped for a very long time (e.g., 24 hours)
+		rt.FailCount++
+
+		// 非法地址仅在"单点隔离"且协议显式返回 Illegal Data Address（异常码2）时判定。
+		// pointLevel=false 表示错误来自整组批量读失败（设备离线/整组死掉），绝不能
+		// 据此把全部点位判为非法地址；否则设备故障会被错误降级为永久点位跳过。
+		if pointLevel && err != nil && isIllegalDataAddress(err) {
 			rt.State = "SKIPPED"
-			rt.CooldownUntil = time.Now().Add(24 * time.Hour)
-			log.Printf("Point %s marked as INVALID due to Illegal Data Address (Exception 2). Will retry in 24 hours.", pointID)
+			rt.CooldownUntil = permanentSkipUntil
+			log.Printf("Point %s permanently SKIPPED: Illegal Data Address (Exception 2). Edit the point config to reset.", pointID)
 			return
 		}
 
@@ -309,6 +329,47 @@ func (s *PointScheduler) markPointFailed(pointID string, err error) {
 			log.Printf("Point %s skipped due to repeated failures (%d times) for 60s", pointID, rt.FailCount)
 		}
 	}
+}
+
+// isIllegalDataAddress 判定是否为 Modbus 协议显式返回的"非法数据地址"（异常码2）。
+// 仅在单点读返回该确定性异常时命中；用文本上的非法地址异常精确区分，避免把
+// illegal data value(异常3)、设备离线等其它失败误判为永久非法地址。
+func isIllegalDataAddress(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	return strings.Contains(msg, "illegal data address") ||
+		strings.Contains(msg, "exception 2") ||
+		strings.Contains(msg, "exception '2'")
+}
+
+// isPointConfigChanged 判断点位关键配置（地址/寄存器类型）是否被人工修改。
+// 在 prepareRuntimes 中作为"人工重置"信号：点位被编辑后清除永久跳过/冷却。
+func isPointConfigChanged(a, b model.Point) bool {
+	return a.Address != b.Address || a.RegisterType != b.RegisterType || a.DataType != b.DataType
+}
+
+// connectionErrorHints 判定传输/链路级失败（设备级故障）。命中时点位不做冷却，
+// 视为设备离线而非点位异常，避免连接恢复后点位饿死。
+var connectionErrorHints = []string{
+	"not connected", "connection refused", "connection reset", "connection closed",
+	"network unreachable", "no route to host", "broken pipe", "dial ",
+	"tls handshake", "cannot assign requested address", "i/o timeout",
+	"request timed out", "timeout", "modbus: not connected",
+}
+
+func isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := strings.ToLower(err.Error())
+	for _, h := range connectionErrorHints {
+		if strings.Contains(msg, h) {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *PointScheduler) markPointSuccess(pointID string, now time.Time) {

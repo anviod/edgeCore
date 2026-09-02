@@ -30,6 +30,8 @@ import (
 	"github.com/anviod/edgeCore/internal/pkg/logger"
 	"github.com/anviod/edgeCore/internal/storage"
 
+	"github.com/anviod/edgeCore/internal/update"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
@@ -90,6 +92,7 @@ type Server struct {
 	runtimeCompactStop     chan struct{}
 	runtimeCompactOnce     sync.Once
 	runtimeCompactStopOnce sync.Once
+	updater                *update.Manager // 软件更新检查与一键升级
 }
 
 func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeline, nbm *core.NorthboundManager, ecm *core.EdgeComputeManager, sm *core.SystemManager, dsm *core.DeviceStorageManager, cfgManager *config.ConfigManager, logBroadcaster *logger.LogBroadcaster) *Server {
@@ -97,6 +100,7 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
+		BodyLimit:    200 * 1024 * 1024, // 200MB：允许上传本地升级安装包
 		// Long scan/browse/export work must use async job APIs, not stretch these.
 	})
 	app.Use(recover.New())
@@ -119,6 +123,7 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 		logBroadcaster: logBroadcaster,
 		startTime:      time.Now(),
 		logger:         zap.L(),
+		updater:        update.NewManager("", "", update.NewChecker("")),
 	}
 
 	// Inject ChannelManager into EdgeComputeManager
@@ -518,6 +523,11 @@ func (s *Server) setupRoutes() {
 	api.Get("/system/network/info", s.getNetworkInfo)
 	api.Get("/system/hostname/status", s.getHostnameAccessStatus)
 	api.Post("/system/network/connectivity", s.checkConnectivity)
+	api.Get("/system/update/check", s.handleUpdateCheck)
+	api.Post("/system/update/perform", s.handlePerformUpdate)
+	api.Get("/system/update/status", s.handleUpdateStatus)
+	api.Post("/system/update/upload", s.handleUploadPackage)
+	api.Post("/system/update/install-local", s.handleInstallLocal)
 
 	// 第一级：采集通道列表
 	api.Get("/channels", s.getChannels)

@@ -57,6 +57,15 @@
           size="small"
           class="point-list-toolbar__select point-list-toolbar__select--sm"
         />
+        <div class="point-list-toolbar__pager">
+          <span class="point-list-toolbar__pager-label">每页</span>
+          <a-select
+            v-model="pageSize"
+            :options="PAGE_SIZE_CHOICES"
+            size="small"
+            class="point-list-toolbar__select point-list-toolbar__select--sm point-list-toolbar__pager-select"
+          />
+        </div>
       </div>
       <div v-if="selection.selectedIds.length > 0" class="point-list-toolbar__batch">
         <span class="point-list-toolbar__selected-count font-mono">已选 {{ selection.selectedIds.length }} 项</span>
@@ -87,6 +96,7 @@
             :selected-ids="selection.selectedIds"
             :filter-key="modbusFilterKey"
             :load-error="loadError"
+            :page-size="effectivePageSize"
             @selection-change="onModbusSelectionChange"
             @clear-filters="clearGlobalFilters"
             @retry="fetchPoints({ force: true })"
@@ -100,6 +110,7 @@
             v-else
             :columns="tableColumns"
             :data="filteredPoints"
+            :pagination="paginationConfig"
             :row-selection="rowSelection"
             v-model:selected-keys="selection.selectedIds"
             row-key="id"
@@ -109,7 +120,7 @@
             <template #value="{ record }">
               <a-tooltip :content="`${formatValue(record.value)} ${record.unit || ''} - ${getRegisterHint(record)}`">
                 <div @click="showFullValue(record)" class="value-cell cursor-pointer block truncate">
-                  <span class="value-text font-mono">{{ formatValue(record.value) }}</span>
+                  <span class="value-text font-mono point-value-tick" :key="'v' + formatValue(record.value)">{{ formatValue(record.value) }}</span>
                   <span v-if="record.unit" class="value-unit">{{ record.unit }}</span>
                 </div>
               </a-tooltip>
@@ -207,7 +218,7 @@
 
       <!-- Connection Status Footer -->
       <div v-if="deviceInfo" class="terminal-info">
-        <span class="terminal-dot"></span>
+        <span class="terminal-dot" :class="terminalDotClass"></span>
         <span class="monospace-text">
           连接状态:{{ deviceInfo.state === 0 ? '已连接' : deviceInfo.state === 1 ? '不稳定' : '已断开' }} | 协议: {{ formatProtocolTag(channelProtocol) }} | 连续通信:{{ deviceInfo.runtime?.success_count || 0 }} 次 | 最近失败:{{ deviceInfo.runtime?.last_fail_time && new Date(deviceInfo.runtime.last_fail_time).getFullYear() > 1 ? formatDate(deviceInfo.runtime.last_fail_time) : '无' }}
         </span>
@@ -1299,6 +1310,14 @@ const route = useRoute()
 const router = useRouter()
 const points = ref([])
 const deviceInfo = ref(null)
+
+// 连接状态语义着色：0 已连接 / 1 不稳定 / 其它 断开
+const terminalDotClass = computed(() => {
+  const s = deviceInfo.value?.state
+  if (s === 0) return 'terminal-dot--ok'
+  if (s === 1) return 'terminal-dot--warn'
+  return 'terminal-dot--off'
+})
 const loading = ref(false)
 const loadError = ref('')
 
@@ -1335,6 +1354,25 @@ const filters = reactive({
     search: '',
     quality: [],
 })
+
+// 每页条数选择：20 / 50 / 100 / 全部(0)。当选择"全部"时按当前过滤后的总数渲染单页。
+const PAGE_SIZE_CHOICES = [
+    { label: '20 条/页', value: 20 },
+    { label: '50 条/页', value: 50 },
+    { label: '100 条/页', value: 100 },
+    { label: '全部', value: 0 },
+]
+const pageSize = ref(20)
+const effectivePageSize = computed(() => (pageSize.value === 0
+    ? Math.max(filteredPoints.value.length, 1)
+    : pageSize.value))
+const paginationConfig = computed(() => ({
+    pageSize: effectivePageSize.value,
+    total: filteredPoints.value.length,
+    showTotal: true,
+    showJumper: true,
+    showPageSize: false,
+}))
 
 const modbusFilterKey = computed(() => JSON.stringify([
     filters.search.trim().toLowerCase(),
@@ -4239,6 +4277,213 @@ const normalizeWriteValue = () => {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+.point-list-toolbar__pager {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.point-list-toolbar__pager-label {
+  font-size: 12px;
+  color: var(--text-tertiary, #94a3b8);
+  white-space: nowrap;
+}
+.point-list-toolbar__pager-select {
+  width: 118px;
+}
+
+/* ── 精细化抛光：行间距与行级反馈 ── */
+.industrial-table-fluid :deep(.arco-table-td) {
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  border-bottom: 1px solid var(--border, rgba(15, 23, 42, 0.06)) !important;
+  vertical-align: middle;
+}
+.industrial-table-fluid :deep(.arco-table-tr:hover .arco-table-td) {
+  background: rgba(14, 165, 233, 0.04) !important;
+}
+.value-cell {
+  gap: 2px;
+}
+.value-text {
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+
+/* ── 数值变化动效：值刷新时上浮淡入 ── */
+.point-value-tick {
+  display: inline-block;
+  animation: pointValueTick 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, color;
+}
+@keyframes pointValueTick {
+  0% {
+    opacity: 0.15;
+    transform: translateY(2px);
+    color: var(--primary);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    color: var(--text-primary);
+  }
+}
+
+/* ── 选择器动效 ── */
+.point-list-toolbar__pager-select :deep(.arco-select-view),
+.point-list-toolbar__select :deep(.arco-select-view) {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.point-list-toolbar__pager-select:hover :deep(.arco-select-view),
+.point-list-toolbar__select:hover :deep(.arco-select-view) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+:global(.arco-select-popup .arco-select-option) {
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+/* ── 尊重系统降低动效偏好 ── */
+@media (prefers-reduced-motion: reduce) {
+  .point-value-tick {
+    animation: none;
+  }
+  .point-list-toolbar__pager-select :deep(.arco-select-view),
+  .point-list-toolbar__select :deep(.arco-select-view) {
+    transition: none;
+  }
+}
+
+/* ═══ 终态抛光：表格卡片气质 + 状态语义着色 + 检索框一致化 ═══ */
+.point-list-container .table-container {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -22px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+/* 检索框获得与下拉一致的聚焦呼应 */
+.point-list-toolbar__search :deep(.arco-input-inner-wrapper) {
+  border-radius: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.point-list-toolbar__search :deep(.arco-input-inner-wrapper:focus-within) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+/* 分页栏整体居中：悬停出现引导提示，底部与容器边缘留 1.5px 空隙 */
+.point-list-container :deep(.arco-table-pagination) {
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1.5px;
+  border-top: 1px dashed var(--border, rgba(15, 23, 42, 0.16));
+  padding-top: 14px;
+}
+.point-list-container :deep(.arco-table-pagination)::after {
+  content: '支持翻页 / 输入页码跳转';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.point-list-container :deep(.arco-table-pagination:hover)::after {
+  opacity: 1;
+}
+
+/* ── 分页控件精修：圆角胶囊 + 主题高亮 + 等宽计数 ── */
+.point-list-container :deep(.arco-pagination-item) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  border-radius: 8px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.point-list-container :deep(.arco-pagination-item-previous),
+.point-list-container :deep(.arco-pagination-item-next) {
+  border-radius: 8px;
+}
+.point-list-container :deep(.arco-pagination-item:hover) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.point-list-container :deep(.arco-pagination-item-active),
+.point-list-container :deep(.arco-pagination-item-active:hover) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover, var(--primary)));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.point-list-container :deep(.arco-pagination-item-disabled),
+.point-list-container :deep(.arco-pagination-item-disabled:hover) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--border, #d0d5dd);
+  cursor: not-allowed;
+}
+.point-list-container :deep(.arco-pagination-item:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
+  outline-offset: 2px;
+}
+.point-list-container :deep(.arco-pagination-total) {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  color: var(--text-secondary, #4b5563);
+}
+.point-list-container :deep(.arco-pagination-jumper .arco-input-inner-wrapper) {
+  border-radius: 6px;
+}
+
+/* 连接状态圆点：按设备真实状态着色 */
+.terminal-dot--ok {
+  background: var(--edgeCore-success, #16a34a);
+  animation: pulse-dot 2s infinite;
+}
+.terminal-dot--warn {
+  background: #f59e0b;
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18);
+}
+.terminal-dot--off {
+  background: #9ca3af;
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-dot--ok {
+    animation: none;
+  }
+  .point-list-toolbar__search :deep(.arco-input-inner-wrapper) {
+    transition: none;
+  }
+  .point-list-container :deep(.arco-table-pagination)::after {
+    transition: none;
+  }
+  .point-list-container :deep(.arco-pagination-item) {
+    transition: none;
+  }
 }
 
 .left-title::before {
