@@ -3883,3 +3883,215 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   }
   .tk-hero__inner { gap: 40px; }
 }
+
+/* ============================================================
+   Polish Pass — 精致打磨
+   统一缓动、细节质感、无障碍、分隔线韵律
+   ============================================================ */
+
+/* ---------- 统一精致缓动曲线 ---------- */
+.tk-btn,
+.tk-signal,
+.tk-signal__go,
+.tk-register__row,
+.tk-register__num,
+.tk-metric,
+.tk-link,
+.tk-chip {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- 分隔线精致化：两端渐隐 ---------- */
+.tk-hero__scan {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200, 167, 91, 0.1) 8%,
+    var(--gold) 40%,
+    var(--gold-bright) 50%,
+    var(--gold) 60%,
+    rgba(200, 167, 91, 0.1) 92%,
+    transparent 100%);
+}
+
+/* 遥测面板顶部分隔线：两端渐隐 */
+.tk-hero__telemetry {
+  border-top: 1px solid var(--gold-line);
+  border-image: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold-line) 15%,
+    var(--gold-line) 85%,
+    transparent 100%) 1;
+}
+
+/* ---------- 刻度标尺：主次刻度韵律 ---------- */
+.tk-hero__ruler {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 115px,
+      var(--gold-border) 115px,
+      var(--gold-border) 117px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 23px,
+      var(--gold-line) 23px,
+      var(--gold-line) 24px
+    );
+}
+
+/* ---------- focus-visible 无障碍：金色外发光 ---------- */
+.tk-btn:focus-visible,
+.tk-signal:focus-visible,
+.tk-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--gold-glow);
+  border-color: var(--gold-bright);
+}
+.tk-signal:focus-visible { padding-left: 34px; }
+
+/* ---------- HUD 读数精致化 ---------- */
+.tk-hud {
+  gap: 4px;
+  padding: 6px 0 6px 16px;
+  border-left: 1px solid var(--gold-line);
+  border-image: linear-gradient(180deg,
+    transparent 0%,
+    var(--gold-line) 30%,
+    var(--gold-line) 70%,
+    transparent 100%) 1;
+}
+.tk-hud__row {
+  display: grid;
+  grid-template-columns: 44px auto;
+  gap: 12px;
+  align-items: baseline;
+}
+.tk-hud__label {
+  position: relative;
+  padding-left: 12px;
+  font-weight: 500;
+}
+.tk-hud__label::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  width: 5px; height: 1px;
+  background: var(--gold-line);
+}
+.tk-hud__val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tk-hud__val--ok {
+  position: relative;
+  padding-left: 12px;
+}
+.tk-hud__val--ok::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success-glow);
+  animation: tk-blink 2s ease-in-out infinite;
+}
+
+/* ---------- 登记表 hover 细节升级 ---------- */
+.tk-register__row {
+  transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-register__row:hover {
+  transform: translateX(4px);
+}
+.tk-register__row::before {
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, transparent 100%);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.tk-register__name {
+  transition: color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-register__row:hover .tk-register__name {
+  color: var(--gold-light);
+}
+
+/* ---------- 信号条 hover 更丝滑 ---------- */
+.tk-signal {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal::before {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal:hover {
+  padding-left: 40px;
+}
+.tk-signal__go {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal:hover .tk-signal__go {
+  transform: translateX(8px);
+  color: var(--gold-bright);
+  text-shadow: 0 0 10px var(--gold-glow);
+}
+
+/* ---------- CTA 按钮精致化 ---------- */
+.tk-btn {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-btn--primary {
+  box-shadow: 0 4px 18px -8px var(--gold-glow);
+}
+.tk-btn--primary:hover {
+  box-shadow: 0 12px 32px -10px var(--gold-glow);
+}
+.tk-btn--primary:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* ---------- 标题脉冲更柔和 ---------- */
+@keyframes tk-pulse-accent {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 20px var(--gold-glow), 0 0 48px var(--gold-glow);
+  }
+  50% {
+    opacity: 0.75;
+    text-shadow: 0 0 10px var(--gold-glow), 0 0 24px var(--gold-glow);
+  }
+}
+
+/* ---------- reduced-motion 完整降级 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tk-btn,
+  .tk-signal,
+  .tk-register__row,
+  .tk-register__num,
+  .tk-register__name,
+  .tk-metric,
+  .tk-link,
+  .tk-signal__go {
+    transition: none !important;
+  }
+  .tk-register__row:hover { transform: none !important; }
+  .tk-signal:hover { padding-left: 24px !important; }
+  .tk-signal:hover .tk-signal__go { transform: none !important; text-shadow: none !important; }
+  .tk-hud__val--ok::before { animation: none !important; }
+  .tk-btn--primary { box-shadow: none !important; }
+}
+
+/* ---------- 移动端打磨 ---------- */
+@media (max-width: 768px) {
+  .tk-hud { display: none; }
+  .tk-hero__ruler { display: none; }
+  .tk-signal:hover { padding-left: 24px; }
+}
