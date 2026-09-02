@@ -14,7 +14,7 @@ builds:
     binary: edgeCore
     flags:
       - -trimpath
-      - -mod=vendor
+      - -mod=mod
     env:
       - CGO_ENABLED=0
     ldflags: >
