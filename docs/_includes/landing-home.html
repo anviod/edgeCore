@@ -46,177 +46,73 @@
     <article class="feature-card">
       <span class="feature-card__tag">Protocol Layer</span>
       <h3>协议适配器</h3>
-      <p>13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、Siemens S7、EtherNet/IP、IEC 104、DLT645-2007、KNXnet/IP、SNMP v2c/v3、Omron FINS、Mitsubishi SLMP、Profinet IO、EtherCAT M1。</p>
+      <p>13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、Siemens S7、EtherNet/IP、IEC 104、DLT645-2007、KNXnet/IP、SNMP、Omron FINS、Mitsubishi SLMP、Profinet IO、EtherCAT M1。</p>
     </article>
     <article class="feature-card">
       <span class="feature-card__tag">Scheduler</span>
       <h3>ScanEngine</h3>
-      <p>基于 EDF 的扫描调度器，自适应节流、RTT/MTU 管理器、熔断与设备级隔离。目标：10k 点位 lag P95 &lt;100 ms。</p>
+      <p>基于 EDF 的扫描调度器，自适应节流与熔断，设备级隔离。目标 10k 点位 lag P95 &lt;100 ms。</p>
     </article>
     <article class="feature-card">
       <span class="feature-card__tag">State</span>
       <h3>ShadowCore</h3>
-      <p>点位值的内存事实来源，支持写时复制快照、环形缓冲区写入和分钟级持久化到 runtime.db。</p>
+      <p>点位值的内存事实来源，写时复制快照、环形缓冲区写入与分钟级持久化。</p>
     </article>
     <article class="feature-card">
       <span class="feature-card__tag">Compute</span>
       <h3>Execution Mapper</h3>
-      <p>边缘规则引擎，支持表达式求值、预处理流水线、批量动作与事件记录。本地执行，无需回环云端。</p>
+      <p>边缘规则引擎：表达式求值、预处理流水线、批量动作与事件记录，本地执行。</p>
     </article>
     <article class="feature-card">
       <span class="feature-card__tag">Virtualization</span>
       <h3>Virtual Shadow</h3>
-      <p>跨通道引用计算点和聚合点，公式依赖图与跨设备聚合。</p>
+      <p>跨通道引用计算点与聚合点，公式依赖图与跨设备聚合。</p>
     </article>
     <article class="feature-card">
       <span class="feature-card__tag">Northbound</span>
       <h3>北向管理器</h3>
-      <p>统一发布器，支持 store-and-forward、自动重连、主题模板与负载 schema 控制。</p>
+      <p>统一发布器，store-and-forward、自动重连、主题模板与 schema 控制。</p>
     </article>
   </div>
 </section>
 
-<!-- AI 能力专题 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">AI 加持</div>
-    <h2>MCP 与 EAN 2.0 能力体系</h2>
-    <p>94 个 MCP 工具覆盖从只读诊断到全功能 CRUD — LLM 直连工业网关，写操作卡在 Human-in-the-loop 门禁后面。</p>
-  </div>
-  <div class="grid-3">
-    <article class="feature-card">
-      <span class="feature-card__tag">MCP Server</span>
-      <h3>33 个原生工具</h3>
-      <p>JSON-RPC 2.0 over Streamable HTTP / SSE。8 只读 + 1 写操作 + 24 全功能 CRUD，6 个资源端点，13 个提示词模板。支持 Claude Desktop、Cursor、Windsurf、Continue.dev。</p>
-      <div class="feature-card__links">
-        <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入指南</a>
-        <a class="mini-link" href="API/AI.html">AI 能力专题</a>
-      </div>
-    </article>
-    <article class="feature-card">
-      <span class="feature-card__tag">EAN 2.0</span>
-      <h3>63 个协议能力</h3>
-      <p>15 种工业协议 × 4 种能力（读/写/扫描/列点）= 60 个设备能力 + 3 个系统/AI 能力。MQTT/NATS 传输，心跳发现，Invoke 调度带超时和状态机。</p>
-      <div class="feature-card__links">
-        <a class="mini-link" href="TODO/AI协同组件规划.html">AI 协同规划</a>
-        <a class="mini-link" href="edgeos/EAN2.0-edgeCore-EdgeOS改造指南.html">EAN 改造指南</a>
-      </div>
-    </article>
-    <article class="feature-card">
-      <span class="feature-card__tag">Bridge</span>
-      <h3>94 工具统一暴露</h3>
-      <p>EAN Capability 自动映射为 ean_* MCP 工具，加上 31 个 edgeCore_* 原生工具。LLM 一次连接访问全部能力，写操作门禁在协议层拦截，不侵入 Runtime。</p>
-      <div class="feature-card__links">
-        <a class="mini-link" href="API/AI.html">专题详情</a>
-        <a class="mini-link" href="TODO/EAN2-Joint-Verification-Report.html">验证报告</a>
-      </div>
-    </article>
-  </div>
-</section>
-
-<!-- 架构设计 + 工程准则 并排 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">数据流</div>
-    <h2>流水线架构</h2>
-    <p>解耦的驱动 → 调度器 → 状态 → 计算 → 分发</p>
-  </div>
-  <div class="arch-flow" data-arch-flow>
-    <canvas class="arch-particles" data-arch-canvas></canvas>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">01</span>
-      <span class="arch-step__label">现场总线</span>
-    </div>
-    <div class="arch-arrow">&#8594;</div>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">02</span>
-      <span class="arch-step__label">协议驱动</span>
-    </div>
-    <div class="arch-arrow">&#8594;</div>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">03</span>
-      <span class="arch-step__label">统一采集</span>
-    </div>
-    <div class="arch-arrow">&#8594;</div>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">04</span>
-      <span class="arch-step__label">数据模型</span>
-    </div>
-    <div class="arch-arrow">&#8594;</div>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">05</span>
-      <span class="arch-step__label">边缘计算</span>
-    </div>
-    <div class="arch-arrow">&#8594;</div>
-    <div class="arch-step">
-      <span class="arch-step__status"></span>
-      <span class="arch-step__num">06</span>
-      <span class="arch-step__label">北向输出</span>
-    </div>
-  </div>
-  <p class="arch-note">每个阶段暴露确定性接口；新增协议或计算节点无需改动流水线主干。</p>
-</section>
-
-<!-- 文档导航 -->
+<!-- 快速入口 -->
 <section class="landing-section">
   <div class="section-heading">
     <div class="section-kicker">快速入口</div>
-    <h2>文档导航</h2>
-    <p>按子系统整理技术资料 — 规格、手册、驱动、架构与规划。</p>
+    <h2>导航</h2>
   </div>
-
   <div class="cards-grid cards-grid--four">
     <article class="feature-card">
       <span class="feature-card__tag">产品</span>
       <h3>产品指南</h3>
-      <p>运行时规格、工业级 SLA、协议矩阵与部署流程。</p>
       <div class="feature-card__links">
         <a class="mini-link" href="guide/产品说明.html">产品说明</a>
         <a class="mini-link" href="guide/USER_MANUAL.html">用户手册</a>
-        <a class="mini-link" href="testing/index.html">SLA 测试报告</a>
       </div>
     </article>
-
     <article class="feature-card">
       <span class="feature-card__tag">驱动</span>
       <h3>南向驱动</h3>
-      <p>驱动设计、测试报告、优化与故障分析。2026-07-12 全量复测 22/22 PASS（含 EtherCAT）。</p>
       <div class="feature-card__links">
         <a class="mini-link" href="drivers/index.html">驱动总览</a>
         <a class="mini-link" href="testing/南向驱动测试报告.html">测试报告</a>
-        <a class="mini-link" href="drivers/index_en.html">Drivers (EN)</a>
       </div>
     </article>
-
     <article class="feature-card">
       <span class="feature-card__tag">架构</span>
       <h3>边缘架构</h3>
-      <p>ScanEngine EDF/CB/diagnostics、ShadowCore COW 快照、ShadowIngress 写入、Virtual Shadow 与规则引擎。</p>
       <div class="feature-card__links">
         <a class="mini-link" href="architecture/index.html">架构设计</a>
         <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
-        <a class="mini-link" href="edge/index.html">边缘计算</a>
-        <a class="mini-link" href="TODO/SLA评估.html">SLA 评估</a>
-        <a class="mini-link" href="architecture/6. 影子设备设计.html">影子设备</a>
-        <a class="mini-link" href="API/AI.html">AI 能力专题</a>
       </div>
     </article>
-
     <article class="feature-card">
-      <span class="feature-card__tag">规划</span>
-      <h3>开发计划</h3>
-      <p>路线图、待开发驱动与 Q3/Q4 架构演进 — ScanEngine、ShadowCore、多节点同步。</p>
+      <span class="feature-card__tag">AI</span>
+      <h3>MCP / EAN</h3>
       <div class="feature-card__links">
-        <a class="mini-link" href="ROADMAP.html">分阶段路线图</a>
-        <a class="mini-link" href="development_plan/index.html">计划总览</a>
-        <a class="mini-link" href="development_plan/drivers/采集驱动ICE104开发.html">IEC 104</a>
-        <a class="mini-link" href="TODO/基于go-libp2p%20同步通信规划方案.html">多节点同步</a>
-        <a class="mini-link" href="TODO/AI协同组件规划.html">AI 规划</a>
+        <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入</a>
+        <a class="mini-link" href="API/AI.html">AI 专题</a>
       </div>
     </article>
   </div>
