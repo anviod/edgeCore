@@ -2920,3 +2920,793 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
+
+/* ============================================================
+   Tech Kit (tk-*) — Modern Industrial Tech
+   Redesigned home visual language. Keeps the gold palette from
+   the design tokens (light/dark adapted via existing variables).
+   Namespaced under tk-* to stay isolated from other pages' FX.
+   ============================================================ */
+
+/* ---------- shared animation tokens ---------- */
+.tk-hero, .tk-section, .tk-hero__copy, .tk-hero__visual,
+.tk-module, .tk-navcard { animation: tk-rise 0.7s var(--transition-slow) both; }
+
+.tk-hero__copy      { animation-delay: 0.05s; }
+.tk-hero__visual    { animation-delay: 0.15s; }
+.tk-hero__telemetry { animation: tk-rise 0.7s var(--transition-slow) 0.3s both; }
+.tk-section:nth-of-type(1) .tk-module { animation-delay: 0.1s; }
+.tk-section:nth-of-type(2) .tk-navcard { animation-delay: 0.12s; }
+
+@keyframes tk-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-hero, .tk-section, .tk-hero__copy, .tk-hero__visual,
+  .tk-hero__telemetry, .tk-module, .tk-navcard,
+  .tk-hero__scan, .tk-module::after { animation: none !important; }
+}
+
+/* ---------- hero frame ---------- */
+.tk-hero {
+  position: relative;
+  width: 100%;
+  padding: clamp(56px, 7vw, 96px) 0 clamp(40px, 5vw, 64px);
+  overflow: hidden;
+}
+
+/* faint engineering grid backdrop */
+.tk-hero__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--gold-ghost) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gold-ghost) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(70% 60% at 72% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(70% 60% at 72% 30%, #000 0%, transparent 75%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* top gold scan line */
+.tk-hero__scan {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold) 30%,
+    var(--gold-bright) 50%,
+    var(--gold) 70%,
+    transparent 100%);
+  opacity: 0.5;
+}
+
+.tk-hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+}
+
+.tk-hero__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 720px;
+}
+
+/* live status chip */
+.tk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 14px;
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  background: var(--gold-bg);
+  color: var(--gold-light);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 26px;
+  backdrop-filter: blur(var(--blur-xs));
+  -webkit-backdrop-filter: blur(var(--blur-xs));
+}
+
+.tk-chip__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+.tk-hero__title {
+  margin: 0;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+
+.tk-hero__title-accent {
+  color: var(--gold);
+  text-shadow: 0 0 24px var(--gold-glow);
+}
+
+.tk-hero__subtitle {
+  margin: 10px 0 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  color: var(--text-soft);
+  letter-spacing: -0.01em;
+}
+
+.tk-hero__desc {
+  margin: 20px 0 0;
+  max-width: 640px;
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* typewriter inherits .hero-typewriter styles, add breathing room */
+.tk-hero .hero-typewriter { margin-top: 22px; }
+
+/* protocol tags */
+.tk-tags { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 26px 0 30px; }
+.tk-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.tk-tag::before { content: "·"; color: var(--gold); margin-right: 8px; }
+
+/* actions */
+.tk-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+.tk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  transition: transform var(--transition-base), background var(--transition-base),
+    border-color var(--transition-base), box-shadow var(--transition-base);
+  cursor: pointer;
+}
+
+.tk-btn--primary {
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+  border-color: var(--button-primary-bg);
+}
+.tk-btn--primary:hover {
+  background: var(--gold-hover);
+  border-color: var(--gold-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -12px var(--gold-glow);
+}
+
+.tk-btn--ghost {
+  color: var(--text-soft);
+  background: transparent;
+  border-color: var(--button-border);
+}
+.tk-btn--ghost:hover {
+  color: var(--gold-light);
+  border-color: var(--gold-border-hover);
+  background: var(--gold-soft);
+  transform: translateY(-2px);
+}
+
+/* hero visual — keep the FX contract, position into grid cell */
+.tk-hero__visual {
+  justify-self: center;
+  margin: 0;
+}
+
+/* ---------- telemetry strip ---------- */
+.tk-hero__telemetry {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin-top: clamp(40px, 5vw, 64px);
+  border-top: 1px solid var(--gold-line);
+  border-bottom: 1px solid var(--gold-line);
+}
+
+.tk-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 24px;
+}
+.tk-metric + .tk-metric { border-left: 1px solid var(--gold-line); }
+
+.tk-metric__value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: -0.02em;
+}
+.tk-metric__label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- sections ---------- */
+.tk-section { padding: clamp(48px, 6vw, 80px) 0 24px; }
+.tk-section:last-child { padding-bottom: 8px; }
+
+.tk-section__head { margin-bottom: 36px; max-width: 720px; }
+
+.tk-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.tk-section__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.tk-section__body {
+  margin: 12px 0 0;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* ---------- module cards ---------- */
+.tk-modules {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.tk-module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px 26px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gold-border);
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur-xs));
+  -webkit-backdrop-filter: blur(var(--blur-xs));
+  overflow: hidden;
+  transition: border-color var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base), background var(--transition-base);
+}
+
+.tk-module:hover {
+  border-color: var(--gold-border-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px -18px var(--gold-glow);
+  background: var(--gold-bg-strong);
+}
+
+/* gold sweep across the module top edge on hover */
+.tk-module::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%; right: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-bright) 50%, transparent 100%);
+  opacity: 0;
+  transition: none;
+  pointer-events: none;
+}
+.tk-module:hover::after {
+  animation: tk-sweep 0.9s var(--transition-slow) forwards;
+}
+@keyframes tk-sweep {
+  from { left: -40%; right: 100%; opacity: 0; }
+  to   { left: 100%; right: -40%; opacity: 1; }
+}
+
+.tk-module__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tk-module__idx {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gold);
+  opacity: 0.7;
+}
+.tk-module__tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.tk-module__name {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.tk-module__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.tk-module__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gold-line);
+}
+
+.tk-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--gold-light);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding-bottom: 2px;
+  transition: color var(--transition-fast);
+}
+.tk-link::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 1px;
+  background: var(--gold-light);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+.tk-link:hover { color: var(--gold-hover); }
+.tk-link:hover::after { transform: scaleX(1); }
+
+/* ---------- navigation cards ---------- */
+.tk-navigation {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.tk-navcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 26px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gold-line);
+  background: transparent;
+  transition: border-color var(--transition-base), transform var(--transition-base),
+    background var(--transition-base);
+}
+
+.tk-navcard:hover {
+  border-color: var(--gold-border-hover);
+  background: var(--gold-bg);
+  transform: translateY(-4px);
+}
+
+.tk-navcard__num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--gold);
+  opacity: 0.7;
+  letter-spacing: 0.1em;
+}
+.tk-navcard__label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.tk-navcard__desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.tk-navcard__go {
+  position: absolute;
+  right: 22px; bottom: 24px;
+  font-size: 1.1rem;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+.tk-navcard:hover .tk-navcard__go {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1024px) {
+  .tk-modules { grid-template-columns: repeat(2, 1fr); }
+  .tk-navigation { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .tk-hero__inner { grid-template-columns: 1fr; gap: 36px; }
+  .tk-hero__visual { justify-self: center; }
+  .tk-hero__telemetry { grid-template-columns: repeat(2, 1fr); }
+  .tk-metric + .tk-metric { border-left: none; }
+  .tk-metric:nth-child(odd) { border-right: 1px solid var(--gold-line); }
+  .tk-modules, .tk-navigation { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Tech Kit v2 — Engineering Blueprint + Live Register
+   Structural polish layer. Extends the gold token system
+   (light/dark adapted via existing variables). Namespaced tk-*.
+   ============================================================ */
+
+/* ---------- hero blueprint layers ---------- */
+.tk-hero__ruler {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 34px;
+  border-right: 1px solid var(--gold-line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 23px,
+    var(--gold-line) 23px, var(--gold-line) 24px
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+}
+
+/* HUD readout, top-right */
+.tk-hud {
+  position: absolute;
+  top: 0; right: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 0 0 20px;
+  border-left: 1px solid var(--gold-line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  pointer-events: none;
+}
+.tk-hud__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.tk-hud__label { color: var(--text-muted); }
+.tk-hud__val { color: var(--gold-bright); }
+.tk-hud__val--ok { color: var(--success); }
+
+/* title rule under display title */
+.tk-hero__rule {
+  width: 64px;
+  height: 2px;
+  margin: 26px 0 0;
+  background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+}
+
+/* display subtitle now 2 lines, larger */
+.tk-hero__subtitle {
+  margin-top: 18px;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  line-height: 1.28;
+}
+
+/* primary CTA with arrow */
+.tk-btn__arrow {
+  display: inline-flex;
+  margin-left: 10px;
+  transition: transform var(--transition-base);
+}
+.tk-btn--primary:hover .tk-btn__arrow { transform: translateX(4px); }
+
+/* ---------- telemetry panel with header ---------- */
+.tk-hero__telemetry {
+  display: grid;
+  grid-template-columns: auto repeat(4, 1fr);
+  align-items: stretch;
+  gap: 0;
+  padding: 22px 0;
+  margin-top: clamp(40px, 5vw, 60px);
+  border-top: 1px solid var(--gold-border);
+}
+.tk-hero__telemetry::before {
+  content: "";
+  position: absolute;
+  left: 0; top: -1px;
+  width: 80px; height: 1px;
+  background: var(--gold);
+}
+
+.tk-tele__head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding-right: 36px;
+  border-right: 1px solid var(--gold-line);
+  min-width: 92px;
+}
+.tk-tele__title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.tk-tele__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+  animation: tk-blink 1.6s ease-in-out infinite;
+}
+@keyframes tk-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* metrics now centered in their cells */
+.tk-metric {
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 24px;
+}
+.tk-metric + .tk-metric { border-left: 1px solid var(--gold-line); }
+.tk-metric__value {
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.tk-metric__label { letter-spacing: 0.06em; }
+
+/* ---------- subsystems register (table rows) ---------- */
+.tk-register {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--gold-border);
+}
+
+.tk-register__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 0 28px;
+  padding: 26px 16px 26px 4px;
+  border-bottom: 1px solid var(--gold-line);
+  transition: background var(--transition-base);
+}
+.tk-register__row::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+.tk-register__row:hover { background: var(--gold-bg); }
+.tk-register__row:hover::before { opacity: 1; }
+
+.tk-register__num {
+  align-self: start;
+  padding-top: 2px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  opacity: 0.55;
+  letter-spacing: 0.04em;
+  transition: opacity var(--transition-base), color var(--transition-base);
+}
+.tk-register__row:hover .tk-register__num {
+  opacity: 1;
+  color: var(--gold-light);
+}
+
+.tk-register__main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tk-register__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tk-register__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.tk-register__tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.tk-register__desc {
+  margin: 0;
+  max-width: 760px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+.tk-register__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+/* ---------- documentation signal bars ---------- */
+.tk-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tk-signal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 72px 1fr auto;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gold-line);
+  overflow: hidden;
+  transition: background var(--transition-base), padding var(--transition-base);
+}
+.tk-signal::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--gold-bg);
+  transition: width var(--transition-slow);
+}
+.tk-signal:hover { padding-left: 34px; }
+.tk-signal:hover::before { width: 100%; }
+
+.tk-signal__idx {
+  position: relative;
+  z-index: 1;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+
+/* amplitude bar — idle, blooms on hover */
+.tk-signal__amp {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+}
+.tk-signal__amp i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, var(--gold-line));
+  transform-origin: bottom;
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+.tk-signal__amp i:nth-child(1) { transform: scaleY(0.4); }
+.tk-signal__amp i:nth-child(2) { transform: scaleY(0.7); }
+.tk-signal__amp i:nth-child(3) { transform: scaleY(1); }
+.tk-signal__amp i:nth-child(4) { transform: scaleY(0.55); }
+.tk-signal__amp i:nth-child(5) { transform: scaleY(0.85); }
+.tk-signal__amp i:nth-child(6) { transform: scaleY(0.5); }
+.tk-signal__amp i:nth-child(7) { transform: scaleY(0.9); }
+.tk-signal:hover .tk-signal__amp i { background: var(--gold); }
+
+.tk-signal__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.tk-signal__label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.tk-signal__desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.tk-signal__go {
+  position: relative;
+  z-index: 1;
+  font-size: 1.15rem;
+  color: var(--gold);
+  transition: transform var(--transition-base);
+}
+.tk-signal:hover .tk-signal__go { transform: translateX(4px); }
+
+/* ---------- v2 responsive ---------- */
+@media (max-width: 1024px) {
+  .tk-hero__telemetry {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 18px;
+  }
+  .tk-tele__head {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: none;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--gold-line);
+  }
+  .tk-metric + .tk-metric { border-left: none; }
+  .tk-metric:nth-child(odd) { border-left: none; }
+}
+
+@media (max-width: 768px) {
+  .tk-hero__inner { grid-template-columns: 1fr; gap: 36px; }
+  .tk-hero__visual { justify-self: center; }
+  .tk-hud { display: none; }
+  .tk-hero__ruler { display: none; }
+  .tk-register__row { grid-template-columns: 48px 1fr; gap: 0 16px; }
+  .tk-signal { grid-template-columns: 36px 56px 1fr auto; gap: 14px; padding: 16px 18px; }
+  .tk-signal__amp { display: none; }
+}

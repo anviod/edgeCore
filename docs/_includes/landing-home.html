@@ -1,147 +1,245 @@
-<!-- Hero Section -->
-<section class="hero-section">
-  <div class="hero-inner">
-    <div class="hero-copy">
-      <span class="hero-badge"><span class="hero-badge__dot"></span>RUNTIME v2.x · 22 个驱动已加载</span>
-      <h1>edgeCore</h1>
-      <h2>工业协议网关与边缘计算运行时</h2>
+<!-- ============================================================
+     Hero — Engineering Blueprint + Live Telemetry
+     结构：蓝图网格背景 + 垂直刻度标尺 + HUD 读数 + 大标题
+            左：超大 display 标题群；右：[data-hero-visual] 粒子核心（JS 契约保留）
+     ============================================================ -->
+<section class="tk-hero">
+  <!-- 工程蓝图网格 -->
+  <div class="tk-hero__grid" aria-hidden="true"></div>
+  <!-- 顶部金色扫描线 -->
+  <div class="tk-hero__scan" aria-hidden="true"></div>
+  <!-- 垂直刻度标尺（左缘） -->
+  <div class="tk-hero__ruler" aria-hidden="true"></div>
+  <!-- HUD 读数：右上角 -->
+  <div class="tk-hud" aria-hidden="true">
+    <div class="tk-hud__row"><span class="tk-hud__label">SYS</span><span class="tk-hud__val tk-hud__val--ok">ONLINE</span></div>
+    <div class="tk-hud__row"><span class="tk-hud__label">RT</span><span class="tk-hud__val">RTU·TCP</span></div>
+    <div class="tk-hud__row"><span class="tk-hud__label">CORE</span><span class="tk-hud__val">v2.x</span></div>
+  </div>
+
+  <div class="tk-hero__inner">
+    <div class="tk-hero__copy">
+      <span class="tk-chip tk-chip--live">
+        <span class="tk-chip__dot"></span>
+        RUNTIME v2.x · 22 驱动在线
+      </span>
+
+      <h1 class="tk-hero__title">
+        edgeCore
+        <span class="tk-hero__title-accent">.</span>
+      </h1>
+
+      <div class="tk-hero__rule" aria-hidden="true"></div>
+
+      <h2 class="tk-hero__subtitle">工业协议网关<br>与边缘计算运行时</h2>
+
       <div class="hero-typewriter">
         <span class="typewriter-cursor">|</span>
         <span class="typewriter-text"></span>
       </div>
-      <p class="hero-desc">单进程运行时，南向协议适配器接入，ShadowCore 内存状态持久化，边缘规则执行，北向数据转发。支持 Linux、Windows 与 ARM64 网关；无需云端依赖，无需容器。</p>
-      <div class="hero-values">
-        <span class="value-tag">Modbus RTU/TCP</span>
-        <span class="value-tag">BACnet Client/Server</span>
-        <span class="value-tag">OPC UA Client/Server</span>
-        <span class="value-tag">S7</span>
-        <span class="value-tag">EtherNet/IP</span>
-        <span class="value-tag">IEC 104</span>
-        <span class="value-tag">AI 助手</span>
-        <span class="value-tag">MCP 服务</span>
-        <span class="value-tag">EAN 2.0</span>
-      </div>
-      <div class="hero-actions">
-        <a class="button-link button-link--primary" href="guide/USER_MANUAL.html">用户手册</a>
-        <a class="button-link button-link--secondary" href="architecture/index.html">架构设计</a>
-        <a class="button-link button-link--secondary" href="drivers/index.html">驱动索引</a>
-        <a class="button-link button-link--secondary" href="API/AI.html">AI 专题</a>
-        <a class="button-link button-link--secondary" href="paper/">学术论文</a>
-      </div>
-    </div>
-    <div class="hero-visual" aria-hidden="true" data-hero-visual data-fx-count="12"></div>
-    <!-- Hero 特效由 assets/script.js + assets/style.css 驱动，共 12 种：
-         core / lattice / radar / field / beacon / nexus / pulse / matrix / orbit / beam / flux / swarm -->
-  </div>
-</section>
 
+      <p class="tk-hero__desc">单进程运行时：南向协议适配 → ShadowCore 内存持久化 → 边缘规则执行 → 北向转发。Linux、Windows 与 ARM64 网关；无云端、无容器。</p>
 
-<!-- 核心子系统 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">核心子系统</div>
-    <h2>运行时组件</h2>
-    <p class="section-body">南向接入、集中调度、状态维持、边缘计算与北向输出，单进程运行时内的六层职责。</p>
-  </div>
-  <div class="spec-list">
-    <div class="spec-row">
-      <span class="spec-row__tag">Protocol Layer</span>
-      <div class="spec-row__main">
-        <h3>协议适配器</h3>
-        <p>13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、Siemens S7、EtherNet/IP、IEC 104、DLT645-2007、KNXnet/IP、SNMP、Omron FINS、Mitsubishi SLMP、Profinet IO、EtherCAT M1。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="drivers/index.html">驱动总览</a>
-          <a class="mini-link" href="testing/南向驱动测试报告.html">测试报告</a>
-        </div>
+      <div class="tk-tags">
+        <span class="tk-tag">Modbus RTU/TCP</span>
+        <span class="tk-tag">BACnet Client/Server</span>
+        <span class="tk-tag">OPC UA Client/Server</span>
+        <span class="tk-tag">S7</span>
+        <span class="tk-tag">EtherNet/IP</span>
+        <span class="tk-tag">IEC 104</span>
+        <span class="tk-tag">AI 助手</span>
+        <span class="tk-tag">MCP 服务</span>
+        <span class="tk-tag">EAN 2.0</span>
       </div>
-    </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">Scheduler</span>
-      <div class="spec-row__main">
-        <h3>ScanEngine</h3>
-        <p>基于 EDF 的扫描调度器，自适应节流与熔断，设备级隔离。目标 10k 点位 lag P95 &lt;100 ms。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="architecture/index.html">架构设计</a>
-        </div>
-      </div>
-    </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">State</span>
-      <div class="spec-row__main">
-        <h3>ShadowCore</h3>
-        <p>点位值的内存事实来源，写时复制快照、环形缓冲区写入与分钟级持久化。</p>
-      </div>
-    </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">Compute</span>
-      <div class="spec-row__main">
-        <h3>Execution Mapper</h3>
-        <p>边缘规则引擎：表达式求值、预处理流水线、批量动作与事件记录，本地执行。</p>
-      </div>
-    </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">Virtualization</span>
-      <div class="spec-row__main">
-        <h3>Virtual Shadow</h3>
-        <p>跨通道引用计算点与聚合点，公式依赖图与跨设备聚合。</p>
-      </div>
-    </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">Northbound</span>
-      <div class="spec-row__main">
-        <h3>北向管理器</h3>
-        <p>统一发布器，store-and-forward、自动重连、主题模板与 schema 控制。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="architecture/index.html">架构设计</a>
-          <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
 
-<!-- 文档入口 -->
-<section class="landing-section">
-  <div class="section-heading">
-    <div class="section-kicker">文档入口</div>
-    <h2>导航</h2>
-    <p class="section-body">按主题直达手册、驱动、架构与 AI 扩展能力文档。</p>
+      <div class="tk-actions">
+        <a class="tk-btn tk-btn--primary" href="guide/USER_MANUAL.html">
+          <span>用户手册</span><span class="tk-btn__arrow">→</span>
+        </a>
+        <a class="tk-btn tk-btn--ghost" href="architecture/index.html">架构设计</a>
+        <a class="tk-btn tk-btn--ghost" href="drivers/index.html">驱动索引</a>
+      </div>
+    </div>
+
+    <div class="hero-visual tk-hero__visual" aria-hidden="true" data-hero-visual data-fx-count="12"></div>
   </div>
-  <div class="spec-list">
-    <div class="spec-row">
-      <span class="spec-row__tag">产品</span>
-      <div class="spec-row__main">
-        <h3>产品指南</h3>
-        <p>产品说明与用户手册。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="guide/产品说明.html">产品说明</a>
-          <a class="mini-link" href="guide/USER_MANUAL.html">用户手册</a>
-        </div>
-      </div>
+
+  <!-- 遥测面板 -->
+  <div class="tk-hero__telemetry">
+    <div class="tk-tele__head">
+      <span class="tk-tele__title">LIVE TELEMETRY</span>
+      <span class="tk-tele__dot" aria-hidden="true"></span>
     </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">架构</span>
-      <div class="spec-row__main">
-        <h3>边缘架构</h3>
-        <p>架构设计、总览与边缘计算。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="architecture/index.html">架构设计</a>
-          <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
-        </div>
-      </div>
+    <div class="tk-metric">
+      <span class="tk-metric__value">13</span>
+      <span class="tk-metric__label">工业协议</span>
     </div>
-    <div class="spec-row">
-      <span class="spec-row__tag">扩展</span>
-      <div class="spec-row__main">
-        <h3>MCP / EAN</h3>
-        <p>MCP 接入与 AI 能力专题。</p>
-        <div class="spec-row__links">
-          <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入</a>
-          <a class="mini-link" href="API/AI.html">AI 专题</a>
-        </div>
-      </div>
+    <div class="tk-metric">
+      <span class="tk-metric__value">10K</span>
+      <span class="tk-metric__label">点位规模</span>
+    </div>
+    <div class="tk-metric">
+      <span class="tk-metric__value">&lt;100ms</span>
+      <span class="tk-metric__label">lag P95</span>
+    </div>
+    <div class="tk-metric">
+      <span class="tk-metric__value">1</span>
+      <span class="tk-metric__label">单进程</span>
     </div>
   </div>
 </section>
 
 
+<!-- ============================================================
+     Core Subsystems — Engineering Register
+     结构：规格登记表（大号 ID 序号 + 内容），非普通卡片网格
+     ============================================================ -->
+<section class="tk-section">
+  <div class="tk-section__head">
+    <span class="tk-kicker">Core Subsystems</span>
+    <h2 class="tk-section__title">运行时组件</h2>
+    <p class="tk-section__body">南向接入、集中调度、状态维持、边缘计算与北向输出——单进程内的六层职责。</p>
+  </div>
+
+  <div class="tk-register">
+    <article class="tk-register__row">
+      <span class="tk-register__num">01</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">协议适配器</h3>
+          <span class="tk-register__tag">Protocol Layer</span>
+        </div>
+        <p class="tk-register__desc">13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、S7、EtherNet/IP、IEC 104、DLT645、KNXnet/IP、SNMP、FINS、SLMP、Profinet IO、EtherCAT M1。</p>
+        <div class="tk-register__links">
+          <a class="tk-link" href="drivers/index.html">驱动总览</a>
+          <a class="tk-link" href="testing/南向驱动测试报告.html">测试报告</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="tk-register__row">
+      <span class="tk-register__num">02</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">ScanEngine</h3>
+          <span class="tk-register__tag">Scheduler</span>
+        </div>
+        <p class="tk-register__desc">EDF 扫描调度器，自适应节流与熔断，设备级隔离。目标 10k 点位 lag P95 &lt;100 ms。</p>
+        <div class="tk-register__links">
+          <a class="tk-link" href="architecture/index.html">架构设计</a>
+        </div>
+      </div>
+    </article>
+
+    <article class="tk-register__row">
+      <span class="tk-register__num">03</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">ShadowCore</h3>
+          <span class="tk-register__tag">State</span>
+        </div>
+        <p class="tk-register__desc">点位值内存事实来源：写时复制快照、环形缓冲写入、分钟级持久化。</p>
+      </div>
+    </article>
+
+    <article class="tk-register__row">
+      <span class="tk-register__num">04</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">Execution Mapper</h3>
+          <span class="tk-register__tag">Compute</span>
+        </div>
+        <p class="tk-register__desc">边缘规则引擎：表达式求值、预处理流水线、批量动作与事件记录，本地执行。</p>
+      </div>
+    </article>
+
+    <article class="tk-register__row">
+      <span class="tk-register__num">05</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">Virtual Shadow</h3>
+          <span class="tk-register__tag">Virtualization</span>
+        </div>
+        <p class="tk-register__desc">跨通道引用计算点与聚合点：公式依赖图与跨设备聚合。</p>
+      </div>
+    </article>
+
+    <article class="tk-register__row">
+      <span class="tk-register__num">06</span>
+      <div class="tk-register__main">
+        <div class="tk-register__top">
+          <h3 class="tk-register__name">北向管理器</h3>
+          <span class="tk-register__tag">Northbound</span>
+        </div>
+        <p class="tk-register__desc">统一发布器：store-and-forward、自动重连、主题模板与 schema 控制。</p>
+        <div class="tk-register__links">
+          <a class="tk-link" href="architecture/index.html">架构设计</a>
+          <a class="tk-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     Documentation — Signal Fourier-style entry bars
+     结构：等宽信号条入口（编号 + 标签 + 描述 + 信号脉冲）
+     ============================================================ -->
+<section class="tk-section">
+  <div class="tk-section__head">
+    <span class="tk-kicker">Documentation</span>
+    <h2 class="tk-section__title">文档导航</h2>
+    <p class="tk-section__body">按主题直达手册、驱动、架构与 AI 扩展能力文档。</p>
+  </div>
+
+  <div class="tk-navigation">
+    <a class="tk-signal" href="guide/产品说明.html">
+      <span class="tk-signal__idx">01</span>
+      <span class="tk-signal__amp" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
+      <span class="tk-signal__meta">
+        <span class="tk-signal__label">产品</span>
+        <span class="tk-signal__desc">产品说明 · 用户手册</span>
+      </span>
+      <span class="tk-signal__go">→</span>
+    </a>
+
+    <a class="tk-signal" href="architecture/index.html">
+      <span class="tk-signal__idx">02</span>
+      <span class="tk-signal__amp" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
+      <span class="tk-signal__meta">
+        <span class="tk-signal__label">架构</span>
+        <span class="tk-signal__desc">架构设计 · 总览</span>
+      </span>
+      <span class="tk-signal__go">→</span>
+    </a>
+
+    <a class="tk-signal" href="guide/mcp-access-guide.html">
+      <span class="tk-signal__idx">03</span>
+      <span class="tk-signal__amp" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
+      <span class="tk-signal__meta">
+        <span class="tk-signal__label">扩展</span>
+        <span class="tk-signal__desc">MCP 接入 · AI 专题</span>
+      </span>
+      <span class="tk-signal__go">→</span>
+    </a>
+
+    <a class="tk-signal" href="paper/">
+      <span class="tk-signal__idx">04</span>
+      <span class="tk-signal__amp" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+      </span>
+      <span class="tk-signal__meta">
+        <span class="tk-signal__label">论文</span>
+        <span class="tk-signal__desc">学术论文</span>
+      </span>
+      <span class="tk-signal__go">→</span>
+    </a>
+  </div>
+</section>
