@@ -41,96 +41,106 @@
   <div class="section-heading">
     <div class="section-kicker">核心子系统</div>
     <h2>运行时组件</h2>
+    <p class="section-body">南向接入、集中调度、状态维持、边缘计算与北向输出，单进程运行时内的六层职责。</p>
   </div>
-  <div class="mod-grid">
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">Protocol Layer</span>
-      <h3>协议适配器</h3>
-      <p>13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、Siemens S7、EtherNet/IP、IEC 104、DLT645-2007、KNXnet/IP、SNMP、Omron FINS、Mitsubishi SLMP、Profinet IO、EtherCAT M1。</p>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">Scheduler</span>
-      <h3>ScanEngine</h3>
-      <p>基于 EDF 的扫描调度器，自适应节流与熔断，设备级隔离。目标 10k 点位 lag P95 &lt;100 ms。</p>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">State</span>
-      <h3>ShadowCore</h3>
-      <p>点位值的内存事实来源，写时复制快照、环形缓冲区写入与分钟级持久化。</p>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">Compute</span>
-      <h3>Execution Mapper</h3>
-      <p>边缘规则引擎：表达式求值、预处理流水线、批量动作与事件记录，本地执行。</p>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">Virtualization</span>
-      <h3>Virtual Shadow</h3>
-      <p>跨通道引用计算点与聚合点，公式依赖图与跨设备聚合。</p>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__rail" aria-hidden="true"></span>
-      <span class="mod-card__tag">Northbound</span>
-      <h3>北向管理器</h3>
-      <p>统一发布器，store-and-forward、自动重连、主题模板与 schema 控制。</p>
-    </article>
+  <div class="spec-list">
+    <div class="spec-row">
+      <span class="spec-row__tag">Protocol Layer</span>
+      <div class="spec-row__main">
+        <h3>协议适配器</h3>
+        <p>13 个南向适配器：Modbus RTU/TCP、BACnet IP、OPC UA Client、Siemens S7、EtherNet/IP、IEC 104、DLT645-2007、KNXnet/IP、SNMP、Omron FINS、Mitsubishi SLMP、Profinet IO、EtherCAT M1。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="drivers/index.html">驱动总览</a>
+          <a class="mini-link" href="testing/南向驱动测试报告.html">测试报告</a>
+        </div>
+      </div>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">Scheduler</span>
+      <div class="spec-row__main">
+        <h3>ScanEngine</h3>
+        <p>基于 EDF 的扫描调度器，自适应节流与熔断，设备级隔离。目标 10k 点位 lag P95 &lt;100 ms。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="architecture/index.html">架构设计</a>
+        </div>
+      </div>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">State</span>
+      <div class="spec-row__main">
+        <h3>ShadowCore</h3>
+        <p>点位值的内存事实来源，写时复制快照、环形缓冲区写入与分钟级持久化。</p>
+      </div>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">Compute</span>
+      <div class="spec-row__main">
+        <h3>Execution Mapper</h3>
+        <p>边缘规则引擎：表达式求值、预处理流水线、批量动作与事件记录，本地执行。</p>
+      </div>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">Virtualization</span>
+      <div class="spec-row__main">
+        <h3>Virtual Shadow</h3>
+        <p>跨通道引用计算点与聚合点，公式依赖图与跨设备聚合。</p>
+      </div>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">Northbound</span>
+      <div class="spec-row__main">
+        <h3>北向管理器</h3>
+        <p>统一发布器，store-and-forward、自动重连、主题模板与 schema 控制。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="architecture/index.html">架构设计</a>
+          <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
+        </div>
+      </div>
+    </div>
   </div>
 </section>
 
-<!-- 快速入口 -->
+<!-- 文档入口 -->
 <section class="landing-section">
   <div class="section-heading">
-    <div class="section-kicker">快速入口</div>
+    <div class="section-kicker">文档入口</div>
     <h2>导航</h2>
+    <p class="section-body">按主题直达手册、驱动、架构与 AI 扩展能力文档。</p>
   </div>
-  <div class="mod-grid mod-grid--four">
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__tag">产品</span>
-      <h3>产品指南</h3>
-      <div class="mod-card__links">
-        <a class="mini-link" href="guide/产品说明.html">产品说明</a>
-        <a class="mini-link" href="guide/USER_MANUAL.html">用户手册</a>
+  <div class="spec-list">
+    <div class="spec-row">
+      <span class="spec-row__tag">产品</span>
+      <div class="spec-row__main">
+        <h3>产品指南</h3>
+        <p>产品说明与用户手册。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="guide/产品说明.html">产品说明</a>
+          <a class="mini-link" href="guide/USER_MANUAL.html">用户手册</a>
+        </div>
       </div>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__tag">驱动</span>
-      <h3>南向驱动</h3>
-      <div class="mod-card__links">
-        <a class="mini-link" href="drivers/index.html">驱动总览</a>
-        <a class="mini-link" href="testing/南向驱动测试报告.html">测试报告</a>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">架构</span>
+      <div class="spec-row__main">
+        <h3>边缘架构</h3>
+        <p>架构设计、总览与边缘计算。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="architecture/index.html">架构设计</a>
+          <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
+        </div>
       </div>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__tag">架构</span>
-      <h3>边缘架构</h3>
-      <div class="mod-card__links">
-        <a class="mini-link" href="architecture/index.html">架构设计</a>
-        <a class="mini-link" href="edge/边缘网关架构设计总览.html">架构总览</a>
+    </div>
+    <div class="spec-row">
+      <span class="spec-row__tag">扩展</span>
+      <div class="spec-row__main">
+        <h3>MCP / EAN</h3>
+        <p>MCP 接入与 AI 能力专题。</p>
+        <div class="spec-row__links">
+          <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入</a>
+          <a class="mini-link" href="API/AI.html">AI 专题</a>
+        </div>
       </div>
-    </article>
-    <article class="mod-card">
-      <span class="mod-card__edge" aria-hidden="true"></span>
-      <span class="mod-card__tag">扩展</span>
-      <h3>MCP / EAN</h3>
-      <div class="mod-card__links">
-        <a class="mini-link" href="guide/mcp-access-guide.html">MCP 接入</a>
-        <a class="mini-link" href="API/AI.html">AI 专题</a>
-      </div>
-    </article>
+    </div>
   </div>
 </section>
 

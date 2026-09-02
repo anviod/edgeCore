@@ -657,12 +657,9 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .hero-badge {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   align-self: flex-start;
   margin-bottom: 20px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: var(--gold-bg);
-  border: 1px solid var(--gold-border);
   color: var(--gold-light);
   font-family: "JetBrains Mono", monospace;
   font-size: 0.72rem;
@@ -1737,10 +1734,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  background: rgba(200, 167, 91, 0.05);
-  border: 1px solid rgba(200, 167, 91, 0.15);
-  border-radius: var(--radius-xs);
   font-size: 0.78rem;
   color: var(--text-soft);
   font-weight: 500;
@@ -1790,14 +1783,13 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .button-link--secondary {
   color: var(--text-soft);
-  border-color: var(--button-border);
-  background: var(--button-secondary-bg);
+  background: transparent;
+  border-color: transparent;
 }
 
 .button-link--secondary:hover {
-  border-color: var(--gold-border-hover);
-  background: var(--gold-bg);
   color: var(--gold-light);
+  background: transparent;
 }
 
 /* =========================================
@@ -1805,13 +1797,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    ========================================= */
 .landing-section {
   margin-bottom: 24px;
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
-  border: 1px solid var(--gold-border);
-  box-shadow: var(--shadow);
+  padding: 48px 0 8px;
 }
 
 /* Section heading */
@@ -2789,137 +2775,64 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 /* =========================================
-   Module Cards — industrial-tech console
-   Precision layers over a clean structure: frosted panel,
-   faint radial sheen, metallic top edge, live status tick
-   on the tag, faint grid substrate. Restrained, not noisy.
+   Specification List — console register view
+   No card shells. Each module is a ledger row: monospace
+   tag column + content column, hairline gold separators.
+   Hover reveals a left status bar. Precise, dense, factual.
    ========================================= */
-.mod-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-}
-
-.mod-grid--four {
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-}
-
-.mod-card {
-  position: relative;
+.spec-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 26px 26px 22px;
-  border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
-  border: 1px solid var(--gold-border);
-  overflow: hidden;
-  transition: transform var(--transition-base),
-    border-color var(--transition-base),
-    box-shadow var(--transition-base);
+  border-top: 1px solid var(--gold-line);
 }
 
-/* Faint radial sheen — depth without noise */
-.mod-card::before {
+.spec-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: 0 28px;
+  padding: 18px 14px 18px 20px;
+  border-bottom: 1px solid var(--gold-line);
+  transition: background var(--transition-base);
+}
+
+/* Left status bar — reveals on hover */
+.spec-row::before {
   content: "";
   position: absolute;
-  inset: 0;
-  background: radial-gradient(120% 90% at 20% 0%,
-      var(--gold-ghost-strong) 0%,
-      rgba(0, 0, 0, 0) 55%);
-  pointer-events: none;
-}
-
-/* Precision grid substrate — barely there */
-.mod-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--gold-ghost) 1px, transparent 1px),
-    linear-gradient(90deg, var(--gold-ghost) 1px, transparent 1px);
-  background-size: 26px 26px;
-  opacity: 0.5;
-  -webkit-mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 78%);
-  mask-image: radial-gradient(120% 80% at 50% 0%, #000 0%, transparent 78%);
-  pointer-events: none;
-}
-
-/* Metallic top edge — the key industrial accent */
-.mod-card__edge {
-  position: absolute;
-  top: 0; left: 18px; right: 18px;
-  height: 1px;
-  background: linear-gradient(90deg,
-    transparent,
-    var(--gold-light) 30%,
-    var(--gold-bright) 50%,
-    var(--gold-light) 70%,
-    transparent);
-  opacity: 0.7;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-line) 100%);
+  opacity: 0;
   transition: opacity var(--transition-base);
 }
 
-/* Left status rail — live module indicator */
-.mod-card__rail {
-  position: absolute;
-  top: 22px; bottom: 22px; left: 0;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(180deg,
-    var(--gold) 0%,
-    var(--gold-line) 100%);
-  opacity: 0.55;
+.spec-row:hover::before { opacity: 1; }
+
+.spec-row:hover {
+  background: var(--gold-bg);
 }
 
-.mod-card:hover {
-  transform: translateY(-3px);
-  border-color: var(--gold-border-hover);
-  box-shadow: 0 16px 40px -12px var(--gold-glow),
-    var(--shadow);
-}
-
-.mod-card:hover .mod-card__edge { opacity: 1; }
-.mod-card:hover .mod-card__rail { opacity: 1; }
-
-.mod-card__tag {
-  position: relative;
-  z-index: 1;
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.spec-row__tag {
+  align-self: center;
   font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--gold);
-  padding: 2px 0 8px;
+  line-height: 1.3;
 }
 
-/* Live status tick */
-.mod-card__tag::before {
-  content: "";
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 0 var(--gold-glow);
-  animation: mod-tick 2.4s var(--transition-slow) infinite;
+.spec-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
 }
 
-@keyframes mod-tick {
-  0%   { box-shadow: 0 0 0 0 var(--gold-glow); }
-  70%  { box-shadow: 0 0 0 6px rgba(200, 167, 91, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(200, 167, 91, 0); }
-}
-
-.mod-card h3, .mod-card p, .mod-card__links { position: relative; z-index: 1; }
-
-.mod-card h3 {
+.spec-row__main h3 {
   margin: 0;
   font-size: 1.06rem;
   font-weight: 600;
@@ -2927,35 +2840,27 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   letter-spacing: -0.01em;
 }
 
-.mod-card p {
+.spec-row__main p {
   margin: 0;
   font-size: 0.9rem;
   color: var(--text-muted);
-  line-height: 1.72;
+  line-height: 1.7;
 }
 
-.mod-card__links {
+.spec-row__links {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
-  margin-top: auto;
-  padding-top: 8px;
-  border-top: 1px solid var(--gold-line);
-}
-
-@media (max-width: 1180px) {
-  .mod-grid--four { grid-template-columns: repeat(2, 1fr); }
+  gap: 18px;
+  margin-top: 8px;
 }
 
 @media (max-width: 768px) {
-  .mod-grid, .mod-grid--four { grid-template-columns: 1fr; }
-  .mod-card { padding: 22px; border-radius: var(--radius-md); }
-  .mod-card__rail { top: 18px; bottom: 18px; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .mod-card__tag::before { animation: none; }
-  .mod-card:hover { transform: none; }
+  .spec-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px 12px 14px 16px;
+  }
+  .spec-row__tag { align-self: flex-start; }
 }
 
 /* Industrial kicker mark — small gold rule before the eyebrow */
@@ -2975,12 +2880,12 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 /* Mini links — underline reveal on hover */
-.mod-card .mini-link {
+.spec-row .mini-link {
   position: relative;
   padding-bottom: 2px;
 }
 
-.mod-card .mini-link::after {
+.spec-row .mini-link::after {
   content: "";
   position: absolute;
   left: 0; bottom: 0;
@@ -2992,6 +2897,11 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   transition: transform var(--transition-base);
 }
 
-.mod-card .mini-link:hover::after {
+.spec-row .mini-link:hover::after {
   transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spec-row:hover { transform: none; }
+  .spec-row::before { transition: none; }
 }
