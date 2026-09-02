@@ -599,15 +599,24 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .hero-section {
   width: 100%;
   margin: 0 0 32px;
-  padding: clamp(40px, 5vw, 72px);
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-xl);
-  background: var(--glass);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  box-shadow: var(--shadow), var(--shadow-gold);
-  overflow: hidden;
+  padding: clamp(40px, 6vw, 88px) 0;
   position: relative;
+  overflow: hidden;
+}
+
+/* Industrial backdrop — faint radial emission from the visual anchor */
+.hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 40px -8% auto auto;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle at 50% 50%,
+    var(--gold-ghost-strong) 0%,
+    var(--gold-ghost) 28%,
+    transparent 62%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Two-column hero layout */
@@ -620,30 +629,22 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   align-items: center;
 }
 
-/* Engineering panel accent — uniform top border */
-.hero-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--gold);
-  opacity: 0.45;
-  z-index: 2;
-  pointer-events: none;
-}
-
 .hero-section::after {
-  content: "RUNTIME";
+  content: "RUNTIME v2";
   position: absolute;
-  top: 14px; right: 18px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.65rem;
+  top: 36px; right: 0;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: var(--gold-dark);
-  opacity: 0.7;
-  z-index: 2;
+  opacity: 0.6;
+  z-index: 0;
   pointer-events: none;
+  padding-right: clamp(16px, 3vw, 32px);
+  border-top: 1px solid var(--gold-line);
+  padding-top: 8px;
 }
 
 .hero-copy {
@@ -2621,8 +2622,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
   .hero-section {
     margin-top: 0;
-    padding: 28px 22px;
-    border-radius: var(--radius-lg);
+    padding: 36px 0 8px;
   }
 
   .hero-inner {
@@ -2904,4 +2904,19 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 @media (prefers-reduced-motion: reduce) {
   .spec-row:hover { transform: none; }
   .spec-row::before { transition: none; }
+}
+
+/* =========================================
+   Hero — no-card guardrail
+   Ensures the hero reads as an open information
+   band (not a framed panel) across all breakpoints.
+   ========================================= */
+.hero-section,
+.hero-inner {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
