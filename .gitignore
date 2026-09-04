@@ -19,3 +19,5 @@ dist/
 build/
 test/
 vendor/
+.workbuddy/
+*.zip
