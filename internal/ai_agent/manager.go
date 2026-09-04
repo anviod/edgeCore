@@ -1,15 +1,16 @@
 package ai_agent
 
 import (
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
-	"github.com/anviod/edgex/internal/ai_agent/pipeline"
-	"github.com/anviod/edgex/internal/ai_agent/quota"
-	"github.com/anviod/edgex/internal/ai_agent/validate"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/pipeline"
+	"github.com/anviod/edgeCore/internal/ai_agent/quota"
+	"github.com/anviod/edgeCore/internal/ai_agent/validate"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type Agent struct {
@@ -113,10 +114,11 @@ func (a *Agent) Create(req aitypes.CreateRequest) (*aitypes.TaskRecord, error) {
 
 	a.mu.Lock()
 	a.tasks[id] = rec
+	result := cloneTask(rec)
 	a.mu.Unlock()
 
 	go a.runPipeline(id, req, estTokens)
-	return cloneTask(rec), nil
+	return result, nil
 }
 
 func (a *Agent) AttachFile(taskID, filename string) error {
@@ -222,6 +224,17 @@ func (a *Agent) runPipeline(id string, req aitypes.CreateRequest, tokens int) {
 }
 
 func cloneTask(t *aitypes.TaskRecord) *aitypes.TaskRecord {
+	if t == nil {
+		return nil
+	}
+	data, err := json.Marshal(t)
+	if err == nil {
+		var cp aitypes.TaskRecord
+		if json.Unmarshal(data, &cp) == nil {
+			return &cp
+		}
+	}
+
 	cp := *t
 	if t.Stages != nil {
 		cp.Stages = append([]aitypes.StageProgress(nil), t.Stages...)

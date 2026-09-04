@@ -4,23 +4,25 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (s *Server) listVirtualShadows(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.JSON([]model.VirtualShadowDeviceConfig{})
 	}
-	return c.JSON(s.vsm.List())
+	return c.JSON(vsm.List())
 }
 
 func (s *Server) getVirtualShadow(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "virtual shadow manager not available"})
 	}
-	cfg, err := s.vsm.Get(c.Params("id"))
+	cfg, err := vsm.Get(c.Params("id"))
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -31,9 +33,9 @@ func (s *Server) getVirtualShadow(c *fiber.Ctx) error {
 	var points map[string]model.ShadowPoint
 	var errRuntime error
 	if refresh {
-		vd, points, errRuntime = s.vsm.RefreshRuntime(cfg.ID)
+		vd, points, errRuntime = vsm.RefreshRuntime(cfg.ID)
 	} else {
-		vd, points, errRuntime = s.vsm.GetRuntime(cfg.ID)
+		vd, points, errRuntime = vsm.GetRuntime(cfg.ID)
 	}
 	if errRuntime == nil {
 		resp["runtime"] = fiber.Map{
@@ -46,48 +48,52 @@ func (s *Server) getVirtualShadow(c *fiber.Ctx) error {
 }
 
 func (s *Server) createVirtualShadow(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "virtual shadow manager not available"})
 	}
 	var cfg model.VirtualShadowDeviceConfig
 	if err := c.BodyParser(&cfg); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid request body"})
 	}
-	if err := s.vsm.Create(cfg); err != nil {
+	if err := vsm.Create(cfg); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.Status(201).JSON(fiber.Map{"status": "ok", "id": cfg.ID})
 }
 
 func (s *Server) updateVirtualShadow(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "virtual shadow manager not available"})
 	}
 	var cfg model.VirtualShadowDeviceConfig
 	if err := c.BodyParser(&cfg); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid request body"})
 	}
-	if err := s.vsm.Update(c.Params("id"), cfg); err != nil {
+	if err := vsm.Update(c.Params("id"), cfg); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "ok"})
 }
 
 func (s *Server) deleteVirtualShadow(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "virtual shadow manager not available"})
 	}
-	if err := s.vsm.Delete(c.Params("id")); err != nil {
+	if err := vsm.Delete(c.Params("id")); err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"status": "ok"})
 }
 
 func (s *Server) listVirtualShadowSources(c *fiber.Ctx) error {
-	if s.vsm == nil {
+	vsm := s.virtualShadowManagerRef()
+	if vsm == nil {
 		return c.JSON([]model.PointSourceRef{})
 	}
-	return c.JSON(s.vsm.ListPointSources())
+	return c.JSON(vsm.ListPointSources())
 }
 
 func (s *Server) searchVirtualShadowDevices(c *fiber.Ctx) error {
@@ -97,8 +103,8 @@ func (s *Server) searchVirtualShadowDevices(c *fiber.Ctx) error {
 		return c.JSON([]model.SourceDeviceSummary{})
 	}
 	limit := c.QueryInt("limit", 50)
-	if s.vsm != nil {
-		return c.JSON(s.vsm.SearchSourceDevices(query, channelID, limit))
+	if vsm := s.virtualShadowManagerRef(); vsm != nil {
+		return c.JSON(vsm.SearchSourceDevices(query, channelID, limit))
 	}
 	return c.JSON(searchSourceDevicesFromCM(s.cm, query, channelID, limit))
 }
@@ -151,8 +157,8 @@ func (s *Server) listVirtualShadowDevicePoints(c *fiber.Ctx) error {
 	channelID := c.Params("channelId")
 	deviceID := c.Params("deviceId")
 	query := c.Query("q")
-	if s.vsm != nil {
-		points, err := s.vsm.ListDevicePointSources(channelID, deviceID, query)
+	if vsm := s.virtualShadowManagerRef(); vsm != nil {
+		points, err := vsm.ListDevicePointSources(channelID, deviceID, query)
 		if err == nil {
 			return c.JSON(points)
 		}
@@ -196,5 +202,7 @@ func listDevicePointSourcesFromCM(cm *core.ChannelManager, channelID, deviceID, 
 }
 
 func (s *Server) SetVirtualShadowManager(vsm *core.VirtualShadowManager) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.vsm = vsm
 }

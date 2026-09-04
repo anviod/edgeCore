@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 系统管理 API
-description: EdgeX 系统管理 API 文档（中文）
+description: edgeCore 系统管理 API 文档（中文）
 ---
 
 # 系统管理 API (System Management)

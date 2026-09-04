@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/awcullen/opcua/server"
 	"github.com/awcullen/opcua/ua"
@@ -298,7 +298,7 @@ func (s *Server) startLocked() error {
 	endpoint := fmt.Sprintf("opc.tcp://0.0.0.0:%d%s", s.config.Port, s.config.Endpoint)
 	// Sanitize name for URI (remove spaces)
 	safeName := strings.ReplaceAll(s.config.Name, " ", "")
-	appURI := fmt.Sprintf("urn:edgex-gateway:%s", safeName)
+	appURI := fmt.Sprintf("urn:edgeCore-gateway:%s", safeName)
 
 	// Resolve server certificate (DB PEM → disk, legacy path, or auto-generated)
 	certFile, keyFile, err := MaterializeServerCerts(s.config)
@@ -449,7 +449,7 @@ func (s *Server) ensureCert(certFile, keyFile, appURI string) error {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
-			Organization: []string{"EdgeX Gateway"},
+			Organization: []string{"edgeCore Gateway"},
 			CommonName:   s.config.Name,
 			Country:      []string{"CN"},
 			Locality:     []string{"Beijing"},
@@ -608,7 +608,7 @@ func stringMapsEqual(a, b map[string]string) bool {
 }
 
 func (s *Server) rebuildAddressSpaceInPlaceLocked() error {
-	nsURI := "http://edgex-gateway.com/opcua"
+	nsURI := "http://edgeCore-gateway.com/opcua"
 	nsIndex := s.srv.NamespaceManager().Add(nsURI)
 	gatewayID := ua.ParseNodeID(fmt.Sprintf("ns=%d;s=G", nsIndex))
 	if node, ok := s.srv.NamespaceManager().FindNode(gatewayID); ok {
@@ -635,16 +635,25 @@ func (s *Server) rebuildAddressSpaceInPlaceLocked() error {
 	return nil
 }
 
+// HasNode reports whether the node for the given key (channelID/deviceID/pointID)
+// currently exists in the address space. Thread-safe.
+func (s *Server) HasNode(key string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.nodeMap[key]
+	return ok
+}
+
 func (s *Server) Update(v model.Value) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	_, isVirtual := s.virtualDeviceIDs[v.DeviceID]
 	if isVirtual {
-		if len(s.config.VirtualDevices) > 0 && !s.config.VirtualDevices.AllowsDevice(v.DeviceID) {
+		if !s.config.VirtualDevices.AllowsDevice(v.DeviceID) {
 			return
 		}
-	} else if len(s.config.Devices) > 0 && !s.config.Devices.AllowsDevice(v.DeviceID) {
+	} else if !s.config.Devices.AllowsDevice(v.DeviceID) {
 		return
 	}
 
@@ -673,7 +682,7 @@ func (s *Server) Update(v model.Value) {
 }
 
 func (s *Server) buildAddressSpace() error {
-	nsURI := "http://edgex-gateway.com/opcua"
+	nsURI := "http://edgeCore-gateway.com/opcua"
 	// Get namespace index from the server
 	nsIndex := s.srv.NamespaceManager().Add(nsURI)
 	//zap.L().Info("OPC UA Namespace Added", zap.String("uri", nsURI), zap.Uint16("index", nsIndex))
@@ -787,17 +796,13 @@ func (s *Server) buildAddressSpace() error {
 		for _, dev := range ch.Devices {
 			//zap.L().Info("Processing Device", zap.String("device_id", dev.ID), zap.String("device_name", dev.Name), zap.Int("point_count", len(dev.Points)))
 
-			// Check if device is enabled in config
-			// If config.Devices is empty, we assume "Allow All" for better UX.
-			// If config.Devices is populated, we apply strict filtering.
-			if len(s.config.Devices) > 0 {
-				if !s.config.Devices.AllowsDevice(dev.ID) {
-					zap.L().Debug("OPC UA device excluded by mapping",
-						zap.String("device_id", dev.ID),
-						zap.String("channel_id", ch.ID),
-					)
-					continue
-				}
+			// Only explicitly enabled devices are exposed to the address space.
+			if !s.config.Devices.AllowsDevice(dev.ID) {
+				zap.L().Debug("OPC UA device excluded by mapping",
+					zap.String("device_id", dev.ID),
+					zap.String("channel_id", ch.ID),
+				)
+				continue
 			}
 
 			// Generate compact device node ID: G/{channelNum}/D/{deviceNum}
@@ -957,7 +962,7 @@ func (s *Server) buildVirtualDevicesForChannel(
 		if model.InferVirtualShadowChannel(vcfg.Points) != ch.ID {
 			continue
 		}
-		if len(s.config.VirtualDevices) > 0 && !s.config.VirtualDevices.AllowsDevice(vcfg.ID) {
+		if !s.config.VirtualDevices.AllowsDevice(vcfg.ID) {
 			continue
 		}
 

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 通道与设备管理 (南向) API
-description: EdgeX 通道与设备管理 API 文档（中文）
+description: edgeCore 通道与设备管理 API 文档（中文）
 ---
 
 # 通道与设备管理 (南向) API

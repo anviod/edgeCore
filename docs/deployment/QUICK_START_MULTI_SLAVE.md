@@ -2,7 +2,7 @@
 layout: default
 ---
 
-> **历史快速入门（2026-01）**：下文 `slaves:` 嵌套格式为初版示例。**现行**请使用三级架构：同 Modbus 通道下为每个 `slave_id` 配置独立 Device（见 [三级架构快速入门](QUICK_START_THREE_LEVEL.html)、[test/README.md](https://github.com/anviod/edgex/blob/dev/test/README.md)）。采集由 **ScanEngine** 调度，非 `device_manager`。
+> **历史快速入门（2026-01）**：下文 `slaves:` 嵌套格式为初版示例。**现行**请使用三级架构：同 Modbus 通道下为每个 `slave_id` 配置独立 Device（见 [三级架构快速入门](QUICK_START_THREE_LEVEL.html)、[test/README.md](https://github.com/anviod/edgeCore/blob/dev/test/README.md)）。采集由 **ScanEngine** 调度，非 `device_manager`。
 
 # 快速开始 - 多从属设备轮询
 
@@ -52,7 +52,7 @@ devices:
 ### 2️⃣ 编译
 
 ```bash
-cd edgex
+cd edgeCore
 go build ./cmd/main.go
 ```
 

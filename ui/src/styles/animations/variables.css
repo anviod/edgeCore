@@ -1,0 +1,36 @@
+/*
+ * edgeCore v3.0 — Motion Design Tokens
+ * 统一的动效时长、缓动、错开间隔变量
+ */
+
+:root {
+  /* ── durations ── */
+  --motion-duration-instant: 80ms;
+  --motion-duration-fast: 130ms;
+  --motion-duration-normal: 180ms;
+  --motion-duration-slow: 240ms;
+  --motion-duration-slower: 320ms;
+
+  /* ── easings ── */
+  --motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
+  --motion-ease-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --motion-ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --motion-ease-industrial: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ── stagger intervals ── */
+  --motion-stagger-tight: 24ms;
+  --motion-stagger-base: 40ms;
+  --motion-stagger-loose: 60ms;
+
+  /* ── transforms ── */
+  --motion-translate-sm: 8px;
+  --motion-translate-md: 16px;
+  --motion-translate-lg: 24px;
+  --motion-scale-sm: 0.98;
+  --motion-scale-md: 0.96;
+  --motion-scale-lg: 0.92;
+
+  /* ── legacy bridge ── */
+  --transition-fast: var(--motion-duration-fast) var(--motion-ease-standard);
+}

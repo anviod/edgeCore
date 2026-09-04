@@ -4,13 +4,13 @@ EtherCAT（Ethernet for Control Automation Technology）是一种基于标准以
 
 > **状态**：**v0.0.8 已实现 M1 里程碑**。核心驱动框架（`internal/driver/ethercat/`）、协议注册、前端通道/设备表单、帮助组件已交付。模拟模式可无硬件验证全流程。后续 M2/M3 里程碑（实时网卡绑定、DC 分布式时钟、CoE 完整对象字典）待规划。
 
-EtherCAT 系统包括几个角色：**主站（Master）** 负责网络扫描、从站配置与过程数据调度；**从站（Slave）** 为现场 IO 模块、伺服驱动器、传感器等，以菊花链或树形拓扑挂接；**配置工具**（如 TwinCAT、SOEM slaveinfo、IgH 工具链）用于导入 ESI/XML、生成 PDO 映射与对象字典。EdgeX 本驱动规划为 **EtherCAT 主站侧采集驱动**，通过过程数据对象（PDO）周期性采集、通过服务数据对象（SDO）非周期性读写参数。
+EtherCAT 系统包括几个角色：**主站（Master）** 负责网络扫描、从站配置与过程数据调度；**从站（Slave）** 为现场 IO 模块、伺服驱动器、传感器等，以菊花链或树形拓扑挂接；**配置工具**（如 TwinCAT、SOEM slaveinfo、IgH 工具链）用于导入 ESI/XML、生成 PDO 映射与对象字典。edgeCore 本驱动规划为 **EtherCAT 主站侧采集驱动**，通过过程数据对象（PDO）周期性采集、通过服务数据对象（SDO）非周期性读写参数。
 
 > **架构依据**：本文档以 [ScanEngine 重构方案](../ScanEngine重构方案.html)（v5.0 调度驱动内核规范）与 [边缘网关架构设计总览](../../edge/边缘网关架构设计总览.html)（v2.2 全生命周期架构）为准绳。EtherCAT 驱动须遵循 **调度→执行→数据→状态** 闭环，Driver 作为纯执行函数接入 ScanEngine 统一调度。
 
 ::: tip 部署约束
 
-EtherCAT 主站需直接访问以太网 MAC 层（原始帧或专用内核模块），对帧时序与网卡驱动有严格要求。与 [Profinet IO 驱动](../../drivers/PLC_Profinet_IO.html) 类似，**须将 EdgeX 部署在物理工业网关上并绑定真实网卡**；不建议在普通 Docker 容器或无专用网卡驱动的虚拟机中运行主站功能。具体网卡白名单与实时性指标**待联调确认**。
+EtherCAT 主站需直接访问以太网 MAC 层（原始帧或专用内核模块），对帧时序与网卡驱动有严格要求。与 [Profinet IO 驱动](../../drivers/PLC_Profinet_IO.html) 类似，**须将 edgeCore 部署在物理工业网关上并绑定真实网卡**；不建议在普通 Docker 容器或无专用网卡驱动的虚拟机中运行主站功能。具体网卡白名单与实时性指标**待联调确认**。
 
 :::
 
@@ -24,7 +24,7 @@ EtherCAT 主站需直接访问以太网 MAC 层（原始帧或专用内核模块
 
 ## 设备配置
 
-点击通道进入设备列表，添加从站设备。配置 EdgeX 与从站建立映射所需的参数，下表为**规划中的**设备相关配置项。
+点击通道进入设备列表，添加从站设备。配置 edgeCore 与从站建立映射所需的参数，下表为**规划中的**设备相关配置项。
 
 | 参数 | 说明 |
 |------|------|
@@ -106,7 +106,7 @@ POSITION:SDO:0xINDEX:0xSUBINDEX[#ENDIAN]
 ### 1.1 背景
 
 - 制造与运动控制现场大量采用 EtherCAT 伺服、IO 耦合器、安全模块；网关若缺少原生主站能力，往往需额外 PLC 或协议转换网关，增加成本与延迟。
-- EdgeX 已在 Go 侧交付 Modbus、S7、EtherNet/IP、Profinet IO 等工业协议驱动，架构上具备 `ScanEngine → Driver.ReadPoints/WritePoint → ShadowCore` 统一数据面（见 [南向采集 TODO 索引](../index.html) §1）。
+- edgeCore 已在 Go 侧交付 Modbus、S7、EtherNet/IP、Profinet IO 等工业协议驱动，架构上具备 `ScanEngine → Driver.ReadPoints/WritePoint → ShadowCore` 统一数据面（见 [南向采集 TODO 索引](../index.html) §1）。
 - 产品说明已对外列出 EtherCAT，需补齐实现规划与里程碑，避免能力表述与代码长期脱节。
 
 ### 1.2 目标
@@ -126,15 +126,15 @@ POSITION:SDO:0xINDEX:0xSUBINDEX[#ENDIAN]
 - **一致性**：遵循 `internal/driver/interface.go` 统一 `Driver` 接口；模块划分对齐 [Profinet IO](../../drivers/PLC_Profinet_IO.html)、[KNXnet/IP](../KNXnetIP/KNXnet-IP采集驱动开发.html) 驱动的 `transport / scheduler / decoder / config` 分层。
 - **可靠性**：主站状态机（INIT → PREOP → SAFEOP → OP）失败可观测；链路 Down 时 `ChannelManager` 将同通道设备标记 Offline（现有 `channel_device_state.go` 行为）。
 - **可测试性**：提供模拟从站或录制的 PDO 帧回放，单元测试默认 `CGO_ENABLED=0` 可编译部分纯逻辑（地址解析、解码）；主站 IO **预计依赖 CGO**，集成测试单独门禁。
-- **实时性边界**：EdgeX 作为网关采集，目标周期 **≥1 ms** 量级、毫秒级抖动可接受；**不**与硬实时运动控制主站竞争同一网口，现场方案需评审。
+- **实时性边界**：edgeCore 作为网关采集，目标周期 **≥1 ms** 量级、毫秒级抖动可接受；**不**与硬实时运动控制主站竞争同一网口，现场方案需评审。
 
 ---
 
-## 2. 架构定位：在 EdgeX V2.0 数据面中的位置
+## 2. 架构定位：在 edgeCore V2.0 数据面中的位置
 
-### 2.1 EdgeX 调度驱动架构回顾
+### 2.1 edgeCore 调度驱动架构回顾
 
-EdgeX V2.0 已完成从「组件驱动」到「调度驱动」的迁移。ScanEngine 作为 Mini OS Scheduler，统一掌控时间（10ms Tick）、资源（IO/Conn）、执行（Serial/Parallel/Limited）与状态（优先级/退避/熔断）。所有南向驱动必须以**纯执行函数**身份接入，不得自行管理时间、并发或连接。
+edgeCore V2.0 已完成从「组件驱动」到「调度驱动」的迁移。ScanEngine 作为 Mini OS Scheduler，统一掌控时间（10ms Tick）、资源（IO/Conn）、执行（Serial/Parallel/Limited）与状态（优先级/退避/熔断）。所有南向驱动必须以**纯执行函数**身份接入，不得自行管理时间、并发或连接。
 
 ```text
 config.db → ChannelManager → ScanEngine → ExecutionLayer → EtherCATDriver.ReadPoints
@@ -198,7 +198,7 @@ ScanEngine 对 Driver 的强约束明确规定：**Driver 内部禁止 ticker、
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                          EdgeX Gateway                                   │
+│                          edgeCore Gateway                                   │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  Web UI · REST API · WebSocket (/api/ws/values)                         │
 ├─────────────────────────────────────────────────────────────────────────┤
@@ -407,7 +407,7 @@ EtherCAT 驱动落地需在以下位置「登记」：
 
 | # | 位置 | 文件 | 改动 |
 |---|------|------|------|
-| 1 | blank import | `cmd/main.go` | 增加 `_ "github.com/anviod/edgex/internal/driver/ethercat"` |
+| 1 | blank import | `cmd/main.go` | 增加 `_ "github.com/anviod/edgeCore/internal/driver/ethercat"` |
 | 2 | 协议类型 | `internal/core/channel_manager.go` `registerProtocolToScanEngine` | `ProtocolTypeLimited` case 增加 `"ethercat"` |
 | 3 | 点位校验 | `internal/core/channel_manager.go` `validatePoint` | 增加 `case "ethercat": return cm.validateEtherCATPoint(point)` |
 | 4 | 驱动注册 | `internal/driver/ethercat/ethercat.go` `init()` | `driver.RegisterDriver("ethercat", ...)` |

@@ -13,7 +13,7 @@
     <div class="ai-settings-banner">
       <div class="ai-settings-banner__icon">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M4.93 4.93l2.12 2.12"/><path d="M16.95 16.95l2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="M4.93 19.07l2.12-2.12"/><path d="M16.95 7.05l2.12-2.12"/>
+          <circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M4.93 4.93l2.12 2.12" /><path d="M16.95 16.95l2.12 2.12" /><path d="M2 12h3" /><path d="M19 12h3" /><path d="M4.93 19.07l2.12-2.12" /><path d="M16.95 7.05l2.12-2.12" />
         </svg>
       </div>
       <div class="ai-settings-banner__body">
@@ -122,7 +122,7 @@
             <div class="ai-settings-card__help-bar">
               <a-button size="small" type="text" @click="openMcpDocs">
                 <template #icon>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                 </template>
                 查看接入帮助
               </a-button>
@@ -135,8 +135,8 @@
       <a-tab-pane key="remote" title="本地 AI 模型">
         <div class="ai-settings-tab-body">
           <div class="ai-settings-intro">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span>局域网 gRPC 对接 EdgeX AI Model Center，提供协议逆向、文档解析等高阶 AI 能力</span>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2" /><line x1="8" y1="21" x2="16" y2="21" /><line x1="12" y1="17" x2="12" y2="21" /></svg>
+            <span>局域网 gRPC 对接 edgeCore AI Model Center，提供协议逆向、文档解析等高阶 AI 能力</span>
           </div>
 
           <div class="ai-settings-card ai-settings-card--vertical">
@@ -173,7 +173,7 @@
       <a-tab-pane key="cloud" title="云端大模型">
         <div class="ai-settings-tab-body">
           <div class="ai-settings-intro">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" /></svg>
             <span>直连公网或私有 LLM API — OpenAI、DeepSeek、通义千问、文心一言等</span>
           </div>
 
@@ -271,12 +271,143 @@
           </div>
         </div>
       </a-tab-pane>
+
+      <!-- ── Tab 4: EAN 接入 ── -->
+      <a-tab-pane key="ean" title="EAN 接入">
+        <div class="ai-settings-tab-body">
+          <div class="ai-settings-intro">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3" /><path d="M12 2v3" /><path d="M12 19v3" /><path d="M4.93 4.93l2.12 2.12" /><path d="M16.95 16.95l2.12 2.12" /><path d="M2 12h3" /><path d="M19 12h3" /><path d="M4.93 19.07l2.12-2.12" /><path d="M16.95 7.05l2.12-2.12" /></svg>
+            <span>Edge Agent Network — EAN 复用北向 edgeOS 通道作为传输层，不单独创建 MQTT/NATS 客户端</span>
+          </div>
+
+          <!-- 无北向通道提示 -->
+          <div v-if="!eanNorthboundAvailable" class="ai-settings-ean-alert">
+            <div class="ai-settings-ean-alert__icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+            </div>
+            <div class="ai-settings-ean-alert__body">
+              <div class="ai-settings-ean-alert__title">未检测到 edgeOS 北向通道</div>
+              <div class="ai-settings-ean-alert__desc">
+                EAN 依赖北向 edgeOS(MQTT) 或 edgeOS(NATS) 通道进行 Agent 注册、能力发现和事件发布。
+                请先创建并启用至少一个 edgeOS 北向通道。
+              </div>
+              <a-button size="small" type="primary" @click="goToNorthbound">前往北向通道配置</a-button>
+            </div>
+          </div>
+
+          <!-- 北向通道信息卡片 -->
+          <div v-else class="ai-settings-card ai-settings-card--vertical">
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">复用北向通道</span>
+                <span class="ai-settings-card__desc">
+                  EAN 直接复用已创建的 edgeOS 通道，不额外占用连接资源
+                </span>
+              </div>
+              <span class="ai-settings-status-dot ai-settings-status-dot--on"></span>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 通道详情 -->
+            <div class="ai-settings-ean-nb">
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">通道名称</span>
+                <span class="ai-settings-ean-nb__value">{{ eanNorthboundChannel?.name || '—' }}</span>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">通道类型</span>
+                <span class="ai-settings-ean-nb__value">{{ eanNorthboundChannel?.type || '—' }}</span>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">接入地址</span>
+                <code class="ai-settings-ean-mono">{{ eanNorthboundChannel?.broker || eanNorthboundChannel?.url || '—' }}</code>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">节点 ID</span>
+                <code class="ai-settings-ean-mono">{{ eanNorthboundChannel?.node_id || '—' }}</code>
+              </div>
+              <div class="ai-settings-ean-nb__item">
+                <span class="ai-settings-ean-nb__label">运行状态</span>
+                <span class="ai-settings-ean-nb__status" :class="eanNorthboundChannel?.status === 'Running' ? 'ok' : 'warn'">
+                  {{ eanNorthboundChannel?.status || 'stopped' }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="ai-settings-card ai-settings-card--vertical" style="margin-top: 12px;">
+            <!-- Agent 信息 (只读) -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">EAN 服务</span>
+                <span class="ai-settings-card__desc">
+                  {{ eanSettings.enabled ? 'Agent 已注册 · 传输层就绪' : 'EAN 服务未启用' }}
+                </span>
+              </div>
+              <span class="ai-settings-status-dot" :class="eanSettings.enabled ? 'ai-settings-status-dot--on' : 'ai-settings-status-dot--off'"></span>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- Agent ID -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">Agent ID</span>
+                <span class="ai-settings-card__desc">全局唯一标识符，由 edgeCore 自动生成</span>
+              </div>
+              <code class="ai-settings-ean-mono">{{ eanSettings.agent_id || '—' }}</code>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 传输协议 + 能力数量 -->
+            <div class="ai-settings-card__row--fields">
+              <div class="ai-settings-card__field" style="flex:1">
+                <label class="ai-settings-card__field-label">传输协议</label>
+                <code class="ai-settings-ean-mono">{{ (eanSettings.transport || 'mqtt').toUpperCase() }}</code>
+              </div>
+              <div class="ai-settings-card__field" style="flex:1">
+                <label class="ai-settings-card__field-label">已注册能力</label>
+                <span class="ai-settings-ean-count">{{ eanSettings.capabilities_count ?? 0 }}</span>
+                <span class="ai-settings-card__hint">由 Driver Commands 自动生成</span>
+              </div>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 心跳间隔 -->
+            <div class="ai-settings-card__field">
+              <label class="ai-settings-card__field-label">心跳间隔 (秒)</label>
+              <code class="ai-settings-ean-mono">{{ eanSettings.heartbeat_sec || 60 }}s</code>
+              <div class="ai-settings-card__hint">Agent 向 EdgeOS 发送心跳的间隔，默认 60 秒</div>
+            </div>
+
+            <div class="ai-settings-card__divider"></div>
+
+            <!-- 事件自动发布 -->
+            <div class="ai-settings-card__row">
+              <div class="ai-settings-card__label">
+                <span class="ai-settings-card__title">事件自动发布</span>
+                <span class="ai-settings-card__desc">
+                  {{ eanSettings.event_auto_publish ? '设备状态变化时自动发布 EAN Event' : '事件发布已暂停' }}
+                </span>
+              </div>
+              <span class="ai-settings-status-dot" :class="eanSettings.event_auto_publish ? 'ai-settings-status-dot--on' : 'ai-settings-status-dot--off'"></span>
+            </div>
+          </div>
+          <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--color-border-2);">
+            <a-button size="small" type="outline" @click="goToNorthbound">前往北向通道配置</a-button>
+            <span style="margin-left: 8px; font-size: 12px; color: var(--color-text-3);">EAN 启停和心跳配置已迁移至北向通道弹窗</span>
+          </div>
+        </div>
+      </a-tab-pane>
     </a-tabs>
 
     <!-- 接入方式（仅 MCP Tab 可见） -->
     <div v-if="activeTab === 'mcp'" class="ai-settings-access">
       <div class="ai-settings-access__head">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
         <span>客户端接入</span>
       </div>
 
@@ -288,7 +419,9 @@
           class="ai-settings-access__tab"
           :class="{ 'ai-settings-access__tab--active': mcpClient === c.key }"
           @click="mcpClient = c.key"
-        >{{ c.label }}</button>
+        >
+          {{ c.label }}
+        </button>
       </div>
 
       <!-- 配置示例 -->
@@ -299,7 +432,7 @@
           </div>
           <span class="ai-settings-access__filename">mcp_config.json</span>
           <button class="ai-settings-access__copy" @click="copyMcpConfig">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
             <span>{{ copyLabel }}</span>
           </button>
         </div>
@@ -332,7 +465,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 import { Message } from '@arco-design/web-vue'
 import {
   AI_AUTH_TYPES,
@@ -341,6 +474,8 @@ import {
   findProvider,
   applyProviderPreset
 } from '@/constants/aiProviders'
+import eanApi from '@/api/ean'
+import { renderHelpDoc } from '@/utils/mcpDoc'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
@@ -357,6 +492,44 @@ const visible = computed({
 
 const form = ref(defaultAiSettings())
 const activeTab = ref('remote')
+
+/* ── EAN 设置 ── */
+const eanSettings = reactive({
+  enabled: false,
+  agent_id: '',
+  transport: 'mqtt',
+  heartbeat_sec: 60,
+  event_auto_publish: true,
+  capabilities_count: 0
+})
+const eanNorthboundAvailable = ref(false)
+const eanNorthboundChannel = ref(null)
+
+async function fetchEanSettings() {
+  try {
+    const res = await eanApi.getSettings()
+    if (res?.code === '0' || res?.code === 0) {
+      const d = res.data || {}
+      eanSettings.enabled = d.enabled ?? false
+      eanSettings.agent_id = d.agent_id || ''
+      eanSettings.transport = d.transport || 'mqtt'
+      eanSettings.heartbeat_sec = d.heartbeat_sec ?? 60
+      eanSettings.event_auto_publish = d.event_auto_publish ?? true
+      eanSettings.capabilities_count = d.capabilities_count ?? 0
+      eanNorthboundAvailable.value = d.northbound_available ?? false
+      eanNorthboundChannel.value = d.northbound_channel || null
+    }
+  } catch {
+    // EAN 后端不可用时保持默认值
+  }
+}
+
+function goToNorthbound() {
+  visible.value = false
+  if (typeof window !== 'undefined') {
+    window.location.href = '/#/northbound'
+  }
+}
 
 /* ── 接入方式 ── */
 const mcpClient = ref('claude')
@@ -380,7 +553,7 @@ const mcpClientConfig = computed(() => {
   const configs = {
     claude: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -388,7 +561,7 @@ const mcpClientConfig = computed(() => {
     },
     cursor: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -396,7 +569,7 @@ const mcpClientConfig = computed(() => {
     },
     windsurf: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           url: mcpEndpoint.value,
           headers: { Authorization: `Bearer ${key}` }
         }
@@ -404,7 +577,7 @@ const mcpClientConfig = computed(() => {
     },
     continue: {
       mcpServers: {
-        edgex: {
+        edgeCore: {
           transport: { type: 'http', url: mcpEndpoint.value },
           auth: { type: 'bearer', token: key }
         }
@@ -455,7 +628,7 @@ const saveKeyLoading = ref(false)
 const mcpInputReadonly = ref(true)
 
 // 使用 sessionStorage 持久化 MCP Key，避免 unmount-on-close 导致丢失
-const MCP_KEY_STORAGE = 'edgex_mcp_api_key'
+const MCP_KEY_STORAGE = 'edgeCore_mcp_api_key'
 function loadMcpKeyFromStorage() {
   if (typeof sessionStorage !== 'undefined') {
     try { return sessionStorage.getItem(MCP_KEY_STORAGE) || '' } catch (e) {}
@@ -639,71 +812,13 @@ async function openMcpDocs() {
   }
 }
 
-function renderHelpDoc(data) {
-  if (!data) return '<p style="padding:24px;color:var(--ai-text-muted)">无数据</p>'
-  let html = ''
-  html += `<header class="ai-mcp-docs-hero"><h2>${esc(data.title || '')}</h2><p>${esc(data.description || '')}</p></header>`
-  if (data.architecture?.layers?.length) {
-    html += `<section class="ai-mcp-docs-section"><h3>系统架构</h3><div class="ai-mcp-docs-arch">`
-    html += data.architecture.layers.map((l, i) => {
-      const colorMap = { purple: '#8b5cf6', blue: '#3b82f6', green: '#22c55e', orange: '#f59e0b' }
-      const bgMap = { purple: 'rgba(139,92,246,0.12)', blue: 'rgba(59,130,246,0.12)', green: 'rgba(34,197,94,0.12)', orange: 'rgba(245,158,11,0.12)' }
-      const c = colorMap[l.color] || '#6b7280'
-      const bg = bgMap[l.color] || 'rgba(107,114,128,0.12)'
-      let node = `<div class="ai-mcp-docs-arch__node" style="border-color:${c};background:${bg}"><strong>${esc(l.name)}</strong><br><small>${esc(l.desc)}</small></div>`
-      let arrow = i < data.architecture.layers.length - 1 ? `<div class="ai-mcp-docs-arch__arrow">&#x2193;</div>` : ''
-      return node + arrow
-    }).join('')
-    html += `</div></section>`
-  }
-  html += `<section class="ai-mcp-docs-section"><h3>传输协议</h3><div class="ai-mcp-docs-grid">`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">传输方式</span><code>${esc(data.transport || '')}</code></div>`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">端点</span><code>${esc(data.endpoint || '')}</code></div>`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">认证方式</span><code>${esc(data.auth_mode || '')}</code></div>`
-  html += `</div></section>`
-  if (data.tools?.length) {
-    const readTools = data.tools.filter(t => t.category === 'read')
-    const writeTools = data.tools.filter(t => t.category === 'write')
-    html += `<section class="ai-mcp-docs-section"><h3>MCP 工具清单 (${data.tools.length} 个)</h3>`
-    html += `<h4 class="ai-mcp-docs-subtitle"><span class="ai-mcp-docs-dot" style="background:#22c55e"></span> 只读查询 (${readTools.length} 个)</h4>`
-    html += `<div class="ai-mcp-docs-tool-grid">`
-    for (const t of readTools) {
-      html += `<div class="ai-mcp-docs-tool-card"><code>${esc(t.name)}</code><p>${esc(t.description)}</p></div>`
-    }
-    html += `</div>`
-    html += `<h4 class="ai-mcp-docs-subtitle"><span class="ai-mcp-docs-dot" style="background:#f59e0b"></span> 全功能 CRUD (${writeTools.length} 个)</h4>`
-    html += `<div class="ai-mcp-docs-tool-grid">`
-    for (const t of writeTools) {
-      html += `<div class="ai-mcp-docs-tool-card"><code>${esc(t.name)}</code><p>${esc(t.description)}</p></div>`
-    }
-    html += `</div></section>`
-  }
-  html += `<section class="ai-mcp-docs-section"><h3>安全说明</h3><div class="ai-mcp-docs-card"><ul class="ai-mcp-docs-security-list">`
-  html += `<li>全功能 CRUD 操作需要用户在 UI 中确认激活</li>`
-  html += `<li>所有操作通过 MCP API Key 认证（Bearer 或 X-MCP-API-Key）</li>`
-  html += `<li>MCP API Key 独立于系统 JWT，可随时更换</li>`
-  html += `<li>敏感信息已脱敏处理，端点仅在内网暴露</li>`
-  html += `</ul></div></section>`
-  html += `<section class="ai-mcp-docs-section"><h3>API 端点</h3><div class="ai-mcp-docs-grid">`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">MCP 协议接入</span><code>POST ${esc(data.endpoint || '/api/mcp')}</code></div>`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">激活全功能</span><code>POST /api/mcp/activate</code></div>`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">查询状态</span><code>GET /api/mcp/status</code></div>`
-  html += `<div class="ai-mcp-docs-grid__item"><span class="ai-mcp-docs-grid__label">帮助文档</span><code>GET /api/mcp/help</code></div>`
-  html += `</div></section>`
-  return html
-}
-
-function esc(s) {
-  if (!s) return ''
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
 
 const cloudProviders = computed(() =>
   AI_PROVIDERS.filter((p) => p.deploymentMode === 'cloud')
 )
 
 const remoteModels = computed(() => {
-  const preset = findProvider('edgex-center')
+  const preset = findProvider('edgeCore-center')
   return preset?.models || []
 })
 
@@ -717,10 +832,10 @@ const authHint = computed(() => {
   return a?.desc || ''
 })
 
-// MCP Tab 独立于 deployment_mode — 不会改变 deployment_mode 也不会被其控制
+// MCP Tab / EAN Tab 独立于 deployment_mode — 不会改变 deployment_mode 也不会被其控制
 const onTabChange = (key) => {
-  // MCP Tab 是独立配置区，不映射到 deployment_mode
-  if (key !== 'mcp') {
+  // MCP / EAN Tab 是独立配置区，不映射到 deployment_mode
+  if (key !== 'mcp' && key !== 'ean') {
     form.value.deployment_mode = key
   }
 }
@@ -736,6 +851,8 @@ const syncForm = async (settings) => {
   form.value = { ...defaultAiSettings(), ...(settings || {}) }
   // 始终从后端获取 MCP Key 明文 — 不依赖 sessionStorage（可能过期/被清）
   await fetchMcpKeyFromBackend()
+  // 并行拉取 EAN 设置
+  fetchEanSettings()
   // MCP Tab 状态由自身 mcp_enabled 决定，不跟随 deployment_mode
   if (form.value.mcp_enabled) {
     activeTab.value = 'mcp'

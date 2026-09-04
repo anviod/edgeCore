@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/anviod/edgex/internal/core"
-	_ "github.com/anviod/edgex/internal/driver/bacnet"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	_ "github.com/anviod/edgeCore/internal/driver/bacnet"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ import (
 func TestAddDevice_API_BACnetScanPayload(t *testing.T) {
 	pipeline := core.NewDataPipeline(100)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil, nil)
+	srv := NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil)
 
 	ch := &model.Channel{
 		ID:       "bacnet-ch",
@@ -59,7 +59,7 @@ func TestAddDevice_API_BACnetScanPayload(t *testing.T) {
 func TestAddDevice_API_BACnetScanPayload_DuplicateInstance(t *testing.T) {
 	pipeline := core.NewDataPipeline(100)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil, nil)
+	srv := NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil)
 
 	ch := &model.Channel{
 		ID:       "bacnet-ch",

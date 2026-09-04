@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TagEntry 表示 Tag 数据库中的标准化点位元数据。

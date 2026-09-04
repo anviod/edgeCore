@@ -1,5 +1,5 @@
 #!/bin/bash
-# EdgeX 远程自动部署脚本
+# edgeCore 远程自动部署脚本
 # 使用方式: bash scripts/deploy-remote.sh <远程主机> <节点名称> [包路径]
 
 set -e
@@ -77,10 +77,10 @@ find_package() {
     fi
     
     info "自动查找最新的 $DEB_ARCH 包..."
-    LATEST_PACKAGE=$(ls -1 dist/edgex-v*-"$DEB_ARCH".deb 2>/dev/null | sort -V | tail -1)
+    LATEST_PACKAGE=$(ls -1 dist/edgeCore-v*-"$DEB_ARCH".deb 2>/dev/null | sort -V | tail -1)
     
     if [ -z "$LATEST_PACKAGE" ]; then
-        LATEST_PACKAGE=$(ls -1 dist/edgex-*-"$DEB_ARCH".deb 2>/dev/null | sort -V | tail -1)
+        LATEST_PACKAGE=$(ls -1 dist/edgeCore-*-"$DEB_ARCH".deb 2>/dev/null | sort -V | tail -1)
     fi
     
     if [ -z "$LATEST_PACKAGE" ]; then
@@ -103,10 +103,10 @@ copy_package() {
 backup_config() {
     info "备份现有配置..."
     ssh "$HOST" <<EOF
-        if [ -d /usr/local/bin/edgex ]; then
-            mkdir -p /tmp/edgex_backup
-            cp -rf /usr/local/bin/edgex/data /tmp/edgex_backup/ 2>/dev/null || true
-            cp -rf /usr/local/bin/edgex/config /tmp/edgex_backup/ 2>/dev/null || true
+        if [ -d /usr/local/bin/edgeCore ]; then
+            mkdir -p /tmp/edgeCore_backup
+            cp -rf /usr/local/bin/edgeCore/data /tmp/edgeCore_backup/ 2>/dev/null || true
+            cp -rf /usr/local/bin/edgeCore/config /tmp/edgeCore_backup/ 2>/dev/null || true
             echo "备份完成"
         else
             echo "无现有配置需要备份"
@@ -117,14 +117,14 @@ EOF
 # 停止服务
 stop_service() {
     info "停止现有服务..."
-    ssh "$HOST" "systemctl stop edgex 2>/dev/null || true"
+    ssh "$HOST" "systemctl stop edgeCore 2>/dev/null || true"
     info "服务已停止"
 }
 
 # 卸载旧版本
 uninstall_old() {
     info "卸载旧版本..."
-    ssh "$HOST" "apt remove -y edgex 2>/dev/null || true"
+    ssh "$HOST" "apt remove -y edgeCore 2>/dev/null || true"
     info "旧版本已卸载"
 }
 
@@ -139,8 +139,8 @@ install_new() {
 configure_node() {
     info "配置节点名称: $NODE_NAME..."
     ssh "$HOST" <<EOF
-        if [ -f /usr/local/bin/edgex/config/sync.yaml ]; then
-            sed -i "s/node_name:.*/node_name: $NODE_NAME/" /usr/local/bin/edgex/config/sync.yaml
+        if [ -f /usr/local/bin/edgeCore/config/sync.yaml ]; then
+            sed -i "s/node_name:.*/node_name: $NODE_NAME/" /usr/local/bin/edgeCore/config/sync.yaml
             echo "节点名称已配置"
         else
             echo "配置文件不存在，跳过节点名称配置"
@@ -151,7 +151,7 @@ EOF
 # 启动服务
 start_service() {
     info "启动服务..."
-    ssh "$HOST" "systemctl daemon-reload && systemctl enable edgex && systemctl start edgex"
+    ssh "$HOST" "systemctl daemon-reload && systemctl enable edgeCore && systemctl start edgeCore"
     info "服务已启动"
 }
 
@@ -159,18 +159,18 @@ start_service() {
 verify_service() {
     info "验证服务状态..."
     sleep 5
-    STATUS=$(ssh "$HOST" "systemctl is-active edgex")
+    STATUS=$(ssh "$HOST" "systemctl is-active edgeCore")
     if [ "$STATUS" = "active" ]; then
         info "服务状态: ${GREEN}运行中${NC}"
     else
         warn "服务状态: ${RED}未运行${NC}"
-        warn "查看日志: journalctl -u edgex -n 50"
+        warn "查看日志: journalctl -u edgeCore -n 50"
     fi
 }
 
 # 主流程
 main() {
-    info "========== EdgeX 远程部署开始 =========="
+    info "========== edgeCore 远程部署开始 =========="
     
     check_ssh
     detect_arch
@@ -184,7 +184,7 @@ main() {
     start_service
     verify_service
     
-    info "========== EdgeX 远程部署完成 =========="
+    info "========== edgeCore 远程部署完成 =========="
     info "远程主机: $HOST"
     info "节点名称: $NODE_NAME"
     info "安装包: $PACKAGE"

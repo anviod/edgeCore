@@ -1,7 +1,7 @@
 ---
 layout: default
 title: Southbound Driver Test Report
-description: EdgeX southbound driver unit test and boundary scenario coverage report
+description: edgeCore southbound driver unit test and boundary scenario coverage report
 ---
 
 # Southbound Driver Test Report

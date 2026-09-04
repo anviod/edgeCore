@@ -1,0 +1,138 @@
+/*
+ * edgeCore v3.0 — Hierarchy & parent-child animations
+ * 树形、折叠面板、子级展开、层级导航等父子动效
+ */
+
+/* ── generic collapse/expand with height animation ── */
+.collapse-animate {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.collapse-animate.is-open {
+  grid-template-rows: 1fr;
+}
+
+.collapse-animate > .collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── tree node expand ── */
+.tree-node-children {
+  overflow: hidden;
+  transition:
+    max-height var(--motion-duration-normal) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.tree-node-children.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.tree-node-children.expanded {
+  max-height: 1000px;
+  opacity: 1;
+}
+
+/* ── chevron rotate ── */
+.chevron-toggle {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.chevron-toggle.is-open {
+  transform: rotate(90deg);
+}
+
+.chevron-toggle.is-down.is-open {
+  transform: rotate(180deg);
+}
+
+/* ── parent highlight trail ── */
+.parent-active {
+  position: relative;
+}
+
+.parent-active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  opacity: 0;
+  transform: scaleY(0);
+  transition:
+    opacity var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.parent-active.is-active::before {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+/* ── breadcrumb / back path ── */
+.breadcrumb-item {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.breadcrumb-item:hover {
+  transform: translateX(-2px);
+}
+
+.breadcrumb-separator {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.breadcrumb-item:hover + .breadcrumb-separator,
+.breadcrumb-item:hover .breadcrumb-separator {
+  transform: translateX(2px);
+}
+
+/* ── nested card reveal ── */
+.nested-reveal {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.99);
+  transform-origin: top center;
+  animation: nested-reveal-in var(--motion-duration-normal) var(--motion-ease-decelerate) forwards;
+}
+
+@keyframes nested-reveal-in {
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── step flow connector ── */
+.step-connector {
+  position: relative;
+}
+
+.step-connector::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 28px;
+  bottom: -8px;
+  width: 2px;
+  background: var(--border);
+  transform: scaleY(0);
+  transform-origin: top;
+  transition: transform var(--motion-duration-slow) var(--motion-ease-decelerate);
+}
+
+.step-connector.is-reached::before {
+  background: var(--primary);
+}
+
+.step-connector.is-visible::before {
+  transform: scaleY(1);
+}

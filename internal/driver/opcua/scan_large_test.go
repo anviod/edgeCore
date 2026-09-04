@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/driver/opcua"
-	"github.com/anviod/edgex/internal/model"
-	nbopcua "github.com/anviod/edgex/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver/opcua"
+	"github.com/anviod/edgeCore/internal/model"
+	nbopcua "github.com/anviod/edgeCore/internal/northbound/opcua"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -118,6 +118,7 @@ func TestScanLargeNumberOfPoints(t *testing.T) {
 		Endpoint: "/test",
 		CertFile: filepath.Join(tmpDir, "server.crt"),
 		KeyFile:  filepath.Join(tmpDir, "server.key"),
+		Devices:  model.OpcUaDeviceMap{"dev1": {Enable: true}},
 	}
 
 	srv := nbopcua.NewServer(cfg, mockSB, nil)

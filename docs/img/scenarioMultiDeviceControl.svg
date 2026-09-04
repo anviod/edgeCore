@@ -53,7 +53,7 @@
   
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="main-title">多设备智能联动控制：跨协议物联网编排与产线楼宇协同数字孪生系统</text>
-    <text y="24" class="section-subtitle">EdgeX 边缘计算网关 · 采集控制通道横向单条直线全对齐零交叉流转</text>
+    <text y="24" class="section-subtitle">edgeCore 边缘计算网关 · 采集控制通道横向单条直线全对齐零交叉流转</text>
   </g>
 
   <line x1="330" y1="120" x2="330" y2="720" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6 4"/>

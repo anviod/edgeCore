@@ -1,27 +1,27 @@
 version: 2
 # goreleaser release --snapshot --clean
-project_name: edgex
+project_name: edgeCore
 dist: ./dist
 
 before:
   hooks:
     - go mod tidy
-    - npm run build --prefix ./ui
+    - npm run build --prefix ./ui # npm run dev --prefix ./ui
 
 builds:
-  - id: edgex
+  - id: edgeCore
     main: ./cmd/main.go
-    binary: edgex
+    binary: edgeCore
     flags:
       - -trimpath
-      - -mod=vendor
+      - -mod=mod
     env:
       - CGO_ENABLED=0
     ldflags: >
       -s -w
-      -X github.com/anviod/edgex/internal/model.Version={{.Version}}
-      -X 'github.com/anviod/edgex/internal/model.BuildTime={{.Date}}'
-      -X github.com/anviod/edgex/internal/model.CommitID={{.ShortCommit}}
+      -X github.com/anviod/edgeCore/internal/model.Version={{.Version}}
+      -X github.com/anviod/edgeCore/internal/model.BuildTime={{.Date}}
+      -X github.com/anviod/edgeCore/internal/model.CommitID={{.ShortCommit}}
     goos:
       - linux
       - windows
@@ -38,7 +38,7 @@ builds:
         goarch: arm64
 
 archives:
-  - id: edgex-archive
+  - id: edgeCore-archive
     formats:
       - tar.gz
     name_template: '{{.ProjectName}}-{{.RawVersion}}-{{.Os}}-{{.Arch}}{{if .Arm}}{{.Arm}}{{end}}'
@@ -47,34 +47,34 @@ archives:
       - LICENSE*
       - conf/**
       - scripts/**
-      - edgex.service
-      - edgex.sh
+      - edgeCore.service
+      - edgeCore.sh
       - ui/dist/**
 
 nfpms:
-  - id: edgex-deb
-    package_name: edgex
-    file_name_template: 'edgex-v{{.RawVersion}}-{{.Arch}}'
+  - id: edgeCore-deb
+    package_name: edgeCore
+    file_name_template: 'edgeCore-v{{.RawVersion}}-{{.Arch}}'
     formats:
       - deb
       - rpm
     vendor: HNE Inc.
-    homepage: https://github.com/anviod/edgex
+    homepage: https://github.com/anviod/edgeCore
     maintainer: anviod <anviod@aliyun.com>
     description: 边缘网关，基于 Go 语言的边缘网络通讯与同步服务
-    license: Apache-2.0
-    bindir: /usr/local/bin/edgex
+    license: GPL-3.0
+    bindir: /usr/local/bin/edgeCore
     contents:
-      - src: ./edgex.service
-        dst: /etc/systemd/system/edgex.service
+      - src: ./edgeCore.service
+        dst: /etc/systemd/system/edgeCore.service
         type: config
-      - src: ./edgex.sh
-        dst: /usr/local/bin/edgex/edgex.sh
+      - src: ./edgeCore.sh
+        dst: /usr/local/bin/edgeCore/edgeCore.sh
       - src: ./conf
-        dst: /usr/local/bin/edgex/conf
+        dst: /usr/local/bin/edgeCore/conf
         type: tree
       - src: ./ui/dist
-        dst: /usr/local/bin/edgex/ui/dist
+        dst: /usr/local/bin/edgeCore/ui/dist
         type: tree
     scripts:
       preinstall: scripts/preinstall.sh
@@ -85,7 +85,7 @@ checksum:
   algorithm: sha256
 
 release:
-  draft: true
+  draft: false
   prerelease: auto
 
 changelog:

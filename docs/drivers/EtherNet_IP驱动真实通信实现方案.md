@@ -1,7 +1,7 @@
 ---
 layout: default
 title: EtherNet/IP 驱动真实通信实现方案
-description: EdgeX EtherNet/IP 驱动真实通信实现方案
+description: edgeCore EtherNet/IP 驱动真实通信实现方案
 ---
 
 # EtherNet/IP 驱动真实通信实现方案
@@ -10,7 +10,7 @@ description: EdgeX EtherNet/IP 驱动真实通信实现方案
 
 ## 1. 产品概述
 
-将EdgeX边缘网关的EtherNet/IP协议采集通道从模拟实现升级为基于go-ethernet-ip库的真实Allen-Bradley PLC通信，支持ControlLogix、CompactLogix、Micro800等系列PLC。
+将edgeCore边缘网关的EtherNet/IP协议采集通道从模拟实现升级为基于go-ethernet-ip库的真实Allen-Bradley PLC通信，支持ControlLogix、CompactLogix、Micro800等系列PLC。
 
 ## 2. 核心功能
 

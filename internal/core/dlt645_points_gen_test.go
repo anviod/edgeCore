@@ -3,8 +3,8 @@ package core
 import (
 	"testing"
 
-	_ "github.com/anviod/edgex/internal/driver/dlt645"
-	"github.com/anviod/edgex/internal/model"
+	_ "github.com/anviod/edgeCore/internal/driver/dlt645"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestAddDevice_DLT645_AutoDefaultPoints(t *testing.T) {

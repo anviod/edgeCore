@@ -1,10 +1,10 @@
 ---
 layout: default
 title: Product Guide
-description: EdgeX industrial edge gateway — capabilities, stability, southbound access, edge compute, northbound integration
+description: edgeCore industrial edge gateway — capabilities, stability, southbound access, edge compute, northbound integration
 ---
 
-# EdgeX Product Guide
+# edgeCore Product Guide
 
 [中文版](产品说明.html) · [User Manual](USER_MANUAL.en.html) · [Architecture](../en/architecture-overview.html)
 
@@ -68,4 +68,4 @@ Not hard real-time PLC cycle. Typical mock gates (≤10k tags): lag P95 &lt;100m
 
 ## Positioning vs peers
 
-Comparable class to industrial collectors / edge platforms (Kepware-style multi-protocol collection, Ignition/ThingsBoard Edge-style edge processing, Node-RED industrial flows) — EdgeX emphasizes **unified shadow SoT**, **schedule-driven SLA**, and **lightweight single-binary** field deployment.
+Comparable class to industrial collectors / edge platforms (Kepware-style multi-protocol collection, Ignition/ThingsBoard Edge-style edge processing, Node-RED industrial flows) — edgeCore emphasizes **unified shadow SoT**, **schedule-driven SLA**, and **lightweight single-binary** field deployment.

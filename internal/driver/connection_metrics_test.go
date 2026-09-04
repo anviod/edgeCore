@@ -4,17 +4,17 @@ import (
 	"testing"
 
 	_ "github.com/anviod/bacnet" // 导入BACnet驱动
-	"github.com/anviod/edgex/internal/driver"
-	_ "github.com/anviod/edgex/internal/driver/dlt645"     // 导入DLT645驱动
-	_ "github.com/anviod/edgex/internal/driver/ethernetip" // 导入EtherNet/IP驱动
-	_ "github.com/anviod/edgex/internal/driver/ice104"     // 导入ICE104驱动
-	_ "github.com/anviod/edgex/internal/driver/mitsubishi" // 导入Mitsubishi驱动
-	_ "github.com/anviod/edgex/internal/driver/modbus"     // 导入Modbus驱动
-	_ "github.com/anviod/edgex/internal/driver/omron"      // 导入Omron驱动
-	_ "github.com/anviod/edgex/internal/driver/opcua"      // 导入OPC UA驱动
-	_ "github.com/anviod/edgex/internal/driver/s7"         // 导入S7驱动
-	_ "github.com/anviod/edgex/internal/driver/snmp"       // 导入SNMP驱动
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	_ "github.com/anviod/edgeCore/internal/driver/dlt645"     // 导入DLT645驱动
+	_ "github.com/anviod/edgeCore/internal/driver/ethernetip" // 导入EtherNet/IP驱动
+	_ "github.com/anviod/edgeCore/internal/driver/ice104"     // 导入ICE104驱动
+	_ "github.com/anviod/edgeCore/internal/driver/mitsubishi" // 导入Mitsubishi驱动
+	_ "github.com/anviod/edgeCore/internal/driver/modbus"     // 导入Modbus驱动
+	_ "github.com/anviod/edgeCore/internal/driver/omron"      // 导入Omron驱动
+	_ "github.com/anviod/edgeCore/internal/driver/opcua"      // 导入OPC UA驱动
+	_ "github.com/anviod/edgeCore/internal/driver/s7"         // 导入S7驱动
+	_ "github.com/anviod/edgeCore/internal/driver/snmp"       // 导入SNMP驱动
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // testGetMetrics 辅助函数，测试GetMetrics方法

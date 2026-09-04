@@ -7,19 +7,19 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/anviod/edgex/internal/core"
-	_ "github.com/anviod/edgex/internal/driver/bacnet"
-	_ "github.com/anviod/edgex/internal/driver/dlt645"
-	_ "github.com/anviod/edgex/internal/driver/ethernetip"
-	_ "github.com/anviod/edgex/internal/driver/ice104"
-	_ "github.com/anviod/edgex/internal/driver/knxnetip"
-	_ "github.com/anviod/edgex/internal/driver/mitsubishi"
-	_ "github.com/anviod/edgex/internal/driver/modbus"
-	_ "github.com/anviod/edgex/internal/driver/omron"
-	_ "github.com/anviod/edgex/internal/driver/opcua"
-	_ "github.com/anviod/edgex/internal/driver/s7"
-	_ "github.com/anviod/edgex/internal/driver/snmp"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	_ "github.com/anviod/edgeCore/internal/driver/bacnet"
+	_ "github.com/anviod/edgeCore/internal/driver/dlt645"
+	_ "github.com/anviod/edgeCore/internal/driver/ethernetip"
+	_ "github.com/anviod/edgeCore/internal/driver/ice104"
+	_ "github.com/anviod/edgeCore/internal/driver/knxnetip"
+	_ "github.com/anviod/edgeCore/internal/driver/mitsubishi"
+	_ "github.com/anviod/edgeCore/internal/driver/modbus"
+	_ "github.com/anviod/edgeCore/internal/driver/omron"
+	_ "github.com/anviod/edgeCore/internal/driver/opcua"
+	_ "github.com/anviod/edgeCore/internal/driver/s7"
+	_ "github.com/anviod/edgeCore/internal/driver/snmp"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +29,7 @@ func newChannelTestServer(t *testing.T) *Server {
 	t.Helper()
 	pipeline := core.NewDataPipeline(100)
 	cm := core.NewChannelManager(pipeline, nil)
-	return NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil, nil)
+	return NewServer(cm, nil, pipeline, nil, nil, nil, nil, nil, nil)
 }
 
 func postChannel(t *testing.T, srv *Server, body any) *http.Response {

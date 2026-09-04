@@ -6,7 +6,7 @@ layout: default
 
 ## 1. 环境准备
 
-> **说明**：下文 Docker 示例仅用于快速启动**第三方 MQTT/NATS Broker**（Mosquitto、NATS 等）。**EdgeX 本体**以裸机二进制或 systemd 服务部署，不提供官方 Docker 镜像。部署步骤见 [产品说明 — 部署流程](../guide/产品说明.html#部署流程) 与 [用户手册 — 部署流程](../guide/USER_MANUAL.html#部署流程)。
+> **说明**：下文 Docker 示例仅用于快速启动**第三方 MQTT/NATS Broker**（Mosquitto、NATS 等）。**edgeCore 本体**以裸机二进制或 systemd 服务部署，不提供官方 Docker 镜像。部署步骤见 [产品说明 — 部署流程](../guide/产品说明.html#部署流程) 与 [用户手册 — 部署流程](../guide/USER_MANUAL.html#部署流程)。
 
 ### 1.1 启动 MQTT Broker
 
@@ -43,22 +43,22 @@ docker run -d \
 
 ### 2.1 通过 Web UI 配置
 
-1. 打开 EdgeX 网关 Web UI: `http://localhost:8082`
+1. 打开 edgeCore 网关 Web UI: `http://localhost:8082`
 2. 导航到"北向通道"页面
 3. 点击"新增 edgeOS(MQTT)"或"新增 edgeOS(NATS)"
 4. 填写配置信息：
    - **edgeOS(MQTT)**:
      - 名称: edgeOS MQTT Channel
      - Broker 地址: tcp://127.0.0.1:1883
-     - Client ID: edgex-node-001
-     - 节点 ID: edgex-node-001
+     - Client ID: edgeCore-node-001
+     - 节点 ID: edgeCore-node-001
      - QoS: 1
      - 心跳周期: 30s
    - **edgeOS(NATS)**:
      - 名称: edgeOS NATS Channel
      - URL: nats://127.0.0.1:4222
-     - Client ID: edgex-node-001
-     - 节点 ID: edgex-node-001
+     - Client ID: edgeCore-node-001
+     - 节点 ID: edgeCore-node-001
      - JetStream: 启用
 5. 点击"保存"
 
@@ -74,8 +74,8 @@ curl -X POST http://localhost:8082/api/northbound/edgeos-mqtt \
   "name": "edgeOS MQTT Channel",
   "enable": true,
   "broker": "tcp://127.0.0.1:1883",
-  "client_id": "edgex-node-001",
-  "node_id": "edgex-node-001",
+  "client_id": "edgeCore-node-001",
+  "node_id": "edgeCore-node-001",
   "qos": 1,
   "keep_alive": 60,
   "heartbeat_interval": "30s"
@@ -93,8 +93,8 @@ curl -X POST http://localhost:8082/api/northbound/edgeos-nats \
   "name": "edgeOS NATS Channel",
   "enable": true,
   "url": "nats://127.0.0.1:4222",
-  "client_id": "edgex-node-001",
-  "node_id": "edgex-node-001",
+  "client_id": "edgeCore-node-001",
+  "node_id": "edgeCore-node-001",
   "jetstream_enabled": true,
   "heartbeat_interval": "30s"
 }
@@ -158,12 +158,12 @@ curl http://localhost:8082/api/northbound/edgeos-nats/edgeos-nats-1/stats
 
 **MQTT 监听:**
 ```bash
-mosquitto_sub -h 127.0.0.1 -p 1883 -t "edgex/#" -v
+mosquitto_sub -h 127.0.0.1 -p 1883 -t "edgeCore/#" -v
 ```
 
 **NATS 监听:**
 ```bash
-nats sub "edgex.>"
+nats sub "edgeCore.>"
 ```
 
 ### 4.2 发送命令
@@ -171,7 +171,7 @@ nats sub "edgex.>"
 **发送设备发现命令 (MQTT):**
 ```bash
 mosquitto_pub -h 127.0.0.1 -p 1883 \
-  -t "edgex/cmd/edgex-node-001/discover" \
+  -t "edgeCore/cmd/edgeCore-node-001/discover" \
   -m '{
   "header": {
     "message_id": "test-disc-001",
@@ -189,7 +189,7 @@ mosquitto_pub -h 127.0.0.1 -p 1883 \
 
 **发送设备发现命令 (NATS):**
 ```bash
-nats pub "edgex.cmd.edgex-node-001.discover" '{
+nats pub "edgeCore.cmd.edgeCore-node-001.discover" '{
   "header": {
     "message_id": "test-disc-001",
     "timestamp": 1744680000000,
@@ -209,13 +209,13 @@ nats pub "edgex.cmd.edgex-node-001.discover" '{
 **写入命令 (MQTT):**
 ```bash
 mosquitto_pub -h 127.0.0.1 -p 1883 \
-  -t "edgex/cmd/edgex-node-001/device-001/write" \
+  -t "edgeCore/cmd/edgeCore-node-001/device-001/write" \
   -m '{
   "header": {
     "message_id": "test-write-001",
     "timestamp": 1744680000000,
     "source": "edgeos-queen",
-    "destination": "edgex-node-001",
+    "destination": "edgeCore-node-001",
     "message_type": "write_command",
     "version": "1.0",
     "correlation_id": "req-write-001"
@@ -234,12 +234,12 @@ mosquitto_pub -h 127.0.0.1 -p 1883 \
 
 **写入命令 (NATS):**
 ```bash
-nats pub "edgex.cmd.edgex-node-001.device-001.write" '{
+nats pub "edgeCore.cmd.edgeCore-node-001.device-001.write" '{
   "header": {
     "message_id": "test-write-001",
     "timestamp": 1744680000000,
     "source": "edgeos-queen",
-    "destination": "edgex-node-001",
+    "destination": "edgeCore-node-001",
     "message_type": "write_command",
     "version": "1.0",
     "correlation_id": "req-write-001"
@@ -262,10 +262,10 @@ nats pub "edgex.cmd.edgex-node-001.device-001.write" '{
 
 ```bash
 # 查看所有日志
-tail -f logs/edgex-gateway.edgex.log
+tail -f logs/edgeCore-gateway.edgeCore.log
 
 # 只查看 edgeOS 相关日志
-tail -f logs/edgex-gateway.edgex.log | grep edgeOS
+tail -f logs/edgeCore-gateway.edgeCore.log | grep edgeOS
 ```
 
 ### 5.2 查看连接状态
@@ -357,12 +357,12 @@ password: "strong-password"
 部署多个 edgeOS 节点，配置不同的节点 ID：
 ```yaml
 # 节点 1
-node_id: "edgex-node-001"
-client_id: "edgex-node-001-mqtt"
+node_id: "edgeCore-node-001"
+client_id: "edgeCore-node-001-mqtt"
 
 # 节点 2
-node_id: "edgex-node-002"
-client_id: "edgex-node-002-mqtt"
+node_id: "edgeCore-node-002"
+client_id: "edgeCore-node-002-mqtt"
 ```
 
 ### 7.3 监控告警
@@ -376,13 +376,13 @@ client_id: "edgex-node-002-mqtt"
 ## 8. 下一步
 
 - 阅读完整文档: [edgeos-northbound.md](edgeos-northbound.html)
-- 查看协议规范: [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)
+- 查看协议规范: [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)
 - 集成到现有 edgeOS 蜂群网络
 - 实现自定义消息处理逻辑
 
 ## 技术支持
 
 如遇问题，请查看：
-1. 日志文件: `logs/edgex-gateway.edgex.log`
+1. 日志文件: `logs/edgeCore-gateway.edgeCore.log`
 2. 统计信息: `/api/northbound/config`
 3. 帮助文档: Web UI 北向通道页面 → 帮助按钮

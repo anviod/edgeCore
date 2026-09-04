@@ -7,15 +7,16 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/bacnet"
-	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
-	"github.com/anviod/edgex/internal/northbound/http"
-	"github.com/anviod/edgex/internal/northbound/mqtt"
-	"github.com/anviod/edgex/internal/northbound/opcua"
-	"github.com/anviod/edgex/internal/northbound/sparkplugb"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/bacnet"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/northbound/http"
+	"github.com/anviod/edgeCore/internal/northbound/mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/northbound/sparkplugb"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 type NorthboundStatus struct {
@@ -53,6 +54,10 @@ type NorthboundManager struct {
 	cancel            context.CancelFunc
 	saveFunc          func(model.NorthboundConfig) error
 	mu                sync.RWMutex
+
+	shadowCore      *ShadowCore
+	eanShadowBridge *capability.ShadowEventBridge
+	eanShadowOnce   sync.Once
 }
 
 func NewNorthboundManager(cfg model.NorthboundConfig, pipeline *DataPipeline, sb model.SouthboundManager, s *storage.Storage, saveFunc func(model.NorthboundConfig) error) *NorthboundManager {
@@ -250,11 +255,12 @@ func (nm *NorthboundManager) Start() {
 	for _, cfg := range nm.config.EdgeOSMQTT {
 		if cfg.Enable {
 			client := edgos_mqtt.NewClient(cfg, nm.sb, nm.storage)
+			nm.wireEdgeOSMQTTClient(client)
+			nm.edgeOSMQTTClients[cfg.ID] = client
 			if err := client.Start(); err != nil {
 				log.Printf("Failed to start edgeOS(MQTT) client [%s]: %v", cfg.Name, err)
 			} else {
 				log.Printf("Northbound edgeOS(MQTT) client [%s] started", cfg.Name)
-				nm.edgeOSMQTTClients[cfg.ID] = client
 			}
 		}
 	}
@@ -263,11 +269,12 @@ func (nm *NorthboundManager) Start() {
 	for _, cfg := range nm.config.EdgeOSNATS {
 		if cfg.Enable {
 			client := edgos_nats.NewClient(cfg, nm.sb, nm.storage)
+			nm.wireEdgeOSNATSClient(client)
+			nm.edgeOSNATSClients[cfg.ID] = client
 			if err := client.Start(); err != nil {
 				log.Printf("Failed to start edgeOS(NATS) client [%s]: %v", cfg.Name, err)
 			} else {
 				log.Printf("Northbound edgeOS(NATS) client [%s] started", cfg.Name)
-				nm.edgeOSNATSClients[cfg.ID] = client
 			}
 		}
 	}
@@ -450,6 +457,25 @@ func (nm *NorthboundManager) PublishPointsMetadata() {
 			if err := c.PublishPointsMetadata(); err != nil {
 				log.Printf("Failed to publish points metadata via edgeOS(NATS): %v", err)
 			}
+		}(client)
+	}
+}
+
+// PublishDeviceReport republishes the device inventory (edgeCore/devices/report) to all
+// edgeOS clients. Called when channels/devices are added/updated or the northbound
+// Devices mapping changes, so EdgeOS's device list stays in sync without re-connecting.
+func (nm *NorthboundManager) PublishDeviceReport() {
+	nm.mu.RLock()
+	defer nm.mu.RUnlock()
+
+	for _, client := range nm.edgeOSMQTTClients {
+		go func(c *edgos_mqtt.Client) {
+			c.PublishDeviceReport()
+		}(client)
+	}
+	for _, client := range nm.edgeOSNATSClients {
+		go func(c *edgos_nats.Client) {
+			c.PublishDeviceReport()
 		}(client)
 	}
 }

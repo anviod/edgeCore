@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "=== BACnet Server Logs ==="
-journalctl -u edgex --no-pager --since "8 hours ago" | grep -i "BACnet server"
+journalctl -u edgeCore --no-pager --since "8 hours ago" | grep -i "BACnet server"
 
 echo ""
 echo "=== Port listening ==="
@@ -13,4 +13,4 @@ curl -s http://127.0.0.1:8080/api/northbound/config -H "Authorization: Bearer $T
 
 echo ""
 echo "=== Recent JSON BACnet logs ==="
-journalctl -u edgex --no-pager --since "5 minutes ago" | grep '"caller":"server/' | tail -20
+journalctl -u edgeCore --no-pager --since "5 minutes ago" | grep '"caller":"server/' | tail -20

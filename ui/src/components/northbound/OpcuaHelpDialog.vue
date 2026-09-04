@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal v-model:visible="visible" title="OPC UA 接入文档" :width="900" :footer="false" modal-class="northbound-help-modal" unmount-on-close>
     <a-tabs v-model:active-key="activeTab" type="line">
       <a-tab-pane key="connection" title="连接配置">
@@ -117,7 +117,6 @@
               </ul>
             </a-collapse-item>
           </a-collapse>
-
         </div>
       </a-tab-pane>
 

@@ -1,14 +1,14 @@
 <template>
   <div class="login-container">
     <div class="login-scene">
-      <div class="login-panel" 
+      <div
+        class="login-panel" 
         :class="{ 'shake-animation': isShaking, 'login-card-exit': isLoginSuccess, 'countdown-10': ctxData.countdown <= 10 }"
       >
-
         <div class="panel-topbar">
           <div class="logo-box">
             <div class="logo-icon">
-              <span>EdgeX</span>
+              <span>edgeCore</span>
             </div>
           </div>
           <div class="panel-header-side">
@@ -71,6 +71,10 @@
             </template>
             {{ isLoginSuccess ? '登录成功' : (ctxData.loginMethod === 'ldap' ? '域验证登录' : '立即登录') }}
           </a-button>
+
+          <div v-if="ctxData.countdown <= 30" class="session-expiry-hint">
+            <icon-info-circle /> 登录会话将在 {{ Math.ceil(ctxData.countdown) }} 秒后过期，请及时操作
+          </div>
 
           <div class="copyright-text panel-copyright">© {{ new Date().getFullYear() }} {{ ctxData.configInfo.name || '系统' }}</div>
         </a-form>
@@ -232,6 +236,7 @@ const getNonce = async () => {
 }
 
 const handleLogin = async () => {
+  if (ctxData.loading || isLoginSuccess.value) return
   if (!ctxData.loginForm.userName) {
     ctxData.errorMessage = '请输入用户名'
     triggerShake()
@@ -242,7 +247,7 @@ const handleLogin = async () => {
     triggerShake()
     return
   }
-  if (ctxData.loginForm.password.length < 8) {
+  if (ctxData.loginMethod === 'local' && ctxData.loginForm.password.length < 8) {
     ctxData.errorMessage = '密码长度至少8位'
     triggerShake()
     return

@@ -5,8 +5,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 func TestResolvePointFormat_Int16_Default(t *testing.T) {
@@ -81,6 +81,20 @@ func TestPointDecoder_Decode_WithDataformat_Float32Expr(t *testing.T) {
 	}
 	if v, ok := val.(int32); !ok || v != 64 {
 		t.Fatalf("expect int32 64, got %#v", val)
+	}
+}
+
+func TestPointDecoder_Decode_WithDataformat_ParseTypeTakesPrecedence(t *testing.T) {
+	d := NewPointDecoder("ABCD", 0, 0)
+	d.EnableDataformatDecoder(true)
+
+	point := model.Point{DataType: "int16", ParseType: "INT32"}
+	val, _, err := d.Decode(point, []byte{0x00, 0x00, 0x01, 0x08})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if v, ok := val.(int32); !ok || v != 264 {
+		t.Fatalf("expect int32 264, got %#v", val)
 	}
 }
 

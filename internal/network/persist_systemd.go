@@ -5,7 +5,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type systemdNetworkdBackend struct{}
@@ -13,7 +13,7 @@ type systemdNetworkdBackend struct{}
 func (b *systemdNetworkdBackend) Type() BackendType { return BackendSystemdNetworkd }
 
 func (b *systemdNetworkdBackend) ApplyInterfaceConfig(iface model.NetworkInterface) error {
-	path := fmt.Sprintf("/etc/systemd/network/10-edgex-%s.network", iface.Name)
+	path := fmt.Sprintf("/etc/systemd/network/10-edgeCore-%s.network", iface.Name)
 	var builder strings.Builder
 	builder.WriteString("[Match]\n")
 	builder.WriteString(fmt.Sprintf("Name=%s\n\n", iface.Name))
@@ -63,7 +63,7 @@ func (b *systemdNetworkdBackend) ApplyInterfaceConfig(iface model.NetworkInterfa
 }
 
 func (b *systemdNetworkdBackend) ApplyStaticRoute(route model.StaticRoute) error {
-	path := fmt.Sprintf("/etc/systemd/network/20-edgex-route-%s-%s.network", route.Interface, strings.ReplaceAll(route.Destination, ":", ""))
+	path := fmt.Sprintf("/etc/systemd/network/20-edgeCore-route-%s-%s.network", route.Interface, strings.ReplaceAll(route.Destination, ":", ""))
 	dest := route.Destination
 	if route.Prefix > 0 {
 		dest = fmt.Sprintf("%s/%d", route.Destination, route.Prefix)

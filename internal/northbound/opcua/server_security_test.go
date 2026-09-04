@@ -16,7 +16,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/awcullen/opcua/client"
 	"github.com/awcullen/opcua/ua"
@@ -33,7 +33,7 @@ func TestServerSecureChannelBasic256Sha256(t *testing.T) {
 	clientCert := filepath.Join(tmpDir, "client.crt")
 	clientKey := filepath.Join(tmpDir, "client.key")
 
-	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgex-gateway:SecureTest", "SecureTest"); err != nil {
+	if err := writeSelfSignedCert(serverCert, serverKey, "urn:edgeCore-gateway:SecureTest", "SecureTest"); err != nil {
 		t.Fatalf("write server cert: %v", err)
 	}
 	if err := writeSelfSignedCert(clientCert, clientKey, "urn:test:client", "TestClient"); err != nil {
@@ -97,7 +97,7 @@ func writeSelfSignedCert(certFile, keyFile, appURI, commonName string) error {
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(time.Now().UnixNano()),
 		Subject: pkix.Name{
-			Organization: []string{"EdgeX Gateway Test"},
+			Organization: []string{"edgeCore Gateway Test"},
 			CommonName:   commonName,
 		},
 		NotBefore:             time.Now().Add(-time.Hour),

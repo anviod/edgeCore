@@ -1,0 +1,31 @@
+/*
+ * edgeCore v3.0 — Global animations entry
+ * 统一引入所有动效样式；在 main.js 中于业务样式之前引入
+ */
+
+@import './variables.css';
+@import './keyframes.css';
+@import './transitions.css';
+@import './interactions.css';
+@import './hierarchy.css';
+@import './arco-motion.css';
+@import './page-components.css';
+
+/* ── 尊重系统级“减少动态效果”偏好：一键关闭全部动画/过渡 ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .status-indicator,
+  .status-dot,
+  .ai-mcp-status__dot--online,
+  .sync-status-dot--online {
+    animation: none !important;
+  }
+}

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 北向接口（列表卡片 + 弹窗 + 帮助文档）
+ * edgeCore v3.0 — 北向接口（列表卡片 + 弹窗 + 帮助文档）
  */
 
 /* ── Modal shells ── */
@@ -62,13 +62,13 @@
 }
 
 .northbound-add-modal .add-section__header--push {
-  background: var(--edgex-push-bg);
-  border-color: var(--edgex-push-border);
+  background: var(--edgeCore-push-bg);
+  border-color: var(--edgeCore-push-border);
 }
 
 .northbound-add-modal .add-section__header--passive {
-  background: var(--edgex-passive-bg);
-  border-color: var(--edgex-passive-border);
+  background: var(--edgeCore-passive-bg);
+  border-color: var(--edgeCore-passive-border);
 }
 
 .northbound-add-modal .add-section__title {
@@ -267,13 +267,13 @@
 }
 
 .nb-mode-banner--push {
-  background: var(--edgex-push-bg);
-  border-color: var(--edgex-push-border);
+  background: var(--edgeCore-push-bg);
+  border-color: var(--edgeCore-push-border);
 }
 
 .nb-mode-banner--passive {
-  background: var(--edgex-passive-bg);
-  border-color: var(--edgex-passive-border);
+  background: var(--edgeCore-passive-bg);
+  border-color: var(--edgeCore-passive-border);
 }
 
 .nb-mode-banner__tag {
@@ -369,6 +369,15 @@
   width: 100%;
 }
 
+.northbound-settings-modal .strategy-interval-dash {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding-left: 2px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .industrial-modal-footer {
   display: flex;
   justify-content: flex-end;
@@ -404,6 +413,14 @@
   font-size: 12px;
   color: var(--text-tertiary);
   min-width: 140px;
+}
+
+.nb-strategy-hint {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  opacity: 0.85;
 }
 
 .table-header__actions {
@@ -442,8 +459,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.northbound-stats-modal .nb-stat-card__value--success { color: var(--edgex-success); }
-.northbound-stats-modal .nb-stat-card__value--danger { color: var(--edgex-error); }
+.northbound-stats-modal .nb-stat-card__value--success { color: var(--edgeCore-success); }
+.northbound-stats-modal .nb-stat-card__value--danger { color: var(--edgeCore-error); }
 .northbound-stats-modal .nb-stat-card__value--warning { color: #ff7d00; }
 .northbound-stats-modal .nb-stat-card__value--primary { color: var(--primary); }
 .northbound-stats-modal .nb-stat-card__value--info { color: #0ea5e9; }
@@ -476,7 +493,7 @@
   padding: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   font-family: var(--font-mono);
   font-size: 12px;
   line-height: 1.6;
@@ -643,7 +660,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -661,7 +678,7 @@
 
 .northbound-help-modal pre,
 .northbound-help-modal .nb-help-pre {
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
   padding: var(--space-3);
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -876,6 +893,125 @@
   color: var(--text-secondary);
 }
 
+/* ── EAN 流程细节图 ── */
+.northbound-help-modal .nb-flow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+}
+
+.northbound-help-modal .nb-flow__head {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, auto) 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.northbound-help-modal .nb-flow__actor {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  text-align: center;
+}
+
+.northbound-help-modal .nb-flow__headline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.northbound-help-modal .nb-flow__row {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, auto) 1fr;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+}
+
+.northbound-help-modal .nb-flow__note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.northbound-help-modal .nb-flow__row .nb-flow__note:first-child {
+  text-align: right;
+}
+
+.northbound-help-modal .nb-flow__mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.northbound-help-modal .nb-flow__arrow {
+  position: relative;
+  width: 110px;
+  height: 16px;
+  flex: none;
+}
+
+.northbound-help-modal .nb-flow__arrow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+  transform: translateY(-50%);
+}
+
+.northbound-help-modal .nb-flow__arrow--right::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-left: 7px solid var(--border);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transform: translateY(-50%);
+}
+
+.northbound-help-modal .nb-flow__arrow--left::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-right: 7px solid var(--border);
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transform: translateY(-50%);
+}
+
+.northbound-help-modal .nb-flow__topic {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--primary);
+  background: rgba(14, 165, 233, 0.08);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
 /* ── Dark ── */
 .dark-theme .northbound-add-modal .proto-option {
   background: var(--bg);
@@ -895,7 +1031,7 @@
 }
 
 .dark-theme .northbound-stats-modal .log-viewer {
-  background: var(--edgex-surface-inset);
+  background: var(--edgeCore-surface-inset);
 }
 
 .northbound-page .empty-wrap .arco-empty-image {
@@ -904,4 +1040,35 @@
 
 .northbound-page .empty-icon-muted {
   color: var(--text-tertiary);
+}
+
+/* ---- 北向上报策略：树形通道分组 ---- */
+.nb-tree-channel-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.nb-tree-channel-badge {
+  display: inline-block;
+  min-width: 52px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 18px;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--edgeCore-surface-inset, rgba(128, 128, 128, 0.12));
+}
+
+.nb-tree-dash {
+  color: var(--text-tertiary);
+  user-select: none;
+}
+
+/* 通道父行启用列：使用复选框样式，与设备行开关区分 */
+.nb-report-strategy-panel .arco-table-tr:not(.arco-tr-expand) .arco-checkbox {
+  margin-left: 8px;
 }

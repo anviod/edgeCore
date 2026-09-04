@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 func TestServer_RuntimeCompactLoopLifecycle(t *testing.T) {

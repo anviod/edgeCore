@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 	"time"
+
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TestNodeRegisterCommandMessageParsing tests parsing of node register command messages
@@ -124,8 +126,8 @@ func TestNodeRegistrationPayload(t *testing.T) {
 		},
 		Body: map[string]interface{}{
 			"node_id":      nodeID,
-			"node_name":    "EdgeX Gateway Node",
-			"model":        "edgex",
+			"node_name":    "edgeCore Gateway Node",
+			"model":        "edgeCore",
 			"version":      "1.0.0",
 			"api_version":  "v1",
 			"capabilities": []string{"shadow-sync", "heartbeat", "device-control", "task-execution"},
@@ -157,11 +159,11 @@ func TestNodeRegistrationPayload(t *testing.T) {
 	if body["node_id"] != nodeID {
 		t.Errorf("Expected node_id '%s', got '%v'", nodeID, body["node_id"])
 	}
-	if body["node_name"] != "EdgeX Gateway Node" {
-		t.Errorf("Expected node_name 'EdgeX Gateway Node', got '%v'", body["node_name"])
+	if body["node_name"] != "edgeCore Gateway Node" {
+		t.Errorf("Expected node_name 'edgeCore Gateway Node', got '%v'", body["node_name"])
 	}
-	if body["model"] != "edgex" {
-		t.Errorf("Expected model 'edgex', got '%v'", body["model"])
+	if body["model"] != "edgeCore" {
+		t.Errorf("Expected model 'edgeCore', got '%v'", body["model"])
 	}
 	if body["version"] != "1.0.0" {
 		t.Errorf("Expected version '1.0.0', got '%v'", body["version"])
@@ -184,19 +186,19 @@ func TestNodeRegistrationPayload(t *testing.T) {
 // TestRegisterSubjectConstant tests the register command subject constant
 func TestRegisterSubjectConstant(t *testing.T) {
 	// The subject that EdgeOS uses to trigger node re-registration
-	registerSubject := "edgex.cmd.nodes.register"
+	registerSubject := "edgeCore.cmd.nodes.register"
 
 	// Verify subject format
 	if registerSubject == "" {
 		t.Error("Register subject should not be empty")
 	}
-	if registerSubject != "edgex.cmd.nodes.register" {
-		t.Errorf("Expected subject 'edgex.cmd.nodes.register', got '%s'", registerSubject)
+	if registerSubject != "edgeCore.cmd.nodes.register" {
+		t.Errorf("Expected subject 'edgeCore.cmd.nodes.register', got '%s'", registerSubject)
 	}
 
 	// Verify it follows the pattern defined in the protocol spec
-	// Subject format: edgex.cmd.nodes.register (EdgeOS -> EdgeX)
-	expectedPattern := "edgex.cmd.nodes.register"
+	// Subject format: edgeCore.cmd.nodes.register (EdgeOS -> edgeCore)
+	expectedPattern := "edgeCore.cmd.nodes.register"
 	if registerSubject != expectedPattern {
 		t.Errorf("Subject should match pattern '%s', got '%s'", expectedPattern, registerSubject)
 	}
@@ -209,8 +211,8 @@ func TestNATSStatusSubjectGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 
 	// Generate status subject (same as in publishNodeOnline)
-	subject := fmt.Sprintf("edgex.nodes.%s.status", nodeID)
-	expected := "edgex.nodes.test-node-001.status"
+	subject := fmt.Sprintf("edgeCore.nodes.%s.status", nodeID)
+	expected := "edgeCore.nodes.test-node-001.status"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
@@ -222,8 +224,8 @@ func TestNATSStatusSubjectGeneration(t *testing.T) {
 // TestNATSRegistrationSubject tests NATS registration subject
 func TestNATSRegistrationSubject(t *testing.T) {
 	// Generate registration subject (same as in publishNodeOnline)
-	subject := "edgex.nodes.register"
-	expected := "edgex.nodes.register"
+	subject := "edgeCore.nodes.register"
+	expected := "edgeCore.nodes.register"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
@@ -377,8 +379,8 @@ func TestDeviceReportMessageFormat(t *testing.T) {
 // TestDeviceReportSubjectGeneration tests device report subject generation for NATS
 func TestDeviceReportSubjectGeneration(t *testing.T) {
 	// Generate device report subject (same as in publishDeviceReport)
-	reportSubject := "edgex.devices.report"
-	expected := "edgex.devices.report"
+	reportSubject := "edgeCore.devices.report"
+	expected := "edgeCore.devices.report"
 
 	if reportSubject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, reportSubject)
@@ -392,8 +394,8 @@ func TestRegisterResponseSubjectGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 
 	// Generate response subject (same as in subscribeToCommands)
-	subject := fmt.Sprintf("edgex.nodes.%s.response", nodeID)
-	expected := "edgex.nodes.test-node-001.response"
+	subject := fmt.Sprintf("edgeCore.nodes.%s.response", nodeID)
+	expected := "edgeCore.nodes.test-node-001.response"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
@@ -410,7 +412,7 @@ func TestRegisterResponseParsing(t *testing.T) {
 			MessageID:     "resp-msg-001",
 			Timestamp:     time.Now().UnixMilli(),
 			Source:        "edgeos-server",
-			Destination:   "edgex-node-001",
+			Destination:   "edgeCore-node-001",
 			MessageType:   "node_register_response",
 			Version:       "1.0",
 			CorrelationID: "req-msg-001",
@@ -460,7 +462,7 @@ func TestRegisterResponseFailureHandling(t *testing.T) {
 			MessageID:     "resp-msg-002",
 			Timestamp:     time.Now().UnixMilli(),
 			Source:        "edgeos-server",
-			Destination:   "edgex-node-001",
+			Destination:   "edgeCore-node-001",
 			MessageType:   "node_register_response",
 			Version:       "1.0",
 			CorrelationID: "req-msg-002",
@@ -586,7 +588,7 @@ func TestNATSMessageFormat(t *testing.T) {
 		},
 		Body: map[string]interface{}{
 			"action":  "re-register",
-			"node_id": "edgex-node-001",
+			"node_id": "edgeCore-node-001",
 		},
 	}
 
@@ -613,8 +615,8 @@ func TestDeviceOnlineSubjectGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 	deviceID := "test-device-001"
 
-	subject := fmt.Sprintf("edgex.devices.%s.%s.online", nodeID, deviceID)
-	expected := "edgex.devices.test-node-001.test-device-001.online"
+	subject := fmt.Sprintf("edgeCore.devices.%s.%s.online", nodeID, deviceID)
+	expected := "edgeCore.devices.test-node-001.test-device-001.online"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
@@ -628,8 +630,8 @@ func TestDeviceOfflineSubjectGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 	deviceID := "test-device-001"
 
-	subject := fmt.Sprintf("edgex.devices.%s.%s.offline", nodeID, deviceID)
-	expected := "edgex.devices.test-node-001.test-device-001.offline"
+	subject := fmt.Sprintf("edgeCore.devices.%s.%s.offline", nodeID, deviceID)
+	expected := "edgeCore.devices.test-node-001.test-device-001.offline"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
@@ -808,16 +810,16 @@ func TestNATSDeviceOfflineMessageFormat(t *testing.T) {
 // TestNATSWildcardSubjectPattern tests NATS wildcard subject pattern for device online/offline
 func TestNATSWildcardSubjectPattern(t *testing.T) {
 	// Test wildcard pattern for subscribing to all device online subjects
-	wildcardPattern := "edgex.devices.>.online"
-	expected := "edgex.devices.>.online"
+	wildcardPattern := "edgeCore.devices.>.online"
+	expected := "edgeCore.devices.>.online"
 
 	if wildcardPattern != expected {
 		t.Errorf("Expected pattern '%s', got '%s'", expected, wildcardPattern)
 	}
 
 	// Test wildcard pattern for subscribing to all device offline subjects
-	wildcardPatternOffline := "edgex.devices.>.offline"
-	expectedOffline := "edgex.devices.>.offline"
+	wildcardPatternOffline := "edgeCore.devices.>.offline"
+	expectedOffline := "edgeCore.devices.>.offline"
 
 	if wildcardPatternOffline != expectedOffline {
 		t.Errorf("Expected pattern '%s', got '%s'", expectedOffline, wildcardPatternOffline)
@@ -831,12 +833,70 @@ func TestNATSResponseSubjectGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 	messageID := "test-msg-001"
 
-	subject := fmt.Sprintf("edgex.res.%s.%s", nodeID, messageID)
-	expected := "edgex.res.test-node-001.test-msg-001"
+	subject := fmt.Sprintf("edgeCore.res.%s.%s", nodeID, messageID)
+	expected := "edgeCore.res.test-node-001.test-msg-001"
 
 	if subject != expected {
 		t.Errorf("Expected subject '%s', got '%s'", expected, subject)
 	}
 
 	t.Logf("NATS response subject generation test passed: %s", subject)
+}
+
+// TestEANEventAutoPublishEnabled verifies the EANEventAutoPublish gating helper
+// returns true only when both EANEnabled and EANEventAutoPublish are set.
+func TestEANEventAutoPublishEnabled(t *testing.T) {
+	cases := []struct {
+		name        string
+		enabled     bool
+		autoPublish bool
+		want        bool
+	}{
+		{"both off", false, false, false},
+		{"ean on auto off", true, false, false},
+		{"ean off auto on", false, true, false},
+		{"both on", true, true, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Client{}
+			c.configMu.Lock()
+			c.config = model.EdgeOSNATSConfig{
+				EANEnabled:          tc.enabled,
+				EANEventAutoPublish: tc.autoPublish,
+			}
+			c.configMu.Unlock()
+			if got := c.EANEventAutoPublishEnabled(); got != tc.want {
+				t.Errorf("EANEventAutoPublishEnabled() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+// TestMqttTopicToNatsSubject verifies the MQTT-to-NATS subject conversion.
+// NATS uses dot-separated hierarchical subjects; MQTT topics use slashes.
+// | 验证 MQTT 斜杠 Topic 到 NATS 点分隔 Subject 的转换规则。
+func TestMqttTopicToNatsSubject(t *testing.T) {
+	cases := []struct {
+		name     string
+		mqtt     string
+		natsWant string
+	}{
+		{"plain", "$edgeos/discovery/agent", "$edgeos.discovery.agent"},
+		{"with_id", "$edgeos/invoke/gw-001", "$edgeos.invoke.gw-001"},
+		{"multi_segment", "$edgeos/event/gw-001/dev-001", "$edgeos.event.gw-001.dev-001"},
+		{"single_level_wildcard", "$edgeos/invoke/+/status", "$edgeos.invoke.*.status"},
+		{"multi_level_wildcard", "$edgeos/event/#", "$edgeos.event.>"},
+		{"v1_compat", "edgeCore/nodes/register", "edgeCore.nodes.register"},
+		{"already_dot", "edgeCore.nodes.register", "edgeCore.nodes.register"},
+		{"no_separator", "discovery", "discovery"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := MqttTopicToNatsSubject(tc.mqtt)
+			if got != tc.natsWant {
+				t.Errorf("MqttTopicToNatsSubject(%q) = %q, want %q", tc.mqtt, got, tc.natsWant)
+			}
+		})
+	}
 }

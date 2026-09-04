@@ -1,7 +1,7 @@
 import sqlite3
 import json
 
-conn = sqlite3.connect('/usr/local/bin/edgex/data/config.db')
+conn = sqlite3.connect('/usr/local/bin/edgeCore/data/config.db')
 cursor = conn.cursor()
 
 # List tables

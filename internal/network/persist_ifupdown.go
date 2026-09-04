@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type ifupdownBackend struct{}
@@ -12,7 +12,7 @@ type ifupdownBackend struct{}
 func (b *ifupdownBackend) Type() BackendType { return BackendIfupdown }
 
 func (b *ifupdownBackend) ApplyInterfaceConfig(iface model.NetworkInterface) error {
-	path := fmt.Sprintf("/etc/network/interfaces.d/edgex-%s", iface.Name)
+	path := fmt.Sprintf("/etc/network/interfaces.d/edgeCore-%s", iface.Name)
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("auto %s\n", iface.Name))
 	builder.WriteString(fmt.Sprintf("iface %s inet ", iface.Name))
@@ -52,7 +52,7 @@ func (b *ifupdownBackend) ApplyInterfaceConfig(iface model.NetworkInterface) err
 }
 
 func (b *ifupdownBackend) ApplyStaticRoute(route model.StaticRoute) error {
-	path := fmt.Sprintf("/etc/network/interfaces.d/edgex-route-%s", strings.ReplaceAll(route.Destination, ".", "-"))
+	path := fmt.Sprintf("/etc/network/interfaces.d/edgeCore-route-%s", strings.ReplaceAll(route.Destination, ".", "-"))
 	dest := route.Destination
 	if route.Prefix > 0 {
 		dest = fmt.Sprintf("%s/%d", route.Destination, route.Prefix)

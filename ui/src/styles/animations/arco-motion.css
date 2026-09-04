@@ -1,0 +1,168 @@
+/*
+ * edgeCore v3.0 — Arco Design built-in motion overrides
+ * 统一覆盖 Arco 内置动画参数，保持全局动效一致性
+ */
+
+/* ── modal / dialog ── */
+.arco-modal-mask,
+.arco-drawer-mask {
+  transition: opacity var(--motion-duration-normal) var(--motion-ease-standard);
+}
+
+.arco-modal-wrapper,
+.arco-drawer-wrapper {
+  transition:
+    opacity var(--motion-duration-normal) var(--motion-ease-standard),
+    transform var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.arco-modal {
+  animation: modal-scale-in var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.arco-modal.arco-modal-exit {
+  animation: modal-scale-out var(--motion-duration-fast) var(--motion-ease-accelerate) forwards;
+}
+
+/* ── drawer ── */
+.arco-drawer {
+  animation: drawer-slide-in var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.arco-drawer.arco-drawer-exit {
+  animation: drawer-slide-out var(--motion-duration-fast) var(--motion-ease-accelerate) forwards;
+}
+
+/* ── message / notification ── */
+.arco-message,
+.arco-notification {
+  animation: toast-slide-in-right var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.arco-message.arco-message-exit,
+.arco-notification.arco-notification-exit {
+  animation: toast-slide-out-right var(--motion-duration-fast) var(--motion-ease-accelerate) forwards;
+}
+
+/* ── menu / dropdown ── */
+.arco-dropdown-menu,
+.arco-menu-popover .arco-trigger-popup-wrapper,
+.arco-trigger-popup {
+  animation: scale-in var(--motion-duration-fast) var(--motion-ease-decelerate);
+  transform-origin: top center;
+}
+
+.arco-menu-item,
+.arco-dropdown-option {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── tooltip / popover ── */
+.arco-tooltip-content,
+.arco-popover-content {
+  animation: scale-soft-in var(--motion-duration-fast) var(--motion-ease-decelerate);
+  transform-origin: center bottom;
+}
+
+@keyframes scale-soft-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ── tabs ── */
+.arco-tabs-nav-ink {
+  transition:
+    left var(--motion-duration-normal) var(--motion-ease-bounce),
+    width var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.arco-tabs-tab {
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── collapse / accordion ── */
+.arco-collapse-item-content {
+  transition:
+    height var(--motion-duration-normal) var(--motion-ease-standard),
+    opacity var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-collapse-item-header {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-collapse-item-icon-right {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.arco-collapse-item-active .arco-collapse-item-icon-right {
+  transform: rotate(180deg);
+}
+
+/* ── switch ── */
+.arco-switch {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-switch-dot {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+/* ── checkbox / radio ── */
+.arco-checkbox,
+.arco-radio {
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-checkbox-icon,
+.arco-radio-icon {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.arco-checkbox:hover .arco-checkbox-icon,
+.arco-radio:hover .arco-radio-icon {
+  transform: scale(1.05);
+}
+
+/* ── tag / badge ── */
+.arco-tag {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── pagination ── */
+.arco-pagination-item,
+.arco-pagination-jumper-input {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+/* ── upload ── */
+.arco-upload-list-item {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.arco-upload-list-item:hover {
+  transform: translateX(2px);
+}
+
+/* ── spin ── */
+.arco-spin-icon {
+  animation: spin 0.8s linear infinite;
+}

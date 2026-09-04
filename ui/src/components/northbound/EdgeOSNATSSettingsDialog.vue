@@ -36,12 +36,12 @@
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="Client ID" required>
-                  <a-input v-model="form.client_id" placeholder="edgex-node-001" class="mono-text" />
+                  <a-input v-model="form.client_id" placeholder="edgeCore-node-001" class="mono-text" />
                 </a-form-item>
               </a-col>
               <a-col :span="12">
                 <a-form-item label="节点 ID" required>
-                  <a-input v-model="form.node_id" placeholder="edgex-node-001" class="mono-text" />
+                  <a-input v-model="form.node_id" placeholder="edgeCore-node-001" class="mono-text" />
                 </a-form-item>
               </a-col>
             </a-row>
@@ -115,6 +115,31 @@
           v-model:virtual-devices="form.virtual_devices"
         />
       </a-tab-pane>
+
+      <!-- EAN 2.0 能力层 / EAN Capability Layer -->
+      <a-tab-pane key="ean">
+        <template #title>EAN 能力层</template>
+        <a-form :model="form" layout="vertical" class="industrial-form form-controls-md">
+          <div class="nb-form-section">
+            <div class="nb-form-section__title">EAN 2.0 能力层</div>
+            <!-- EAN 启用开关 / EAN Enable Switch -->
+            <a-form-item label="启用 EAN 能力层">
+              <a-switch v-model="form.ean_enabled" />
+              <div class="form-hint">启用后此通道将承载 EAN 2.0 Agent 注册、能力发现和远程调用</div>
+            </a-form-item>
+            <!-- 心跳间隔 / Heartbeat Interval -->
+            <a-form-item label="心跳间隔 (秒)">
+              <a-input-number v-model="form.ean_heartbeat_sec" :min="10" :max="600" :step="10" style="width:180px" />
+              <div class="form-hint">Agent 向 EdgeOS 发送心跳的间隔，默认 60 秒</div>
+            </a-form-item>
+            <!-- 事件自动发布 / Event Auto Publish -->
+            <a-form-item label="事件自动发布">
+              <a-switch v-model="form.ean_event_auto_publish" />
+              <div class="form-hint">设备数据变化时自动发布 EAN Event</div>
+            </a-form-item>
+          </div>
+        </a-form>
+      </a-tab-pane>
     </a-tabs>
 
     <template #footer>
@@ -174,8 +199,8 @@ const initForm = () => {
       enable: true,
       name: 'New edgeOS NATS',
       url: 'nats://127.0.0.1:4222',
-      client_id: 'edgex-node-001',
-      node_id: 'edgex-node-001',
+      client_id: 'edgeCore-node-001',
+      node_id: 'edgeCore-node-001',
       username: '',
       password: '',
       token: '',
@@ -186,7 +211,10 @@ const initForm = () => {
       jetstream_enabled: false,
       heartbeat_interval: '30s',
       devices: {},
-      virtual_devices: {}
+      virtual_devices: {},
+      ean_enabled: false,
+      ean_heartbeat_sec: 60,
+      ean_event_auto_publish: false
     }
   }
   if (!form.value.devices) form.value.devices = {}

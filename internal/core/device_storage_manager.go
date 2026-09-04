@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 const DefaultMaxHistoryRecords = 1000
@@ -53,6 +53,16 @@ func (m *DeviceStorageManager) SetShadowCore(sc *ShadowCore) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.shadowCore = sc
+}
+
+// IsStorageEnabled reports whether history storage is enabled for a device.
+// Used by MCP get_point_history to give actionable feedback when no data exists.
+// IsStorageEnabled 报告设备是否已启用历史存储
+func (m *DeviceStorageManager) IsStorageEnabled(deviceID string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cfg, ok := m.deviceCfgs[deviceID]
+	return ok && cfg.Enable
 }
 
 func (m *DeviceStorageManager) handleValue(val model.Value) {

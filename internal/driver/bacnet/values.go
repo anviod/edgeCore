@@ -6,7 +6,7 @@ import (
 
 	"github.com/anviod/bacnet/btypes"
 	"github.com/anviod/bacnet/btypes/null"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func applyFreshReadToCache(devCtx *DeviceContext, deviceID string, fresh map[string]model.Value) {

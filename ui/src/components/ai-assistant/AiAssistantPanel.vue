@@ -53,6 +53,15 @@
             <div class="ai-panel__actions">
               <button
                 type="button"
+                class="ai-panel__action ai-panel__action--help"
+                title="使用帮助"
+                aria-label="打开 AI 助手使用帮助"
+                @click.stop="openHelp"
+              >
+                <icon-question-circle :size="14" />
+              </button>
+              <button
+                type="button"
                 class="ai-panel__action"
                 title="AI 设置"
                 aria-label="打开 AI 设置"
@@ -99,8 +108,12 @@
                 type="button"
                 role="tab"
                 class="ai-tab"
-                :class="{ 'ai-tab--active': state.workspace === ws.id }"
+                :class="[
+                  `ai-tab--${ws.id}`,
+                  { 'ai-tab--active': state.workspace === ws.id }
+                ]"
                 :aria-selected="state.workspace === ws.id"
+                :title="ws.description"
                 @click="setWorkspace(ws.id)"
               >
                 <span class="ai-tab__goal">{{ ws.goal }}</span>
@@ -127,38 +140,46 @@
                   </div>
                   <div class="ai-split__workspace-content">
                     <AiTaskHistory
+                      v-if="state.workspace !== 'mcp' && state.workspace !== 'ean'"
                       :tasks="tasks"
                       :active-id="activeTask?.id"
                       :loading="copilotLoading"
+                      :workspace="state.workspace"
                       @select="selectTask"
                       @refresh="fetchTasks"
                     />
-                    <AiWorkbenchProtocol
-                      v-if="state.workspace === 'protocol'"
-                      :task="activeTask"
-                      :stages="stages"
-                      :deliverables="activeDeliverables"
-                      :loading="copilotLoading"
-                      :upload-progress="uploadProgress"
-                      @upload="handleUpload"
-                      @export="exportDeliverable"
-                      @export-all="exportAll"
-                      @confirm="handleConfirm"
-                    />
-                    <AiWorkbenchValidation
-                      v-else-if="state.workspace === 'validation'"
-                      :deliverables="activeDeliverables"
-                      :validation="validation"
-                      :loading="copilotLoading"
-                      @validate="handleValidate"
-                    />
-                    <AiWorkbenchCases
-                      v-else-if="state.workspace === 'cases'"
-                      :deliverables="activeDeliverables"
-                    />
-                    <AiWorkbenchEdge v-else-if="state.workspace === 'edge'" />
-                    <AiWorkbenchDiagnostics v-else-if="state.workspace === 'diagnostics'" />
-                    <AiMcpHelp v-else-if="state.workspace === 'mcp'" />
+                    <Transition name="fade-up" mode="out-in">
+                      <AiWorkbenchProtocol
+                        v-if="state.workspace === 'protocol'"
+                        :key="'protocol'"
+                        :task="activeTask"
+                        :stages="stages"
+                        :deliverables="activeDeliverables"
+                        :loading="copilotLoading"
+                        :upload-progress="uploadProgress"
+                        @upload="handleUpload"
+                        @export="exportDeliverable"
+                        @export-all="exportAll"
+                        @confirm="handleConfirm"
+                      />
+                      <AiWorkbenchValidation
+                        v-else-if="state.workspace === 'validation'"
+                        :key="'validation'"
+                        :deliverables="activeDeliverables"
+                        :validation="validation"
+                        :loading="copilotLoading"
+                        @validate="handleValidate"
+                      />
+                      <AiWorkbenchCases
+                        v-else-if="state.workspace === 'cases'"
+                        :key="'cases'"
+                        :deliverables="activeDeliverables"
+                      />
+                      <AiWorkbenchEdge v-else-if="state.workspace === 'edge'" :key="'edge'" />
+                      <AiWorkbenchDiagnostics v-else-if="state.workspace === 'diagnostics'" :key="'diagnostics'" />
+                      <AiMcpHelp v-else-if="state.workspace === 'mcp'" :key="'mcp'" />
+                      <AiEanPanel v-else-if="state.workspace === 'ean'" :key="'ean'" />
+                    </Transition>
                   </div>
                 </section>
 
@@ -205,6 +226,11 @@
     @save="handleSaveSettings"
     @refresh="fetchSettings"
   />
+
+  <AiHelpPanel
+    v-if="!isLoginPage"
+    v-model:visible="helpOpen"
+  />
 </template>
 
 <script setup>
@@ -212,7 +238,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { Message } from '@arco-design/web-vue'
 import {
-  IconShrink, IconExpand, IconMinus, IconLeft, IconRight, IconSettings
+  IconShrink, IconExpand, IconMinus, IconLeft, IconRight, IconSettings, IconQuestionCircle
 } from '@arco-design/web-vue/es/icon'
 import { useAiAssistant, AI_WORKSPACES } from '@/composables/useAiAssistant'
 import { useAiCopilot } from '@/composables/useAiCopilot'
@@ -226,7 +252,9 @@ import AiWorkbenchCases from './AiWorkbenchCases.vue'
 import AiWorkbenchEdge from './AiWorkbenchEdge.vue'
 import AiWorkbenchDiagnostics from './AiWorkbenchDiagnostics.vue'
 import AiMcpHelp from './AiMcpHelp.vue'
+import AiEanPanel from './AiEanPanel.vue'
 import AiSettingsDialog from './AiSettingsDialog.vue'
+import AiHelpPanel from './AiHelpPanel.vue'
 
 const route = useRoute()
 const isLoginPage = computed(() => route.path === '/login' || route.path === '/install')
@@ -245,6 +273,11 @@ const {
 
 const settingsOpen = ref(false)
 const settingsSaving = ref(false)
+const helpOpen = ref(false)
+
+const openHelp = () => {
+  helpOpen.value = true
+}
 
 const dialogRef = ref(null)
 const dragging = ref(false)
@@ -409,8 +442,8 @@ const onResizeStart = (e) => {
 const onResizeMove = (e) => {
   if (!resizeStart) return
   setSize(
-    Math.max(480, Math.min(960, resizeStart.width + e.clientX - resizeStart.pointerX)),
-    Math.max(420, Math.min(window.innerHeight - 40, resizeStart.height + e.clientY - resizeStart.pointerY))
+    Math.max(320, resizeStart.width + e.clientX - resizeStart.pointerX),
+    Math.max(240, resizeStart.height + e.clientY - resizeStart.pointerY)
   )
 }
 const onResizeEnd = (e) => {

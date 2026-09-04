@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestNorthboundManager_StartHandleValueAndStop(t *testing.T) {

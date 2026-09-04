@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	drv "github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	drv "github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -234,8 +234,8 @@ func (s *Server) getDeviceMetrics(c *fiber.Ctx) error {
 		metrics.State = 2 // 离线
 	}
 
-	if s.shadowCore != nil {
-		if opt := s.shadowCore.GetDeviceOptimization(deviceID); opt != nil {
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		if opt := shadowCore.GetDeviceOptimization(deviceID); opt != nil {
 			metrics.CommunicationProfile = opt
 		}
 	}

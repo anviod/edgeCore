@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal
     :visible="visible"
     title="克隆其它设备点位"
@@ -8,7 +8,6 @@
     @update:visible="(val) => emit('update:visible', val)"
   >
     <a-space direction="vertical" :size="16" fill>
-      
       <!-- 条件区 -->
       <a-row :gutter="16">
         <a-col :span="8">
@@ -53,6 +52,8 @@
         :data="tableData"
         :pagination="false"
         :row-selection="rowSelection"
+        :selected-keys="selectedRowKeys"
+        @selection-change="onSelectionChange"
         :scroll="{ y: 360 }"
       />
 
@@ -61,7 +62,6 @@
         v-if="!loading && tableData.length === 0"
         description="暂无数据"
       />
-
     </a-space>
   </a-modal>
 </template>
@@ -104,8 +104,11 @@ const columns = [
 const rowSelection = reactive({
   type: 'checkbox',
   showCheckedAll: true,
-  selectedRowKeys
 })
+
+const onSelectionChange = (keys) => {
+  selectedRowKeys.value = keys || []
+}
 
 // 监听 search 和 points 变化，更新 tableData
 watch([search, points], () => {
@@ -197,9 +200,7 @@ const onDeviceChange = async (did) => {
 
 /* 确认 */
 const handleOk = () => {
-  // 从 rowSelection 中获取选中的键
-  const selectedKeys = rowSelection.selectedRowKeys || []
-  const set = new Set(selectedKeys)
+  const set = new Set(selectedRowKeys.value)
   const result = points.value.filter(p => set.has(p.id))
 
   if (!result.length) {

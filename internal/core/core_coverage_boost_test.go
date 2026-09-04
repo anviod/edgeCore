@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 type scannerStubDriver struct {
@@ -216,6 +217,120 @@ func TestChannelManager_OnBACnetAddressDiscovered(t *testing.T) {
 		t.Fatalf("bacnet address not updated: %+v", dev.Config)
 	}
 	cm.OnBACnetAddressDiscovered("", "192.168.1.10", 47809)
+}
+
+// mockScanResult mimics bacnet.ScanResult without importing the bacnet package.
+// Used to test autoUpdateBACnetAddresses reflection logic.
+type mockScanResult struct {
+	DeviceID   int    `json:"bacnet_device_id"`
+	IP         string `json:"ip"`
+	Port       int    `json:"port"`
+	DiffStatus string `json:"diff_status"`
+}
+
+// TestAutoUpdateBACnetAddresses_NoPanic verifies that the reflection-based
+// address extraction does not panic when processing struct slices with int fields.
+// Regression test for the "reflect.Value.FieldByName on int Value" panic.
+func TestAutoUpdateBACnetAddresses_NoPanic(t *testing.T) {
+	cm := NewChannelManager(nil, nil)
+	t.Cleanup(func() { cm.cancel() })
+
+	channelID := "ch-bacnet-auto"
+	cm.channels[channelID] = &model.Channel{
+		ID:       channelID,
+		Name:     "BACnet Auto",
+		Protocol: "bacnet-ip",
+		Devices: []model.Device{{
+			ID:     "2228316",
+			Name:   "RoomController 2228316",
+			Config: map[string]any{"bacnet_device_id": 2228316, "ip": "192.168.3.104", "port": 53772},
+		}},
+	}
+	cm.drivers[channelID] = &stubChannelDriver{}
+	cm.driverMus[channelID] = &sync.Mutex{}
+
+	// Simulate a scan result where the port has changed (device reboot).
+	// This is the exact scenario that triggered the original panic.
+	scanResult := []mockScanResult{
+		{DeviceID: 2228316, IP: "192.168.3.104", Port: 99999, DiffStatus: "existing"},
+	}
+
+	// This must not panic.
+	cm.autoUpdateBACnetAddresses(cm.channels[channelID], scanResult)
+
+	// Verify the address was updated.
+	dev := cm.GetDevice(channelID, "2228316")
+	if dev == nil {
+		t.Fatal("device not found after auto-update")
+	}
+	port := dev.Config["port"]
+	if port != 99999 {
+		t.Fatalf("port not updated: expected 99999, got %v", port)
+	}
+}
+
+// TestAutoUpdateBACnetAddresses_NilAndNonSlice verifies graceful handling
+// of nil and non-slice scan results.
+func TestAutoUpdateBACnetAddresses_NilAndNonSlice(t *testing.T) {
+	cm := NewChannelManager(nil, nil)
+	t.Cleanup(func() { cm.cancel() })
+
+	channelID := "ch-bacnet-nil"
+	cm.channels[channelID] = &model.Channel{
+		ID:       channelID,
+		Protocol: "bacnet-ip",
+		Devices: []model.Device{{
+			ID:     "dev1",
+			Config: map[string]any{"bacnet_device_id": 1},
+		}},
+	}
+
+	// nil result — must not panic.
+	cm.autoUpdateBACnetAddresses(cm.channels[channelID], nil)
+
+	// Non-slice result — must not panic.
+	cm.autoUpdateBACnetAddresses(cm.channels[channelID], "not a slice")
+
+	// Empty slice — must not panic.
+	cm.autoUpdateBACnetAddresses(cm.channels[channelID], []mockScanResult{})
+
+	// Slice of ints (non-struct elements) — must not panic.
+	cm.autoUpdateBACnetAddresses(cm.channels[channelID], []int{1, 2, 3})
+}
+
+// TestExtractIntByJSONTag_NoPanicOnIntField directly tests the helper function
+// that caused the original panic: calling FieldByName on an int value.
+func TestExtractIntByJSONTag_NoPanicOnIntField(t *testing.T) {
+	item := mockScanResult{DeviceID: 2228316, IP: "192.168.3.104", Port: 53772}
+	v := reflect.ValueOf(item)
+
+	// These calls previously panicked with "FieldByName on int Value".
+	port := extractIntByJSONTag(v, "port")
+	if port != 53772 {
+		t.Fatalf("extractIntByJSONTag(port) = %d, want 53772", port)
+	}
+
+	id := extractIntByJSONTag(v, "bacnet_device_id")
+	if id != 2228316 {
+		t.Fatalf("extractIntByJSONTag(bacnet_device_id) = %d, want 2228316", id)
+	}
+
+	ip := extractStringByJSONTag(v, "ip")
+	if ip != "192.168.3.104" {
+		t.Fatalf("extractStringByJSONTag(ip) = %q, want 192.168.3.104", ip)
+	}
+
+	// Test with non-struct value — must return 0, not panic.
+	intVal := reflect.ValueOf(42)
+	if extractIntByJSONTag(intVal, "port") != 0 {
+		t.Fatal("extractIntByJSONTag on int should return 0")
+	}
+	if extractStringByJSONTag(intVal, "ip") != "" {
+		t.Fatal("extractStringByJSONTag on int should return empty string")
+	}
+	if extractIntField(intVal, "DeviceID") != 0 {
+		t.Fatal("extractIntField on int should return 0")
+	}
 }
 
 func TestNorthboundManager_SaveConfigAndUpdateConfig(t *testing.T) {

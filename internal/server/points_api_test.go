@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
@@ -142,7 +142,7 @@ func TestGetDevicePoints_ProtocolFields(t *testing.T) {
 
 	// 6. Setup Server
 	// We need to pass nil for other dependencies as they are not used in getDevicePoints
-	srv := NewServer(cm, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+	srv := NewServer(cm, nil, nil, nil, nil, nil, nil, nil, nil)
 
 	// 7. Test Modbus Response
 	token := GenerateTestToken()

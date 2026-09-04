@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 边缘计算
-description: EdgeX 边缘计算 — 规则引擎、ShadowCore 影子设备与场景编排
+description: edgeCore 边缘计算 — 规则引擎、ShadowCore 影子设备与场景编排
 hero_eyebrow: Edge Computing
-hero_lead: EdgeX 边缘计算文档 — 规则引擎、数据流转、ShadowCore 影子设备、ScanEngine 调度与场景编排。
+hero_lead: edgeCore 边缘计算文档 — 规则引擎、数据流转、ShadowCore 影子设备、ScanEngine 调度与场景编排。
 hero_buttons:
   - text: 基础功能
     url: 边缘计算基础功能.html
@@ -31,7 +31,7 @@ hero_buttons:
 | [边缘计算 API](../API/Edge_Computing_CN.html) | REST 接口（**规则、指标与日志接口**） |
 
 <div align="center">
-  <img src="../img/dataScanEngineCN.svg" width="100%" alt="EdgeX 架构 · ScanEngine 统一调度" />
+  <img src="../img/dataScanEngineCN.svg" width="100%" alt="edgeCore 架构 · ScanEngine 统一调度" />
 </div>
 
 > **数据主路径：** 南向驱动 → **ScanEngine** → **ShadowIngress** → **ShadowCore** → **ShadowBridge** → **DataPipeline** → **EdgeComputeManager**（规则）/ 北向 / 历史落库。详见 [边缘计算基础功能](边缘计算基础功能.html)。

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 采集通道页（Dashboard 三级视觉对齐）
+ * edgeCore v3.0 — 采集通道页（Dashboard 三级视觉对齐）
  */
 
 /* ── page shell：全宽 + 紧凑 section 间距 ── */
@@ -139,8 +139,8 @@
 .channel-list-page .channel-card-inner {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  padding: var(--space-3) var(--space-4) 0;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) 0;
   min-width: 0;
 }
 
@@ -223,11 +223,11 @@
 .channel-list-page .channel-status-chip.is-enabled {
   border-color: rgba(22, 163, 74, 0.25);
   background: rgba(22, 163, 74, 0.06);
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .channel-list-page .channel-status-chip.is-enabled .status-dot {
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.15);
 }
 
@@ -297,12 +297,12 @@
 
 .channel-list-page .channel-kpi-value.online,
 .channel-list-page .channel-kpi-value.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .channel-list-page .channel-kpi-value.offline,
 .channel-list-page .channel-kpi-value.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .channel-list-page .channel-kpi-value.warning {
@@ -354,7 +354,7 @@
   align-items: center;
   justify-content: flex-end;
   margin-top: var(--space-1);
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
   background: var(--surface-2);
   border-top: 1px solid var(--border);
 }
@@ -440,3 +440,35 @@
     align-items: flex-start;
   }
 }
+
+/* ── channel list motion polish ── */
+/* 入场由 App.vue 路由过渡统一处理；此处仅保留交互反馈 */
+
+.channel-list-page .channel-status-chip .status-dot {
+  animation: status-breathe 2.4s var(--motion-ease-standard) infinite;
+}
+
+.channel-list-page .channel-kpi-value {
+  transition: color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.channel-list-page .channel-card-actions .arco-btn {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.channel-list-page .channel-card-actions .arco-btn:hover {
+  transform: scale(1.08);
+}
+
+.channel-list-page .quality-bar {
+  transition: width var(--motion-duration-slow) var(--motion-ease-decelerate);
+}
+
+.channel-list-page .channel-list-zone-empty {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* 表格行：即时可见，不做逐行错开入场 */

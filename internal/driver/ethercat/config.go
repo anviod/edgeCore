@@ -1,4 +1,4 @@
-// Package ethercat implements EtherCAT master driver for EdgeX gateway.
+// Package ethercat implements EtherCAT master driver for edgeCore gateway.
 // Provides PDO periodic snapshot read/write, CoE SDO parameter access,
 // bus topology scanning, and slave enumeration via anviod/EtherCAT library.
 package ethercat

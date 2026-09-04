@@ -3,7 +3,7 @@
     <header class="help-doc__hero">
       <span class="protocol-tag protocol-tag--accent">KNXnet/IP</span>
       <p class="help-doc__lead">
-        KNX 楼宇自动化协议的 IP 隧道模式。EdgeX 作为隧道客户端，经 KNX IP 接口（网关）读写总线组地址（Group Address）。
+        KNX 楼宇自动化协议的 IP 隧道模式。edgeCore 作为隧道客户端，经 KNX IP 接口（网关）读写总线组地址（Group Address）。
       </p>
     </header>
     <div class="help-doc__sections">

@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: API 文档
-description: EdgeX REST API 文档汇总 — 认证、通道设备、边缘计算与系统管理
+description: edgeCore REST API 文档汇总 — 认证、通道设备、边缘计算与系统管理
 hero_eyebrow: API Reference
-hero_lead: EdgeX REST API 文档 — 认证、通道设备管理、边缘计算、北向配置与系统管理接口。
+hero_lead: edgeCore REST API 文档 — 认证、通道设备管理、边缘计算、北向配置与系统管理接口。
 hero_buttons:
   - text: 认证 API
     url: Authentication_CN.html

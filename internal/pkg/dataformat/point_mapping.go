@@ -2,10 +2,11 @@ package dataformat
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strconv"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type PointFormatConfig struct {
@@ -16,6 +17,22 @@ type PointFormatConfig struct {
 
 func ResolvePointFormat(p model.Point, defaultWordOrder string) PointFormatConfig {
 	dt := strings.ToLower(p.DataType)
+	if p.ParseType != "" {
+		switch strings.ToUpper(p.ParseType) {
+		case "INT16":
+			dt = "int16"
+		case "UINT16":
+			dt = "uint16"
+		case "INT32":
+			dt = "int32"
+		case "UINT32":
+			dt = "uint32"
+		case "FLOAT32":
+			dt = "float32"
+		case "FLOAT64":
+			dt = "float64"
+		}
+	}
 	format := strings.ToLower(p.Format)
 	wordOrder := p.WordOrder
 	if wordOrder == "" {
@@ -148,6 +165,17 @@ func FormatScalar(p model.Point, defaultWordOrder string, raw any) (any, error) 
 	default:
 		return intVal, nil
 	}
+}
+
+// ApplyFormula evaluates a point formula against a numeric value. Formula
+// evaluation is intentionally separate from scale/offset so callers can make
+// the formula-over-scale precedence explicit.
+func ApplyFormula(expr string, value any) (any, error) {
+	valueInt, ok := toInt64(value)
+	if !ok {
+		return nil, fmt.Errorf("formula requires numeric value, got %T", value)
+	}
+	return EvalExpression(expr, valueInt)
 }
 
 func toInt64(v any) (int64, bool) {

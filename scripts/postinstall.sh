@@ -2,9 +2,9 @@
 # 安装后处理脚本（安全版）
 set -e
 
-DATA_DIR="/usr/local/bin/edgex/data"
-CONFIG_DIR="/usr/local/bin/edgex/config"
-BACKUP_DIR="/tmp/edgex_backup"
+DATA_DIR="/usr/local/bin/edgeCore/data"
+CONFIG_DIR="/usr/local/bin/edgeCore/config"
+BACKUP_DIR="/tmp/edgeCore_backup"
 
 echo "[postinstall] Running postinstall script..."
 
@@ -32,10 +32,10 @@ if command -v systemctl >/dev/null 2>&1; then
     systemctl daemon-reload || true
 
     echo "[postinstall] Enabling service..."
-    systemctl enable edgex || true
+    systemctl enable edgeCore || true
 
     echo "[postinstall] Starting service..."
-    systemctl restart edgex || true
+    systemctl restart edgeCore || true
 else
     echo "[postinstall] systemctl not found, skipping systemd service operations."
 fi

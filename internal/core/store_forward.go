@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 const storeForwardSouthKey = "southbound_values"
@@ -56,6 +56,8 @@ func (m *StoreForwardManager) cacheSouthbound(v model.Value) {
 	m.pruneSouthbound()
 }
 
+// pruneSouthbound 先在只读事务中收集 key，再在事务外逐条删除，
+// 避免在 db.View 回调内调用 db.Update 导致 rwlock 自死锁。
 func (m *StoreForwardManager) pruneSouthbound() {
 	count := 0
 	_ = m.store.LoadAll(storage.BucketDataCache, func(k, _ []byte) error {
@@ -67,17 +69,23 @@ func (m *StoreForwardManager) pruneSouthbound() {
 	if count <= m.policy.MaxSouthboundRecords {
 		return
 	}
+
 	toDelete := count - m.policy.MaxSouthboundRecords
+	var keys []string
 	_ = m.store.LoadAll(storage.BucketDataCache, func(k, _ []byte) error {
 		if toDelete <= 0 {
 			return nil
 		}
 		if len(k) > len(storeForwardSouthKey) && string(k[:len(storeForwardSouthKey)]) == storeForwardSouthKey {
-			_ = m.store.DeleteData(storage.BucketDataCache, string(k))
+			keys = append(keys, string(k))
 			toDelete--
 		}
 		return nil
 	})
+
+	for _, key := range keys {
+		_ = m.store.DeleteData(storage.BucketDataCache, key)
+	}
 }
 
 // CacheNorthbound 缓存北向离线消息（复用 NorthboundCache bucket）。

@@ -33,7 +33,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      EdgeX Gateway                              │
+│                      edgeCore Gateway                              │
 ├─────────────────────────────────────────────────────────────────┤
 │                    Device Service Layer                         │
 │   ┌─────────────┐  ┌─────────────┐  ┌─────────────┐           │
@@ -299,7 +299,7 @@ AREA ADDRESS[.BIT][.LEN[H][L]]
 ### 5.1 连接建立流程
 
 ```
-EdgeX                          Omron PLC
+edgeCore                          Omron PLC
   |                               |
   |--- TCP Connect -------------->|
   |                               |
@@ -441,7 +441,7 @@ if wait > maxBackoff:
 
 ## 7. 与其他系统集成
 
-### 7.1 EdgeX Device Service 集成
+### 7.1 edgeCore Device Service 集成
 
 驱动通过 `driver.RegisterDriver` 注册，Device Service 通过统一接口调用：
 
@@ -457,7 +457,7 @@ func init() {
 
 ```
 ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│  Omron PLC   │─────>│  FinsTCP     │─────>│  EdgeX       │
+│  Omron PLC   │─────>│  FinsTCP     │─────>│  edgeCore       │
 │              │      │  Driver      │      │  Core Data   │
 └──────────────┘      └──────────────┘      └──────────────┘
      ^                      │                      │
@@ -533,7 +533,7 @@ internal/driver/omron/
 
 ```go
 import (
-    _ "github.com/anviod/edgex/internal/driver/omron"
+    _ "github.com/anviod/edgeCore/internal/driver/omron"
 )
 ```
 
@@ -592,7 +592,7 @@ points:
 
 本章节介绍如何使用 Omron FINS TCP 插件连接欧姆龙 CP2E PLC，实现读写 PLC 中的点位值。
 
-Omron FINS TCP 插件可以通过本地局域网或者 Internet 连接到欧姆龙 PLC，但是需要注意的是，如果 PLC 与 EdgeX Gateway 不在同一局域网，需要在 PLC 上配置端口转发。
+Omron FINS TCP 插件可以通过本地局域网或者 Internet 连接到欧姆龙 PLC，但是需要注意的是，如果 PLC 与 edgeCore Gateway 不在同一局域网，需要在 PLC 上配置端口转发。
 
 #### 11.1.1 前置准备
 
@@ -619,7 +619,7 @@ Omron FINS TCP 插件可以通过本地局域网或者 Internet 连接到欧姆�
 | 默认网关 | 192.168.1.1 | 默认网关 |
 | FINS 端口 | 9600 | FINS TCP 默认端口 |
 
-#### 11.1.4 EdgeX 驱动配置
+#### 11.1.4 edgeCore 驱动配置
 
 ```yaml
 device:
@@ -694,7 +694,7 @@ points:
 | :--- | :--- | :--- |
 | 连接失败 | IP地址错误 | 检查 PLC IP 地址配置 |
 | 连接失败 | 端口被占用 | 检查 9600 端口是否被其他程序占用 |
-| 连接失败 | 网络不通 | 检查网络连接，确保 PLC 和 EdgeX 在同一网段 |
+| 连接失败 | 网络不通 | 检查网络连接，确保 PLC 和 edgeCore 在同一网段 |
 | 读取失败 | 地址不存在 | 检查点位地址是否在 PLC 支持范围内 |
 | 写入失败 | 区域只读 | 确认点位所在区域支持写入操作 |
 | 写入失败 | 权限不足 | 检查 PLC 权限设置 |

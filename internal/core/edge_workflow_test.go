@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // MockDeviceIO for testing ReadPoint/WritePoint

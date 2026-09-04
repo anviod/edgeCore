@@ -117,7 +117,7 @@
       title="确认删除"
       ok-text="确认删除"
       cancel-text="取消"
-      :ok-button-props="{ status: 'danger' }"
+      :ok-button-props="{ status: 'danger', loading: deleteDialog.loading }"
       @ok="executeDeleteProtocol"
       @cancel="deleteDialog.visible = false"
     >
@@ -189,7 +189,7 @@ const edgeosHelpVisible = ref(false)
 const bacnetDialogVisible = ref(false)
 const bacnetEditConfig = ref(null)
 const bacnetHelpVisible = ref(false)
-const bacnetHelpData = ref({ port: 47808, deviceId: 0, deviceName: 'EdgeX-Gateway' })
+const bacnetHelpData = ref({ port: 47808, deviceId: 0, deviceName: 'edgeCore-Gateway' })
 
 const mqttStatsVisible = ref(false)
 const mqttStatsId = ref('')
@@ -275,7 +275,7 @@ const onHelp = (type, item) => {
     opcuaHelpData.value = { port: item?.port || 4840, endpoint: item?.endpoint || '/ipp/opcua/server' }
     opcuaHelpVisible.value = true
   } else if (type === 'bacnet_server') {
-    bacnetHelpData.value = { port: item?.port || 47808, deviceId: item?.device_id || 0, deviceName: item?.device_name || 'EdgeX-Gateway' }
+    bacnetHelpData.value = { port: item?.port || 47808, deviceId: item?.device_id || 0, deviceName: item?.device_name || 'edgeCore-Gateway' }
     bacnetHelpVisible.value = true
   } else if (type === 'edgeos_mqtt' || type === 'edgeos_nats') {
     edgeosHelpVisible.value = true
@@ -296,7 +296,7 @@ const onStats = (type, item) => {
   if (idRef) { idRef.value = item.id; visRef.value = true }
 }
 
-const deleteDialog = reactive({ visible: false, type: '', id: '' })
+const deleteDialog = reactive({ visible: false, type: '', id: '', loading: false })
 const syncingOpcuaId = ref('')
 const syncingBacnetId = ref(null)
 
@@ -316,15 +316,18 @@ const deleteProtocol = (type, id) => {
 
 const executeDeleteProtocol = async () => {
   const { type, id } = deleteDialog
-  if (!type || !id) return
+  if (!type || !id || deleteDialog.loading) return
+  deleteDialog.loading = true
 
   try {
-    await request.delete(`/api/northbound/${type}/${id}`, northboundSaveRequestConfig)
+    await request.delete(`/api/northbound/${type}/${encodeURIComponent(id)}`, northboundSaveRequestConfig)
     Message.success('北向通道已删除')
     deleteDialog.visible = false
     fetchConfig()
   } catch (e) {
     Message.error('删除失败：' + resolveNorthboundSaveError(e))
+  } finally {
+    deleteDialog.loading = false
   }
 }
 
@@ -339,7 +342,7 @@ const syncOpcuaServer = async (item) => {
   })
 
   try {
-    await request.post(`/api/northbound/opcua/${item.id}/sync`, null, northboundSaveRequestConfig)
+    await request.post(`/api/northbound/opcua/${encodeURIComponent(item.id)}/sync`, null, northboundSaveRequestConfig)
     closeArcoLoading(stopMessage)
     stopMessage = null
     Message.success('点位映射已同步，读写权限已更新')
@@ -372,7 +375,7 @@ const syncBACnetServer = async (item) => {
   })
 
   try {
-    await request.post(`/api/northbound/bacnet_server/${item.id}/sync`, null, northboundSaveRequestConfig)
+    await request.post(`/api/northbound/bacnet_server/${encodeURIComponent(item.id)}/sync`, null, northboundSaveRequestConfig)
     closeArcoLoading(stopMessage)
     stopMessage = null
     Message.success('BACnet 点位映射已同步')

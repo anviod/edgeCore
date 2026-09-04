@@ -1,10 +1,11 @@
 package core
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestPipeline_Optimization(t *testing.T) {
@@ -54,12 +55,12 @@ func TestPipeline_StartHandlersAndBatch(t *testing.T) {
 	dp := NewDataPipeline(10)
 	dp.Start()
 
-	var singleCount, batchCount int
+	var singleCount, batchCount atomic.Int64
 	dp.AddHandler(func(v model.Value) {
-		singleCount++
+		singleCount.Add(1)
 	})
 	dp.AddBatchHandler(func(batch []model.Value) {
-		batchCount++
+		batchCount.Add(1)
 		if len(batch) == 0 {
 			t.Error("batch handler received empty batch")
 		}
@@ -73,10 +74,10 @@ func TestPipeline_StartHandlersAndBatch(t *testing.T) {
 	})
 
 	deadline := time.After(2 * time.Second)
-	for singleCount == 0 || batchCount == 0 {
+	for singleCount.Load() == 0 || batchCount.Load() == 0 {
 		select {
 		case <-deadline:
-			t.Fatalf("handlers not invoked: single=%d batch=%d", singleCount, batchCount)
+			t.Fatalf("handlers not invoked: single=%d batch=%d", singleCount.Load(), batchCount.Load())
 		default:
 			time.Sleep(10 * time.Millisecond)
 		}

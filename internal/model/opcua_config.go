@@ -9,14 +9,12 @@ import (
 // OpcUaDeviceMap 北向 OPC UA 服务端的设备映射，兼容历史 bool 与 DevicePublishConfig 两种格式。
 type OpcUaDeviceMap map[string]DevicePublishConfig
 
-// AllowsDevice 在映射非空时：未列出的设备默认暴露；仅 enable=false 的条目会被排除。
+// AllowsDevice 仅允许显式启用（Enable=true）的设备暴露到北向地址空间；
+// 未在映射中列出或显式禁用的设备默认不暴露，需在树形映射中启用后才可见。
 func (m OpcUaDeviceMap) AllowsDevice(deviceID string) bool {
-	if len(m) == 0 {
-		return true
-	}
 	cfg, ok := m[deviceID]
 	if !ok {
-		return true
+		return false
 	}
 	return cfg.Enable
 }

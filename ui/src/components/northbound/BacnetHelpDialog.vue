@@ -90,7 +90,7 @@ bacnet.write('1000 analogValue 3 presentValue', 25.5)</pre>
         <div class="nb-help-tab">
           <header class="nb-help-hero">
             <h4 class="nb-help-hero__title">对象映射 (Object Mapping)</h4>
-            <p class="nb-help-hero__lead">EdgeX 南向设备的点位会根据其 DataType 和 ReadWrite 属性自动映射为对应的 BACnet 标准对象类型。</p>
+            <p class="nb-help-hero__lead">edgeCore 南向设备的点位会根据其 DataType 和 ReadWrite 属性自动映射为对应的 BACnet 标准对象类型。</p>
           </header>
 
           <div class="nb-help-block">
@@ -135,7 +135,7 @@ bacnet.write('1000 analogValue 3 presentValue', 25.5)</pre>
             <ul class="nb-help-list nb-help-list--tertiary">
               <li>如果主站无法发现设备，请确认主站与网关在同一子网（Who-Is 广播不跨子网）。</li>
               <li>如果读取值为空或错误，请检查南向设备是否在线且点位数据是否正常采集。</li>
-              <li>如果写入失败，请确认点位在 EdgeX 中配置为 RW（可读写），且设备支持写入操作。</li>
+              <li>如果写入失败，请确认点位在 edgeCore 中配置为 RW（可读写），且设备支持写入操作。</li>
               <li>BACnet 对象实例号在设备内唯一，不同设备之间可以重复使用相同的实例号。</li>
             </ul>
           </div>
@@ -152,7 +152,7 @@ const props = defineProps({
   visible: { type: Boolean, default: false },
   port: { type: Number, default: 47808 },
   deviceId: { type: Number, default: 0 },
-  deviceName: { type: String, default: 'EdgeX-Gateway' }
+  deviceName: { type: String, default: 'edgeCore-Gateway' }
 })
 
 const emit = defineEmits(['update:visible'])
@@ -180,7 +180,7 @@ const serviceData = [
 ]
 
 const mappingColumns = [
-  { title: 'EdgeX DataType', dataIndex: 'dataType', width: 160 },
+  { title: 'edgeCore DataType', dataIndex: 'dataType', width: 160 },
   { title: 'ReadWrite', dataIndex: 'rw', width: 80, align: 'center' },
   { title: 'BACnet 对象类型', dataIndex: 'bacnetType', width: 160 },
   { title: '类型编号', dataIndex: 'typeId', width: 80, align: 'center' },
@@ -204,7 +204,7 @@ const propColumns = [
 
 const propData = [
   { prop: 'PresentValue', id: '85', desc: '当前值，从南向设备实时数据同步' },
-  { prop: 'ObjectName', id: '77', desc: '对象名称，对应 EdgeX 点位名称' },
+  { prop: 'ObjectName', id: '77', desc: '对象名称，对应 edgeCore 点位名称' },
   { prop: 'Description', id: '28', desc: '对象描述，包含通道/设备/点位完整路径' }
 ]
 
@@ -216,7 +216,7 @@ const idColumns = [
 
 const idData = [
   { param: '设备实例 ID', desc: 'BACnet 网络中唯一标识此设备的编号 (0-4194303)', def: '自动生成 (FNV-32a)' },
-  { param: '设备名称', desc: '设备的人类可读名称', def: 'EdgeX-Gateway' },
+  { param: '设备名称', desc: '设备的人类可读名称', def: 'edgeCore-Gateway' },
   { param: '厂商 ID', desc: 'BACnet 厂商识别码', def: '999' },
   { param: '最大 PDU', desc: '最大协议数据单元大小（字节）', def: '1476' }
 ]

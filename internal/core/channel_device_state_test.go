@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	drv "github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	drv "github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type stubChannelDriver struct {
@@ -31,6 +31,9 @@ func (s *stubChannelDriver) GetConnectionMetrics() (int64, int64, string, string
 
 func newTestChannelManager() *ChannelManager {
 	cm := NewChannelManager(NewDataPipeline(64), nil)
+	// The helper mutates private maps to build fixtures. Stop the production
+	// soak goroutine before those fixture writes so -race observes a happens-before edge.
+	cm.soakMonitor.Stop()
 	cm.channels["ch-1"] = &model.Channel{
 		ID:       "ch-1",
 		Name:     "modbus",
@@ -242,6 +245,34 @@ func TestCollectContextFromExecuteResult_CountsPointQuality(t *testing.T) {
 	}, 2)
 	if allBad.SuccessCmd != 0 || allBad.FailCmd != 2 {
 		t.Fatalf("expected all bad success=0 fail=2, got success=%d fail=%d", allBad.SuccessCmd, allBad.FailCmd)
+	}
+}
+
+// TestCollectContextFromExecuteResult_AllSkippedIdleDoesNotOffline: when the link is
+// healthy (nil error) but every point is in point-level cooldown, no I/O actually ran.
+// Thread result must be treated as an idle success (device stays online), NOT as an
+// unreachable failure — otherwise a cooled device is stuck offline until restart.
+func TestCollectContextFromExecuteResult_AllSkippedIdleDoesNotOffline(t *testing.T) {
+	idle := collectContextFromExecuteResult(&ExecuteResult{Success: true}, 3)
+	if idle.SuccessCmd != 1 || idle.FailCmd != 0 {
+		t.Fatalf("expected idle collect success=1 fail=0, got success=%d fail=%d",
+			idle.SuccessCmd, idle.FailCmd)
+	}
+}
+
+// TestFinalizeScanCollect_AllSkippedKeepsDeviceOnline verifies a device whose points
+// are all cooled (empty idle result) recovers to Online from Offline without a restart.
+func TestFinalizeScanCollect_AllSkippedKeepsDeviceOnline(t *testing.T) {
+	cm := newTestChannelManager()
+	cm.scanEngineAdapter.scanEngine.AddTask("dev-1", "modbus-tcp", 1*time.Second, 5, []string{"p1", "p2", "p3"}, nil)
+
+	node := cm.stateManager.GetNode("dev-1")
+	node.Runtime.State = NodeStateOffline
+
+	cm.finalizeScanCollect("dev-1", &ExecuteResult{Success: true})
+
+	if node.Runtime.State == NodeStateOffline {
+		t.Fatal("device whose points are all cooled (idle success) must not remain offline")
 	}
 }
 

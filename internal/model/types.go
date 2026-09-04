@@ -3,6 +3,8 @@ package model
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
+	"strings"
 	"time"
 )
 
@@ -179,9 +181,10 @@ type Point struct {
 	ID           string           `json:"id" yaml:"id"`
 	Name         string           `json:"name" yaml:"name"`
 	RegisterType RegisterType     `json:"register_type" yaml:"register_type"`
-	FunctionCode byte             `json:"function_code" yaml:"function_code"` // 允许非标准功能码 (当前会将配置初始化值设置为0)
-	Address      string           `json:"address" yaml:"address"`             // 地址字符串，支持不同协议格式
-	DataType     string           `json:"datatype" yaml:"datatype"`           // int16, float32, bool, bit.0
+	FunctionCode byte             `json:"function_code" yaml:"function_code"`               // 允许非标准功能码 (当前会将配置初始化值设置为0)
+	Address      string           `json:"address" yaml:"address"`                           // 地址字符串，支持不同协议格式
+	DataType     string           `json:"datatype" yaml:"datatype"`                         // int16, float32, bool, bit.0
+	ParseType    string           `json:"parse_type,omitempty" yaml:"parse_type,omitempty"` // 原始字节解析类型，如 INT16、FLOAT32
 	Scale        float64          `json:"scale" yaml:"scale"`
 	Offset       float64          `json:"offset" yaml:"offset"`
 	Format       string           `json:"format,omitempty" yaml:"format,omitempty"`
@@ -195,6 +198,37 @@ type Point struct {
 	ReportMode   string           `json:"report_mode" yaml:"report_mode"`                   // cycle / cov / event
 	Threshold    *ThresholdConfig `json:"threshold" yaml:"threshold"`
 	DeviceID     string           `json:"-" yaml:"-"` // Runtime field, not persisted
+}
+
+// RawDataType returns the protocol payload type. ParseType is authoritative for
+// byte-oriented protocols; DataType remains the converted output type.
+func RawDataType(point Point) string {
+	if point.ParseType == "" {
+		return strings.ToLower(point.DataType)
+	}
+	switch strings.ToUpper(point.ParseType) {
+	case "INT8":
+		return "int8"
+	case "UINT8", "BCD8":
+		return "uint8"
+	case "INT16", "INT16_SWAP":
+		return "int16"
+	case "UINT16", "UINT16_SWAP", "BCD16":
+		return "uint16"
+	case "INT32", "INT32_SWAP":
+		return "int32"
+	case "UINT32", "UINT32_SWAP", "BCD32":
+		return "uint32"
+	case "FLOAT32", "FLOAT32_SWAP":
+		return "float32"
+	case "INT64":
+		return "int64"
+	case "UINT64":
+		return "uint64"
+	case "FLOAT64", "FLOAT64_SWAP":
+		return "float64"
+	}
+	return strings.ToLower(point.DataType)
 }
 
 // ThresholdConfig defines alarm thresholds for a point
@@ -224,6 +258,7 @@ type PointData struct {
 	FunctionCode byte      `json:"function_code"`
 	Address      string    `json:"address"`
 	DataType     string    `json:"datatype"`
+	ParseType    string    `json:"parse_type,omitempty"`
 	Value        any       `json:"value"`
 	Quality      string    `json:"quality"`
 	Timestamp    time.Time `json:"timestamp"`    // 采集时间（兼容旧字段）
@@ -231,6 +266,17 @@ type PointData struct {
 	UpdatedAt    time.Time `json:"updated_at"`   // 影子更新时间
 	Unit         string    `json:"unit,omitempty"`
 	ReadWrite    string    `json:"readwrite"` // R / RW
+	// 点位配置字段（与 Point 对齐），供点位列表接口透传给前端，
+	// 避免"设备协议类型(format)"、编辑回显等依赖配置的展示丢失
+	Format       string  `json:"format,omitempty"`
+	WordOrder    string  `json:"word_order,omitempty"`
+	Scale        float64 `json:"scale,omitempty"`
+	Offset       float64 `json:"offset,omitempty"`
+	ReadFormula  string  `json:"read_formula,omitempty"`
+	WriteFormula string  `json:"write_formula,omitempty"`
+	Group        string  `json:"group,omitempty"`
+	ScanClass    string  `json:"scan_class,omitempty"`
+	ReportMode   string  `json:"report_mode,omitempty"`
 }
 
 // DeviceStorage defines data storage strategy for a device
@@ -243,10 +289,15 @@ type DeviceStorage struct {
 
 // Device represents a device configuration (within a channel)
 type Device struct {
-	ID               string         `json:"id" yaml:"id"`
-	Name             string         `json:"name" yaml:"name"`
-	Enable           bool           `json:"enable" yaml:"enable"`
-	Interval         Duration       `json:"interval" yaml:"interval"`
+	ID       string   `json:"id" yaml:"id"`
+	Name     string   `json:"name" yaml:"name"`
+	Enable   bool     `json:"enable" yaml:"enable"`
+	Interval Duration `json:"interval" yaml:"interval"`
+	// Spatial attributes / 空间属性 - 物理位置信息，用于资产管理和设备定位
+	StationName      string         `json:"station_name,omitempty" yaml:"station_name,omitempty"`             // 局站名称 / Station name
+	StationCode      string         `json:"station_code,omitempty" yaml:"station_code,omitempty"`             // 局站编码 / Station code
+	RoomName         string         `json:"room_name,omitempty" yaml:"room_name,omitempty"`                   // 机房名称 / Equipment room name
+	RoomCode         string         `json:"room_code,omitempty" yaml:"room_code,omitempty"`                   // 机房编码 / Equipment room code
 	DegradeOnFailure *bool          `json:"degrade_on_failure,omitempty" yaml:"degrade_on_failure,omitempty"` // 默认 true；设为 false 关闭失败退避
 	DeviceFile       string         `json:"device_file,omitempty" yaml:"device_file,omitempty"`               // 设备配置文件路径
 	Config           map[string]any `json:"config" yaml:"config"`                                             // 设备特定配置（如 slave_id）
@@ -266,6 +317,118 @@ func (d Device) WithPointsSummary() Device {
 	out.PointsCount = len(d.Points)
 	out.Points = nil
 	return out
+}
+
+// DeepCopy returns a deep copy of a Device so callers may mutate the result
+// (Points, Config, DegradeOnFailure, NodeRuntime) without corrupting the
+// channel manager's internal state. Without this, the Points slice and Config
+// map share backing storage with the stored device, so MCP/API update handlers
+// mutate the live configuration before the change-diff / restart decision runs.
+func (d Device) DeepCopy() Device {
+	out := d
+	if d.Config != nil {
+		out.Config = cloneAnyMap(d.Config)
+	}
+	if d.DegradeOnFailure != nil {
+		v := *d.DegradeOnFailure
+		out.DegradeOnFailure = &v
+	}
+	if d.NodeRuntime != nil {
+		nr := *d.NodeRuntime
+		out.NodeRuntime = &nr
+	}
+	if d.Points != nil {
+		pts := make([]Point, len(d.Points))
+		for i, p := range d.Points {
+			pts[i] = p
+			if p.Threshold != nil {
+				th := *p.Threshold
+				pts[i].Threshold = &th
+			}
+		}
+		out.Points = pts
+	}
+	return out
+}
+
+// DeepCopy returns an independent copy of a Channel configuration.
+func (c Channel) DeepCopy() Channel {
+	out := c
+	out.Config = cloneAnyMap(c.Config)
+	if c.Devices != nil {
+		out.Devices = make([]Device, len(c.Devices))
+		for i, device := range c.Devices {
+			out.Devices[i] = device.DeepCopy()
+		}
+	}
+	if c.NodeRuntime != nil {
+		runtime := *c.NodeRuntime
+		out.NodeRuntime = &runtime
+	}
+	return out
+}
+
+// ClonePoint returns a deep copy of a Point (duplicates the Threshold pointer).
+func (p Point) Clone() Point {
+	out := p
+	if p.Threshold != nil {
+		th := *p.Threshold
+		out.Threshold = &th
+	}
+	return out
+}
+
+func cloneAnyMap(m map[string]any) map[string]any {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]any, len(m))
+	for k, v := range m {
+		out[k] = cloneAny(v)
+	}
+	return out
+}
+
+func cloneAny(value any) any {
+	switch typed := value.(type) {
+	case map[string]any:
+		return cloneAnyMap(typed)
+	case []any:
+		out := make([]any, len(typed))
+		for i, item := range typed {
+			out[i] = cloneAny(item)
+		}
+		return out
+	}
+	valueRef := reflect.ValueOf(value)
+	if !valueRef.IsValid() {
+		return nil
+	}
+	if valueRef.Kind() == reflect.Slice {
+		out := reflect.MakeSlice(valueRef.Type(), valueRef.Len(), valueRef.Len())
+		reflect.Copy(out, valueRef)
+		for i := 0; i < out.Len(); i++ {
+			item := cloneAny(out.Index(i).Interface())
+			if item != nil {
+				out.Index(i).Set(reflect.ValueOf(item))
+			}
+		}
+		return out.Interface()
+	}
+	if valueRef.Kind() == reflect.Map && valueRef.Type().Key().Kind() == reflect.String {
+		out := reflect.MakeMapWithSize(valueRef.Type(), valueRef.Len())
+		iter := valueRef.MapRange()
+		for iter.Next() {
+			item := cloneAny(iter.Value().Interface())
+			if item == nil {
+				out.SetMapIndex(iter.Key(), reflect.Zero(valueRef.Type().Elem()))
+			} else {
+				out.SetMapIndex(iter.Key(), reflect.ValueOf(item))
+			}
+		}
+		return out.Interface()
+	}
+	return value
 }
 
 // NodeRuntime defines runtime statistics for a node (device or channel)
@@ -434,9 +597,22 @@ type EdgeOSMQTTConfig struct {
 	ConnectTimeout       int                            `json:"connect_timeout" yaml:"connect_timeout"`
 	AutoReconnect        bool                           `json:"auto_reconnect" yaml:"auto_reconnect"`
 	MaxReconnectInterval int                            `json:"max_reconnect_interval" yaml:"max_reconnect_interval"`
-	HeartbeatInterval    string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s"
+	HeartbeatInterval    string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s" V1 心跳
 	Devices              map[string]DevicePublishConfig `json:"devices" yaml:"devices"`                       // Key: DeviceID, Value: DevicePublishConfig
 	VirtualDevices       OpcUaDeviceMap                 `json:"virtual_devices" yaml:"virtual_devices"`
+
+	// EAN 2.0 能力层配置 | EAN 2.0 capability layer config
+	// EANEnabled 控制北向 EAN Runtime 启停；MCP Runtime 不受此字段影响
+	EANEnabled bool `json:"ean_enabled" yaml:"ean_enabled"`
+	// EANHeartbeatSec EAN 心跳周期（秒），0 时使用默认值 60
+	EANHeartbeatSec int `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
+	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
+	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
+
+	// Phase 4 (EX-P4): V1 命令面开关——已全面下线，默认 false（不订阅 edgeCore/cmd/*）；
+	// 命令统一 EAN Invoke（$edgeos/invoke/*）。V1 数据面/告警不受影响。
+	// V1 command plane switch (Phase 4): default false - V1 command plane fully retired; commands use EAN Invoke.
+	V1CommandEnabled bool `json:"v1_command_enabled" yaml:"v1_command_enabled"`
 }
 
 // EdgeOSNATSConfig defines configuration for edgeOS(NATS) northbound channel
@@ -456,9 +632,22 @@ type EdgeOSNATSConfig struct {
 	PingInterval        int                            `json:"ping_interval" yaml:"ping_interval"`
 	MaxPingsOutstanding int                            `json:"max_pings_outstanding" yaml:"max_pings_outstanding"`
 	JetStreamEnabled    bool                           `json:"jetstream_enabled" yaml:"jetstream_enabled"`
-	HeartbeatInterval   string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s"
+	HeartbeatInterval   string                         `json:"heartbeat_interval" yaml:"heartbeat_interval"` // e.g. "30s" V1 心跳
 	Devices             map[string]DevicePublishConfig `json:"devices" yaml:"devices"`                       // Key: DeviceID, Value: DevicePublishConfig
 	VirtualDevices      OpcUaDeviceMap                 `json:"virtual_devices" yaml:"virtual_devices"`
+
+	// EAN 2.0 能力层配置 | EAN 2.0 capability layer config
+	// EANEnabled 控制北向 EAN Runtime 启停；MCP Runtime 不受此字段影响
+	EANEnabled bool `json:"ean_enabled" yaml:"ean_enabled"`
+	// EANHeartbeatSec EAN 心跳周期（秒），0 时使用默认值 60
+	EANHeartbeatSec int `json:"ean_heartbeat_sec" yaml:"ean_heartbeat_sec"`
+	// EANEventAutoPublish 设备数据变化时是否自动发布 EAN Event
+	EANEventAutoPublish bool `json:"ean_event_auto_publish" yaml:"ean_event_auto_publish"`
+
+	// Phase 4 (EX-P4): V1 命令面开关——已全面下线，默认 false（不订阅 edgeCore.cmd.*）；
+	// 命令统一 EAN Invoke（$edgeos/invoke/*）。V1 数据面/告警不受影响。
+	// V1 command plane switch (Phase 4): default false - V1 command plane fully retired; commands use EAN Invoke.
+	V1CommandEnabled bool `json:"v1_command_enabled" yaml:"v1_command_enabled"`
 }
 
 // BACnetServerConfig 北向 BACnet Server 配置，以从机模式运行，对外暴露点位数据
@@ -580,6 +769,7 @@ type ProtocolConfig struct {
 // ShadowPoint represents a single point in a shadow device
 type ShadowPoint struct {
 	Value          any       `json:"value"`
+	PreviousValue  any       `json:"previous_value,omitempty"` // notify-only: prior value before this delta
 	Unit           string    `json:"unit"`
 	RW             string    `json:"rw"` // "r" or "rw"
 	SamplePeriodMs int       `json:"sample_period_ms"`

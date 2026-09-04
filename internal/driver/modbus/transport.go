@@ -4,15 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net"
+	neturl "net/url"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 	"unsafe"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/simonvetter/modbus"
 	"go.uber.org/zap"
@@ -28,6 +30,18 @@ func normalizeModbusURL(raw string) string {
 		return raw
 	}
 	return "tcp://" + raw
+}
+
+// parseParity 将校验位字符串（N/E/O 或 none/even/odd）转换为 modbus 库的枚举值。
+func parseParity(p string) uint {
+	switch strings.ToUpper(strings.TrimSpace(p)) {
+	case "E", "EVEN":
+		return modbus.PARITY_EVEN
+	case "O", "ODD":
+		return modbus.PARITY_ODD
+	default:
+		return modbus.PARITY_NONE
+	}
 }
 
 const (
@@ -282,6 +296,13 @@ func (t *ModbusTransport) connectOnce(ctx context.Context) error {
 		return ctx.Err()
 	}
 
+	// Serial parameters for RTU links. The modbus library does NOT parse URL
+	// query parameters — Speed/DataBits/Parity/StopBits must be passed via
+	// ClientConfiguration struct fields, and the URL must be a bare
+	// rtu://<device> locator.
+	var serialSpeed, serialDataBits, serialStopBits, serialParity uint
+	useSerialConf := false
+
 	// Build URL
 	url, ok := t.cfg.Config["url"].(string)
 	if !ok || url == "" {
@@ -314,8 +335,12 @@ func (t *ModbusTransport) connectOnce(ctx context.Context) error {
 			if v, ok := t.cfg.Config["parity"].(string); ok {
 				parity = v
 			}
-			url = fmt.Sprintf("rtu://%s?baudrate=%d&data_bits=%d&parity=%s&stop_bits=%d",
-				port, baudRate, dataBits, parity, stopBits)
+			url = fmt.Sprintf("rtu://%s", port)
+			serialSpeed = uint(baudRate)
+			serialDataBits = uint(dataBits)
+			serialStopBits = uint(stopBits)
+			serialParity = parseParity(parity)
+			useSerialConf = true
 		} else {
 			// Try to get address from config
 			addr, _ := t.cfg.Config["address"].(string)
@@ -348,10 +373,58 @@ func (t *ModbusTransport) connectOnce(ctx context.Context) error {
 
 	url = normalizeModbusURL(url)
 
-	client, err := modbus.NewClient(&modbus.ClientConfiguration{
+	// For rtu:// URLs that carry legacy query parameters (e.g. a user-provided
+	// url config like rtu:///dev/ttyS3?baudrate=4800&...), parse and strip
+	// them — the library treats everything after "://" as the device path.
+	if u, perr := neturl.Parse(url); perr == nil && strings.HasPrefix(url, "rtu://") && u.RawQuery != "" {
+		q := u.Query()
+		if v := q.Get("baudrate"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				serialSpeed = uint(n)
+			}
+		}
+		if v := q.Get("data_bits"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				serialDataBits = uint(n)
+			}
+		}
+		if v := q.Get("stop_bits"); v != "" {
+			if n, err := strconv.Atoi(v); err == nil {
+				serialStopBits = uint(n)
+			}
+		}
+		if v := q.Get("parity"); v != "" {
+			serialParity = parseParity(v)
+		}
+		u.RawQuery = ""
+		url = u.String()
+		useSerialConf = true
+	}
+
+	clientConf := &modbus.ClientConfiguration{
 		URL:     url,
 		Timeout: t.timeout,
-	})
+	}
+	if useSerialConf {
+		if serialSpeed != 0 {
+			clientConf.Speed = serialSpeed
+		}
+		if serialDataBits != 0 {
+			clientConf.DataBits = serialDataBits
+		}
+		clientConf.Parity = serialParity
+		if serialStopBits != 0 {
+			clientConf.StopBits = serialStopBits
+		}
+		zap.L().Info("[Modbus] RTU serial config",
+			zap.Uint("baudRate", clientConf.Speed),
+			zap.Uint("dataBits", clientConf.DataBits),
+			zap.Uint("parity", clientConf.Parity),
+			zap.Uint("stopBits", clientConf.StopBits),
+		)
+	}
+
+	client, err := modbus.NewClient(clientConf)
 	if err != nil {
 		zap.L().Warn("[Modbus] Create client failed", zap.Error(err))
 		return err
@@ -419,7 +492,11 @@ func (t *ModbusTransport) connectOnce(ctx context.Context) error {
 		t.metricsRecorder.RecordConnectionStart(t.channelID)
 	}
 
-	zap.L().Info("[Modbus] TCP connection established", zap.String("url", url))
+	if strings.HasPrefix(url, "rtu://") {
+		zap.L().Info("[Modbus] Serial (RTU) connection established", zap.String("url", url))
+	} else {
+		zap.L().Info("[Modbus] TCP connection established", zap.String("url", url))
+	}
 	return nil
 }
 
@@ -491,19 +568,20 @@ func (t *ModbusTransport) SetUnitID(id uint8) {
 // GetConnectionMetrics 获取连接指标
 func (t *ModbusTransport) GetConnectionMetrics() (connectionSeconds int64, reconnectCount int64, localAddr string, remoteAddr string, lastDisconnectTime time.Time) {
 	reconnectCount = int64(t.reconnectCount.Load())
-	lastDisconnectTime = t.lastDisconnectTime
 
-	if !t.connected.Load() {
+	t.mu.Lock()
+	wasConnected := t.connected.Load()
+	connectTime := t.connectTime
+	lastDisconnectTime = t.lastDisconnectTime
+	localAddr = t.localAddr
+	remoteAddr = t.remoteAddr
+	t.mu.Unlock()
+
+	if !wasConnected {
 		return 0, reconnectCount, "", "", lastDisconnectTime
 	}
 
-	connectionSeconds = int64(time.Since(t.connectTime).Seconds())
-
-	// 获取地址信息
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	localAddr = t.localAddr
-	remoteAddr = t.remoteAddr
+	connectionSeconds = int64(time.Since(connectTime).Seconds())
 
 	return
 }

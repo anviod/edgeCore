@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 工业边缘网关 API 文档
-description: EdgeX API 文档（中文）
+description: edgeCore API 文档（中文）
 ---
 
 # 工业边缘网关 API 文档

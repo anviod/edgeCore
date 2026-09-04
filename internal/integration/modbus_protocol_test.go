@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver/modbus"
-	"github.com/anviod/edgex/internal/model"
-	mbsim "github.com/anviod/edgex/internal/testutil/modbus"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver/modbus"
+	"github.com/anviod/edgeCore/internal/model"
+	mbsim "github.com/anviod/edgeCore/internal/testutil/modbus"
 )
 
 func newModbusDriver(t *testing.T, sim *mbsim.Simulator, channelID, deviceID string, slaveID int) *modbus.ModbusDriver {
@@ -29,6 +29,10 @@ func newModbusDriver(t *testing.T, sim *mbsim.Simulator, channelID, deviceID str
 	if err := d.SetDeviceConfig(map[string]any{"slave_id": slaveID}); err != nil {
 		t.Fatalf("set device config: %v", err)
 	}
+	if err := d.Connect(context.Background()); err != nil {
+		t.Fatalf("connect modbus driver: %v", err)
+	}
+	t.Cleanup(func() { _ = d.Disconnect() })
 	_ = deviceID
 	return d
 }

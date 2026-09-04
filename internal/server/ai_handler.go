@@ -617,7 +617,7 @@ func (s *Server) replyNavigationHelp(route string) (string, []string, []aiAction
 		}
 	}
 	if reply == "" {
-		reply = "EdgeX 边缘计算网关主要模块：\n" + formatPageList(pages) + "\n\n可直接问我「通道状态」「边缘规则」「Modbus 配置」「PCAP 逆向」等。"
+		reply = "edgeCore 边缘计算网关主要模块：\n" + formatPageList(pages) + "\n\n可直接问我「通道状态」「边缘规则」「Modbus 配置」「PCAP 逆向」等。"
 	}
 
 	actions := []aiAction{{Type: "navigate", Label: "首页监控", Path: "/"}}

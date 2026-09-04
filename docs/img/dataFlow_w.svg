@@ -59,7 +59,7 @@
 
   <g transform="translate(550, 160)">
     <rect width="300" height="70" rx="8" class="panel-bg" stroke="#16a34a" />
-    <text x="150" y="42" text-anchor="middle" class="text-label">Industrial EdgeX Gateway</text>
+    <text x="150" y="42" text-anchor="middle" class="text-label">Industrial edgeCore Gateway</text>
     <path d="M150 0 V-40" class="line-main" />
   </g>
 

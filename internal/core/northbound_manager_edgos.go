@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/edgos_mqtt"
-	"github.com/anviod/edgex/internal/northbound/edgos_nats"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_mqtt"
+	"github.com/anviod/edgeCore/internal/northbound/edgos_nats"
 )
 
 // updateEdgeOSMQTTClients 更新 edgeOS(MQTT) 客户端
@@ -42,11 +42,12 @@ func (nm *NorthboundManager) updateEdgeOSMQTTClients(oldConfigs, newConfigs []mo
 			} else {
 				// 创建新客户端
 				client := edgos_mqtt.NewClient(newCfg, nm.sb, nm.storage)
+				nm.wireEdgeOSMQTTClient(client)
+				nm.edgeOSMQTTClients[newCfg.ID] = client
 				if err := client.Start(); err != nil {
 					log.Printf("Failed to start edgeOS(MQTT) client [%s]: %v", newCfg.Name, err)
 				} else {
 					log.Printf("Northbound edgeOS(MQTT) client [%s] started", newCfg.Name)
-					nm.edgeOSMQTTClients[newCfg.ID] = client
 				}
 			}
 		}
@@ -86,11 +87,12 @@ func (nm *NorthboundManager) updateEdgeOSNATSClients(oldConfigs, newConfigs []mo
 			} else {
 				// 创建新客户端
 				client := edgos_nats.NewClient(newCfg, nm.sb, nm.storage)
+				nm.wireEdgeOSNATSClient(client)
+				nm.edgeOSNATSClients[newCfg.ID] = client
 				if err := client.Start(); err != nil {
 					log.Printf("Failed to start edgeOS(NATS) client [%s]: %v", newCfg.Name, err)
 				} else {
 					log.Printf("Northbound edgeOS(NATS) client [%s] started", newCfg.Name)
-					nm.edgeOSNATSClients[newCfg.ID] = client
 				}
 			}
 		}
@@ -135,8 +137,9 @@ func (nm *NorthboundManager) UpsertEdgeOSMQTTConfig(cfg model.EdgeOSMQTTConfig) 
 	var startErr error
 	if !exists {
 		newClient := edgos_mqtt.NewClient(cfg, nm.sb, nm.storage)
-		startErr = newClient.Start()
+		nm.wireEdgeOSMQTTClient(newClient)
 		nm.edgeOSMQTTClients[cfg.ID] = newClient
+		startErr = newClient.Start()
 	} else {
 		startErr = client.UpdateConfig(cfg)
 	}
@@ -214,8 +217,9 @@ func (nm *NorthboundManager) UpsertEdgeOSNATSConfig(cfg model.EdgeOSNATSConfig) 
 	var startErr error
 	if !exists {
 		newClient := edgos_nats.NewClient(cfg, nm.sb, nm.storage)
-		startErr = newClient.Start()
+		nm.wireEdgeOSNATSClient(newClient)
 		nm.edgeOSNATSClients[cfg.ID] = newClient
+		startErr = newClient.Start()
 	} else {
 		startErr = client.UpdateConfig(cfg)
 	}

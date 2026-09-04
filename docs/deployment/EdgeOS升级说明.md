@@ -1,7 +1,7 @@
 ---
 layout: default
 title: EdgeOS 升级说明
-description: EdgeX EdgeOS 升级说明
+description: edgeCore EdgeOS 升级说明
 ---
 
 # EdgeOS 升级说明
@@ -186,7 +186,7 @@ go build -o gateway ./cmd/main.go
 
 ### 7. 验证升级
 - 检查服务是否正常启动
-- 查看 EdgeX-EdgeOS 通信日志
+- 查看 edgeCore-EdgeOS 通信日志
 - 使用 MQTT Explorer / NATS Subscriber 检查消息格式
 - 确认统计数据正常更新
 
@@ -263,7 +263,7 @@ go build -o gateway ./cmd/main.go
 
 ### 兼容性
 
-- ✅ 协议格式完全符合 EdgeX-EdgeOS 通信协议规范
+- ✅ 协议格式完全符合 edgeCore-EdgeOS 通信协议规范
 - ✅ 支持旧版配置格式自动迁移
 - ✅ 向后兼容未配置设备的默认行为
 - ✅ 与现有 MQTT/NATS 客户端完全兼容
@@ -308,5 +308,5 @@ device-001:
 ## 技术支持
 
 如有问题,请参考:
-- [EdgeX 通信协议规范](../edgeos/EdgeX通信协议规范%28MQTT-NATS%29.html)
+- [edgeCore 通信协议规范](../edgeos/edgeCore通信协议规范%28MQTT-NATS%29.html)
 - [EdgeOS 设备级数据推送验证方案](../edgeos/EdgeOS设备级数据推送验证方案.html)

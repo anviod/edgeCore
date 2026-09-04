@@ -3,8 +3,8 @@ package ice104
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestICE104DriverRegistration(t *testing.T) {

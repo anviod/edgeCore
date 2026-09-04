@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/gosnmp/gosnmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func TestSchedulerReadPointsMock(t *testing.T) {
 		return []gosnmp.SnmpPDU{{
 			Name:  oids[0],
 			Type:  gosnmp.OctetString,
-			Value: []byte("EdgeX Gateway"),
+			Value: []byte("edgeCore Gateway"),
 		}}, nil
 	}
 	transport.connected.Store(true)
@@ -37,7 +37,7 @@ func TestSchedulerReadPointsMock(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 1)
 	assert.Equal(t, "Good", results["p1"].Quality)
-	assert.Equal(t, "EdgeX Gateway", results["p1"].Value)
+	assert.Equal(t, "edgeCore Gateway", results["p1"].Value)
 
 	total, success, failure := scheduler.GetStats()
 	assert.Equal(t, int64(1), total)

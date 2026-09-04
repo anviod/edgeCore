@@ -9,7 +9,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/miekg/dns"
 )
@@ -64,7 +64,7 @@ func (d *DNSProxy) Start(cfg model.HostnameConfig) error {
 	}
 
 	if cfg.Name == "" {
-		cfg.Name = "edgex"
+		cfg.Name = "edgeCore"
 		d.status.Hostname = cfg.Name
 	}
 

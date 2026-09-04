@@ -2,7 +2,7 @@
 
 ## 概述
 
-BACnet Server 北向通道以**从机模式**运行，将 EdgeX 网关南向设备的点位数据映射为 BACnet 标准对象，对外暴露给 BACnet 主站（如 BMS 楼宇管理系统、SCADA 系统）进行监控和写入。
+BACnet Server 北向通道以**从机模式**运行，将 edgeCore 网关南向设备的点位数据映射为 BACnet 标准对象，对外暴露给 BACnet 主站（如 BMS 楼宇管理系统、SCADA 系统）进行监控和写入。
 
 ### 参考实现
 
@@ -44,9 +44,9 @@ BACnet Server 北向通道以**从机模式**运行，将 EdgeX 网关南向设�
 
 ## 点位类型映射
 
-EdgeX 点位 DataType 到 BACnet 对象类型的映射规则：
+edgeCore 点位 DataType 到 BACnet 对象类型的映射规则：
 
-| EdgeX DataType | ReadWrite | BACnet 对象类型    | 对象类型编号 |
+| edgeCore DataType | ReadWrite | BACnet 对象类型    | 对象类型编号 |
 |---------------|-----------|-------------------|------------|
 | float32/float64/int | R   | AnalogInput       | 0          |
 | float32/float64/int | RW  | AnalogValue       | 2          |
@@ -89,9 +89,9 @@ type BACnetServerConfig struct {
       "enable": true,
       "port": 47808,
       "device_id": 1000,
-      "device_name": "EdgeX-Gateway",
+      "device_name": "edgeCore-Gateway",
       "vendor_id": 999,
-      "vendor_name": "EdgeX Foundry",
+      "vendor_name": "edgeCore Foundry",
       "max_pdu": 1476,
       "devices": {
         "dev1": { "enable": true },
@@ -147,8 +147,8 @@ type BACnetServerConfig struct {
 
 ```go
 import (
-    "github.com/anviod/edgex/internal/model"
-    "github.com/anviod/edgex/internal/northbound/bacnet"
+    "github.com/anviod/edgeCore/internal/model"
+    "github.com/anviod/edgeCore/internal/northbound/bacnet"
 )
 
 cfg := model.BACnetServerConfig{
@@ -157,7 +157,7 @@ cfg := model.BACnetServerConfig{
     Enable:     true,
     Port:       47808,
     DeviceID:   1000,
-    DeviceName: "EdgeX-Gateway",
+    DeviceName: "edgeCore-Gateway",
 }
 
 srv := bacnet.NewServer(cfg, southboundManager)
@@ -199,7 +199,7 @@ stats, err := northboundManager.GetBACnetServerStats("bacnet-1")
 
 ### 4. 值类型转换
 
-所有 EdgeX 值在写入 BACnet 对象前根据对象类型进行转换：
+所有 edgeCore 值在写入 BACnet 对象前根据对象类型进行转换：
 - AnalogInput/AnalogValue → float64
 - BinaryInput/BinaryValue → bool
 - MultiStateInput/MultiStateValue → uint32

@@ -2,8 +2,9 @@ package core
 
 import (
 	"sync"
+	"sync/atomic"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // DataPipeline handles the flow of collected data
@@ -14,6 +15,9 @@ type DataPipeline struct {
 	handlers      []func(model.Value)
 	batchHandlers []func([]model.Value)
 	shadowIngress *ShadowIngress
+	stopOnce      sync.Once
+	wg            sync.WaitGroup
+	stopped       atomic.Bool
 }
 
 func NewDataPipeline(bufferSize int) *DataPipeline {
@@ -40,11 +44,22 @@ func (dp *DataPipeline) SetShadowIngress(si *ShadowIngress) {
 }
 
 func (dp *DataPipeline) Start() {
+	dp.wg.Add(1)
 	go func() {
+		defer dp.wg.Done()
 		for range dp.signalChan {
 			dp.drainAndProcess()
 		}
 	}()
+}
+
+// Stop 关闭 pipeline goroutine，确保后续不会再触发 batch handler 写数据库。
+func (dp *DataPipeline) Stop() {
+	dp.stopOnce.Do(func() {
+		dp.stopped.Store(true)
+		close(dp.signalChan)
+	})
+	dp.wg.Wait()
 }
 
 func (dp *DataPipeline) Push(val model.Value) {
@@ -52,7 +67,7 @@ func (dp *DataPipeline) Push(val model.Value) {
 }
 
 func (dp *DataPipeline) PushBatch(vals []model.Value) {
-	if len(vals) == 0 {
+	if len(vals) == 0 || dp.stopped.Load() {
 		return
 	}
 
@@ -68,6 +83,9 @@ func (dp *DataPipeline) PushBatch(vals []model.Value) {
 	}
 	dp.mu.Unlock()
 
+	if dp.stopped.Load() {
+		return
+	}
 	select {
 	case dp.signalChan <- struct{}{}:
 	default:

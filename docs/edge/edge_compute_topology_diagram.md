@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算拓扑图
-description: EdgeX 边缘计算拓扑图
+description: edgeCore 边缘计算拓扑图
 ---
 
 # 边缘计算拓扑图

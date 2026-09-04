@@ -1,9 +1,9 @@
 ---
 layout: section-index
 title: 运维文档
-description: EdgeX 运维管理文档 — 系统设置、故障修复、UI 规范与回滚方案
+description: edgeCore 运维管理文档 — 系统设置、故障修复、UI 规范与回滚方案
 hero_eyebrow: Operations
-hero_lead: EdgeX 运维管理文档 — 系统设置、网络配置、认证管理、故障修复、UI 规范与回滚方案。
+hero_lead: edgeCore 运维管理文档 — 系统设置、网络配置、认证管理、故障修复、UI 规范与回滚方案。
 hero_buttons:
   - text: 系统设置
     url: 边缘网关系统设置.html

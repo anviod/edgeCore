@@ -1,14 +1,14 @@
 ---
 layout: default
 title: BACnet Server 北向从机模式
-description: EdgeX BACnet Server 北向通道 — 将 EdgeX 南向点位映射为 BACnet 标准对象，对外暴露给 BMS/SCADA 主站
+description: edgeCore BACnet Server 北向通道 — 将 edgeCore 南向点位映射为 BACnet 标准对象，对外暴露给 BMS/SCADA 主站
 ---
 
 # BACnet Server 北向从机模式
 
 ## 概述
 
-BACnet Server 北向通道以**从机模式**运行，将 EdgeX 网关南向设备的点位数据映射为 BACnet 标准对象，对外暴露给 BACnet 主站（如 BMS 楼宇管理系统、SCADA 系统）进行监控和写入。
+BACnet Server 北向通道以**从机模式**运行，将 edgeCore 网关南向设备的点位数据映射为 BACnet 标准对象，对外暴露给 BACnet 主站（如 BMS 楼宇管理系统、SCADA 系统）进行监控和写入。
 
 参考 OPC UA Server 的架构模式实现，支持双向读写控制。
 
@@ -52,9 +52,9 @@ BACnet 主站 (BMS/SCADA)
 
 ## 点位类型映射
 
-EdgeX 点位根据数据类型和读写属性自动映射为 BACnet 标准对象：
+edgeCore 点位根据数据类型和读写属性自动映射为 BACnet 标准对象：
 
-| EdgeX 数据类型 | 读写属性 | BACnet 对象类型 | 编号 |
+| edgeCore 数据类型 | 读写属性 | BACnet 对象类型 | 编号 |
 |--------------|----------|----------------|------|
 | float32/float64/int | R | AnalogInput | 0 |
 | float32/float64/int | RW | AnalogValue | 2 |
@@ -74,7 +74,7 @@ EdgeX 点位根据数据类型和读写属性自动映射为 BACnet 标准对象
 | `port` | int | 47808 | BACnet 端口 |
 | `subnet_cidr` | int | 24 | 子网 CIDR |
 | `device_id` | int | 自动生成 | BACnet 设备实例 ID（0 时 FNV-32a 哈希生成） |
-| `device_name` | string | "EdgeX-Gateway" | BACnet 设备名称 |
+| `device_name` | string | "edgeCore-Gateway" | BACnet 设备名称 |
 | `vendor_id` | int | 999 | BACnet 厂商 ID |
 | `vendor_name` | string | — | BACnet 厂商名称 |
 | `max_pdu` | int | 1476 | 最大 PDU 大小 |
@@ -105,7 +105,7 @@ EdgeX 点位根据数据类型和读写属性自动映射为 BACnet 标准对象
   "enable": true,
   "port": 47810,
   "device_id": 47810,
-  "device_name": "EdgeX-Gateway",
+  "device_name": "edgeCore-Gateway",
   "vendor_id": 999
 }
 ```
@@ -131,7 +131,7 @@ EdgeX 点位根据数据类型和读写属性自动映射为 BACnet 标准对象
 
 在 Yabe 或其他 BACnet 客户端中：
 
-1. 添加设备：输入 EdgeX 网关的 IP 地址和 BACnet Server 端口
+1. 添加设备：输入 edgeCore 网关的 IP 地址和 BACnet Server 端口
 2. 或发送 Who-Is 广播：BACnet Server 会自动回复 I-Am 完成设备发现
 3. 浏览 Object List：查看所有映射的 BACnet 对象
 4. 读取 PresentValue：获取实时点位数据

@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	drv "github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	drv "github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

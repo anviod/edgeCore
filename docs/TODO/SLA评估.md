@@ -51,7 +51,7 @@
 Kepware        ██████████  确定性 SLA + 完整 Diagnostics
 Neuron         ████████    统计 SLA + 边缘轻量化
 --------------------------------
-EdgeX（当前）   ███████▌   统计 SLA + 轻量化 diagnostics
+edgeCore（当前）   ███████▌   统计 SLA + 轻量化 diagnostics
 --------------------------------
 Demo 调度器     ███
 ```

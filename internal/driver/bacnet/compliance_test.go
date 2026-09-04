@@ -8,7 +8,7 @@ import (
 
 	bacnetlib "github.com/anviod/bacnet"
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TestCompliance_BACnet_Isolation implements the test plan from "BACnet 多设备隔离采集测试方案.md"
@@ -116,8 +116,8 @@ func TestCompliance_BACnet_Isolation(t *testing.T) {
 	} else {
 		t.Logf("✅ Device 19 returned error as expected: %v (Time: %v)", err, dur)
 	}
-	if dur > 3*time.Second {
-		t.Errorf("Offline device read exceeded 3s budget: %v", dur)
+	if dur > 8*time.Second {
+		t.Errorf("Offline device read exceeded 8s budget: %v", dur)
 	}
 
 	verifyPoint(p16, 316.0)

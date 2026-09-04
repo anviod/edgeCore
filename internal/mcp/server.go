@@ -162,7 +162,7 @@ func (s *MCPServer) handleInitialize(req *JSONRPCRequest) *JSONRPCResponse {
 }
 
 func (s *MCPServer) getInstructions() string {
-	return `EdgeX MCP Server — 工业边缘网关协议操作接口
+	return `edgeCore MCP Server — 工业边缘网关协议操作接口
 
 # 可用能力
 - **Tools**: 查询通道/设备/点位、读写点位值、分析协议报文、获取诊断信息
@@ -173,15 +173,15 @@ func (s *MCPServer) getInstructions() string {
 将此 MCP Server 配置到你的 LLM 客户端（如 Claude Desktop、Cursor 等）：
 {
   "mcpServers": {
-    "edgex": {
-      "url": "http://<edgex-host>:8080/api/mcp"
+    "edgeCore": {
+      "url": "http://<edgeCore-host>:8080/api/mcp"
     }
   }
 }
 
 # 安全说明
 - 写操作（write_point）需要人工确认，不会自动执行
-- 所有操作通过 EdgeX JWT 认证
+- 所有操作通过 edgeCore JWT 认证
 - 敏感配置信息已脱敏处理`
 }
 
@@ -202,11 +202,21 @@ func (s *MCPServer) handleToolsList(req *JSONRPCRequest) *JSONRPCResponse {
 
 // ── tools/call ──
 
-func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
+func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) (resp *JSONRPCResponse) {
+	// Panic recovery: prevents a single tool handler crash from killing the
+	// HTTP connection and cascading into SSE stream termination.
+	// panic 恢复：防止单个工具处理器崩溃导致 HTTP 连接中断和 SSE 流终止。
+	defer func() {
+		if r := recover(); r != nil {
+			errResp := JSONRPCErrorResponse(req.ID, ErrInternalError, fmt.Sprintf("tool execution panic: %v", r))
+			resp = &errResp
+		}
+	}()
+
 	var params CallToolParams
 	if err := json.Unmarshal(req.Params, &params); err != nil {
-		resp := JSONRPCErrorResponse(req.ID, ErrInvalidParams, "Invalid tool call params: "+err.Error())
-		return &resp
+		errResp := JSONRPCErrorResponse(req.ID, ErrInvalidParams, "Invalid tool call params: "+err.Error())
+		return &errResp
 	}
 
 	s.mu.RLock()
@@ -214,8 +224,8 @@ func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
 	s.mu.RUnlock()
 
 	if !ok {
-		resp := JSONRPCErrorResponse(req.ID, ErrMethodNotFound, fmt.Sprintf("Tool not found: %s", params.Name))
-		return &resp
+		errResp := JSONRPCErrorResponse(req.ID, ErrMethodNotFound, fmt.Sprintf("Tool not found: %s", params.Name))
+		return &errResp
 	}
 
 	result, err := handler(params.Arguments)
@@ -223,8 +233,8 @@ func (s *MCPServer) handleToolsCall(req *JSONRPCRequest) *JSONRPCResponse {
 		result = NewErrorResult(err.Error())
 	}
 
-	resp := JSONRPCSuccessResponse(req.ID, result)
-	return &resp
+	successResp := JSONRPCSuccessResponse(req.ID, result)
+	return &successResp
 }
 
 // ── resources/list ──

@@ -3,7 +3,7 @@ package model
 // AICopilotSettings is persisted in config.db → ai_copilot bucket (key: settings).
 type AICopilotSettings struct {
 	DeploymentMode string `json:"deployment_mode"` // local | remote | cloud
-	Provider       string `json:"provider"`        // edgex-local | edgex-center | openai | anthropic | azure-openai | deepseek | qwen | ernie | zhipu | moonshot | custom
+	Provider       string `json:"provider"`        // edgeCore-local | edgeCore-center | openai | anthropic | azure-openai | deepseek | qwen | ernie | zhipu | moonshot | custom
 
 	// AI Model Center (Mode A/B — remote)
 	GrpcEndpoint string `json:"grpc_endpoint"`
@@ -43,7 +43,7 @@ type AICopilotSettingsPublic struct {
 func DefaultAICopilotSettings() AICopilotSettings {
 	return AICopilotSettings{
 		DeploymentMode:  "remote",
-		Provider:        "edgex-center",
+		Provider:        "edgeCore-center",
 		GrpcEndpoint:    "127.0.0.1:50051",
 		BaseURL:         "",
 		AuthType:        "bearer",
@@ -69,17 +69,17 @@ func (s AICopilotSettings) RuntimeMode() string {
 // ProviderLabel returns a human-readable provider name for status UI.
 func (s AICopilotSettings) ProviderLabel() string {
 	labels := map[string]string{
-		"edgex-local":  "本地 Mock",
-		"edgex-center": "AI Model Center",
-		"openai":       "OpenAI",
-		"anthropic":    "Anthropic",
-		"azure-openai": "Azure OpenAI",
-		"deepseek":     "DeepSeek",
-		"qwen":         "通义千问",
-		"ernie":        "文心一言",
-		"zhipu":        "智谱 AI",
-		"moonshot":     "Moonshot",
-		"custom":       "自定义",
+		"edgeCore-local":  "本地 Mock",
+		"edgeCore-center": "AI Model Center",
+		"openai":          "OpenAI",
+		"anthropic":       "Anthropic",
+		"azure-openai":    "Azure OpenAI",
+		"deepseek":        "DeepSeek",
+		"qwen":            "通义千问",
+		"ernie":           "文心一言",
+		"zhipu":           "智谱 AI",
+		"moonshot":        "Moonshot",
+		"custom":          "自定义",
 	}
 	if label, ok := labels[s.Provider]; ok {
 		return label

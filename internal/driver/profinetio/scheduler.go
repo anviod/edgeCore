@@ -5,7 +5,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 	"go.uber.org/zap"
 )
 
@@ -18,6 +19,18 @@ type ProfinetScheduler struct {
 	successCount  int64
 	failureCount  int64
 	mu            sync.Mutex
+}
+
+func reverseScaleOffset(point model.Point, value any) any {
+	f, err := toFloat64(value)
+	if err != nil {
+		return value
+	}
+	scale := point.Scale
+	if scale == 0 {
+		scale = 1
+	}
+	return (f - point.Offset) / scale
 }
 
 func NewProfinetScheduler(transport *ProfinetTransport, decoder *ProfinetDecoder) *ProfinetScheduler {
@@ -50,7 +63,8 @@ func (s *ProfinetScheduler) ReadPoints(ctx context.Context, points []model.Point
 			continue
 		}
 
-		size := ByteSize(p.DataType)
+		rawType := model.RawDataType(p)
+		size := ByteSize(rawType)
 		data, err := s.transport.ReadIO(ctx, addr.Slot, addr.SubSlot, addr.Index, size)
 		if err != nil {
 			zap.L().Warn("[Profinet IO] read failed",
@@ -63,7 +77,7 @@ func (s *ProfinetScheduler) ReadPoints(ctx context.Context, points []model.Point
 			continue
 		}
 
-		val, err := s.decoder.DecodeValue(data, p.DataType, addr)
+		val, err := s.decoder.DecodeValue(data, rawType, addr)
 		if err != nil {
 			results[p.ID] = model.Value{PointID: p.ID, Quality: "Bad", TS: time.Now()}
 			s.incFailure()
@@ -71,7 +85,12 @@ func (s *ProfinetScheduler) ReadPoints(ctx context.Context, points []model.Point
 			continue
 		}
 
-		if p.Scale != 0 || p.Offset != 0 {
+		if p.ReadFormula != "" {
+			val, err = dataformat.ApplyFormula(p.ReadFormula, val)
+			if err != nil {
+				continue
+			}
+		} else if p.Scale != 0 || p.Offset != 0 {
 			if f, err := toFloat64(val); err == nil {
 				val = f*p.Scale + p.Offset
 			}
@@ -97,7 +116,15 @@ func (s *ProfinetScheduler) WritePoint(ctx context.Context, p model.Point, value
 	if err != nil {
 		return err
 	}
-	data, err := s.decoder.EncodeValue(value, p.DataType, addr)
+	if p.WriteFormula != "" {
+		value, err = dataformat.ApplyFormula(p.WriteFormula, value)
+	} else {
+		value = reverseScaleOffset(p, value)
+	}
+	if err != nil {
+		return err
+	}
+	data, err := s.decoder.EncodeValue(value, model.RawDataType(p), addr)
 	if err != nil {
 		return err
 	}

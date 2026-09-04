@@ -123,7 +123,7 @@ def convert(md: str) -> str:
 def wrap(title: str, description: str, content: str, depth: int) -> str:
     root = "../" * depth
     nav = [
-        ("返回项目", "https://github.com/anviod/edgex"),
+        ("返回项目", "https://github.com/anviod/edgeCore"),
         ("首页", f"{root}index.html"),
         ("产品指南", f"{root}guide/index.html"),
         ("设备驱动", f"{root}drivers/index.html"),
@@ -139,7 +139,7 @@ def wrap(title: str, description: str, content: str, depth: int) -> str:
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{html.escape(title)} | EdgeX 知识库</title>
+    <title>{html.escape(title)} | edgeCore 知识库</title>
     <meta name="description" content="{desc}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -150,7 +150,7 @@ def wrap(title: str, description: str, content: str, depth: int) -> str:
     <header class="site-header site-header--docs">
       <div class="shell shell--wide">
         <div class="site-header__topbar">
-          <a class="site-brand" href="{root}index.html">EdgeX 知识库</a>
+          <a class="site-brand" href="{root}index.html">edgeCore 知识库</a>
           <nav class="site-nav" aria-label="主导航">
 {nav_html}
           </nav>

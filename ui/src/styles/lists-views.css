@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — List views (Channel, Device, Point, EdgeCompute)
+ * edgeCore v3.0 — List views (Channel, Device, Point, EdgeCompute)
  */
 
 /* ── List detail page layout ── */
@@ -104,7 +104,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   flex-shrink: 0;
 }
 
@@ -369,7 +369,7 @@
   font-weight: 600;
 }
 
-.status-text.enabled { color: var(--edgex-success); }
+.status-text.enabled { color: var(--edgeCore-success); }
 .status-text.disabled { color: var(--text-tertiary); }
 
 /* ── Point list cells ── */
@@ -450,6 +450,39 @@
   color: var(--text-tertiary);
 }
 
+.device-location-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.device-location-cell .loc-line {
+  font-size: 13px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.device-location-cell .loc-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.device-location-cell .loc-code {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  background: var(--fill-2);
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.device-location-cell .loc-empty {
+  color: var(--text-tertiary);
+}
+
 .device-footer {
   margin-top: var(--space-6);
   padding: var(--space-3);
@@ -474,12 +507,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
   flex-shrink: 0;
   width: 100%;
   box-sizing: border-box;
   background: var(--surface);
-  border-top: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px 16px;
   margin-top: auto;
   position: sticky;
@@ -490,7 +525,7 @@
 .terminal-dot {
   width: 6px;
   height: 6px;
-  background: var(--edgex-success);
+  background: var(--edgeCore-success);
   border-radius: 50%;
   animation: pulse-dot 2s infinite;
   flex-shrink: 0;
@@ -500,6 +535,9 @@
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-secondary);
+  line-height: 1.6;
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 
 @keyframes pulse-dot {
@@ -622,3 +660,29 @@
 .industrial-btn-primary:hover {
   background: var(--primary-hover) !important;
 }
+
+/* ── list view motion polish ── */
+/* 入场由 App.vue 路由过渡统一处理 */
+
+.list-back-btn {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.list-back-btn:hover {
+  transform: translateX(-3px);
+}
+
+.list-back-btn:hover .arco-icon,
+.list-back-btn:hover svg {
+  animation: bounce-subtle 0.6s var(--motion-ease-bounce);
+}
+
+/* 表格行：渲染即时可见，不做逐行错开入场（避免列表延迟感） */
+
+/* 列表状态点 */
+.list-detail-meta__dot:not(.is-offline):not(.is-idle) {
+  animation: status-breathe 2.4s var(--motion-ease-standard) infinite;
+}
+

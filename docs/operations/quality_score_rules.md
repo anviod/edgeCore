@@ -4,7 +4,7 @@ layout: default
 
 # 质量评分规则文档 (Quality Score Rules)
 
-本文档详细说明了 EdgeX 系统中通道 (Channel) 和设备 (Device) 的质量评分计算逻辑、评分等级定义以及改进建议。
+本文档详细说明了 edgeCore 系统中通道 (Channel) 和设备 (Device) 的质量评分计算逻辑、评分等级定义以及改进建议。
 
 ## 1. 评分体系概述
 

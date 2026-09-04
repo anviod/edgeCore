@@ -3,7 +3,7 @@ package core
 import (
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // ShadowBridge 将 ShadowCore 快照变更扇出到 DataPipeline，

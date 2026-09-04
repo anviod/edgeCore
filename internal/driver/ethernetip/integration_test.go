@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TestIntegrationWithSimulator 测试与EtherNet/IP模拟器的集成

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet 点位串流 Bug 修复
-description: EdgeX BACnet 点位串流 Bug 修复（索引）
+description: edgeCore BACnet 点位串流 Bug 修复（索引）
 ---
 
 # BACnet 点位串流 Bug 修复

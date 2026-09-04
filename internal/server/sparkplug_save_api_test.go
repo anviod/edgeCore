@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,14 +19,14 @@ func TestUpsertSparkplugBConfig_Returns200WithWarningWhenBrokerUnreachable(t *te
 		saved = cfg
 		return nil
 	})
-	srv := NewServer(nil, nil, nil, nbm, nil, nil, nil, nil, nil, nil)
+	srv := NewServer(nil, nil, nil, nbm, nil, nil, nil, nil, nil)
 
 	body := model.SparkplugBConfig{
 		ID:       "api-spb-test",
 		Name:     "API Sparkplug Test",
 		Enable:   true,
 		Broker:   "127.0.0.1",
-		Port:     1883,
+		Port:     18884,
 		ClientID: "api-spb-client",
 		GroupID:  "group1",
 		NodeID:   "node1",

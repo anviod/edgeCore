@@ -4,9 +4,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 func attachTestConfigManager(t *testing.T, sm *SystemManager, cfg *config.Config) {
@@ -34,8 +34,8 @@ func TestNewSystemManager_Defaults(t *testing.T) {
 	if got.Time.Mode != "manual" {
 		t.Fatalf("time mode = %q, want manual", got.Time.Mode)
 	}
-	if got.Hostname.Name != "edgex" {
-		t.Fatalf("hostname = %q, want edgex", got.Hostname.Name)
+	if got.Hostname.Name != "edgeCore" {
+		t.Fatalf("hostname = %q, want edgeCore", got.Hostname.Name)
 	}
 	if got.Hostname.HTTPPort != 8080 {
 		t.Fatalf("http port = %d, want 8080", got.Hostname.HTTPPort)
@@ -132,12 +132,12 @@ func TestSystemManager_UpdateConfig(t *testing.T) {
 
 	newCfg := sm.GetConfig()
 	newCfg.Time.Mode = "ntp"
-	newCfg.Hostname.Name = "edgex-test"
+	newCfg.Hostname.Name = "edgeCore-test"
 	if err := sm.UpdateConfig(newCfg); err != nil {
 		t.Fatalf("UpdateConfig: %v", err)
 	}
 	got := sm.GetConfig()
-	if got.Time.Mode != "ntp" || got.Hostname.Name != "edgex-test" {
+	if got.Time.Mode != "ntp" || got.Hostname.Name != "edgeCore-test" {
 		t.Fatalf("config not updated: %+v", got)
 	}
 }

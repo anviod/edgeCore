@@ -1,7 +1,7 @@
 ---
 layout: default
 title: EdgeOS 设备级数据推送验证方案
-description: EdgeX EdgeOS 设备级数据推送验证方案
+description: edgeCore EdgeOS 设备级数据推送验证方案
 ---
 
 # EdgeOS 设备级数据推送验证方案
@@ -72,7 +72,7 @@ description: EdgeX EdgeOS 设备级数据推送验证方案
 
 ### 2.1 协议要求的格式
 
-根据 `EdgeX通信协议规范%28MQTT-NATS%29.md` 第 4.5 节,数据推送格式如下:
+根据 `edgeCore通信协议规范%28MQTT-NATS%29.md` 第 4.5 节,数据推送格式如下:
 
 ```json
 {
@@ -138,7 +138,7 @@ edgeos_mqtt:
     name: "EdgeOS MQTT Channel 1"
     enable: true
     broker: "tcp://localhost:1883"
-    client_id: "edgex-node-001"
+    client_id: "edgeCore-node-001"
     node_id: "node-001"
     username: ""
     password: ""
@@ -173,7 +173,7 @@ edgeos_nats:
     name: "EdgeOS NATS Channel 1"
     enable: true
     url: "nats://localhost:4222"
-    client_id: "edgex-node-001"
+    client_id: "edgeCore-node-001"
     node_id: "node-001"
     username: ""
     password: ""
@@ -251,7 +251,7 @@ edgeos_nats:
 **测试工具**: MQTT Explorer / NATS Subscriber
 
 **测试步骤**:
-1. 订阅主题: `edgex/data/{node_id}/{device_id}`
+1. 订阅主题: `edgeCore/data/{node_id}/{device_id}`
 2. 触发设备数据推送
 3. 捕获消息并解析 JSON
 4. 验证字段完整性
@@ -399,7 +399,7 @@ devices:
 ### 核心改进:
 1. ✅ **设备级数据推送**: 从单点推送升级为设备级推送
 2. ✅ **推送策略支持**: 支持 realtime 和 periodic 两种模式
-3. ✅ **协议格式符合**: JSON 格式完全符合 EdgeX-EdgeOS 通信协议规范
+3. ✅ **协议格式符合**: JSON 格式完全符合 edgeCore-EdgeOS 通信协议规范
 4. ✅ **UI 配置联动**: 设备启用状态和推送周期设置生效
 
 ### 技术亮点:

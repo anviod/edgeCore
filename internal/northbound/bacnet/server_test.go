@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // mockSouthboundManager 实现 model.SouthboundManager 用于测试

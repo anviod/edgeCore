@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/testutil/fault"
-	mbsim "github.com/anviod/edgex/internal/testutil/modbus"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/testutil/fault"
+	mbsim "github.com/anviod/edgeCore/internal/testutil/modbus"
 )
 
 /*
@@ -151,9 +151,9 @@ func TestModbusPLC_PressureMultiSlaveIsolation(t *testing.T) {
 	gates := []productionGate{
 		{
 			Name:   "scan_lag_p95_under_200ms",
-			Passed: p95 <= prodGatePLCLagP95Ms,
+			Passed: p95 <= plcPressureLagP95Limit,
 			Value:  p95,
-			Limit:  prodGatePLCLagP95Ms,
+			Limit:  plcPressureLagP95Limit,
 			Detail: fmt.Sprintf("P95 lag %.2fms", p95),
 		},
 		{

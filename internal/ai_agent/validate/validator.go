@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/ai_agent/aitypes"
+	"github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 )
 
 var supportedDatatypes = map[string]bool{

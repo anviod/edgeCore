@@ -96,7 +96,7 @@
     <rect x="0" y="130" width="420" height="510" rx="14" fill="#ffffff" stroke="#ea580c" stroke-width="2" stroke-dasharray="8 5" filter="url(#shadow)"/>
     <rect x="0" y="130" width="420" height="40" rx="14" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
     <rect x="0" y="155" width="420" height="15" fill="#f8fafc"/>
-    <text x="20" y="156" class="group-title" fill="#9a3412">■ EdgeX 协议透传解析网关</text>
+    <text x="20" y="156" class="group-title" fill="#9a3412">■ edgeCore 协议透传解析网关</text>
 
     <g transform="translate(25, 175)">
       <rect width="370" height="70" rx="10" fill="url(#grad-orange)" stroke="#ea580c" stroke-width="1.5"/>

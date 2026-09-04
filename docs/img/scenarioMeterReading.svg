@@ -47,7 +47,7 @@
   
   <g transform="translate(700, 65)" text-anchor="middle">
     <text class="title">多能流智能联合抄表：全品类计量批处理采集与能耗可视化统计系统</text>
-    <text y="24" class="subtitle">EdgeX 边缘计算网关 · 采集解耦管道横向单条直线全对齐零交叉流转</text>
+    <text y="24" class="subtitle">edgeCore 边缘计算网关 · 采集解耦管道横向单条直线全对齐零交叉流转</text>
   </g>
 
   <g transform="translate(70, 0)">

@@ -4,7 +4,7 @@ import (
 	"crypto/x509"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"github.com/awcullen/opcua/server"
 	"github.com/awcullen/opcua/ua"

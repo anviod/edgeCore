@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/thinkgos/go-iecp5/asdu"
@@ -19,9 +19,9 @@ import (
 
 const goIecp5CommonAddr asdu.CommonAddr = 1
 
-type goIecp5EdgexHandler struct{}
+type goIecp5edgeCoreHandler struct{}
 
-func (goIecp5EdgexHandler) InterrogationHandler(c asdu.Connect, _ *asdu.ASDU, qoi asdu.QualifierOfInterrogation) error {
+func (goIecp5edgeCoreHandler) InterrogationHandler(c asdu.Connect, _ *asdu.ASDU, qoi asdu.QualifierOfInterrogation) error {
 	if qoi != asdu.QOIStation {
 		return nil
 	}
@@ -35,20 +35,22 @@ func (goIecp5EdgexHandler) InterrogationHandler(c asdu.Connect, _ *asdu.ASDU, qo
 		})
 }
 
-func (goIecp5EdgexHandler) CounterInterrogationHandler(asdu.Connect, *asdu.ASDU, asdu.QualifierCountCall) error {
+func (goIecp5edgeCoreHandler) CounterInterrogationHandler(asdu.Connect, *asdu.ASDU, asdu.QualifierCountCall) error {
 	return nil
 }
-func (goIecp5EdgexHandler) ReadHandler(asdu.Connect, *asdu.ASDU, asdu.InfoObjAddr) error { return nil }
-func (goIecp5EdgexHandler) ClockSyncHandler(asdu.Connect, *asdu.ASDU, time.Time) error {
+func (goIecp5edgeCoreHandler) ReadHandler(asdu.Connect, *asdu.ASDU, asdu.InfoObjAddr) error {
 	return nil
 }
-func (goIecp5EdgexHandler) ResetProcessHandler(asdu.Connect, *asdu.ASDU, asdu.QualifierOfResetProcessCmd) error {
+func (goIecp5edgeCoreHandler) ClockSyncHandler(asdu.Connect, *asdu.ASDU, time.Time) error {
 	return nil
 }
-func (goIecp5EdgexHandler) DelayAcquisitionHandler(asdu.Connect, *asdu.ASDU, uint16) error {
+func (goIecp5edgeCoreHandler) ResetProcessHandler(asdu.Connect, *asdu.ASDU, asdu.QualifierOfResetProcessCmd) error {
 	return nil
 }
-func (goIecp5EdgexHandler) ASDUHandler(asdu.Connect, *asdu.ASDU) error { return nil }
+func (goIecp5edgeCoreHandler) DelayAcquisitionHandler(asdu.Connect, *asdu.ASDU, uint16) error {
+	return nil
+}
+func (goIecp5edgeCoreHandler) ASDUHandler(asdu.Connect, *asdu.ASDU) error { return nil }
 
 func startGoIecp5Server(t *testing.T) (host string, port int, stop func()) {
 	t.Helper()
@@ -61,7 +63,7 @@ func startGoIecp5Server(t *testing.T) (host string, port int, stop func()) {
 	require.NoError(t, ln.Close())
 
 	conf := cs104.Config{}
-	srv, err := cs104.NewServer(&conf, asdu.ParamsWide, goIecp5EdgexHandler{})
+	srv, err := cs104.NewServer(&conf, asdu.ParamsWide, goIecp5edgeCoreHandler{})
 	require.NoError(t, err)
 
 	done := make(chan struct{})

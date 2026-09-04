@@ -37,7 +37,7 @@ func boltLockTimeoutHint(dbPath string) string {
 		return holders
 	}
 	return fmt.Sprintf(
-		"database lock not acquired within %s — another EdgeX/go process may already be using %s; check with: lsof %q",
+		"database lock not acquired within %s — another edgeCore/go process may already be using %s; check with: lsof %q",
 		boltOpenTimeout,
 		dbPath,
 		dbPath,

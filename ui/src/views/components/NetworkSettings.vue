@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <!-- 网络接口 -->
   <a-card v-if="activeTab === 'network'" class="settings-panel">
     <a-card-header>
@@ -9,49 +9,49 @@
     </a-card-header>
     <a-card-body>
       <div class="table-container saas-table">
-      <a-table 
-        :columns="networkColumns" 
-        :data="networkInterfaces" 
-        size="small"
-        :bordered="false"
-        class="industrial-table-inline"
-      >
-        <template #name="{ record }">
-          <span class="mono-text bold">{{ record.name }}</span>
-        </template>
-        <template #status="{ record }">
-          <a-tag :color="record.status === 'UP' ? 'green' : 'red'" size="small">
-            <template #icon>
-              <icon-check-circle v-if="record.status === 'UP'" />
-              <icon-close-circle v-else />
-            </template>
-            {{ record.status }}
-          </a-tag>
-        </template>
-        <template #ip_configs="{ record }">
-          <div class="subscribers-line">
-            <template v-if="safeIPs(record).length">
-              <span
-                v-for="(ipConf, idx) in safeIPs(record)"
-                :key="idx"
-                class="sub-item mono-text"
-              >
-                {{ ipConf.address }}/{{ ipConf.prefix }} ({{ ipConf.version }})
-              </span>
-            </template>
+        <a-table 
+          :columns="networkColumns" 
+          :data="networkInterfaces" 
+          size="small"
+          :bordered="false"
+          class="industrial-table-inline"
+        >
+          <template #name="{ record }">
+            <span class="mono-text bold">{{ record.name }}</span>
+          </template>
+          <template #status="{ record }">
+            <a-tag :color="record.status === 'UP' ? 'green' : 'red'" size="small">
+              <template #icon>
+                <icon-check-circle v-if="record.status === 'UP'" />
+                <icon-close-circle v-else />
+              </template>
+              {{ record.status }}
+            </a-tag>
+          </template>
+          <template #ip_configs="{ record }">
+            <div class="subscribers-line">
+              <template v-if="safeIPs(record).length">
+                <span
+                  v-for="(ipConf, idx) in safeIPs(record)"
+                  :key="idx"
+                  class="sub-item mono-text"
+                >
+                  {{ ipConf.address }}/{{ ipConf.prefix }} ({{ ipConf.version }})
+                </span>
+              </template>
 
-            <span v-else class="text-gray-400 text-xs">
-              --
-            </span>
-          </div>
-        </template>
-        <template #actions="{ record }">
-          <a-button type="text" size="small" @click="editInterface(record)">
-            <template #icon><icon-edit /></template>
-            配置
-          </a-button>
-        </template>
-      </a-table>
+              <span v-else class="text-gray-400 text-xs">
+                --
+              </span>
+            </div>
+          </template>
+          <template #actions="{ record }">
+            <a-button type="text" size="small" @click="editInterface(record)">
+              <template #icon><icon-edit /></template>
+              配置
+            </a-button>
+          </template>
+        </a-table>
       </div>
 
       <a-divider />
@@ -75,22 +75,22 @@
         </span>
       </div>
       <div class="table-container saas-table">
-      <a-table :columns="connectivityColumns" :data="connectivityTargets" size="small" :bordered="false" class="industrial-table-inline">
-        <template #type="{ index }">
-          <a-select v-model="connectivityTargets[index].type" :options="connectivityTypeOptions" size="small" class="rect-input" @change="onConnectivityChange" />
-        </template>
-        <template #target="{ index }">
-          <a-input v-model="connectivityTargets[index].target" placeholder="例如: 8.8.8.8 或 http://baidu.com" size="small" class="rect-input" @change="onConnectivityChange" />
-        </template>
-        <template #timeout="{ index }">
-          <a-input-number v-model="connectivityTargets[index].timeout" :min="1" size="small" class="rect-input" @change="onConnectivityChange" />
-        </template>
-        <template #actions="{ index }">
-          <a-button type="text" size="small" status="danger" @click="removeConnectivityTarget(index)">
-            <template #icon><icon-delete /></template>
-          </a-button>
-        </template>
-      </a-table>
+        <a-table :columns="connectivityColumns" :data="connectivityTargets" size="small" :bordered="false" class="industrial-table-inline">
+          <template #type="{ index }">
+            <a-select v-model="connectivityTargets[index].type" :options="connectivityTypeOptions" size="small" class="rect-input" @change="onConnectivityChange" />
+          </template>
+          <template #target="{ index }">
+            <a-input v-model="connectivityTargets[index].target" placeholder="例如: 8.8.8.8 或 http://baidu.com" size="small" class="rect-input" @change="onConnectivityChange" />
+          </template>
+          <template #timeout="{ index }">
+            <a-input-number v-model="connectivityTargets[index].timeout" :min="1" size="small" class="rect-input" @change="onConnectivityChange" />
+          </template>
+          <template #actions="{ index }">
+            <a-button type="text" size="small" status="danger" @click="removeConnectivityTarget(index)">
+              <template #icon><icon-delete /></template>
+            </a-button>
+          </template>
+        </a-table>
       </div>
     </a-card-body>
   </a-card>
@@ -105,22 +105,22 @@
     </a-card-header>
     <a-card-body>
       <div class="table-container saas-table">
-      <a-table :columns="routesColumns" :data="routeRows" size="small" :bordered="false" class="industrial-table-inline">
-        <template #destination="{ record }">
-          {{ record.destination }}/{{ record.prefix }}
-        </template>
-        <template #enabled="{ index }">
-          <a-switch :model-value="Boolean(routeRows[index]?.enabled)" @change="(value) => setRouteEnabled(index, value)" />
-        </template>
-        <template #actions="{ record, index }">
-          <a-button type="text" size="small" @click="openRouteDialog(record, index)">
-            <template #icon><icon-edit /></template>
-          </a-button>
-          <a-button type="text" size="small" status="danger" @click="deleteRoute(index)">
-            <template #icon><icon-delete /></template>
-          </a-button>
-        </template>
-      </a-table>
+        <a-table :columns="routesColumns" :data="routeRows" size="small" :bordered="false" class="industrial-table-inline">
+          <template #destination="{ record }">
+            {{ record.destination }}/{{ record.prefix }}
+          </template>
+          <template #enabled="{ index }">
+            <a-switch :model-value="Boolean(routeRows[index]?.enabled)" @change="(value) => setRouteEnabled(index, value)" />
+          </template>
+          <template #actions="{ record, index }">
+            <a-button type="text" size="small" @click="openRouteDialog(record, index)">
+              <template #icon><icon-edit /></template>
+            </a-button>
+            <a-button type="text" size="small" status="danger" @click="deleteRoute(index)">
+              <template #icon><icon-delete /></template>
+            </a-button>
+          </template>
+        </a-table>
       </div>
     </a-card-body>
   </a-card>

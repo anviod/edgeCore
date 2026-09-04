@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 系统日志页（LogViewer）
+ * edgeCore v3.0 — 系统日志页（LogViewer）
  * Flow UI：page-header → toolbar → floating log rows
  */
 
@@ -155,7 +155,7 @@
 
 .log-viewer-page .log-stream-toggle.is-streaming .log-stream-toggle__indicator {
   left: 3px;
-  background: var(--edgex-success, #16a34a);
+  background: var(--edgeCore-success, #16a34a);
   box-shadow:
     0 0 0 1px rgba(22, 163, 74, 0.28),
     0 2px 10px rgba(22, 163, 74, 0.24),
@@ -370,7 +370,7 @@
 }
 
 .log-viewer-page .stream-status.is-live .stream-status__dot {
-  background: var(--edgex-success, #16a34a);
+  background: var(--edgeCore-success, #16a34a);
   box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
   animation: log-stream-status-dot-pulse 2.2s ease-in-out infinite;
 }
@@ -659,7 +659,7 @@
 }
 
 .log-viewer-page .log-level.error {
-  color: var(--edgex-error, #dc2626);
+  color: var(--edgeCore-error, #dc2626);
   background: rgba(220, 38, 38, 0.1);
 }
 
@@ -1096,4 +1096,84 @@
   align-items: center;
   gap: var(--space-2);
   margin-left: auto;
+}
+
+/* ── log viewer motion polish ── */
+/* 入场由 App.vue 路由过渡统一处理 */
+
+.log-viewer-page .log-toolbar {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.log-viewer-page .log-toolbar-buttons .arco-btn,
+.log-viewer-page .log-toolbar-select {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-toolbar-buttons .arco-btn:active {
+  transform: scale(0.95);
+}
+
+.log-viewer-page .log-terminal {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-terminal:hover {
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+}
+
+.log-viewer-page .log-line {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-line:hover {
+  transform: translateX(2px);
+}
+
+.log-viewer-page .log-line.is-selected {
+  transform: translateX(2px);
+}
+
+.log-viewer-page .log-pinned-panel {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.log-viewer-page .log-pinned-entry {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.log-viewer-page .log-pinned-entry:hover {
+  background: rgba(14, 165, 233, 0.05);
+}
+
+.log-viewer-page .log-level {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.log-viewer-page .log-line:hover .log-level {
+  transform: scale(1.08);
+}
+
+/* 新日志高亮闪烁 */
+.log-viewer-page .log-line.is-new {
+  animation: log-new-flash 1.2s var(--motion-ease-decelerate);
+}
+
+@keyframes log-new-flash {
+  0% { background: rgba(14, 165, 233, 0.18); }
+  100% { background: transparent; }
+}
+
+.log-detail-modal .arco-modal-body {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
 }

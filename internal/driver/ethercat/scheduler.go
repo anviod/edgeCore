@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 
 	"go.uber.org/zap"
 )
@@ -22,6 +23,18 @@ import (
 type EtherCATScheduler struct {
 	transport *EtherCATTransport
 	decoder   *EtherCATDecoder
+}
+
+func reverseScaleOffset(point model.Point, value any) any {
+	f, err := toFloat64(value)
+	if err != nil {
+		return value
+	}
+	scale := point.Scale
+	if scale == 0 {
+		scale = 1
+	}
+	return (f - point.Offset) / scale
 }
 
 // NewEtherCATScheduler creates a new scheduler instance.
@@ -91,7 +104,8 @@ func (s *EtherCATScheduler) ReadPoints(ctx context.Context, points []model.Point
 
 // readPDOValue reads a single PDO point from the transport's atomic snapshot.
 func (s *EtherCATScheduler) readPDOValue(p model.Point, addr *ParsedAddress) (model.Value, map[string]any) {
-	byteSize := s.decoder.ByteSize(p.DataType)
+	rawType := model.RawDataType(p)
+	byteSize := s.decoder.ByteSize(rawType)
 	if byteSize == 0 {
 		byteSize = 1
 	}
@@ -106,7 +120,7 @@ func (s *EtherCATScheduler) readPDOValue(p model.Point, addr *ParsedAddress) (mo
 		}, map[string]any{"error": "PDO snapshot data unavailable"}
 	}
 
-	val, err := s.decoder.DecodeValue(data, p.DataType, addr)
+	val, err := s.decoder.DecodeValue(data, rawType, addr)
 	if err != nil {
 		return model.Value{
 			PointID: p.ID,
@@ -116,8 +130,12 @@ func (s *EtherCATScheduler) readPDOValue(p model.Point, addr *ParsedAddress) (mo
 		}, map[string]any{"error": err.Error()}
 	}
 
-	// Apply scale/offset if configured
-	if p.Scale != 0 || p.Offset != 0 {
+	if p.ReadFormula != "" {
+		val, err = dataformat.ApplyFormula(p.ReadFormula, val)
+		if err != nil {
+			return model.Value{PointID: p.ID, Quality: "Bad", TS: time.Now()}, nil
+		}
+	} else if p.Scale != 0 || p.Offset != 0 {
 		if fv, ok := toFloat64(val); ok == nil {
 			val = fv*p.Scale + p.Offset
 		}
@@ -205,7 +223,16 @@ func (s *EtherCATScheduler) WritePoint(ctx context.Context, p model.Point, value
 	}
 
 	// PDO write: encode and write to RxPDO buffer
-	data, err := s.decoder.EncodeValue(value, p.DataType, addr)
+	value = reverseScaleOffset(p, value)
+	if p.WriteFormula != "" {
+		value, err = dataformat.ApplyFormula(p.WriteFormula, value)
+	} else {
+		value = reverseScaleOffset(p, value)
+	}
+	if err != nil {
+		return err
+	}
+	data, err := s.decoder.EncodeValue(value, model.RawDataType(p), addr)
 	if err != nil {
 		return fmt.Errorf("ethercat WritePoint: encode: %w", err)
 	}

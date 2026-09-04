@@ -1,6 +1,197 @@
 /*
- * EdgeX v3.0 — 系统设置页（SystemSettings + 子组件）
+ * edgeCore v3.0 — 系统设置页（SystemSettings + 子组件）
  */
+
+/* ────────────────────────────────────────────────────────────────
+ * 金 色 工 业 主 题（作用域覆盖，仅约束「系统设置」子树）
+ * 复用 theme.css 设计令牌，重映射为金/暖色系 + Apple 大圆角，
+ * 使时间/网络/高可用/主机/LDAP/数据管理/系统维护全部组件视觉统一。
+ * 不修改 theme.css，不影响首页监控等其它页面。
+ * ──────────────────────────────────────────────────────────────── */
+.system-settings-page {
+  --mm-gold: #b98b3d;
+  --mm-gold-deep: #a2742c;
+  --mm-gold-soft: rgba(185, 139, 61, 0.12);
+
+  /* 项目级令牌 → 金 / 暖边框 / 圆润 */
+  --primary: #b98b3d;
+  --primary-hover: #a2742c;
+  --border: rgba(162, 116, 44, 0.16);
+  --border-hover: rgba(162, 116, 44, 0.3);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 18px;
+
+  /* Arco 主色（primary）→ 金：按钮 / 激活 tab / 链接 / 选中态 */
+  --color-primary-1: rgba(185, 139, 61, 0.09);
+  --color-primary-2: rgba(185, 139, 61, 0.2);
+  --color-primary-3: rgba(185, 139, 61, 0.32);
+  --color-primary-4: #d3ad6c;
+  --color-primary-5: #c79a52;
+  --color-primary-6: #b98b3d;
+  --color-primary-7: #a5772b;
+  --color-primary-8: #8f6420;
+  --rgb-primary-6: 185 139 61;
+  --rgb-primary-5: 199 154 82;
+  --rgb-primary-7: 165 119 43;
+  --hover-color-primary: #a5772b;
+  --active-color-primary: #8f6420;
+}
+
+/* 暗色主题下的金色系微调 */
+.dark-theme .system-settings-page {
+  --mm-gold: #d4ab5c;
+  --mm-gold-soft: rgba(212, 171, 92, 0.14);
+  --primary: #c9a24b;
+  --primary-hover: #d6ae5f;
+  --border: rgba(212, 171, 92, 0.22);
+  --border-hover: rgba(212, 171, 92, 0.38);
+  --color-primary-6: #c9a24b;
+  --color-primary-7: #d4ab5c;
+  --color-primary-5: #bf9140;
+  --rgb-primary-6: 201 162 75;
+  --hover-color-primary: #d4ab5c;
+  --active-color-primary: #a8822f;
+}
+
+/* 主操作按钮 → 金渐变（排除带 status 的语义按钮：绿/红/橙保留） */
+.system-settings-page .arco-btn-primary:not(.arco-btn-status-success):not(.arco-btn-status-danger):not(.arco-btn-status-warning) {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, #d3ae57, #a87a2a) !important;
+  box-shadow: 0 6px 16px rgba(185, 139, 61, 0.28);
+  transition: filter 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease;
+}
+.system-settings-page .arco-btn-primary:not(.arco-btn-status-success):not(.arco-btn-status-danger):not(.arco-btn-status-warning):hover {
+  filter: brightness(1.06);
+  box-shadow: 0 8px 20px rgba(185, 139, 61, 0.38);
+}
+
+/* 面板卡头 → 左侧金色指示标 + 更圆润 */
+.system-settings-page > .main-tabs + .settings-body .settings-panel > .arco-card-header,
+.system-settings-page > .main-tabs + .settings-body .settings-panel.arco-card > .arco-card-header {
+  position: relative;
+  padding-left: 22px;
+}
+.system-settings-page > .main-tabs + .settings-body .settings-panel > .arco-card-header::before,
+.system-settings-page > .main-tabs + .settings-body .settings-panel.arco-card > .arco-card-header::before {
+  content: "";
+  width: 4px;
+  height: 18px;
+  margin-right: 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #d3ae57, #a87a2a);
+  flex-shrink: 0;
+}
+.system-settings-page .settings-panel .card-title {
+  color: var(--text-primary);
+}
+
+/* 表单控件 → 圆润输入框 */
+.system-settings-page .industrial-form .arco-input-wrapper,
+.system-settings-page .industrial-form .arco-textarea-wrapper,
+.system-settings-page .industrial-form .arco-select-view,
+.system-settings-page .industrial-form .arco-input-number,
+.system-settings-page .remote-pull-form .arco-input-wrapper,
+.system-settings-page .remote-pull-form .arco-input-number {
+  border-radius: 10px;
+}
+
+/* ── 表格头 → 金色文字 + 淡金渐变底 + 金分隔线 ── */
+.system-settings-page .arco-table-th {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--mm-gold-deep);
+  background: linear-gradient(180deg, rgba(185, 139, 61, 0.09), rgba(185, 139, 61, 0.03));
+  box-shadow: none;
+}
+
+.system-settings-page .arco-table-th .arco-table-cell {
+  color: inherit;
+}
+
+/* 表头底部金分隔线（Arco 用 --color-fill-1/border 画线，这里补一层更明确的暖线） */
+.system-settings-page .arco-table-container .arco-table-header {
+  border-bottom: 1px solid rgba(185, 139, 61, 0.22);
+}
+
+/* 排序/筛选头悬停 */
+.system-settings-page .arco-table-th:hover {
+  color: var(--mm-gold-deep);
+  background: rgba(185, 139, 61, 0.11);
+}
+
+/* 表格行 hover → 淡金底 + 行分隔金化 */
+.system-settings-page .arco-table-tr:not(.arco-table-tr-empty):hover .arco-table-td {
+  background: rgba(185, 139, 61, 0.05);
+}
+.system-settings-page .arco-table-tr .arco-table-td {
+  border-bottom-color: rgba(185, 139, 61, 0.1);
+}
+
+/* ── 状态徽章 → 金调柔和胶囊 ── */
+.system-settings-page .arco-tag {
+  border-radius: 999px;
+  border-width: 1px;
+  border-style: solid;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 20px;
+}
+.system-settings-page .arco-tag-green {
+  background: rgba(52, 199, 89, 0.12);
+  color: #1d7d3a;
+  border-color: rgba(52, 199, 89, 0.26);
+}
+.system-settings-page .arco-tag-red {
+  background: rgba(228, 76, 88, 0.11);
+  color: #c0001a;
+  border-color: rgba(228, 76, 88, 0.24);
+}
+.system-settings-page .arco-tag-orange {
+  background: rgba(217, 130, 20, 0.13);
+  color: #a46106;
+  border-color: rgba(217, 130, 20, 0.26);
+}
+.system-settings-page .arco-tag-arcoblue,
+.system-settings-page .arco-tag-gold {
+  background: var(--mm-gold-soft);
+  color: var(--mm-gold-deep);
+  border-color: rgba(185, 139, 61, 0.3);
+}
+
+/* a-badge（文本徽章）→ 金调描边圆点 + 加粗小字 */
+.system-settings-page .arco-badge-status-text {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.system-settings-page .arco-badge-status-dot {
+  box-shadow: 0 0 0 1px var(--mm-gold-soft);
+}
+
+/* 暗色主题下徽章配色微调 */
+.dark-theme .system-settings-page .arco-tag-green {
+  background: rgba(52, 199, 89, 0.16);
+  color: #5fd68a;
+  border-color: rgba(52, 199, 89, 0.34);
+}
+.dark-theme .system-settings-page .arco-tag-red {
+  background: rgba(228, 76, 88, 0.16);
+  color: #ff7a88;
+  border-color: rgba(228, 76, 88, 0.34);
+}
+.dark-theme .system-settings-page .arco-tag-orange {
+  background: rgba(217, 130, 20, 0.18);
+  color: #f0b055;
+  border-color: rgba(217, 130, 20, 0.36);
+}
+.dark-theme .system-settings-page .arco-table-th {
+  background: linear-gradient(180deg, rgba(212, 171, 92, 0.14), rgba(212, 171, 92, 0.04));
+}
+.dark-theme .system-settings-page .arco-table-container .arco-table-header {
+  border-bottom: 1px solid rgba(212, 171, 92, 0.28);
+}
 
 .system-settings-page.page-shell {
   gap: var(--space-6);
@@ -263,9 +454,9 @@
 .system-settings-page .system-maintenance-card .maintenance-card .arco-card-body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
-  padding: var(--space-6) !important;
-  min-height: 180px;
+  gap: var(--space-4);
+  padding: var(--space-5) !important;
+  min-height: 150px;
 }
 
 .system-settings-page .system-maintenance-card .card-icon {
@@ -285,7 +476,7 @@
 }
 
 .system-settings-page .system-maintenance-card .reset-card .card-icon {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   background: rgba(220, 38, 38, 0.1);
 }
 
@@ -497,4 +688,49 @@
   .database-management .overview-header {
     flex-wrap: wrap;
   }
+}
+
+/* ── database management motion polish ── */
+.database-management .overview-item {
+  transition:
+    transform var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.database-management .overview-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.database-management .action-group .arco-btn {
+  transition:
+    transform var(--motion-duration-instant) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.database-management .action-group .arco-btn:active {
+  transform: scale(0.97);
+}
+
+.database-management .backup-result,
+.database-management .import-result,
+.database-management .compact-result,
+.database-management .migrate-result {
+  animation: slide-in-down var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+/* 表格行：即时可见，不做逐行错开入场 */
+
+.database-management .remote-pull-form .arco-input-wrapper,
+.database-management .remote-pull-form .arco-input-number {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.database-management .remote-pull-form .arco-input-wrapper:hover,
+.database-management .remote-pull-form .arco-input-number:hover {
+  transform: translateY(-1px);
 }

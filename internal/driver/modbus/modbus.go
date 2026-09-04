@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 	"go.uber.org/zap"
 )
 
@@ -128,8 +128,6 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 
 	d.connController = core.NewConnectionController("modbus", config.ChannelID, config.Protocol)
 
-	go d.performMTUProbe()
-
 	return nil
 }
 
@@ -138,7 +136,12 @@ func (d *ModbusDriver) performMTUProbe() {
 	defer cancel()
 
 	if mtu, err := d.transport.DetectMTU(ctx); err == nil {
-		d.scheduler.SetMaxPacketSize(mtu)
+		d.mu.RLock()
+		scheduler := d.scheduler
+		if scheduler != nil {
+			scheduler.SetMaxPacketSize(mtu)
+		}
+		d.mu.RUnlock()
 		zap.L().Info("[Modbus] MTU探测成功",
 			zap.String("channelID", d.config.ChannelID),
 			zap.Uint16("maxRegisters", mtu),
@@ -155,7 +158,14 @@ func (d *ModbusDriver) Connect(ctx context.Context) error {
 	d.connectionStartTime = time.Now()
 	d.reconnectCount++
 
-	return d.transport.Connect(ctx)
+	if err := d.transport.Connect(ctx); err != nil {
+		return err
+	}
+	// Probe only after the transport is connected. Starting this from Init
+	// races with configuration/scheduler setup and can probe test hooks before
+	// the caller has finished wiring the driver.
+	go d.performMTUProbe()
+	return nil
 }
 
 func (d *ModbusDriver) Disconnect() error {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   EdgeX Docs — Industrial Console + Protocol-first UI
+   edgeCore Docs — Industrial Console + Protocol-first UI
    Engineering typography · Functional components · Deterministic motion
    ========================================================================== */
 
@@ -599,15 +599,24 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .hero-section {
   width: 100%;
   margin: 0 0 32px;
-  padding: clamp(40px, 5vw, 72px);
-  border: 1px solid var(--gold-border);
-  border-radius: var(--radius-xl);
-  background: var(--glass);
-  backdrop-filter: blur(var(--blur-sm));
-  -webkit-backdrop-filter: blur(var(--blur-sm));
-  box-shadow: var(--shadow), var(--shadow-gold);
-  overflow: hidden;
+  padding: clamp(40px, 6vw, 88px) 0;
   position: relative;
+  overflow: hidden;
+}
+
+/* Industrial backdrop — faint radial emission from the visual anchor */
+.hero-section::before {
+  content: "";
+  position: absolute;
+  inset: 40px -8% auto auto;
+  width: 560px;
+  height: 560px;
+  background: radial-gradient(circle at 50% 50%,
+    var(--gold-ghost-strong) 0%,
+    var(--gold-ghost) 28%,
+    transparent 62%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* Two-column hero layout */
@@ -620,30 +629,22 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   align-items: center;
 }
 
-/* Engineering panel accent — uniform top border */
-.hero-section::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--gold);
-  opacity: 0.45;
-  z-index: 2;
-  pointer-events: none;
-}
-
 .hero-section::after {
-  content: "RUNTIME";
+  content: "RUNTIME v2";
   position: absolute;
-  top: 14px; right: 18px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 0.65rem;
+  top: 36px; right: 0;
+  font-family: "JetBrains Mono", "SF Mono", monospace;
+  font-size: 0.62rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
   color: var(--gold-dark);
-  opacity: 0.7;
-  z-index: 2;
+  opacity: 0.6;
+  z-index: 0;
   pointer-events: none;
+  padding-right: clamp(16px, 3vw, 32px);
+  border-top: 1px solid var(--gold-line);
+  padding-top: 8px;
 }
 
 .hero-copy {
@@ -657,12 +658,9 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .hero-badge {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   align-self: flex-start;
   margin-bottom: 20px;
-  padding: 6px 12px;
-  border-radius: 6px;
-  background: var(--gold-bg);
-  border: 1px solid var(--gold-border);
   color: var(--gold-light);
   font-family: "JetBrains Mono", monospace;
   font-size: 0.72rem;
@@ -890,7 +888,8 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 /* =========================================
    Scene containers — all anchored to 100% of viewport
    ========================================= */
-.fx-core, .fx-lattice, .fx-radar, .fx-field, .fx-beacon {
+.fx-core, .fx-lattice, .fx-radar, .fx-field, .fx-beacon,
+.fx-nexus, .fx-pulse, .fx-matrix, .fx-orbit, .fx-beam, .fx-flux, .fx-swarm {
   position: absolute;
   width: 100%; height: 100%;
   top: 0; left: 0;
@@ -1068,11 +1067,17 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 /* ── Effect 3: Radar sweep ── */
+.fx-radar__outer-ring {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border-hover);
+  box-shadow: 0 0 16px var(--gold-glow), inset 0 0 16px var(--gold-glow);
+}
+
 .fx-radar__rings {
   position: absolute;
-  top: 50%; left: 50%;
   width: 260px; height: 260px;
-  margin: -130px 0 0 -130px;
   border-radius: 50%;
   pointer-events: none;
 }
@@ -1080,18 +1085,17 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 .fx-radar__ring {
   position: absolute;
   border-radius: 50%;
-  border: 1.5px solid var(--gold-border);
+  border: 1px dashed var(--gold-border);
   top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
 }
-.fx-radar__ring.r1 { width: 82px; height: 82px; margin: -41px 0 0 -41px; opacity: 0.45; }
-.fx-radar__ring.r2 { width: 164px; height: 164px; margin: -82px 0 0 -82px; opacity: 0.35; }
-.fx-radar__ring.r3 { width: 246px; height: 246px; margin: -123px 0 0 -123px; opacity: 0.25; }
+.fx-radar__ring.r1 { width: 85px; height: 85px; opacity: 0.5; }
+.fx-radar__ring.r2 { width: 170px; height: 170px; opacity: 0.4; }
+.fx-radar__ring.r3 { width: 260px; height: 260px; border-style: solid; opacity: 0.2; }
 
 .fx-radar__crosshair {
   position: absolute;
-  top: 50%; left: 50%;
   width: 260px; height: 260px;
-  margin: -130px 0 0 -130px;
   pointer-events: none;
 }
 .fx-radar__crosshair::before,
@@ -1100,16 +1104,14 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   position: absolute;
   top: 50%; left: 50%;
   background: var(--gold-border);
-  opacity: 0.3;
+  opacity: 0.4;
 }
 .fx-radar__crosshair::before {
-  width: 100%; height: 1.5px;
-  margin-top: -0.75px;
+  width: 100%; height: 1px;
   transform: translate(-50%, -50%);
 }
 .fx-radar__crosshair::after {
-  width: 1.5px; height: 100%;
-  margin-left: -0.75px;
+  width: 1px; height: 100%;
   transform: translate(-50%, -50%);
 }
 
@@ -1121,9 +1123,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .fx-radar__sweep-arm {
   position: absolute;
-  top: 50%; left: 50%;
   width: 260px; height: 260px;
-  margin: -130px 0 0 -130px;
   border-radius: 50%;
   animation: fx-radar-sweep 4s linear infinite;
 }
@@ -1132,10 +1132,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  /* Leading edge (clockwise) is bright/sharp; trailing edge fades to transparent */
-  background: conic-gradient(from 55deg, transparent 0deg, rgba(200,167,91,0.04) 5deg, rgba(200,167,91,0.15) 20deg, rgba(200,167,91,0.5) 34deg, rgba(200,167,91,0.55) 35deg, transparent 36deg);
-  -webkit-mask: radial-gradient(circle, transparent 12%, black 13%);
-  mask: radial-gradient(circle, transparent 12%, black 13%);
+  background: conic-gradient(from 0deg, transparent 0deg, rgba(200,167,91,0.05) 30deg, rgba(200,167,91,0.35) 60deg, transparent 61deg);
 }
 
 @keyframes fx-radar-sweep {
@@ -1155,118 +1152,142 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .fx-radar__blip {
   position: absolute;
-  width: 10px; height: 10px;
-  margin: -5px 0 0 -5px;
+  width: 8px; height: 8px;
+  margin: -4px 0 0 -4px;
   border-radius: 50%;
   background: var(--gold-bright);
-  box-shadow: 0 0 14px var(--gold-glow-strong);
+  box-shadow: 0 0 12px var(--gold-glow-strong);
 }
 
 .fx-radar__target-box {
   position: absolute;
-  width: 20px; height: 20px;
-  margin: -10px 0 0 -10px;
-  border: 1.5px solid var(--gold-border-hover);
-  animation: fx-target-pulse 0.8s ease-in-out infinite;
+  width: 16px; height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 1px solid var(--gold-bright);
+  animation: fx-target-pulse 1s ease-in-out infinite;
 }
 
 @keyframes fx-target-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.35); opacity: 0.95; }
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.3); opacity: 1; }
 }
 
 @keyframes fx-radar-blip {
   0%, 100% { opacity: 0; }
-  15% { opacity: 1; }
-  35% { opacity: 0; }
+  20% { opacity: 1; }
+  40% { opacity: 0; }
 }
 
-/* ── Effect 4: Magnetic field ── */
-.fx-field__core-halo {
+/* ── Effect 4: Vector Field ── */
+.fx-field__boundary {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 120px; height: 120px;
-  margin: -60px 0 0 -60px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(200,167,91,0.18) 0%, transparent 70%);
-  animation: fx-logo-breathe 4s ease-in-out infinite;
-}
-
-.fx-field__orbit-plane {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 0; height: 0;
-  transform: rotate(var(--tilt));
-}
-
-.fx-field__orbit {
-  position: absolute;
-  width: calc(var(--rx) * 2); height: calc(var(--ry) * 2);
-  margin: calc(-1 * var(--ry)) 0 0 calc(-1 * var(--rx));
-  border-radius: 50%;
-  animation: fx-field-spin var(--dur) linear infinite;
-}
-
-.fx-field__orbit-line {
-  position: absolute;
-  inset: 0;
+  width: 260px; height: 260px;
   border-radius: 50%;
   border: 1.5px solid var(--gold-border);
-  opacity: 0.4;
+  box-shadow: inset 0 0 18px var(--gold-glow);
 }
 
-.fx-field__electron {
+.fx-field__polar-grid {
   position: absolute;
-  top: 0; left: 50%;
-  width: 10px; height: 10px;
-  margin: -5px 0 0 -5px;
+  width: 260px; height: 260px;
   border-radius: 50%;
-  background: var(--gold-bright);
-  box-shadow: 0 0 16px var(--gold-glow-strong), 0 0 32px var(--gold-glow);
-}
-
-@keyframes fx-field-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ── Effect 5: Beacon tower ── */
-.fx-beacon__beam-group {
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 80px; height: 200px;
-  margin: -100px 0 0 -40px;
+  background:
+    radial-gradient(circle at center, transparent 35%, var(--gold-ghost) 36%, transparent 37%),
+    radial-gradient(circle at center, transparent 65%, var(--gold-ghost) 66%, transparent 67%);
   pointer-events: none;
 }
 
-.fx-beacon__beam-core {
+.fx-field__cross-axis {
   position: absolute;
-  top: 0; left: 50%;
-  width: 4px; height: 100%;
-  margin-left: -2px;
-  background: linear-gradient(180deg, var(--gold-border-hover), transparent);
-  opacity: 0.6;
+  width: 260px; height: 260px;
+  pointer-events: none;
 }
-
-.fx-beacon__beam-flare {
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: linear-gradient(180deg, rgba(200,167,91,0.3), rgba(200,167,91,0));
-  clip-path: polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%);
-  opacity: 0;
-  animation: fx-beacon-beam 3s ease-in-out infinite;
-}
-
-@keyframes fx-beacon-beam {
-  0%, 100% { opacity: 0; transform: scaleX(0.6); }
-  50% { opacity: 0.6; transform: scaleX(1.2); }
-}
-
-.fx-beacon__base-plane {
+.fx-field__cross-axis::before,
+.fx-field__cross-axis::after {
+  content: '';
   position: absolute;
   top: 50%; left: 50%;
-  width: 0; height: 0;
+  background: var(--gold-border);
+  opacity: 0.3;
+}
+.fx-field__cross-axis::before {
+  width: 100%; height: 1px;
+  transform: translate(-50%, -50%);
+}
+.fx-field__cross-axis::after {
+  width: 1px; height: 100%;
+  transform: translate(-50%, -50%);
+}
+
+.fx-field__reticle {
+  position: absolute;
+  width: 14px; height: 14px;
+  border: 1.5px solid var(--gold-bright);
+  opacity: 0.8;
+}
+.fx-field__reticle--tl { top: 22px; left: 22px; border-right: none; border-bottom: none; }
+.fx-field__reticle--tr { top: 22px; right: 22px; border-left: none; border-bottom: none; }
+.fx-field__reticle--bl { bottom: 22px; left: 22px; border-right: none; border-top: none; }
+.fx-field__reticle--br { bottom: 22px; right: 22px; border-left: none; border-top: none; }
+
+.fx-field__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-field__stream-line {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 260px; height: 1px;
+  margin-top: -0.5px;
+  margin-left: -130px;
+  transform: rotate(var(--a));
+  background: linear-gradient(90deg, transparent, var(--gold-line), transparent);
+}
+
+.fx-field__stream-packet {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px; height: 2px;
+  margin-top: -1px;
+  margin-left: -6px;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-glow-strong);
+  animation: fx-field-packet-flow 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--delay);
+  transform: rotate(var(--a)) translateX(0);
+}
+
+@keyframes fx-field-packet-flow {
+  0% { transform: rotate(var(--a)) translateX(30px) scaleX(0.5); opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(120px) scaleX(1.5); opacity: 0; }
+}
+
+/* ── Effect 5: Beacon ── */
+.fx-beacon__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  opacity: 0.25;
+}
+
+.fx-beacon__cone {
+  position: absolute;
+  bottom: 50%; left: 50%;
+  width: 140px; height: 130px;
+  margin-left: -70px;
+  background: linear-gradient(0deg, rgba(200,167,91,0.35), transparent);
+  clip-path: polygon(50% 100%, 10% 0%, 90% 0%);
+  animation: fx-beacon-cone 2.5s ease-in-out infinite;
+}
+
+@keyframes fx-beacon-cone {
+  0%, 100% { opacity: 0.4; transform: scaleX(0.85); }
+  50% { opacity: 0.85; transform: scaleX(1.1); }
 }
 
 .fx-beacon__ring {
@@ -1277,39 +1298,426 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   border-radius: 50%;
   border: 1.5px solid var(--gold-border-hover);
   opacity: 0;
-  animation: fx-beacon-ring 3s ease-out infinite;
+  animation: fx-beacon-ring 2.8s ease-out infinite;
   animation-delay: var(--delay);
 }
 
 @keyframes fx-beacon-ring {
-  0% { transform: scale(1); opacity: 0.75; }
-  100% { transform: scale(7); opacity: 0; }
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(6.5); opacity: 0; }
 }
 
-.fx-beacon__particles {
+/* ── Effect 6: Nexus ── */
+.fx-nexus__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border);
+  box-shadow: inset 0 0 16px var(--gold-glow);
+}
+
+.fx-nexus__ticks {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.fx-beacon__particle {
+.fx-nexus__svg {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 4px; height: 4px;
-  margin: -2px 0 0 -2px;
-  border-radius: 50%;
-  background: var(--gold-bright);
-  box-shadow: 0 0 8px var(--gold-glow-strong);
-  transform: translateX(var(--x));
+  width: 300px; height: 300px;
+  top: 0; left: 0;
+  pointer-events: none;
+}
+
+.fx-nexus__synapse {
+  stroke: var(--gold-border);
+  stroke-width: 1;
+  opacity: 0.22;
+  stroke-dasharray: 2 3;
+}
+
+.fx-nexus__synapse--active {
+  stroke: var(--gold-border-hover);
+  stroke-width: 1.2;
+  opacity: 0.55;
+  stroke-dasharray: 4 6;
+  animation: fx-synapse-dash 2.5s linear infinite;
+}
+
+@keyframes fx-synapse-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+.fx-nexus__node-halo {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 1;
   opacity: 0;
-  animation: fx-beacon-rise var(--dur) ease-out infinite;
+  animation: fx-node-halo 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
   animation-delay: var(--delay);
 }
 
-@keyframes fx-beacon-rise {
-  0% { opacity: 0; transform: translateX(var(--x)) translateY(20px) scale(0.5); }
+@keyframes fx-node-halo {
+  0% { r: 2px; opacity: 0.8; }
+  100% { r: 6px; opacity: 0; }
+}
+
+.fx-nexus__node-core {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 4px var(--gold-glow-strong));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: fx-node-fire 2.2s ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-node-fire {
+  0% { opacity: 0.3; transform: scale(0.85); }
+  100% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px var(--gold-hover)); }
+}
+
+.fx-nexus__svg-impulse {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 6px var(--gold-glow-strong));
+  offset-distance: 0%;
+  animation: fx-impulse-travel var(--dur) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-impulse-travel {
+  0% { offset-distance: 0%; opacity: 0; transform: scale(0.5); }
+  15% { opacity: 1; transform: scale(1); }
+  85% { opacity: 1; transform: scale(1); }
+  100% { offset-distance: 100%; opacity: 0; transform: scale(0.5); }
+}
+
+/* ── Effect 7: Pulse ── */
+.fx-pulse__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border);
+  box-shadow: 0 0 12px var(--gold-glow);
+}
+
+.fx-pulse__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-pulse__wave {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 60px; height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border-hover);
+  opacity: 0;
+  animation: fx-pulse-expand 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-pulse-expand {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(4.3); opacity: 0; }
+}
+
+/* ── Effect 8: Matrix ── */
+.fx-matrix__frame {
+  position: absolute;
+  width: 260px; height: 260px;
+  border: 1px solid var(--gold-border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fx-matrix__grid {
+  width: 180px; height: 180px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
+  gap: 12px;
+}
+
+.fx-matrix__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  opacity: 0.2;
+  margin: auto;
+  transition: opacity 0.3s, transform 0.3s;
+  animation: fx-matrix-blink 2.5s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-matrix-blink {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.4); box-shadow: 0 0 8px var(--gold-glow-strong); }
+}
+
+.fx-matrix__scanbar {
+  position: absolute;
+  width: 220px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-bright), transparent);
+  box-shadow: 0 0 10px var(--gold-glow-strong);
+  animation: fx-matrix-scan 3s ease-in-out infinite alternate;
+}
+
+@keyframes fx-matrix-scan {
+  0% { transform: translateY(-90px); opacity: 0.2; }
+  50% { opacity: 1; }
+  100% { transform: translateY(90px); opacity: 0.2; }
+}
+
+/* ── Effect 9: Orbit Matrix ── */
+.fx-orbit__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border);
+  box-shadow: inset 0 0 20px var(--gold-glow);
+}
+
+.fx-orbit__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-orbit__ring-3d {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: var(--w); height: var(--h);
+  margin: calc(-1 * var(--h) / 2) 0 0 calc(-1 * var(--w) / 2);
+  border-radius: 50%;
+  border: 1.2px solid var(--gold-border-hover);
+  transform: rotate(var(--rot)) rotateX(65deg);
+  animation: fx-orbit-spin var(--dur) linear infinite var(--dir);
+}
+
+@keyframes fx-orbit-spin {
+  from { transform: rotate(var(--rot)) rotateX(65deg) rotateZ(0deg); }
+  to { transform: rotate(var(--rot)) rotateX(65deg) rotateZ(360deg); }
+}
+
+.fx-orbit__satellite {
+  position: absolute;
+  top: 0; left: 50%;
+  width: 6px; height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 10px var(--gold-glow-strong);
+}
+
+/* ── Effect 10: Data Beam ── */
+.fx-beam__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1px dashed var(--gold-border);
+  opacity: 0.35;
+}
+
+.fx-beam__axis {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 260px; height: 2px;
+  margin: -1px 0 0 -130px;
+  background: linear-gradient(90deg, transparent, var(--gold-border), var(--gold-bright), var(--gold-border), transparent);
+  transform: rotate(var(--a));
+  opacity: 0.6;
+}
+
+.fx-beam__pulse {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 10px; height: 10px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 14px var(--gold-glow-strong);
+  animation: fx-beam-shoot 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite;
+  animation-delay: var(--delay);
+  transform: rotate(var(--a)) translateX(0);
+}
+
+@keyframes fx-beam-shoot {
+  0% { transform: rotate(var(--a)) translateX(0) scale(0.5); opacity: 0; }
   20% { opacity: 1; }
-  100% { opacity: 0; transform: translateX(var(--x)) translateY(-140px) scale(1); }
+  80% { opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(130px) scale(1.2); opacity: 0; }
+}
+
+.fx-beam__receiver {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px; height: 12px;
+  margin: -6px 0 0 -6px;
+  border: 1.5px solid var(--gold-bright);
+  transform: rotate(var(--a)) translateX(130px) rotate(45deg);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+
+/* ── Effect 11: Flux Field ── */
+.fx-flux__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-border);
+  box-shadow: inset 0 0 15px var(--gold-glow);
+}
+
+.fx-flux__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-flux__svg {
+  position: absolute;
+  width: 300px; height: 300px;
+  top: 0; left: 0;
+  pointer-events: none;
+}
+
+.fx-flux__arc-cw {
+  fill: none;
+  stroke: var(--gold-border-hover);
+  stroke-width: 1.5;
+  stroke-dasharray: 60 120;
+  transform-origin: 150px 150px;
+  animation: fx-spin-cw 8s linear infinite;
+}
+
+.fx-flux__arc-ccw {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 1.2;
+  stroke-dasharray: 40 100;
+  stroke-opacity: 0.7;
+  transform-origin: 150px 150px;
+  animation: fx-spin-ccw 11s linear infinite;
+}
+
+@keyframes fx-spin-cw {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fx-spin-ccw {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
+.fx-flux__spark {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 6px var(--gold-glow-strong));
+  animation: fx-spark-twinkle 1.8s ease-in-out infinite alternate;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-spark-twinkle {
+  0% { opacity: 0.2; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.4); }
+}
+
+/* ── Effect 12: Quantum Swarm V2 ── */
+.fx-swarm__boundary {
+  position: absolute;
+  width: 260px; height: 260px;
+  border-radius: 50%;
+  border: 1px dashed var(--gold-border);
+  opacity: 0.3;
+}
+
+.fx-swarm__ticks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx-swarm__svg {
+  position: absolute;
+  width: 300px; height: 300px;
+  top: 0; left: 0;
+  pointer-events: none;
+}
+
+.fx-swarm__hive-core {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 80px; height: 80px;
+  margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-glow-strong) 0%, rgba(200, 167, 91, 0.05) 60%, transparent 80%);
+  animation: fx-hive-pulse 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+@keyframes fx-hive-pulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.65; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.fx-swarm__orbit-guide {
+  fill: none;
+  stroke: var(--gold-border);
+  stroke-width: 0.6;
+  stroke-dasharray: 2 6;
+  opacity: 0.2;
+}
+
+.fx-swarm__bee--guard {
+  fill: #FFFFFF;
+  filter: drop-shadow(0 0 6px var(--gold-bright));
+  offset-distance: 0%;
+  animation: fx-bee-guard-flight var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-bee-guard-flight {
+  0% { offset-distance: 0%; opacity: 0.5; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2) translate(var(--jx, 1px), var(--jy, -1px)); }
+  100% { offset-distance: 100%; opacity: 0.5; transform: scale(0.8); }
+}
+
+.fx-swarm__bee--patrol {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 5px var(--gold-glow-strong));
+  offset-distance: 0%;
+  animation: fx-bee-patrol-flight var(--dur) cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-bee-patrol-flight {
+  0% { offset-distance: 0%; opacity: 0.3; transform: scale(0.7); }
+  25% { opacity: 0.9; transform: scale(1.1) translate(var(--jx, 2px), var(--jy, -2px)); }
+  60% { opacity: 0.95; transform: scale(1) translate(calc(-1 * var(--jx, 2px)), var(--jy, 2px)); }
+  100% { offset-distance: 100%; opacity: 0.3; transform: scale(0.7); }
+}
+
+.fx-swarm__bee--forager {
+  fill: var(--gold-light);
+  filter: drop-shadow(0 0 7px var(--gold-glow-strong));
+  offset-distance: 0%;
+  animation: fx-bee-forager-life var(--dur) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--delay);
+}
+
+@keyframes fx-bee-forager-life {
+  0% { offset-distance: 0%; opacity: 0.1; transform: scale(0.4) translate(0, 0); }
+  30% { opacity: 0.9; transform: scale(1.2) translate(var(--jx, 3px), var(--jy, -3px)); }
+  50% { opacity: 1; transform: scale(1.1) translate(calc(-1 * var(--jx, 3px)), calc(-1 * var(--jy, 3px))); }
+  75% {
+    opacity: 1;
+    transform: scale(0.5) translate(var(--cx, 0px), var(--cy, 0px));
+    filter: drop-shadow(0 0 12px #FFFFFF);
+  }
+  100% { offset-distance: 100%; opacity: 0.1; transform: scale(0.4) translate(0, 0); }
 }
 
 /* =========================================
@@ -1327,10 +1735,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
-  background: rgba(200, 167, 91, 0.05);
-  border: 1px solid rgba(200, 167, 91, 0.15);
-  border-radius: var(--radius-xs);
   font-size: 0.78rem;
   color: var(--text-soft);
   font-weight: 500;
@@ -1380,14 +1784,13 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .button-link--secondary {
   color: var(--text-soft);
-  border-color: var(--button-border);
-  background: var(--button-secondary-bg);
+  background: transparent;
+  border-color: transparent;
 }
 
 .button-link--secondary:hover {
-  border-color: var(--gold-border-hover);
-  background: var(--gold-bg);
   color: var(--gold-light);
+  background: transparent;
 }
 
 /* =========================================
@@ -1395,13 +1798,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    ========================================= */
 .landing-section {
   margin-bottom: 24px;
-  padding: 32px;
-  border-radius: var(--radius-lg);
-  background: var(--glass);
-  backdrop-filter: var(--blur-xs);
-  -webkit-backdrop-filter: var(--blur-xs);
-  border: 1px solid var(--gold-border);
-  box-shadow: var(--shadow);
+  padding: 48px 0 8px;
 }
 
 /* Section heading */
@@ -1639,15 +2036,15 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: stretch;
   gap: 0;
+  width: 100%;
   padding: 28px 22px;
   border-radius: var(--radius-md);
   background: var(--arch-bg);
   border: 1px solid var(--gold-border);
   box-shadow: var(--arch-flow-shadow);
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: hidden;
   font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
 }
 
@@ -1686,7 +2083,8 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  min-width: 108px;
+  flex: 1 1 0;
+  min-width: 0;
   padding: 12px 14px;
   margin-top: 14px;
   background: var(--arch-step-bg);
@@ -1695,7 +2093,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   border-radius: 0 var(--radius-xs) var(--radius-xs) 0;
   box-shadow: var(--arch-step-shadow);
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
-  flex-shrink: 0;
 }
 
 .arch-step:hover {
@@ -1737,13 +2134,14 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
+  width: 20px;
+  min-width: 16px;
   height: 28px;
   margin-top: 14px;
   color: var(--gold-dark);
   font-weight: bold;
   font-size: 0.85rem;
-  flex-shrink: 0;
+  flex: 0 0 auto;
 }
 
 .arch-note {
@@ -2106,27 +2504,6 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 /* =========================================
    Site Tagline & Footnotes
    ========================================= */
-.landing-section--tagline {
-  padding: 48px 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  margin-bottom: 0;
-}
-
-.site-tagline {
-  text-align: center;
-  padding: 24px 0;
-}
-
-.site-tagline p {
-  margin: 0;
-  color: var(--text-dim);
-  font-size: 1.05rem;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-}
-
 .landing-section--footnotes {
   padding-top: 0;
   padding-bottom: 16px;
@@ -2142,9 +2519,9 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 }
 
 .footnotes p {
-  font-size: 0.82rem;
+  font-size: 0.68rem;
   color: var(--text-dim);
-  line-height: 1.6;
+  line-height: 1.2;
   margin: 0;
 }
 
@@ -2172,7 +2549,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
    Footer
    ========================================= */
 .site-footer {
-  width: min(100% - 48px, var(--shell-width));
+  width: min(calc(100% - 48px), var(--shell-width));
   margin: 60px auto 0;
   padding: 32px 0;
   border-top: 1px solid var(--gold-border);
@@ -2180,10 +2557,11 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
 .site-footer__row {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
   gap: 8px 14px;
+  white-space: nowrap;
   font-size: 0.9rem;
   color: var(--text-muted);
 }
@@ -2244,8 +2622,7 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
 
   .hero-section {
     margin-top: 0;
-    padding: 28px 22px;
-    border-radius: var(--radius-lg);
+    padding: 36px 0 8px;
   }
 
   .hero-inner {
@@ -2274,19 +2651,43 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   .fx-lattice__boundary { width: 195px; height: 195px; margin: -97px 0 0 -97px; }
   .fx-lattice__pulse { width: 5px; height: 5px; margin: -2.5px 0 0 -2.5px; }
 
-  .fx-radar__rings { width: 195px; height: 195px; margin: -97px 0 0 -97px; }
-  .fx-radar__ring.r1 { width: 62px; height: 62px; margin: -31px 0 0 -31px; }
-  .fx-radar__ring.r2 { width: 124px; height: 124px; margin: -62px 0 0 -62px; }
-  .fx-radar__ring.r3 { width: 185px; height: 185px; margin: -92px 0 0 -92px; }
-  .fx-radar__crosshair { width: 195px; height: 195px; margin: -97px 0 0 -97px; }
-  .fx-radar__sweep-arm { width: 195px; height: 195px; margin: -97px 0 0 -97px; }
+  .fx-radar__outer-ring { width: 195px; height: 195px; }
+  .fx-radar__rings { width: 195px; height: 195px; }
+  .fx-radar__ring.r1 { width: 62px; height: 62px; }
+  .fx-radar__ring.r2 { width: 124px; height: 124px; }
+  .fx-radar__ring.r3 { width: 185px; height: 185px; }
+  .fx-radar__crosshair { width: 195px; height: 195px; }
+  .fx-radar__sweep-arm { width: 195px; height: 195px; }
 
-  .fx-beacon__beam-group { width: 60px; height: 150px; margin: -75px 0 0 -30px; }
+  .fx-field__boundary,
+  .fx-field__polar-grid,
+  .fx-field__cross-axis { width: 195px; height: 195px; }
+  .fx-field__stream-line { width: 195px; margin-left: -97.5px; }
+  .fx-field__reticle { width: 10px; height: 10px; }
+  .fx-field__reticle--tl { top: 16px; left: 16px; }
+  .fx-field__reticle--tr { top: 16px; right: 16px; }
+  .fx-field__reticle--bl { bottom: 16px; left: 16px; }
+  .fx-field__reticle--br { bottom: 16px; right: 16px; }
+
+  .fx-beacon__boundary { width: 195px; height: 195px; }
+  .fx-beacon__cone { width: 105px; height: 98px; margin-left: -52.5px; }
   .fx-beacon__ring { width: 30px; height: 30px; margin: -15px 0 0 -15px; }
-  .fx-beacon__particle { width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px; }
 
-  .fx-field__electron { width: 8px; height: 8px; margin: -4px 0 0 -4px; }
-  .fx-field__core-halo { width: 90px; height: 90px; margin: -45px 0 0 -45px; }
+  .fx-nexus__boundary,
+  .fx-pulse__boundary,
+  .fx-orbit__boundary,
+  .fx-beam__boundary,
+  .fx-flux__boundary,
+  .fx-swarm__boundary { width: 195px; height: 195px; }
+  .fx-matrix__frame { width: 195px; height: 195px; }
+  .fx-matrix__grid { width: 135px; height: 135px; gap: 8px; }
+  .fx-matrix__dot { width: 4px; height: 4px; }
+  .fx-matrix__scanbar { width: 165px; }
+  .fx-nexus__svg,
+  .fx-flux__svg,
+  .fx-swarm__svg { width: 225px; height: 225px; }
+  .fx-swarm__hive-core { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
+  .fx-beam__axis { width: 195px; margin: -1px 0 0 -97.5px; }
 
   .hero-copy h1 { font-size: 2.2rem; }
   .hero-copy h2 { font-size: 1.15rem; }
@@ -2300,10 +2701,21 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   .markdown-body { padding: 24px 20px; border-radius: var(--radius-md); }
   .feature-card { padding: 22px; border-radius: var(--radius-md); }
   .roadmap-table { display: block; overflow-x: auto; }
-  .arch-flow { gap: 6px; padding: 14px; flex-wrap: wrap; justify-content: center; }
-  .arch-step { padding: 6px 10px; font-size: 0.78rem; }
+  .arch-flow {
+    gap: 6px;
+    padding: 14px;
+    flex-wrap: wrap;
+    justify-content: stretch;
+    overflow: hidden;
+  }
+  .arch-step {
+    flex: 1 1 calc(33.333% - 16px);
+    min-width: 96px;
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+  .arch-arrow { width: 16px; }
   .overview-table .overview-label { width: 90px; }
-  .site-tagline p { font-size: 0.9rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2327,14 +2739,25 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
   .fx-radar__blip,
   .fx-radar__blip-wrapper,
   .fx-radar__target-box,
-  .fx-field__orbit,
-  .fx-field__orbit-plane,
-  .fx-field__electron,
-  .fx-field__core-halo,
-  .fx-beacon__beam-core,
-  .fx-beacon__beam-flare,
+  .fx-field__stream-packet,
+  .fx-beacon__cone,
   .fx-beacon__ring,
-  .fx-beacon__particle,
+  .fx-nexus__synapse--active,
+  .fx-nexus__node-halo,
+  .fx-nexus__node-core,
+  .fx-nexus__svg-impulse,
+  .fx-pulse__wave,
+  .fx-matrix__dot,
+  .fx-matrix__scanbar,
+  .fx-orbit__ring-3d,
+  .fx-beam__pulse,
+  .fx-flux__arc-cw,
+  .fx-flux__arc-ccw,
+  .fx-flux__spark,
+  .fx-swarm__hive-core,
+  .fx-swarm__bee--guard,
+  .fx-swarm__bee--patrol,
+  .fx-swarm__bee--forager,
   .fx-core__pulse-wave { animation: none !important; }
 
   .fx-scene {
@@ -2349,4 +2772,1333 @@ code, pre { font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, mon
     filter: blur(0);
     transform: scale(1);
   }
+}
+
+/* =========================================
+   Specification List — console register view
+   No card shells. Each module is a ledger row: monospace
+   tag column + content column, hairline gold separators.
+   Hover reveals a left status bar. Precise, dense, factual.
+   ========================================= */
+.spec-list {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--gold-line);
+}
+
+.spec-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 148px 1fr;
+  gap: 0 28px;
+  padding: 18px 14px 18px 20px;
+  border-bottom: 1px solid var(--gold-line);
+  transition: background var(--transition-base);
+}
+
+/* Left status bar — reveals on hover */
+.spec-row::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, var(--gold-line) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.spec-row:hover::before { opacity: 1; }
+
+.spec-row:hover {
+  background: var(--gold-bg);
+}
+
+.spec-row__tag {
+  align-self: center;
+  font-family: "JetBrains Mono", "SF Mono", "Fira Code", Consolas, monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--gold);
+  line-height: 1.3;
+}
+
+.spec-row__main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.spec-row__main h3 {
+  margin: 0;
+  font-size: 1.06rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.spec-row__main p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+}
+
+.spec-row__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .spec-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 14px 12px 14px 16px;
+  }
+  .spec-row__tag { align-self: flex-start; }
+}
+
+/* Industrial kicker mark — small gold rule before the eyebrow */
+.section-heading .section-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.section-heading .section-kicker::before {
+  content: "";
+  width: 22px;
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--gold) 0%,
+    var(--gold-line) 100%);
+}
+
+/* Mini links — underline reveal on hover */
+.spec-row .mini-link {
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.spec-row .mini-link::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--gold-light);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+
+.spec-row .mini-link:hover::after {
+  transform: scaleX(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spec-row:hover { transform: none; }
+  .spec-row::before { transition: none; }
+}
+
+/* =========================================
+   Hero — no-card guardrail
+   Ensures the hero reads as an open information
+   band (not a framed panel) across all breakpoints.
+   ========================================= */
+.hero-section,
+.hero-inner {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ============================================================
+   Tech Kit (tk-*) — Modern Industrial Tech
+   Redesigned home visual language. Keeps the gold palette from
+   the design tokens (light/dark adapted via existing variables).
+   Namespaced under tk-* to stay isolated from other pages' FX.
+   ============================================================ */
+
+/* ---------- shared animation tokens ---------- */
+.tk-hero, .tk-section, .tk-hero__copy, .tk-hero__visual,
+.tk-module, .tk-navcard { animation: tk-rise 0.7s var(--transition-slow) both; }
+
+.tk-hero__copy      { animation-delay: 0.05s; }
+.tk-hero__visual    { animation-delay: 0.15s; }
+.tk-hero__telemetry { animation: tk-rise 0.7s var(--transition-slow) 0.3s both; }
+.tk-section:nth-of-type(1) .tk-module { animation-delay: 0.1s; }
+.tk-section:nth-of-type(2) .tk-navcard { animation-delay: 0.12s; }
+
+@keyframes tk-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-hero, .tk-section, .tk-hero__copy, .tk-hero__visual,
+  .tk-hero__telemetry, .tk-module, .tk-navcard,
+  .tk-hero__scan, .tk-module::after { animation: none !important; }
+}
+
+/* ---------- hero frame ---------- */
+.tk-hero {
+  position: relative;
+  width: 100%;
+  padding: clamp(64px, 8vw, 112px) 0 clamp(48px, 6vw, 72px);
+  overflow: visible;
+}
+
+/* faint engineering grid backdrop */
+.tk-hero__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--gold-ghost) 1px, transparent 1px),
+    linear-gradient(90deg, var(--gold-ghost) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(70% 60% at 72% 30%, #000 0%, transparent 75%);
+  mask-image: radial-gradient(70% 60% at 72% 30%, #000 0%, transparent 75%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* top gold scan line */
+.tk-hero__scan {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold) 30%,
+    var(--gold-bright) 50%,
+    var(--gold) 70%,
+    transparent 100%);
+  opacity: 0.5;
+}
+
+.tk-hero__inner {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(40px, 6vw, 80px);
+  align-items: center;
+}
+
+.tk-hero__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 720px;
+}
+
+/* live status chip */
+.tk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 6px 14px;
+  border: 1px solid var(--gold-line);
+  border-radius: 999px;
+  background: var(--gold-bg);
+  color: var(--gold-light);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  margin-bottom: 26px;
+  backdrop-filter: blur(var(--blur-xs));
+  -webkit-backdrop-filter: blur(var(--blur-xs));
+}
+
+.tk-chip__dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+}
+
+.tk-hero__title {
+  margin: 0;
+  font-size: clamp(3rem, 6vw, 5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+
+.tk-hero__title-accent {
+  color: var(--gold);
+  text-shadow: 0 0 24px var(--gold-glow);
+}
+
+.tk-hero__subtitle {
+  margin: 10px 0 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+  font-weight: 500;
+  color: var(--text-soft);
+  letter-spacing: -0.01em;
+}
+
+.tk-hero__desc {
+  margin: 20px 0 0;
+  max-width: 640px;
+  font-size: clamp(0.95rem, 1.2vw, 1.05rem);
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* typewriter inherits .hero-typewriter styles, add breathing room */
+.tk-hero .hero-typewriter { margin-top: 22px; }
+
+/* protocol tags */
+.tk-tags { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 26px 0 30px; }
+.tk-tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-soft);
+}
+.tk-tag::before { content: "·"; color: var(--gold); margin-right: 8px; }
+
+/* actions */
+.tk-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
+
+.tk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 30px;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  transition: transform var(--transition-base), background var(--transition-base),
+    border-color var(--transition-base), box-shadow var(--transition-base);
+  cursor: pointer;
+}
+
+.tk-btn--primary {
+  color: var(--button-primary-text);
+  background: var(--button-primary-bg);
+  border-color: var(--button-primary-bg);
+}
+.tk-btn--primary:hover {
+  background: var(--gold-hover);
+  border-color: var(--gold-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px -12px var(--gold-glow);
+}
+
+.tk-btn--ghost {
+  color: var(--text-soft);
+  background: transparent;
+  border-color: var(--button-border);
+}
+.tk-btn--ghost:hover {
+  color: var(--gold-light);
+  border-color: var(--gold-border-hover);
+  background: var(--gold-soft);
+  transform: translateY(-2px);
+}
+
+/* hero visual — keep the FX contract, position into grid cell */
+.tk-hero__visual {
+  justify-self: center;
+  margin: 0;
+}
+
+/* ---------- telemetry strip ---------- */
+.tk-hero__telemetry {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0;
+  margin-top: clamp(40px, 5vw, 64px);
+  border-top: 1px solid var(--gold-line);
+  border-bottom: 1px solid var(--gold-line);
+}
+
+.tk-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 24px;
+}
+.tk-metric + .tk-metric { border-left: 1px solid var(--gold-line); }
+
+.tk-metric__value {
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: -0.02em;
+}
+.tk-metric__label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* ---------- sections ---------- */
+.tk-section { padding: clamp(48px, 6vw, 80px) 0 24px; }
+.tk-section:last-child { padding-bottom: 8px; }
+
+.tk-section__head { margin-bottom: 36px; max-width: 720px; }
+
+.tk-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+
+.tk-section__title {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.tk-section__body {
+  margin: 12px 0 0;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-muted);
+}
+
+/* ---------- module cards ---------- */
+.tk-modules {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.tk-module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 26px 26px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gold-border);
+  background: var(--glass);
+  backdrop-filter: blur(var(--blur-xs));
+  -webkit-backdrop-filter: blur(var(--blur-xs));
+  overflow: hidden;
+  transition: border-color var(--transition-base), transform var(--transition-base),
+    box-shadow var(--transition-base), background var(--transition-base);
+}
+
+.tk-module:hover {
+  border-color: var(--gold-border-hover);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 48px -18px var(--gold-glow);
+  background: var(--gold-bg-strong);
+}
+
+/* gold sweep across the module top edge on hover */
+.tk-module::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -40%; right: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-bright) 50%, transparent 100%);
+  opacity: 0;
+  transition: none;
+  pointer-events: none;
+}
+.tk-module:hover::after {
+  animation: tk-sweep 0.9s var(--transition-slow) forwards;
+}
+@keyframes tk-sweep {
+  from { left: -40%; right: 100%; opacity: 0; }
+  to   { left: 100%; right: -40%; opacity: 1; }
+}
+
+.tk-module__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.tk-module__idx {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--gold);
+  opacity: 0.7;
+}
+.tk-module__tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.tk-module__name {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.tk-module__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+
+.tk-module__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--gold-line);
+}
+
+.tk-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  color: var(--gold-light);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding-bottom: 2px;
+  transition: color var(--transition-fast);
+}
+.tk-link::after {
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 100%; height: 1px;
+  background: var(--gold-light);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-base);
+}
+.tk-link:hover { color: var(--gold-hover); }
+.tk-link:hover::after { transform: scaleX(1); }
+
+/* ---------- navigation cards ---------- */
+.tk-navigation {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.tk-navcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 26px 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--gold-line);
+  background: transparent;
+  transition: border-color var(--transition-base), transform var(--transition-base),
+    background var(--transition-base);
+}
+
+.tk-navcard:hover {
+  border-color: var(--gold-border-hover);
+  background: var(--gold-bg);
+  transform: translateY(-4px);
+}
+
+.tk-navcard__num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.68rem;
+  color: var(--gold);
+  opacity: 0.7;
+  letter-spacing: 0.1em;
+}
+.tk-navcard__label {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.tk-navcard__desc {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.tk-navcard__go {
+  position: absolute;
+  right: 22px; bottom: 24px;
+  font-size: 1.1rem;
+  color: var(--gold);
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity var(--transition-base), transform var(--transition-base);
+}
+.tk-navcard:hover .tk-navcard__go {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1024px) {
+  .tk-modules { grid-template-columns: repeat(2, 1fr); }
+  .tk-navigation { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+  .tk-hero__inner { grid-template-columns: 1fr; gap: 36px; }
+  .tk-hero__visual { justify-self: center; }
+  .tk-hero__telemetry { grid-template-columns: repeat(2, 1fr); }
+  .tk-metric + .tk-metric { border-left: none; }
+  .tk-metric:nth-child(odd) { border-right: 1px solid var(--gold-line); }
+  .tk-modules, .tk-navigation { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   Tech Kit v2 — Engineering Blueprint + Live Register
+   Structural polish layer. Extends the gold token system
+   (light/dark adapted via existing variables). Namespaced tk-*.
+   ============================================================ */
+
+/* ---------- hero blueprint layers ---------- */
+.tk-hero__ruler {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 34px;
+  border-right: 1px solid var(--gold-line);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0, transparent 23px,
+    var(--gold-line) 23px, var(--gold-line) 24px
+  );
+  opacity: 0.5;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 12%, #000 88%, transparent 100%);
+}
+
+/* HUD readout, top-right */
+.tk-hud {
+  position: absolute;
+  top: 0; right: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 0 0 20px;
+  border-left: 1px solid var(--gold-line);
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  pointer-events: none;
+}
+.tk-hud__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+.tk-hud__label { color: var(--text-muted); }
+.tk-hud__val { color: var(--gold-bright); }
+.tk-hud__val--ok { color: var(--success); }
+
+/* title rule under display title */
+.tk-hero__rule {
+  width: 64px;
+  height: 2px;
+  margin: 26px 0 0;
+  background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+}
+
+/* display subtitle now 2 lines, larger */
+.tk-hero__subtitle {
+  margin-top: 18px;
+  font-size: clamp(1.5rem, 3vw, 2.4rem);
+  line-height: 1.28;
+}
+
+/* primary CTA with arrow */
+.tk-btn__arrow {
+  display: inline-flex;
+  margin-left: 10px;
+  transition: transform var(--transition-base);
+}
+.tk-btn--primary:hover .tk-btn__arrow { transform: translateX(4px); }
+
+/* ---------- telemetry panel with header ---------- */
+.tk-hero__telemetry {
+  display: grid;
+  grid-template-columns: auto repeat(4, 1fr);
+  align-items: stretch;
+  gap: 0;
+  padding: 22px 0;
+  margin-top: clamp(40px, 5vw, 60px);
+  border-top: 1px solid var(--gold-border);
+}
+.tk-hero__telemetry::before {
+  content: "";
+  position: absolute;
+  left: 0; top: -1px;
+  width: 80px; height: 1px;
+  background: var(--gold);
+}
+
+.tk-tele__head {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  padding-right: 36px;
+  border-right: 1px solid var(--gold-line);
+  min-width: 92px;
+}
+.tk-tele__title {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.tk-tele__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success-glow);
+  animation: tk-blink 1.6s ease-in-out infinite;
+}
+@keyframes tk-blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* metrics now centered in their cells */
+.tk-metric {
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 24px;
+}
+.tk-metric + .tk-metric { border-left: 1px solid var(--gold-line); }
+.tk-metric__value {
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+.tk-metric__label { letter-spacing: 0.06em; }
+
+/* ---------- subsystems register (table rows) ---------- */
+.tk-register {
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--gold-border);
+}
+
+.tk-register__row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 84px 1fr;
+  gap: 0 28px;
+  padding: 26px 16px 26px 4px;
+  border-bottom: 1px solid var(--gold-line);
+  transition: background var(--transition-base);
+}
+.tk-register__row::before {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+.tk-register__row:hover { background: var(--gold-bg); }
+.tk-register__row:hover::before { opacity: 1; }
+
+.tk-register__num {
+  align-self: start;
+  padding-top: 2px;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold);
+  opacity: 0.55;
+  letter-spacing: 0.04em;
+  transition: opacity var(--transition-base), color var(--transition-base);
+}
+.tk-register__row:hover .tk-register__num {
+  opacity: 1;
+  color: var(--gold-light);
+}
+
+.tk-register__main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.tk-register__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+.tk-register__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.tk-register__tag {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+.tk-register__desc {
+  margin: 0;
+  max-width: 760px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  color: var(--text-muted);
+}
+.tk-register__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 10px;
+}
+
+/* ---------- documentation signal bars ---------- */
+.tk-navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tk-signal {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px 72px 1fr auto;
+  align-items: center;
+  gap: 22px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--gold-line);
+  overflow: hidden;
+  transition: background var(--transition-base);
+}
+.tk-signal::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--gold-bg);
+  transition: width var(--transition-slow);
+}
+.tk-signal:hover::before { width: 100%; }
+
+.tk-signal__idx {
+  position: relative;
+  z-index: 1;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+
+/* amplitude bar — idle, blooms on hover */
+.tk-signal__amp {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 22px;
+}
+.tk-signal__amp i {
+  display: block;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, transparent, var(--gold-line));
+  transform-origin: bottom;
+  transition: background var(--transition-base), transform var(--transition-base);
+}
+.tk-signal__amp i:nth-child(1) { transform: scaleY(0.4); }
+.tk-signal__amp i:nth-child(2) { transform: scaleY(0.7); }
+.tk-signal__amp i:nth-child(3) { transform: scaleY(1); }
+.tk-signal__amp i:nth-child(4) { transform: scaleY(0.55); }
+.tk-signal__amp i:nth-child(5) { transform: scaleY(0.85); }
+.tk-signal__amp i:nth-child(6) { transform: scaleY(0.5); }
+.tk-signal__amp i:nth-child(7) { transform: scaleY(0.9); }
+.tk-signal:hover .tk-signal__amp i { background: var(--gold); }
+
+.tk-signal__meta {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.tk-signal__label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.tk-signal__desc {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.tk-signal__go {
+  position: relative;
+  z-index: 1;
+  font-size: 1.15rem;
+  color: var(--gold);
+  transition: transform var(--transition-base);
+}
+.tk-signal:hover .tk-signal__go { transform: translateX(4px); }
+
+/* ---------- v2 responsive ---------- */
+@media (max-width: 1024px) {
+  .tk-hero__telemetry {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 18px;
+  }
+  .tk-tele__head {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-right: none;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--gold-line);
+  }
+  .tk-metric + .tk-metric { border-left: none; }
+  .tk-metric:nth-child(odd) { border-left: none; }
+}
+
+@media (max-width: 768px) {
+  .tk-hero__inner { grid-template-columns: 1fr; gap: 36px; }
+  .tk-hero__visual { justify-self: center; }
+  .tk-hud { display: none; }
+  .tk-hero__ruler { display: none; }
+  .tk-register__row { grid-template-columns: 48px 1fr; gap: 0 16px; }
+  .tk-signal { grid-template-columns: 36px 56px 1fr auto; gap: 14px; padding: 16px 18px; }
+  .tk-signal__amp { display: none; }
+}
+
+/* ============================================================
+   Tech Kit v3 — Overdrive Layer (炫酷增强)
+   Progressive enhancement. Every effect degrades gracefully:
+   - reduced-motion 完全关闭动画
+   - 未启用硬件特性的浏览器回退为静态构图
+   ============================================================ */
+
+/* ---------- 巨型水印氛围字 → 右下角微光铭牌 ----------
+   弱化为小尺寸 + 极低透明度 + 左上渐隐蒙版，
+   只留一隅弱影，保证永不与左侧正文 / 右侧粒子争视。 */
+.tk-hero__watermark {
+  position: absolute;
+  right: clamp(0px, 1vw, 16px);
+  bottom: clamp(-10px, -1vw, 0px);
+  z-index: 0;
+  font-family: "JetBrains Mono", monospace;
+  font-size: clamp(1.3rem, 2.6vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-align: right;
+  color: var(--gold);
+  opacity: 0.16;
+  -webkit-mask-image: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.25) 45%, #000 100%);
+  mask-image: linear-gradient(135deg, transparent 0%, rgba(0,0,0,0.25) 45%, #000 100%);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* ---------- hero 沉浸：标题金色辉光 ---------- */
+.tk-hero__title {
+  font-size: clamp(3.6rem, 9vw, 7.5rem);
+  letter-spacing: -0.045em;
+  padding: 0.06em 0;
+  line-height: 1.08;
+}
+.tk-hero__title-accent {
+  display: inline-block;
+  color: var(--gold-bright);
+  text-shadow: 0 0 18px var(--gold-glow), 0 0 40px var(--gold-glow);
+  animation: tk-pulse-accent 3.2s ease-in-out infinite;
+}
+@keyframes tk-pulse-accent {
+  0%, 100% { opacity: 1; text-shadow: 0 0 14px var(--gold-glow), 0 0 34px var(--gold-glow); }
+  50% { opacity: 0.65; text-shadow: 0 0 6px var(--gold-glow), 0 0 14px var(--gold-glow); }
+}
+
+/* title 流光梯度（受支持时） */
+@supports (-webkit-background-clip: text) or (background-clip: text) {
+  .tk-hero__title {
+    background: linear-gradient(110deg,
+      var(--text) 0%,
+      var(--text) 28%,
+      var(--gold-light) 60%,
+      var(--gold) 100%);
+    background-size: 220% 100%;
+    background-position: 0 0;
+    background-repeat: no-repeat;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    animation: tk-title-flow 14s ease-in-out infinite alternate;
+  }
+  @keyframes tk-title-flow {
+    0%   { background-position: 0% 0%; }
+    100% { background-position: 45% 0%; }
+  }
+}
+
+/* ---------- 登记表行 hover：编号放大 + 金色点亮 ---------- */
+.tk-register__row { overflow: hidden; }
+.tk-register__num {
+  transition: opacity 0.3s var(--transition-slow), color 0.3s var(--transition-slow),
+    transform 0.3s var(--transition-slow);
+}
+.tk-register__row:hover .tk-register__num {
+  transform: scale(1.12);
+  opacity: 1;
+  color: var(--gold-bright);
+  text-shadow: 0 0 16px var(--gold-glow);
+}
+
+/* ---------- 信号条柱 hover 跳动（音波感） ---------- */
+.tk-signal:hover .tk-signal__amp i { animation: tk-amp 0.7s ease-in-out infinite alternate; }
+.tk-signal:hover .tk-signal__amp i:nth-child(1) { animation-delay: 0s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(2) { animation-delay: 0.08s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(3) { animation-delay: 0.16s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(4) { animation-delay: 0.06s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(5) { animation-delay: 0.14s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(6) { animation-delay: 0.02s; }
+.tk-signal:hover .tk-signal__amp i:nth-child(7) { animation-delay: 0.1s; }
+@keyframes tk-amp {
+  0% { transform: scaleY(0.35); }
+  100% { transform: scaleY(1.1); }
+}
+
+/* ---------- CTA 光晕脉冲 ---------- */
+.tk-btn--primary {
+  position: relative;
+  overflow: hidden;
+}
+.tk-btn--primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 120% at 20% 20%, rgba(255, 214, 130, 0.0) 30%, rgba(255, 214, 130, 0.0) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+.tk-btn--primary:hover::after { opacity: 1; }
+
+/* ---------- 遥测数值 hover 提起 ---------- */
+.tk-metric { transition: transform var(--transition-base); }
+.tk-metric:hover { transform: translateY(-2px); }
+.tk-metric__value { transition: text-shadow var(--transition-base); }
+.tk-metric:hover .tk-metric__value { text-shadow: 0 0 18px var(--gold-glow); }
+
+/* ---------- 滚动驱动视差（渐进增强） ---------- */
+@supports (animation-timeline: scroll()) {
+  .tk-hero__copy {
+    animation: tk-parallax-copy linear both;
+    animation-timeline: scroll();
+    animation-range: 0 40vh;
+  }
+  @keyframes tk-parallax-copy {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0.55; transform: translateY(-26px); }
+  }
+}
+
+/* ---------- reduced-motion：全部静默 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tk-hero__title-accent,
+  .tk-signal:hover .tk-signal__amp i,
+  .tk-tele__dot,
+  .tk-chip__dot { animation: none !important; }
+  .tk-register__row:hover .tk-register__num,
+  .tk-metric:hover,
+  .tk-metric:hover .tk-metric__value,
+  .tk-btn--primary:hover::after { transform: none !important; text-shadow: none !important; }
+}
+
+/* ============================================================
+   Breathing Room — 左右文字留白 / 空气感
+   为 hero 两栏与各 section 增加横向呼吸间距，
+   文字不与容器边缘贴齐。
+   ============================================================ */
+
+/* hero 两栏：左右留白 + 更大中缝 */
+.tk-hero__inner {
+  grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
+  gap: clamp(48px, 9vw, 120px);
+  padding: 0 clamp(12px, 3vw, 48px);
+}
+
+/* 遥测面板同步收进留白，与 hero-inner 对齐 */
+.tk-hero__telemetry {
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+/* 各 section：左右内边距，文字与 shell 边缘留出空间 */
+.tk-section {
+  padding-right: clamp(12px, 3vw, 48px);
+  padding-left: clamp(12px, 3vw, 48px);
+}
+
+/* 子系统登记表、信号条整体内边距一致 */
+.tk-register__row { padding-right: clamp(10px, 2vw, 28px); }
+
+@media (max-width: 768px) {
+  .tk-hero__inner,
+  .tk-hero__telemetry,
+  .tk-section {
+    padding-right: clamp(6px, 2vw, 18px);
+    padding-left: clamp(6px, 2vw, 18px);
+  }
+  .tk-hero__inner { gap: 40px; }
+}
+
+/* ============================================================
+   Polish Pass — 精致打磨
+   统一缓动、细节质感、无障碍、分隔线韵律
+   ============================================================ */
+
+/* ---------- 统一精致缓动曲线 ---------- */
+.tk-btn,
+.tk-signal,
+.tk-signal__go,
+.tk-register__row,
+.tk-register__num,
+.tk-metric,
+.tk-link,
+.tk-chip {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- 分隔线精致化：两端渐隐 ---------- */
+.tk-hero__scan {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(200, 167, 91, 0.1) 8%,
+    var(--gold) 40%,
+    var(--gold-bright) 50%,
+    var(--gold) 60%,
+    rgba(200, 167, 91, 0.1) 92%,
+    transparent 100%);
+}
+
+/* 遥测面板顶部分隔线：两端渐隐 */
+.tk-hero__telemetry {
+  border-top: 1px solid var(--gold-line);
+  border-image: linear-gradient(90deg,
+    transparent 0%,
+    var(--gold-line) 15%,
+    var(--gold-line) 85%,
+    transparent 100%) 1;
+}
+
+/* ---------- 刻度标尺：主次刻度韵律 ---------- */
+.tk-hero__ruler {
+  background-image:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 115px,
+      var(--gold-border) 115px,
+      var(--gold-border) 117px
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent 23px,
+      var(--gold-line) 23px,
+      var(--gold-line) 24px
+    );
+}
+
+/* ---------- focus-visible 无障碍：金色外发光 ---------- */
+.tk-btn:focus-visible,
+.tk-signal:focus-visible,
+.tk-link:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--gold-glow);
+  border-color: var(--gold-bright);
+}
+.tk-signal:focus-visible { padding-left: 24px; }
+
+/* ---------- HUD 读数精致化 ---------- */
+.tk-hud {
+  gap: 4px;
+  padding: 6px 0 6px 16px;
+  border-left: 1px solid var(--gold-line);
+  border-image: linear-gradient(180deg,
+    transparent 0%,
+    var(--gold-line) 30%,
+    var(--gold-line) 70%,
+    transparent 100%) 1;
+}
+.tk-hud__row {
+  display: grid;
+  grid-template-columns: 44px auto;
+  gap: 12px;
+  align-items: baseline;
+}
+.tk-hud__label {
+  position: relative;
+  padding-left: 12px;
+  font-weight: 500;
+}
+.tk-hud__label::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  width: 5px; height: 1px;
+  background: var(--gold-line);
+}
+.tk-hud__val {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tk-hud__val--ok {
+  position: relative;
+  padding-left: 12px;
+}
+.tk-hud__val--ok::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success-glow);
+  animation: tk-blink 2s ease-in-out infinite;
+}
+
+/* ---------- 登记表 hover 细节升级 ---------- */
+.tk-register__row {
+  transition: background 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-register__row:hover {
+  transform: translateX(4px);
+}
+.tk-register__row::before {
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, transparent 100%);
+  box-shadow: 0 0 8px var(--gold-glow);
+}
+.tk-register__name {
+  transition: color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-register__row:hover .tk-register__name {
+  color: var(--gold-light);
+}
+
+/* ---------- 信号条 hover 更丝滑 ---------- */
+.tk-signal {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal::before {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal__go {
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-signal:hover .tk-signal__go {
+  transform: translateX(8px);
+  color: var(--gold-bright);
+  text-shadow: 0 0 10px var(--gold-glow);
+}
+
+/* ---------- CTA 按钮精致化 ---------- */
+.tk-btn {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.tk-btn--primary {
+  box-shadow: 0 4px 18px -8px var(--gold-glow);
+}
+.tk-btn--primary:hover {
+  box-shadow: 0 12px 32px -10px var(--gold-glow);
+}
+.tk-btn--primary:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+/* ---------- 标题脉冲更柔和 ---------- */
+@keyframes tk-pulse-accent {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0 0 20px var(--gold-glow), 0 0 48px var(--gold-glow);
+  }
+  50% {
+    opacity: 0.75;
+    text-shadow: 0 0 10px var(--gold-glow), 0 0 24px var(--gold-glow);
+  }
+}
+
+/* ---------- reduced-motion 完整降级 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .tk-btn,
+  .tk-signal,
+  .tk-register__row,
+  .tk-register__num,
+  .tk-register__name,
+  .tk-metric,
+  .tk-link,
+  .tk-signal__go {
+    transition: none !important;
+  }
+  .tk-register__row:hover { transform: none !important; }
+  .tk-signal:hover .tk-signal__go { transform: none !important; text-shadow: none !important; }
+  .tk-hud__val--ok::before { animation: none !important; }
+  .tk-btn--primary { box-shadow: none !important; }
+  .tk-hero__title { animation: none !important; }
+}
+
+/* ---------- 移动端打磨 ---------- */
+@media (max-width: 768px) {
+  .tk-hud { display: none; }
+  .tk-hero__ruler { display: none; }
 }

@@ -62,7 +62,7 @@
             <p><strong>导出配置数据库</strong>：将 <code>config.db</code> 打包为 <code>.tar.gz</code> 下载，包含通道、设备、点位、北向、边缘规则、系统设置等。</p>
             <p><strong>导出运行时数据</strong>：将 <code>runtime.db</code> 打包为 <code>.tar.gz</code> 下载，包含实时值快照、缓存、历史数据等（不含配置）。</p>
             <p><strong>导入配置数据库</strong>：上传此前导出的配置库 <code>.tar.gz</code> 文件，将覆盖当前网关的采集与业务配置。</p>
-            <p><strong>强制拉取远程覆盖本地</strong>：从另一台 EdgeX 网关 HTTP 拉取其配置库并<strong>完全覆盖</strong>本机（含用户密码与端口）。</p>
+            <p><strong>强制拉取远程覆盖本地</strong>：从另一台 edgeCore 网关 HTTP 拉取其配置库并<strong>完全覆盖</strong>本机（含用户密码与端口）。</p>
             <ul>
               <li>普通导入时<strong>不会覆盖</strong>本机已有<strong>用户账号与密码</strong>，避免导入后无法登录。</li>
               <li>普通导入时<strong>不会覆盖</strong>本机当前<strong>服务器端口</strong>，避免 Web 服务端口冲突导致无法访问。</li>
@@ -123,7 +123,7 @@
 
       <a-divider orientation="left" class="section-divider">远程配置拉取</a-divider>
       <a-alert type="warning" show-icon :closable="false" class="mb-block">
-        从远程 EdgeX 网关拉取配置库并<strong>强制覆盖</strong>本机全部配置（含用户账号/密码与服务器端口）。请确保目标地址正确，操作前请先备份。
+        从远程 edgeCore 网关拉取配置库并<strong>强制覆盖</strong>本机全部配置（含用户账号/密码与服务器端口）。请确保目标地址正确，操作前请先备份。
       </a-alert>
       <div class="remote-pull-form">
         <a-input v-model="remotePullForm.host" placeholder="远程网关 IP 或域名" allow-clear />
@@ -247,10 +247,10 @@
 
     <a-card title="一次性迁移工具" :bordered="false" class="settings-panel">
       <template #extra>
-        <a-tag color="arcoblue" size="small">edgex.db → config.db + runtime.db</a-tag>
+        <a-tag color="arcoblue" size="small">edgeCore.db → config.db + runtime.db</a-tag>
       </template>
       <a-alert type="info" show-icon :closable="false" class="mb-block">
-        将旧版 <code>data/edgex.db</code> 中的配置 bucket 迁移到 <code>data/config.db</code>，
+        将旧版 <code>data/edgeCore.db</code> 中的配置 bucket 迁移到 <code>data/config.db</code>，
         运行时 bucket 迁移到 <code>data/runtime.db</code>。启动时已自动执行，此工具用于手动迁移。
       </a-alert>
       <div class="action-group">
@@ -507,7 +507,7 @@ const handleBackupConfig = async () => {
 const handleExportConfigDB = async () => {
   exportConfigLoading.value = true
   try {
-    await downloadArchive('/api/data/export-config-db', `edgex-config-${Date.now()}.tar.gz`)
+    await downloadArchive('/api/data/export-config-db', `edgeCore-config-${Date.now()}.tar.gz`)
     showMessage('配置库导出成功', 'success')
   } catch (error) {
     console.error('Export config db failed:', error)
@@ -520,7 +520,7 @@ const handleExportConfigDB = async () => {
 const handleExportRuntimeDB = async () => {
   exportRuntimeLoading.value = true
   try {
-    await downloadArchive('/api/data/export-runtime-db', `edgex-runtime-${Date.now()}.tar.gz`)
+    await downloadArchive('/api/data/export-runtime-db', `edgeCore-runtime-${Date.now()}.tar.gz`)
     showMessage('运行时数据导出成功', 'success')
   } catch (error) {
     console.error('Export runtime db failed:', error)
@@ -680,7 +680,7 @@ const handleMigrateLegacy = async () => {
   migrateLoading.value = true
   migrateResult.value = null
   try {
-    const res = await request.post('/api/data/migrate-legacy', { legacy_path: 'data/edgex.db' })
+    const res = await request.post('/api/data/migrate-legacy', { legacy_path: 'data/edgeCore.db' })
     migrateResult.value = res
     showMessage('迁移完成', 'success')
     await fetchStats()

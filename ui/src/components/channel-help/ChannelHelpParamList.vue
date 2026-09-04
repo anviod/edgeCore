@@ -7,7 +7,6 @@
         <span v-if="item.desc && !item.example" class="help-doc-row__desc">{{ item.desc }}</span>
       </div>
       <code v-if="item.example" class="help-doc-row__value">{{ item.example }}</code>
-      <span v-else-if="item.desc && item.example" class="help-doc-row__desc">{{ item.desc }}</span>
     </div>
   </div>
 </template>

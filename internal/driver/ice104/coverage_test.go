@@ -3,11 +3,12 @@ package ice104
 import (
 	"context"
 	"net"
+	"sync"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -143,8 +144,13 @@ func TestSendGeneralCallAndSingleCommand(t *testing.T) {
 	client, server := net.Pipe()
 	defer client.Close()
 
-	var written []byte
+	var (
+		written []byte
+		wg      sync.WaitGroup
+	)
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		defer server.Close()
 		buf := make([]byte, 256)
 		for i := 0; i < 2; i++ {
@@ -166,6 +172,7 @@ func TestSendGeneralCallAndSingleCommand(t *testing.T) {
 	require.NoError(t, tr.SendGeneralCall(ctx))
 	require.NoError(t, tr.SendSingleCommand(ctx, 10, true))
 
+	wg.Wait()
 	require.NotEmpty(t, written)
 	assert.Equal(t, byte(startByte), written[0])
 }

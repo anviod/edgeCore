@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <a-modal 
     :visible="props.visible" 
     @update:visible="handleClose" 
@@ -22,99 +22,103 @@
       </div>
 
       <div class="scan-container">
-      <div class="scanner-toolbar">
-        <div class="toolbar-left">
-          <a-input-search 
-            v-model="state.filterText" 
-            placeholder="搜索 NodeID / 名称" 
-            size="small" 
-            style="width: 240px" 
-            allow-clear 
-            class="industrial-input"
-          />
-          <div class="toolbar-divider"></div>
-          <!-- 状态筛选 - 极简符号点+文字 -->
-          <div class="status-filters">
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'all' }"
-              @click="state.filterStatus = 'all'"
-            >
-              <span class="status-dot dot-all"></span>
-              <span class="status-label">全部</span>
-            </div>
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'new' }"
-              @click="state.filterStatus = 'new'"
-            >
-              <span class="status-dot dot-new"></span>
-              <span class="status-label">新增</span>
-            </div>
-            <div 
-              class="status-filter-item" 
-              :class="{ active: state.filterStatus === 'exists' }"
-              @click="state.filterStatus = 'exists'"
-            >
-              <span class="status-dot dot-existing"></span>
-              <span class="status-label">存量</span>
+        <div class="scanner-toolbar">
+          <div class="toolbar-left">
+            <a-input-search 
+              v-model="state.filterText" 
+              placeholder="搜索 NodeID / 名称" 
+              size="small" 
+              style="width: 240px" 
+              allow-clear 
+              class="industrial-input"
+            />
+            <div class="toolbar-divider"></div>
+            <!-- 状态筛选 - 极简符号点+文字 -->
+            <div class="status-filters">
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'all' }"
+                @click="state.filterStatus = 'all'"
+              >
+                <span class="status-dot dot-all"></span>
+                <span class="status-label">全部</span>
+              </div>
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'new' }"
+                @click="state.filterStatus = 'new'"
+              >
+                <span class="status-dot dot-new"></span>
+                <span class="status-label">新增</span>
+              </div>
+              <div 
+                class="status-filter-item" 
+                :class="{ active: state.filterStatus === 'exists' }"
+                @click="state.filterStatus = 'exists'"
+              >
+                <span class="status-dot dot-existing"></span>
+                <span class="status-label">存量</span>
+              </div>
             </div>
           </div>
+          <div class="toolbar-right">
+            <a-button 
+              @click="handleScan" 
+              :loading="state.loading" 
+              size="small" 
+              class="scan-btn rescan-btn"
+              :class="{ 'is-scanning': state.loading }"
+            >
+              <template #icon><IconScan /></template> 重新扫描
+            </a-button>
+            <a-button 
+              type="primary" 
+              :disabled="!state.selectedKeys.length" 
+              @click="handleAddSelected" 
+              size="small" 
+              class="scan-btn"
+              style="margin-left: 8px"
+            >
+              导入选中点位 ({{ state.selectedKeys.length }})
+            </a-button>
+          </div>
         </div>
-        <div class="toolbar-right">
-          <a-button 
-            @click="handleScan" 
-            :loading="state.loading" 
-            size="small" 
-            class="scan-btn"
-          >
-            <template #icon><IconScan /></template> 重新扫描
-          </a-button>
-          <a-button 
-            type="primary" 
-            :disabled="!state.selectedKeys.length" 
-            @click="handleAddSelected" 
-            size="small" 
-            class="scan-btn"
-            style="margin-left: 8px"
-          >
-            导入选中点位 ({{ state.selectedKeys.length }})
-          </a-button>
-        </div>
-      </div>
 
-      <a-table 
-        row-key="unique_id" 
-        :loading="state.loading" 
-        :columns="scanColumns" 
-        :data="filteredScanResults" 
-        :pagination="{ pageSize: 100, size: 'small' }" 
-        :row-selection="{ type: 'checkbox', showCheckedAll: true }" 
-        v-model:selectedKeys="state.selectedKeys" 
-        :bordered="{ wrapper: true, cell: true }" 
-        :scroll="{ y: 550 }" 
-        class="industrial-table-fluid"
-      >
-        <template #status="{ record }">
-          <a-tag v-if="record.is_exists" color="gray" size="mini" class="rect-tag">
-            <template #icon><IconCheckCircle /></template>存量
-          </a-tag>
-          <a-tag v-else color="green" size="mini" class="rect-tag">
-            <template #icon><IconPlus /></template>新增
-          </a-tag>
-        </template>
+        <div class="resize-hint">提示：将鼠标移到表头右侧分隔线，左右拖动即可调整列宽</div>
 
-        <template #address="{ record }">
-          <span class="font-mono text-[13px]">
-            <template v-if="props.channelProtocol === 'bacnet-ip'">
-              {{ record.type }}:{{ record.instance }}
-            </template>
-            <template v-else-if="props.channelProtocol === 'opc-ua'">
-              {{ record.node_id }}
-            </template>
-          </span>
-        </template>
-      </a-table>
+        <a-table 
+          row-key="unique_id" 
+          :loading="state.loading" 
+          :columns="scanColumns" 
+          :data="filteredScanResults" 
+          :pagination="{ pageSize: 100, size: 'small' }" 
+          :row-selection="{ type: 'checkbox', showCheckedAll: true }" 
+          v-model:selected-keys="state.selectedKeys" 
+          :bordered="{ wrapper: true, cell: true }" 
+          :scroll="{ y: 550 }" 
+          column-resizable
+          class="industrial-table-fluid"
+        >
+          <template #status="{ record }">
+            <a-tag v-if="record.is_exists" color="gray" size="mini" class="rect-tag">
+              <template #icon><IconCheckCircle /></template>存量
+            </a-tag>
+            <a-tag v-else color="green" size="mini" class="rect-tag">
+              <template #icon><IconPlus /></template>新增
+            </a-tag>
+          </template>
+
+          <template #address="{ record }">
+            <span class="font-mono text-[13px]">
+              <template v-if="props.channelProtocol === 'bacnet-ip'">
+                {{ record.type }}:{{ record.instance }}
+              </template>
+              <template v-else-if="props.channelProtocol === 'opc-ua'">
+                {{ record.node_id }}
+              </template>
+            </span>
+          </template>
+        </a-table>
       </div>
     </div>
   </a-modal>
@@ -200,17 +204,17 @@ const countNewPoints = computed(() =>
   state.results.filter(i => !i.is_exists).length
 );
 
-// 统一的表格列定义
+// 统一的表格列定义；均开启 resizable，便于用户在表头拖拽调整列宽
 const scanColumns = computed(() => {
   const base = [
-    { title: '状态', slotName: 'status', width: 90 },
-    { title: '名称', dataIndex: 'name', ellipsis: true, tooltip: true },
-    { title: '点位地址', slotName: 'address', width: 220 },
-    { title: '类型', dataIndex: 'type', width: 120 },
-    { title: '实例', dataIndex: 'instance', width: 80 },
-    { title: '当前值', dataIndex: 'present_value', width: 100 },
-    { title: '单位', dataIndex: 'units', width: 80 },
-    { title: '描述/DataType', dataIndex: 'description', ellipsis: true, tooltip: true }
+    { title: '状态', slotName: 'status', width: 90, resizable: true },
+    { title: '名称', dataIndex: 'name', ellipsis: true, tooltip: true, minWidth: 160, resizable: true },
+    { title: '点位地址', slotName: 'address', width: 220, resizable: true },
+    { title: '类型', dataIndex: 'type', width: 220, minWidth: 140, resizable: true },
+    { title: '实例', dataIndex: 'instance', width: 80, resizable: true },
+    { title: '当前值', dataIndex: 'present_value', width: 100, resizable: true },
+    { title: '单位', dataIndex: 'units', width: 80, resizable: true },
+    { title: '描述/DataType', dataIndex: 'description', ellipsis: true, tooltip: true, minWidth: 160, resizable: true }
   ];
 
   return base;
@@ -313,11 +317,15 @@ const handleAddSelected = async () => {
   
   // Find selected objects based on selectedKeys
   const selectedObjects = state.results.filter(obj => state.selectedKeys.includes(obj.unique_id))
-  
+
+  // 已存在点位（存量）跳过导入，最终以友好汇总统一提醒，避免重复入库
+  const existingCount = selectedObjects.filter(obj => obj.is_exists).length
+  const importable = selectedObjects.filter(obj => !obj.is_exists)
+
   // Build all point payloads into a single array for batch import
   const pointPayloads = []
 
-  for (const obj of selectedObjects) {
+  for (const obj of importable) {
     if (props.channelProtocol === 'opc-ua') {
       // OPC UA Point Mapping
       if (obj.type !== 'Variable') continue;
@@ -385,9 +393,28 @@ const handleAddSelected = async () => {
       failCount = pointPayloads.length
     }
   }
-  
+
   state.loading = false
-  showMessage(`已添加 ${successCount} 个点位${failCount > 0 ? `，${failCount} 个失败` : ''}`, failCount > 0 ? 'warning' : 'success')
+  // 友好合并汇总：清晰告知"新增导入"与"已存在跳过"数量
+  let msg
+  let type
+  if (failCount > 0) {
+    msg = `导入 ${successCount} 个新增点位，${existingCount} 个已存在跳过，${failCount} 个失败`
+    type = 'warning'
+  } else if (successCount > 0 && existingCount > 0) {
+    msg = `已导入 ${successCount} 个新增点位，另有 ${existingCount} 个已存在已跳过`
+    type = 'success'
+  } else if (successCount > 0) {
+    msg = `成功导入 ${successCount} 个新增点位`
+    type = 'success'
+  } else if (existingCount > 0) {
+    msg = `所选 ${existingCount} 个点位均已存在，无需重复导入`
+    type = 'info'
+  } else {
+    msg = '没有可导入的新增点位'
+    type = 'info'
+  }
+  showMessage(msg, type)
   emit('update:visible', false)
   emit('refresh-points')
 }
@@ -433,6 +460,49 @@ const flattenOpcNodes = (nodes, level = 0) => {
 </script>
 
 <style scoped>
+.resize-hint {
+  font-size: 11px;
+  color: var(--secondary, #868e96);
+  margin: 2px 2px 8px;
+  letter-spacing: 0.3px;
+}
+
+/* 列宽拖拽提示：悬停表头时显现可拖动的细分隔条 */
+.industrial-table-fluid :deep(.arco-table-th) {
+  position: relative;
+}
+.industrial-table-fluid :deep(.arco-table-column-handle) {
+  width: 14px;
+  right: -7px;
+}
+.industrial-table-fluid :deep(.arco-table-column-handle::after) {
+  content: '';
+  position: absolute;
+  top: 16%;
+  bottom: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--primary, #165dff);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.industrial-table-fluid :deep(.arco-table-th:hover .arco-table-column-handle::after),
+.industrial-table-fluid :deep(.arco-table-column-handle:hover::after) {
+  opacity: 0.55;
+}
+.industrial-table-fluid :deep(.arco-table-column-handle:hover::after) {
+  width: 3px;
+  opacity: 0.9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .industrial-table-fluid :deep(.arco-table-column-handle::after) {
+    transition: none;
+  }
+}
+
 .scanner-content {
   padding: 0;
 }
@@ -480,7 +550,7 @@ const flattenOpcNodes = (nodes, level = 0) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
   border: 1px solid #e9ecef;
   margin-bottom: 12px;
 }
@@ -510,7 +580,7 @@ const flattenOpcNodes = (nodes, level = 0) => {
 .industrial-input :deep(.arco-input-wrapper) {
   border-radius: 0;
   border-color: #dee2e6;
-  background: var(--edgex-surface-raised);
+  background: var(--edgeCore-surface-raised);
 }
 
 .industrial-input :deep(.arco-input-wrapper:hover) {
@@ -575,14 +645,130 @@ const flattenOpcNodes = (nodes, level = 0) => {
 }
 
 .scan-btn {
-  background: #212529 !important;
-  border: none;
-  border-radius: 0;
+  border-radius: 8px;
   padding: 4px 16px;
   font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
-.scan-btn:hover {
-  background: #343a40 !important;
+/* 导入按钮：主题蓝色，高对比白字 */
+.scan-btn:not(.rescan-btn) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  border: none;
+  color: #fff !important;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, opacity 0.18s ease;
+}
+.scan-btn:not(.rescan-btn):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.35);
+  background: linear-gradient(135deg, var(--primary-hover), #0369a1);
+}
+.scan-btn:not(.rescan-btn):disabled {
+  opacity: 0.45;
+  color: #fff !important;
+}
+
+/* 重新扫描：深色底高对比白字 + 动效 */
+.rescan-btn {
+  position: relative;
+  overflow: hidden;
+  background: #12151c !important;
+  border: none;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 4px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.18s ease, background 0.18s ease;
+}
+.rescan-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: #262b38 !important;
+  box-shadow: 0 4px 14px rgba(18, 21, 28, 0.35);
+}
+.rescan-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.rescan-btn:disabled {
+  opacity: 0.6;
+  color: #fff !important;
+}
+/* 悬停流光扫过 */
+.rescan-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.rescan-btn:hover:not(:disabled)::after {
+  left: 140%;
+}
+/* 扫描中：呼吸 + 波纹扩散 */
+.rescan-btn.is-scanning {
+  animation: rescanPulse 1.4s ease-in-out infinite;
+}
+.rescan-btn.is-scanning::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  animation: rescanRing 1.4s ease-out infinite;
+  pointer-events: none;
+}
+.rescan-btn.is-scanning .arco-icon-loading {
+  animation: rescanPulse 1.4s ease-in-out infinite;
+}
+@keyframes rescanPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-1px) scale(1.02); }
+}
+@keyframes rescanRing {
+  0% { box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.45); }
+  100% { box-shadow: 0 0 0 8px rgba(14, 165, 233, 0); }
+}
+/* 无障碍兜底：系统开启“减弱动态效果”时关闭所有扫描按钮动效 */
+@media (prefers-reduced-motion: reduce) {
+  .rescan-btn {
+    transition: none;
+    animation: none;
+  }
+  .rescan-btn::after,
+  .rescan-btn::before {
+    display: none;
+    animation: none;
+  }
+  .rescan-btn.is-scanning .arco-icon-loading {
+    animation: none;
+  }
+}
+
+/* 扫描结果表格：收紧行内垂直间距，适配宽表阅读 */
+.scan-container :deep(.arco-table-td) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+.scan-container :deep(.arco-table-th .arco-table-cell),
+.scan-container :deep(.arco-table-td > .arco-table-cell) {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+}
+.scan-container :deep(.arco-table-tr) {
+  height: auto !important;
+  min-height: 40px;
+}
+/* 尽量禁止文字换行：超出列宽以省略号截断 */
+.scan-container :deep(.arco-table-cell) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

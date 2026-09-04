@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/testutil/fault"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/testutil/fault"
 )
 
 func soakDuration() time.Duration {

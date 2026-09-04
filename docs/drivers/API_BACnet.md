@@ -1,7 +1,7 @@
 ---
 layout: default
 title: API 文档：BACnet 模块
-description: EdgeX BACnet API 文档
+description: edgeCore BACnet API 文档
 ---
 
 # API 文档：BACnet 模块

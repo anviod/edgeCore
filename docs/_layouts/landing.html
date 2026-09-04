@@ -11,7 +11,7 @@
     <link rel="stylesheet" href="{{ '/assets/style.css' | relative_url }}">
     <script>
       (function () {
-        var stored = localStorage.getItem('edgex-docs-theme');
+        var stored = localStorage.getItem('edgeCore-docs-theme');
         var theme;
         if (stored) {
           theme = stored === 'light' ? 'light' : 'dark';
@@ -28,7 +28,7 @@
     <header class="site-header site-header--home">
       <div class="shell shell--wide">
         <div class="site-header__topbar">
-          <a class="site-brand" href="{{ '/' | relative_url }}">{{ site.name | default: 'EdgeX 文档' }}</a>
+          <a class="site-brand" href="{{ '/' | relative_url }}">{{ site.name | default: 'edgeCore 文档' }}</a>
           <nav class="site-nav" aria-label="主导航">
             {% for item in site.nav %}
               <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
@@ -52,6 +52,20 @@
         {% include landing-home.html %}
       </div>
     </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__row">
+        <span class="site-footer__brand">edgeCore</span>
+        <span class="site-footer__divider">|</span>
+        <span class="site-footer__tagline">让工业设备连接更加简单、稳定、高效。</span>
+        <span class="site-footer__divider">|</span>
+        <a href="https://anviod.github.io/edgeOS/" target="_blank" rel="noopener noreferrer">EdgeOS</a>
+        <span class="site-footer__divider">|</span>
+        <a href="https://github.com/anviod/edgeCore" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <span class="site-footer__divider">|</span>
+        <span class="site-footer__copy">开源 · MIT 许可证</span>
+      </div>
+    </footer>
 
     <script src="{{ '/assets/script.js' | relative_url }}"></script>
   </body>

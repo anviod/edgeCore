@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestChannelManager_AddDevice_RejectsDuplicate(t *testing.T) {

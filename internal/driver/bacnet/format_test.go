@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 func TestBacnet_FormatPoint_HexBinary(t *testing.T) {

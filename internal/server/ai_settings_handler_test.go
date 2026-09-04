@@ -22,8 +22,8 @@ func TestGetAiSettings_Default(t *testing.T) {
 	assert.Equal(t, "0", body["code"])
 	data, ok := body["data"].(map[string]any)
 	require.True(t, ok)
-	assert.Equal(t, "local", data["deployment_mode"])
-	assert.Equal(t, "edgex-local", data["provider"])
+	assert.Equal(t, "remote", data["deployment_mode"])
+	assert.Equal(t, "edgeCore-center", data["provider"])
 }
 
 func TestPutAiSettings_RemoteMode(t *testing.T) {
@@ -31,7 +31,7 @@ func TestPutAiSettings_RemoteMode(t *testing.T) {
 
 	payload, err := json.Marshal(map[string]any{
 		"deployment_mode": "remote",
-		"provider":        "edgex-center",
+		"provider":        "edgeCore-center",
 		"grpc_endpoint":   "192.168.1.50:50051",
 		"tokens_limit":    80000,
 		"tasks_limit":     120,

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // MockDeviceWriter 用于捕获 WritePoint 调用

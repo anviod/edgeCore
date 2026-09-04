@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver"
 	"github.com/stretchr/testify/assert"
 )
 

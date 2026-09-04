@@ -29,6 +29,28 @@
               </a-form-item>
             </a-col>
           </a-row>
+          <a-row :gutter="16">
+            <a-col :span="16">
+              <a-form-item
+                label="通道 ID"
+                extra="仅允许英文字母、数字、下划线或横线，禁止空格；点击「生成」一键生成"
+              >
+                <a-input
+                  v-model="form.id"
+                  placeholder="bacnet_xxx"
+                  class="mono-text"
+                  @input="onChannelIdInput"
+                >
+                  <template #suffix>
+                    <a-button type="text" size="mini" @click="generateChannelId">
+                      <template #icon><icon-refresh /></template>生成
+                    </a-button>
+                  </template>
+                </a-input>
+              </a-form-item>
+            </a-col>
+            <a-col :span="8" />
+          </a-row>
 
           <div class="nb-form-section">
             <div class="nb-form-section__title">网络配置</div>
@@ -77,7 +99,7 @@
               </a-col>
               <a-col :span="8">
                 <a-form-item label="设备名称">
-                  <a-input v-model="form.device_name" placeholder="EdgeX-Gateway" />
+                  <a-input v-model="form.device_name" placeholder="edgeCore-Gateway" />
                 </a-form-item>
               </a-col>
               <a-col :span="8">
@@ -89,7 +111,7 @@
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="厂商名称">
-                  <a-input v-model="form.vendor_name" placeholder="EdgeX Foundry" />
+                  <a-input v-model="form.vendor_name" placeholder="edgeCore Foundry" />
                 </a-form-item>
               </a-col>
             </a-row>
@@ -100,16 +122,16 @@
       <a-tab-pane key="real-devices">
         <template #title>映射真实设备</template>
         <div class="table-header">
-          <span class="table-header__hint">选择在 BACnet 地址空间中暴露的南向采集设备</span>
-          <a-button type="outline" size="small" @click="autoFillDevices">
-            <template #icon><icon-check /></template>全部启用
-          </a-button>
+          <span class="table-header__hint">按通道树形选择 BACnet 地址空间中暴露的南向采集设备</span>
         </div>
         <div class="table-container saas-table nb-device-table">
           <a-table
-            row-key="id"
+            ref="realTreeRef"
+            row-key="rowKey"
             :columns="deviceColumns"
-            :data="deviceTableData"
+            :data="deviceTableTree"
+            :expanded-keys="expandedKeys"
+            @expand-change="onExpandChange"
             size="small"
             :pagination="false"
             class="industrial-table-inline"
@@ -117,13 +139,31 @@
             <template #empty>
               <a-empty description="暂无南向设备，请先在通道管理中创建设备" />
             </template>
+            <template #name="{ record }">
+              <span v-if="record.children" class="nb-tree-channel-name">
+                <span class="nb-tree-channel-badge">{{ record.enabledCount }}/{{ record.count }} 已启用</span>
+                {{ record.channelName }}
+              </span>
+              <span v-else>{{ record.name || record.id }}</span>
+            </template>
+            <template #channel="{ record }">
+              <span v-if="record.children">—</span>
+              <span v-else>{{ record.channelName }}</span>
+            </template>
             <template #state="{ record }">
-              <a-tag v-if="record.state === 0" color="green" size="small">在线</a-tag>
+              <a-tag v-if="record.children" color="arcoblue" size="small">通道</a-tag>
+              <a-tag v-else-if="record.state === 0" color="green" size="small">在线</a-tag>
               <a-tag v-else-if="record.state === 1" color="orangered" size="small">不稳定</a-tag>
               <a-tag v-else color="red" size="small">离线</a-tag>
             </template>
             <template #enable="{ record }">
-              <a-switch v-model="record._enable" size="small" />
+              <a-checkbox
+                v-if="record.children"
+                :model-value="record.enabledCount > 0 && record.enabledCount >= record.count"
+                :indeterminate="record.enabledCount > 0 && record.enabledCount < record.count"
+                @change="(checked) => setChannelAll(record, checked)"
+              />
+              <a-switch v-else v-model="record._enable" size="small" @change="onDeviceToggle" />
             </template>
           </a-table>
         </div>
@@ -186,21 +226,24 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
-import { IconPlus, IconCheck, IconSync } from '@arco-design/web-vue/es/icon'
+import { IconPlus, IconCheck, IconSync, IconRefresh } from '@arco-design/web-vue/es/icon'
 import { Message } from '@arco-design/web-vue'
 import { showMessage } from '@/composables/useGlobalState'
 import request from '@/utils/request'
 import {
   closeNorthboundSettingsDialog,
   extractNorthboundSaveWarning,
+  generateNorthboundID,
   northboundSaveRequestConfig,
   notifyNorthboundSaveError,
   notifyNorthboundSaveSuccess,
   notifyNorthboundValidationError,
   resolveNorthboundSaveError,
-  validateNorthboundChannelName
+  sanitizeNorthboundID,
+  validateNorthboundChannelName,
+  validateNorthboundID
 } from '@/utils/northboundSave'
-import { buildNorthboundVirtualDeviceRows, syncNorthboundVirtualDevicesFromRows } from '@/utils/southboundDevices'
+import { buildNorthboundDeviceTree, buildNorthboundVirtualDeviceRows, syncNorthboundDevicesFromTree, syncNorthboundVirtualDevicesFromRows } from '@/utils/southboundDevices'
 import { listVirtualShadows } from '@/api/virtualShadow'
 
 const props = defineProps({
@@ -219,16 +262,18 @@ const visible = computed({
 const loading = ref(false)
 const syncing = ref(false)
 const form = ref({})
-const deviceTableData = ref([])
+const deviceTableTree = ref([])
 const virtualDeviceTableData = ref([])
+const expandedKeys = ref([])
+const realTreeRef = ref(null)
 const activeTab = ref('basic')
 const isNewMode = ref(false)
 
 const deviceColumns = [
-  { title: '设备名称', dataIndex: 'name' },
-  { title: '采集通道', dataIndex: 'channelName', width: 120 },
-  { title: '状态', slotName: 'state', width: 80, align: 'center' },
-  { title: '暴露', slotName: 'enable', width: 70, align: 'center' }
+  { title: '设备名称', slotName: 'name', width: 260, ellipsis: true, tooltip: true },
+  { title: '采集通道', slotName: 'channel', width: 120 },
+  { title: '状态', slotName: 'state', width: 84, align: 'center' },
+  { title: '暴露', slotName: 'enable', width: 90, align: 'center' }
 ]
 
 const virtualDeviceColumns = [
@@ -248,6 +293,7 @@ watch(() => props.visible, async (val) => {
     } else {
       form.value = {
         enable: true,
+        id: generateNorthboundID('bacnet'),
         name: 'New BACnet Server',
         interface: '',
         ip: '',
@@ -270,20 +316,13 @@ watch(() => props.visible, async (val) => {
   }
 })
 
+const onExpandChange = (keys) => {
+  expandedKeys.value = keys || []
+}
+
 const buildDeviceTable = () => {
-  const allowAll = !form.value.devices || Object.keys(form.value.devices).length === 0
-  deviceTableData.value = props.allDevices.map(dev => {
-    const current = form.value.devices[dev.id]
-    let _enable = allowAll
-    if (current === undefined || current === null) {
-      _enable = allowAll
-    } else if (typeof current === 'boolean') {
-      _enable = current
-    } else if (typeof current === 'object') {
-      _enable = !!current.enable
-    }
-    return { ...dev, _enable }
-  })
+  deviceTableTree.value = buildNorthboundDeviceTree(props.allDevices, form.value.devices)
+  expandedKeys.value = deviceTableTree.value.map((r) => r.rowKey)
 }
 
 const buildVirtualDeviceTable = async () => {
@@ -298,31 +337,27 @@ const buildVirtualDeviceTable = async () => {
 }
 
 const syncDevicesFromTable = () => {
-  if (deviceTableData.value.length === 0) {
-    form.value.devices = {}
-    return
-  }
-  const devices = {}
-  let allEnabled = true
-  for (const record of deviceTableData.value) {
-    if (!record._enable) {
-      allEnabled = false
-    }
-    devices[record.id] = { enable: record._enable }
-  }
-  // 全部启用时使用空 map，保持默认"全部暴露"语义
-  form.value.devices = allEnabled ? {} : devices
+  form.value.devices = syncNorthboundDevicesFromTree(deviceTableTree.value)
 }
 
 const syncVirtualDevicesFromTable = () => {
   form.value.virtual_devices = syncNorthboundVirtualDevicesFromRows(virtualDeviceTableData.value)
 }
 
-const autoFillDevices = () => {
-  deviceTableData.value.forEach(record => {
-    record._enable = true
-  })
-  showMessage('已启用全部真实设备', 'success')
+// 单个设备开关切换后联动父行启用计数
+const onDeviceToggle = () => {
+  for (const g of deviceTableTree.value) {
+    g.enabledCount = g.children.filter((c) => c._enable).length
+  }
+}
+
+// 通道父勾选：批量启用/禁用该通道下全部设备
+const setChannelAll = (channel, checked) => {
+  const enable = !!checked
+  for (const child of channel.children) {
+    child._enable = enable
+  }
+  channel.enabledCount = enable ? channel.count : 0
 }
 
 const autoFillVirtualDevices = () => {
@@ -344,7 +379,7 @@ const syncPointMapping = async () => {
   syncing.value = true
   try {
     await request.post(
-      `/api/northbound/bacnet_server/${form.value.id}/sync`,
+      `/api/northbound/bacnet_server/${encodeURIComponent(form.value.id)}/sync`,
       null,
       northboundSaveRequestConfig
     )
@@ -356,6 +391,16 @@ const syncPointMapping = async () => {
   }
 }
 
+// 一键生成合法通道 ID（仅英文字母/数字/下划线/横线）
+const generateChannelId = () => {
+  form.value.id = generateNorthboundID('bacnet')
+}
+
+// 输入通道 ID 时即时清洗，禁止空格等非法字符
+const onChannelIdInput = (value) => {
+  form.value.id = sanitizeNorthboundID(value)
+}
+
 const saveSettings = async () => {
   if (!form.value.name?.trim()) {
     notifyNorthboundValidationError('请填写通道名称')
@@ -364,6 +409,13 @@ const saveSettings = async () => {
   }
   if (!form.value.port) {
     notifyNorthboundValidationError('请填写端口号')
+    activeTab.value = 'basic'
+    return
+  }
+
+  const idError = validateNorthboundID(form.value.id)
+  if (idError) {
+    notifyNorthboundValidationError(idError)
     activeTab.value = 'basic'
     return
   }

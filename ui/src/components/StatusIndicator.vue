@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="relative flex h-2 w-2">
     <!-- 外层脉冲环 (仅运行和故障状态显示) -->
     <span
@@ -14,12 +14,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { computed } from 'vue'
 
-const props = defineProps<{
-  status: 'running' | 'standby' | 'fault' | 'unknown'
-}>()
+const props = defineProps({
+  status: { type: String, default: 'unknown' },
+})
 
 const showPulse = computed(() => props.status === 'running' || props.status === 'fault')
 

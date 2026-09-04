@@ -167,7 +167,6 @@
           </ul>
         </a-alert>
       </section>
-
     </div>
 
     <a-empty v-else class="channel-metrics-panel__empty" description="暂无监控指标数据" />

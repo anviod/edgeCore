@@ -1,7 +1,7 @@
 ---
 layout: default
 title: BACnet 前端 Web UI 对应需求说明书
-description: EdgeX BACnet 前端 UI 需求说明书
+description: edgeCore BACnet 前端 UI 需求说明书
 ---
 
 # BACnet 前端 Web UI 对应需求说明书（PRD）

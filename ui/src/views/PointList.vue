@@ -1,1293 +1,1262 @@
 <template>
-    <div class="page-shell point-list-container list-detail-page">
-        <div class="page-header point-header list-page-header">
-            <div class="header-left">
-                <a-button type="outline" size="small" class="list-back-btn" @click="goBack">
-                    <template #icon><IconArrowLeft /></template>
-                    返回设备
-                </a-button>
-                <div class="header-info header-info--inline">
-                    <span class="protocol-tag protocol-tag--accent">{{ formatProtocolTag(channelProtocol) }}</span>
-                    <h2 class="page-title title-text">点位列表</h2>
-                </div>
-            </div>
-
-            <div class="header-right header-actions point-header-actions">
-                <a-space size="small" wrap>
-                    <a-button v-if="channelProtocol && channelProtocol.includes('modbus')" type="outline" status="warning" size="small" @click="openRegisterBlockDialog">
-                        <template #icon><IconPlus /></template>
-                        批量创建寄存器
-                    </a-button>
-                    <a-button type="outline" status="success" size="small" @click="openAddDialog">
-                        <template #icon><IconPlus /></template>
-                        新增点位
-                    </a-button>
-                    <a-button v-if="channelProtocol === 'bacnet-ip' || channelProtocol === 'opc-ua'" type="outline" size="small" @click="openDiscoverDialog">
-                        <template #icon><IconScan /></template>
-                        扫描点位
-                    </a-button>
-                    <a-button type="primary" size="small" @click="fetchPoints" :loading="loading">
-                        <template #icon><IconRefresh /></template>
-                        刷新
-                    </a-button>
-                    <a-button type="text" size="small" class="help-trigger-btn" @click="helpVisible = true">
-                        <template #icon><IconQuestionCircle /></template>
-                        配置指引
-                    </a-button>
-                </a-space>
-            </div>
+  <div class="page-shell point-list-container list-detail-page">
+    <div class="page-header point-header list-page-header">
+      <div class="header-left">
+        <a-button type="outline" size="small" class="list-back-btn" @click="goBack">
+          <template #icon><IconArrowLeft /></template>
+          返回设备
+        </a-button>
+        <div class="header-info header-info--inline">
+          <span class="protocol-tag protocol-tag--accent">{{ formatProtocolTag(channelProtocol) }}</span>
+          <h2 class="page-title title-text">点位列表</h2>
         </div>
+      </div>
 
-        <div class="point-list-toolbar">
-            <div class="point-list-toolbar__filters">
-                <a-input
-                    v-model="filters.search"
-                    placeholder="搜索点位 (ID/名称/地址)"
-                    size="small"
-                    allow-clear
-                    class="point-list-toolbar__search"
-                >
-                    <template #prefix><IconSearch /></template>
-                </a-input>
-                <a-select
-                    v-model="filters.quality"
-                    :options="[{ label: 'Good', value: 'Good' }, { label: 'Bad', value: 'Bad' }]"
-                    placeholder="质量过滤"
-                    mode="multiple"
-                    size="small"
-                    class="point-list-toolbar__select point-list-toolbar__select--sm"
-                />
-            </div>
-            <div v-if="selection.selectedIds.length > 0" class="point-list-toolbar__batch">
-                <span class="point-list-toolbar__selected-count font-mono">已选 {{ selection.selectedIds.length }} 项</span>
-                <a-button type="text" size="small" @click="selection.selectedIds = []">
-                    清除选择
-                </a-button>
-                <a-button type="outline" status="success" size="small" @click="goCreateVirtualShadow">
-                    <template #icon><IconThunderbolt /></template>
-                    拼虚拟设备 ({{ selection.selectedIds.length }})
-                </a-button>
-                <a-button status="danger" type="outline" size="small" @click="confirmBatchDelete">
-                    <template #icon><IconDelete /></template>
-                    批量删除 ({{ selection.selectedIds.length }})
-                </a-button>
-            </div>
-        </div>
-
-        <div class="list-detail-body">
-        <a-spin :loading="loading" class="list-detail-spin">
-            <div class="table-container">
-                <div class="table-toolbar">
-                    <div class="left-title">{{ isModbusChannel ? 'MODBUS SLAVE VIEW' : 'POINT LIST' }}</div>
-                </div>
-                <ModbusSlavePointView
-                    v-if="isModbusChannel"
-                    :all-points="points"
-                    :points="filteredPoints"
-                    :selected-ids="selection.selectedIds"
-                    :filter-key="modbusFilterKey"
-                    :load-error="loadError"
-                    @selection-change="onModbusSelectionChange"
-                    @clear-filters="clearGlobalFilters"
-                    @retry="fetchPoints({ force: true })"
-                    @write="openWriteDialog"
-                    @edit="openEditDialog"
-                    @delete="confirmDelete"
-                    @debug="openDebug"
-                    @show-value="showFullValue"
-                />
-                <a-table
-                    v-else
-                    :columns="tableColumns"
-                    :data="filteredPoints"
-                    :row-selection="rowSelection"
-                    v-model:selected-keys="selection.selectedIds"
-                    row-key="id"
-                    class="industrial-table-fluid"
-                    :bordered="{ wrapper: true, cell: true }"
-                >
-                    <template #value="{ record }">
-                        <a-tooltip :content="`${formatValue(record.value)} ${record.unit || ''} - ${getRegisterHint(record)}`">
-                            <div @click="showFullValue(record)" class="value-cell cursor-pointer block truncate">
-                                <span class="value-text font-mono">{{ formatValue(record.value) }}</span>
-                                <span v-if="record.unit" class="value-unit">{{ record.unit }}</span>
-                            </div>
-                        </a-tooltip>
-                    </template>
-
-                    <template #quality="{ record }">
-                        <span class="table-cell-semantic">
-                            <div class="status-display flex items-center">
-                                <IconCheckCircle v-if="isQualityGood(record.quality)" class="mr-1 text-emerald-500" />
-                                <IconCloseCircle v-else class="mr-1 text-red-500" />
-                                <span class="font-mono text-xs">{{ record.quality }}</span>
-                            </div>
-                        </span>
-                    </template>
-
-                    <template #readwrite="{ record }">
-                        <div class="status-display flex items-center">
-                            <IconEdit v-if="record.readwrite === 'RW' || record.readwrite === 'W'" class="mr-1 text-blue-500" />
-                            <IconCheckCircle v-else class="mr-1 text-emerald-500" />
-                            <span class="font-mono text-xs">{{ record.readwrite }}</span>
-                        </div>
-                    </template>
-
-                    <template #timestamp="{ record }">
-                        <a-tooltip v-if="record?.updated_at" :content="`更新 ${formatDate(record.updated_at)}`">
-                            <div class="font-mono text-xs text-slate-500 cursor-default">
-                                {{ record && (record.collected_at || record.timestamp) ? formatDate(record.collected_at || record.timestamp) : 'N/A' }}
-                            </div>
-                        </a-tooltip>
-                        <div v-else class="font-mono text-xs text-slate-500">
-                            {{ record && (record.collected_at || record.timestamp) ? formatDate(record.collected_at || record.timestamp) : 'N/A' }}
-                        </div>
-                    </template>
-
-                    <template #actions="{ record }">
-                        <div class="actions-container flex gap-1">
-                            <a-button
-                                v-if="record.readwrite === 'RW' || record.readwrite === 'W'"
-                                type="text"
-                                size="mini"
-                                class="hover:bg-slate-100"
-                                @click="openWriteDialog(record)"
-                            >
-                                写入
-                            </a-button>
-                            
-                            <a-button
-                                type="text"
-                                size="mini"
-                                class="hover:bg-slate-100"
-                                @click="openEditDialog(record)"
-                            >
-                                编辑
-                            </a-button>
-                            
-                            <a-button
-                                type="text"
-                                size="mini"
-                                status="danger"
-                                class="hover:bg-red-50"
-                                @click="confirmDelete(record)"
-                            >
-                                删除
-                            </a-button>
-                            
-                            <a-button
-                                type="text"
-                                size="mini"
-                                status="info"
-                                class="hover:bg-blue-50"
-                                @click="openDebug(record)"
-                            >
-                                调试
-                            </a-button>
-                        </div>
-                    </template>
-
-                    <template #empty>
-                        <div class="empty-state">
-                            <IconSearch size="48" class="text-slate-300" />
-                            <div class="empty-text font-mono">暂无匹配的点位数据</div>
-                            <div class="empty-actions">
-                                <a-button v-if="!points.value || points.value.length === 0" type="primary" size="small" @click="openCloneDialog">
-                                    <template #icon><IconCopy /></template>复制其它设备点位
-                                </a-button>
-                                <a-button v-else type="outline" size="small" @click="filters.search = ''; filters.quality = []">
-                                    清除过滤器
-                                </a-button>
-                            </div>
-                        </div>
-                    </template>
-                </a-table>
-            </div>
-        </a-spin>
-
-            <!-- Connection Status Footer -->
-            <div v-if="deviceInfo" class="terminal-info">
-                <span class="terminal-dot"></span>
-                <span class="monospace-text">
-                    连接状态:{{ deviceInfo.state === 0 ? '已连接' : deviceInfo.state === 1 ? '不稳定' : '已断开' }} | 协议: {{ formatProtocolTag(channelProtocol) }} | 连续通信:{{ deviceInfo.runtime?.success_count || 0 }} 次 | 最近失败:{{ deviceInfo.runtime?.last_fail_time && new Date(deviceInfo.runtime.last_fail_time).getFullYear() > 1 ? formatDate(deviceInfo.runtime.last_fail_time) : '无' }}
-                </span>
-            </div>
-        </div>
-
-        <a-modal v-model:visible="cloneDialog.visible" title="克隆其它设备点位" width="100%" @ok="executeClone" @cancel="cloneDialog.visible = false">
-            <a-space direction="vertical" :size="16" fill>
-                <a-row :gutter="16">
-                    <a-col :span="8">
-                        <a-select
-                            v-model="cloneDialog.selectedChannel"
-                            :options="cloneDialog.channels"
-                            placeholder="选择通道"
-                            :loading="cloneDialog.loading"
-                            @change="onCloneChannelChange"
-                        />
-                    </a-col>
-                    <a-col :span="8">
-                        <a-select
-                            v-model="cloneDialog.selectedDevice"
-                            :options="cloneDialog.devices"
-                            placeholder="选择设备"
-                            :loading="cloneDialog.loading"
-                            @change="onCloneDeviceChange"
-                        />
-                    </a-col>
-                    <a-col :span="8">
-                        <a-input
-                            v-model="cloneDialog.search"
-                            placeholder="按名称或地址过滤"
-                            allow-clear
-                        >
-                            <template #prefix><IconSearch /></template>
-                        </a-input>
-                    </a-col>
-                </a-row>
-                <a-row :gutter="16" v-if="cloneDialog.points && cloneDialog.points.length > 0">
-                    <a-col :span="24">
-                        <a-space>
-                            <a-checkbox
-                                v-model="cloneDialog.selectAll"
-                                @change="toggleCloneSelectAll"
-                            >
-                                全选
-                            </a-checkbox>
-                            <span class="text-slate-600">
-                                已选择 {{ cloneDialog.selected.length }} / {{ cloneDialog.points.length }}
-                            </span>
-                        </a-space>
-                    </a-col>
-                </a-row>
-                <a-table
-                    :columns="cloneTableColumns"
-                    :data="filteredClonePoints"
-                    :pagination="false"
-                    :scroll="{ y: 360 }"
-                >
-                    <template #checkbox="{ record }">
-                        <a-checkbox
-                            v-model="cloneDialog.selected"
-                            :value="record"
-                        />
-                    </template>
-                </a-table>
-                <a-empty v-if="!cloneDialog.loading && cloneDialog.points.length === 0" description="请选择通道与设备以加载点位" />
-            </a-space>
-        </a-modal>
-
-        <!-- Point Config Dialog (Add/Edit) -->
-        <a-modal 
-            v-model:visible="pointDialog.visible" 
-            :width="760"
-            :mask-closable="false"
-            unmount-on-close
-            modal-class="channel-config-modal"
-            :title="pointDialog.isEdit ? '编辑点位' : '新增点位'"
-            @cancel="pointDialog.visible = false"
-        >
-            <a-form :model="pointDialog.form" layout="vertical" class="channel-config-form point-config-form form-controls-md">
-                <div class="batch-form-fields">
-                    <div class="batch-form-row">
-                        <div class="form-field">
-                            <div class="field-label">点位 ID</div>
-                            <a-input
-                                v-model="pointDialog.form.id"
-                                placeholder="唯一标识符"
-                                :disabled="pointDialog.isEdit"
-                            />
-                        </div>
-                        <div class="form-field">
-                            <div class="field-label">点位名称</div>
-                            <a-input
-                                v-model="pointDialog.form.name"
-                                placeholder="点位名称"
-                            />
-                        </div>
-                    </div>
-
-                    <!-- Protocol Specific Configuration -->
-                    <ModbusPointConfig
-                        v-if="channelProtocol.startsWith('modbus')"
-                        v-model:form="pointDialog.form"
-                        :device-info="deviceInfo"
-                    />
-                    
-                    <BacnetPointConfig
-                        v-else-if="channelProtocol === 'bacnet-ip'"
-                        v-model:form="pointDialog.form"
-                        :device-info="deviceInfo"
-                    />
-                    
-                    <OpcuaPointConfig
-                        v-else-if="channelProtocol === 'opc-ua'"
-                        v-model:form="pointDialog.form"
-                        :device-info="deviceInfo"
-                    />
-
-                    <template v-else-if="channelProtocol === 'knxnet-ip'">
-                        <div class="modal-section__title modal-section__title--sub">KNX 组地址</div>
-                        <div class="advanced-block point-advanced-block">
-                            <div class="batch-form-row">
-                                <div class="form-field">
-                                    <div class="field-label">主组</div>
-                                    <a-input-number
-                                        v-model="pointDialog.knx.mainGroup"
-                                        :min="0"
-                                        :max="31"
-                                        :precision="0"
-                                        placeholder="0-31"
-                                        @change="updateKNXAddress"
-                                    />
-                                </div>
-                                <div class="form-field">
-                                    <div class="field-label">中组</div>
-                                    <a-input-number
-                                        v-model="pointDialog.knx.middleGroup"
-                                        :min="0"
-                                        :max="7"
-                                        :precision="0"
-                                        placeholder="0-7"
-                                        @change="updateKNXAddress"
-                                    />
-                                </div>
-                                <div class="form-field">
-                                    <div class="field-label">子组</div>
-                                    <a-input-number
-                                        v-model="pointDialog.knx.subGroup"
-                                        :min="0"
-                                        :max="255"
-                                        :precision="0"
-                                        placeholder="0-255"
-                                        @change="updateKNXAddress"
-                                    />
-                                </div>
-                            </div>
-                            <div class="batch-form-row">
-                                <div class="form-field">
-                                    <div class="field-label">个体地址（可选）</div>
-                                    <a-input
-                                        v-model="pointDialog.knx.individualAddress"
-                                        placeholder="例如 1.1.1"
-                                        @input="updateKNXAddress"
-                                    />
-                                </div>
-                                <div class="form-field">
-                                    <div class="field-label">位宽（可选）</div>
-                                    <a-input-number
-                                        v-model="pointDialog.knx.bitWidth"
-                                        :min="0"
-                                        :max="7"
-                                        :precision="0"
-                                        placeholder="0-7，0 为省略"
-                                        allow-clear
-                                        @change="updateKNXAddress"
-                                    />
-                                </div>
-                            </div>
-                            <div class="form-field">
-                                <div class="field-label">生成地址预览</div>
-                                <a-input
-                                    v-model="pointDialog.form.address"
-                                    readonly
-                                    placeholder="main/middle/sub"
-                                />
-                            </div>
-                        </div>
-                    </template>
-                    
-                    <!-- Other Protocols -->
-                    <template v-else>
-                        <div class="form-field">
-                            <div class="field-label">{{ getProtocolAddressLabel() }}</div>
-                            <a-input
-                                v-model="pointDialog.form.address"
-                                :placeholder="getProtocolAddressPlaceholder()"
-                            />
-                        </div>
-                    </template>
-
-                    <template v-if="channelProtocol.startsWith('modbus')">
-                        <div class="modal-section__title modal-section__title--sub">高级设置</div>
-                        <div class="advanced-block point-advanced-block">
-                            <div class="point-advanced-fields">
-                                <div class="form-field">
-                                    <div class="field-label">数据格式</div>
-                                    <a-select
-                                        v-model="formatPresetSelected"
-                                        :options="filteredFormatPresets"
-                                        clearable
-                                        @update:value="onSelectFormatPreset"
-                                    />
-                                </div>
-                                <div class="batch-form-row">
-                                    <div class="form-field">
-                                        <div class="field-label">解析类型</div>
-                                        <a-select
-                                            v-model="pointDialog.parseType"
-                                            :options="filteredParseTypes"
-                                        />
-                                    </div>
-                                    <div class="form-field">
-                                        <div class="field-label">数据类型 (存储)</div>
-                                        <a-select
-                                            v-model="pointDialog.form.datatype"
-                                            :options="datatypeOptions"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="batch-form-row">
-                                    <div class="form-field">
-                                        <div class="field-label">读公式模板</div>
-                                        <a-select
-                                            v-model="pointDialog.form.read_formula_template"
-                                            :options="formulaTemplates"
-                                            clearable
-                                            @update:value="onSelectFormulaTemplate('read')"
-                                        />
-                                    </div>
-                                    <div class="form-field">
-                                        <div class="field-label">读公式 (使用变量 v)</div>
-                                        <a-input
-                                            v-model="pointDialog.form.read_formula"
-                                            @input="validateFormula('read')"
-                                        />
-                                        <div v-if="formulaErrors.read" class="field-error">{{ formulaErrors.read }}</div>
-                                    </div>
-                                </div>
-                                <div class="batch-form-row">
-                                    <div class="form-field">
-                                        <div class="field-label">读写权限</div>
-                                        <a-select
-                                            v-model="pointDialog.form.readwrite"
-                                            :options="['R', 'RW']"
-                                        />
-                                    </div>
-                                    <div class="form-field">
-                                        <div class="field-label">写公式模板</div>
-                                        <a-select
-                                            v-model="pointDialog.form.write_formula_template"
-                                            :options="formulaTemplates"
-                                            clearable
-                                            @update:value="onSelectFormulaTemplate('write')"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="batch-form-row">
-                                    <div class="form-field">
-                                        <div class="field-label">写公式 (使用变量 v)</div>
-                                        <a-input
-                                            v-model="pointDialog.form.write_formula"
-                                            @input="validateFormula('write')"
-                                        />
-                                        <div v-if="formulaErrors.write" class="field-error">{{ formulaErrors.write }}</div>
-                                    </div>
-                                    <div class="form-field">
-                                        <div class="field-label">单位</div>
-                                        <a-input v-model="pointDialog.form.unit" />
-                                    </div>
-                                </div>
-                                <div class="batch-form-row">
-                                    <div class="form-field">
-                                        <div class="field-label">缩放比例</div>
-                                        <a-input
-                                            v-model.number="pointDialog.form.scale"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="1.0"
-                                        />
-                                    </div>
-                                    <div class="form-field">
-                                        <div class="field-label">偏移量</div>
-                                        <a-input
-                                            v-model.number="pointDialog.form.offset"
-                                            type="number"
-                                            step="0.01"
-                                            placeholder="0"
-                                        />
-                                    </div>
-                                </div>
-                                <div class="form-field">
-                                    <div class="field-label">默认值</div>
-                                    <a-input v-model="pointDialog.defaultValue" />
-                                </div>
-                            </div>
-                            <div class="point-config-actions">
-                                <a-button type="outline" @click="openQuickValidate">
-                                    <template #icon><IconThunderbolt /></template>
-                                    快速验证
-                                </a-button>
-                                <a-button type="outline" @click="openTemplateDialog">
-                                    <template #icon><IconFile /></template>
-                                    协议模板
-                                </a-button>
-                            </div>
-                        </div>
-                    </template>
-                    <template v-else>
-                        <div class="modal-section__title modal-section__title--sub">数据解析</div>
-                        <div class="advanced-block point-advanced-block">
-                        <a-row :gutter="[24, 16]" class="field-grid">
-                        <a-col :span="24">
-                            <a-form-item field="formatPreset" label="数据格式">
-                                <a-select
-                                        v-model="formatPresetSelected"
-                                        :options="filteredFormatPresets"
-                                        clearable
-                                        @update:value="onSelectFormatPreset"
-                                    ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="byteLength" label="字节数">
-                                <a-select
-                                    v-model="pointDialog.byteLength"
-                                    :options="[1, 2, 4, 8]"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="wordOrderOption" label="WordOrder(字序)">
-                                <a-select
-                                    v-model="pointDialog.wordOrderOption"
-                                    :options="wordOrderOptionsForBytes"
-                                    :disabled="pointDialog.byteLength === 1"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="8">
-                            <a-form-item field="parseType" label="解析类型">
-                                <a-select
-                                    v-model="pointDialog.parseType"
-                                    :options="parseTypesForBytes"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="datatype" label="数据类型(存储)">
-                                <a-select
-                                    v-model="pointDialog.form.datatype"
-                                    :options="datatypeOptions"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="read_formula_template" label="读公式模板">
-                                <a-select
-                                    v-model="pointDialog.form.read_formula_template"
-                                    :options="formulaTemplates"
-                                    clearable
-                                    @update:value="onSelectFormulaTemplate('read')"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="read_formula" label="读公式 (使用变量 v)" :error="formulaErrors.read">
-                                <a-input
-                                    v-model="pointDialog.form.read_formula"
-                                    @input="validateFormula('read')"
-                                ></a-input>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="readwrite" label="读写权限">
-                                <a-select
-                                    v-model="pointDialog.form.readwrite"
-                                    :options="['R', 'RW']"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="write_formula_template" label="写公式模板">
-                                <a-select
-                                    v-model="pointDialog.form.write_formula_template"
-                                    :options="formulaTemplates"
-                                    clearable
-                                    @update:value="onSelectFormulaTemplate('write')"
-                                ></a-select>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="write_formula" label="写公式 (使用变量 v)" :error="formulaErrors.write">
-                                <a-input
-                                    v-model="pointDialog.form.write_formula"
-                                    @input="validateFormula('write')"
-                                ></a-input>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="unit" label="单位">
-                                <a-input
-                                    v-model="pointDialog.form.unit"
-                                ></a-input>
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="scale" label="缩放比例">
-                                <a-input-number
-                                    v-model="pointDialog.form.scale"
-                                    placeholder="缩放比例"
-                                    :step="0.01"
-                                    size="small"
-                                    :tooltip="{ title: '默认为 1.0', placement: 'top' }"
-                                />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="offset" label="偏移量">
-                                <a-input-number
-                                    v-model="pointDialog.form.offset"
-                                    placeholder="偏移量"
-                                    :step="0.01"
-                                    size="small"
-                                    :tooltip="{ title: '默认为 0', placement: 'top' }"
-                                />
-                            </a-form-item>
-                        </a-col>
-                        <a-col :span="12">
-                            <a-form-item field="defaultValue" label="默认值">
-                                <a-input
-                                    v-model="pointDialog.defaultValue"
-                                    placeholder="默认值"
-                                    size="small"
-                                />
-                            </a-form-item>
-                        </a-col>
-                        </a-row>
-                        <div class="point-config-actions">
-                            <a-button type="outline" @click="openQuickValidate">
-                                <template #icon><IconThunderbolt /></template>
-                                快速验证
-                            </a-button>
-                            <a-button type="outline" @click="openTemplateDialog">
-                                <template #icon><IconFile /></template>
-                                协议模板
-                            </a-button>
-                        </div>
-                        </div>
-                    </template>
-                </div>
-            </a-form>
-
-            <template #footer>
-                <a-button type="primary" :loading="pointDialog.loading" @click="submitPoint">
-                    保存配置
-                </a-button>
-            </template>
-        </a-modal>
-
-        <a-modal v-model="quickValidate.visible" max-width="640">
-            <a-card>
-                <a-card-title class="d-flex align-center">
-                    <span class="text-h6">快速验证当前解析配置</span>
-                    <div style="flex: 1;"></div>
-                    <a-tag
-                        v-if="quickValidate.status"
-                        :color="quickValidate.status === 'pass' ? 'success' : 'error'"
-                        size="small"
-                        class="mr-2"
-                    >
-                        {{ quickValidate.status === 'pass' ? '验证通过' : '未通过' }}
-                    </a-tag>
-                    <a-button type="text" size="small" @click="quickValidate.visible = false">
-                        <template #icon><IconClose /></template>
-                    </a-button>
-
-                </a-card-title>
-                <a-card-text>
-
-                    <a-row :gutter="16" class="dense">
-                        <a-col :span="24">
-                            <a-input
-                                v-model="quickValidate.rawHex"
-                                placeholder="原始十六进制报文 (例如: 01 0A FF 00)"
-                                size="small"
-                            />
-
-                        </a-col>
-                        <a-col :span="24">
-                            <a-input
-                                v-model="quickValidate.registerValues"
-                                placeholder="寄存器值列表(可选, 以空格或逗号分隔, 支持0x前缀) 例如: 0x1234 0x5678 或 4660 22136"
-                                size="small"
-                            />
-
-                        </a-col>
-                        <a-col :span="24" :sm="12">
-                            <a-input
-                                v-model="quickValidate.registerBaseAddress"
-                                placeholder="起始寄存器地址(仅用于标注) 例如: 40001"
-                                size="small"
-                            />
-
-                        </a-col>
-                        <a-col :span="24">
-                            <a-input
-                                v-model="quickValidate.expected"
-                                placeholder="期望工程值(可选) 例如: 230.1 或 LongABCD 11112222"
-                                size="small"
-                            />
-
-                        </a-col>
-                        <a-col :span="24">
-                            <div class="text-caption mb-1">解析结果预览</div>
-                            <div class="pa-3 rounded bg-grey-lighten-4 font-mono text-body-2">
-                                <span v-html="quickValidate.previewHtml"></span>
-                            </div>
-                        </a-col>
-                    </a-row>
-                </a-card-text>
-                <div class="pa-4 pt-0" style="display: flex; justify-content: flex-end; border-top: 1px solid #e8e8e8;">
-
-                    <div style="flex: 1;"></div>
-                    <a-button variant="text" @click="quickValidate.visible = false">关闭</a-button>
-                    <a-button color="primary" variant="elevated" @click="runQuickValidate">
-                        立即验证
-                    </a-button>
-                    <a-button
-                        color="secondary"
-                        variant="tonal"
-                        :disabled="quickValidate.status !== 'pass'"
-                        @click="saveCurrentAsTemplate"
-                    >
-                        保存为模板
-                    </a-button>
-                </div>
-            </a-card>
-        </a-modal>
-
-        <a-modal v-model="templateDialog.visible" max-width="900">
-            <a-card>
-                <a-card-title class="d-flex align-center">
-                    <span class="text-h6">协议模板示例</span>
-                    <div style="flex: 1;"></div>
-                    <a-input
-                        v-model="templateDialog.search"
-                        prepend-inner-icon="mdi-magnify"
-                        label="搜索模板(名称/描述)"
-                        variant="outlined"
-                        density="compact"
-                        hide-details
-                        style="max-width: 260px"
-                    ></a-input>
-                    <a-button type="text" size="small" @click="templateDialog.visible = false">
-                        <template #icon><IconClose /></template>
-                    </a-button>
-
-                </a-card-title>
-                <a-card-text>
-
-                    <a-row :gutter="16" class="dense">
-                        <a-col
-                            v-for="tpl in filteredPointTemplates"
-                            :key="tpl.id"
-                            cols="12"
-                            md="6"
-                        >
-                            <a-card variant="outlined" class="pa-3">
-                                <div class="d-flex align-center mb-1">
-                                    <span class="font-weight-medium">{{ tpl.name }}</span>
-                                    <div style="flex: 1;"></div>
-                                    <a-tag size="x-small" color="primary" class="mr-1">
-                                        {{ tpl.protocol }}
-                                    </a-tag>
-                                </div>
-                                <div class="text-caption text-grey-darken-1 mb-2">
-                                    {{ tpl.description }}
-                                </div>
-                                <div class="text-caption mb-1">
-                                    类型: {{ tpl.parseType }} / {{ tpl.datatype }},
-                                    字节数: {{ tpl.byteLength || 'N/A' }},
-                                    字序: {{ tpl.wordOrder || 'N/A' }},
-                                    单位: {{ tpl.unit || '-' }},
-                                    默认值: {{ tpl.defaultValue === '' ? '-' : tpl.defaultValue }},
-                                    权限: {{ tpl.readwrite }}
-                                </div>
-                                <div class="mt-2 d-flex">
-                                    <a-button
-                                        color="primary"
-                                        size="small"
-                                        variant="elevated"
-                                        prepend-icon="mdi-clipboard-arrow-right"
-                                        @click="applyTemplate(tpl)"
-                                    >
-                                        套用模板
-                                    </a-button>
-                                    <a-button
-                                        class="ml-2"
-                                        color="secondary"
-                                        size="small"
-                                        variant="text"
-                                        prepend-icon="mdi-content-copy"
-                                        @click="copyTemplate(tpl)"
-                                    >
-                                        复制配置
-                                    </a-button>
-                                </div>
-                            </a-card>
-                        </a-col>
-                    </a-row>
-                </a-card-text>
-                <div class="pa-4 pt-0" style="display: flex; justify-content: flex-end; border-top: 1px solid #e8e8e8;">
-
-                    <div style="flex: 1;"></div>
-                    <a-button type="primary" size="small" @click="templateDialog.visible = false">关闭</a-button>
-
-                </div>
-            </a-card>
-        </a-modal>
-
-        <a-modal v-model="helpDialog.visible" max-width="900">
-            <a-card>
-                <a-card-title class="d-flex align-center">
-                    <span class="text-h6">点位解码与公式使用帮助</span>
-                    <div style="flex: 1;"></div>
-                    <a-button type="text" size="small" @click="helpDialog.visible = false">
-                        <template #icon><IconClose /></template>
-                    </a-button>
-
-                </a-card-title>
-                <a-card-text class="pt-2">
-
-                    <a-input
-                        v-model="helpDialog.search"
-                        prepend-inner-icon="mdi-magnify"
-                        label="搜索关键字 (协议 / 函数 / 示例)"
-                        variant="outlined"
-                        density="compact"
-                        class="mb-4"
-                        clearable
-                    ></a-input>
-                    <a-collapse multiple>
-                        <a-collapse-item
-                            v-for="section in filteredHelpSections"
-                            :key="section.id"
-                            :title="section.title"
-                        >
-                            <div>
-                                <div v-for="item in section.items" :key="item.title" class="mb-4">
-                                    <div class="d-flex align-center mb-1">
-                                        <span class="font-weight-medium">{{ item.title }}</span>
-                                        <div style="flex: 1;"></div>
-                                        <a-button
-                                            v-if="item.snippet"
-                                            type="text"
-                                            size="small"
-                                            @click="copySnippet(item.snippet)"
-                                        >
-                                            复制示例
-                                        </a-button>
-                                    </div>
-                                    <div class="text-body-2 mb-1">{{ item.desc }}</div>
-                                    <div v-if="item.snippet" class="pa-2 rounded bg-grey-lighten-4 font-mono text-body-2">
-                                        {{ item.snippet }}
-                                    </div>
-                                </div>
-                            </div>
-                        </a-collapse-item>
-                    </a-collapse>
-                </a-card-text>
-                <div class="pa-4" style="display: flex; justify-content: flex-end; border-top: 1px solid #e8e8e8;">
-
-                    <div style="flex: 1;"></div>
-                    <a-button type="primary" size="small" @click="helpDialog.visible = false">关闭</a-button>
-
-                </div>
-            </a-card>
-        </a-modal>
-
-        <!-- BACnet Scanner Dialog -->
-        <BACnetScanner
-            v-if="channelProtocol === 'bacnet-ip'"
-            :visible="scanDialogVisible"
-            :channel-id="channelId"
-            :device-id="deviceId"
-            :channel-protocol="channelProtocol"
-            :existing-addresses="existingAddresses"
-            :device-info="deviceInfo"
-            @close="scanDialogVisible = false"
-            @refresh-points="handleRefreshPoints"
-        />
-
-
-        <a-modal
-            v-model:visible="registerBlockDialog.visible"
-            title="批量创建寄存器区块"
-            :width="760"
-            modal-class="channel-config-modal channel-config-modal--batch"
-            :ok-loading="registerBlockDialog.loading"
-            ok-text="生成点位"
-            @ok="submitRegisterBlock"
-            @cancel="registerBlockDialog.visible = false"
-        >
-            <p class="modal-intro modal-intro--compact">
-                按地址区间批量生成 Modbus 点位。合并模式下保留同 ID 现有点位配置。
-            </p>
-            <a-form layout="vertical" class="channel-config-form batch-modbus-form form-controls-md">
-                <div class="batch-form-fields">
-                    <div class="form-field">
-                        <div class="field-label">地址区间</div>
-                        <div class="batch-range-control">
-                            <a-input-number
-                                v-model="registerBlockDialog.start"
-                                :min="0"
-                                :max="65535"
-                                placeholder="0"
-                            />
-                            <span class="batch-range-sep">至</span>
-                            <a-input-number
-                                v-model="registerBlockDialog.end"
-                                :min="0"
-                                :max="65535"
-                                placeholder="199"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="batch-form-row">
-                        <div class="form-field">
-                            <div class="field-label">寄存器类型</div>
-                            <a-select
-                                v-model="registerBlockDialog.register_type"
-                                :options="registerBlockRegisterTypes"
-                                @change="onRegisterBlockTypeChange"
-                            />
-                        </div>
-                        <div class="form-field">
-                            <div class="field-label">数据类型</div>
-                            <a-select
-                                v-model="registerBlockDialog.datatype"
-                                :options="registerBlockDatatypeOptions"
-                                placeholder="选择数据类型"
-                            />
-                        </div>
-                    </div>
-
-                    <div class="form-field">
-                        <div class="field-label">读写</div>
-                        <a-select
-                            v-model="registerBlockDialog.readwrite"
-                            :options="registerBlockReadWriteOptions"
-                        />
-                    </div>
-
-                    <div class="form-field">
-                        <div class="field-label">生成模式</div>
-                        <a-radio-group v-model="registerBlockDialog.mode" direction="vertical" class="register-block-mode">
-                            <a-radio value="merge">合并（保留现有点）</a-radio>
-                            <a-radio value="replace">替换（仅保留新区间）</a-radio>
-                        </a-radio-group>
-                    </div>
-
-                    <div class="batch-preview-block">
-                        <div class="field-label batch-preview-block__label">创建预览</div>
-                        <div class="batch-preview-stats batch-preview-stats--single">
-                            <div class="batch-preview-stat batch-preview-stat--accent">
-                                <span class="batch-preview-stat__value">{{ registerBlockCount }}</span>
-                                <span class="batch-preview-stat__label">点位</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a-form>
-        </a-modal>
-
-        <!-- Delete Confirmation Dialog -->
-        <a-modal v-model:visible="deleteDialog.visible" width="400px" @ok="executeDelete" @cancel="deleteDialog.visible = false">
-            <template #title>
-                <div class="flex items-center gap-2">
-                    <IconCloseCircle class="text-red-500" />
-                    <span>确认删除</span>
-                </div>
-            </template>
-            <div class="text-center py-4">
-                <template v-if="deleteDialog.isBatch">
-                    确定要批量删除选中的 <span class="text-red-500 font-bold">{{ deleteDialog.batchCount }}</span> 个点位吗？
-                </template>
-                <template v-else>
-                    确定要删除点位 <span class="text-red-500 font-bold">{{ deleteDialog.point?.name || deleteDialog.point?.id }}</span> 吗？
-                </template>
-                <div class="mt-2 text-gray-400 text-sm">此操作不可撤销。</div>
-            </div>
-            <template #footer>
-                <div class="flex justify-end gap-2">
-                    <a-button @click="deleteDialog.visible = false">取消</a-button>
-                    <a-button type="primary" status="danger" @click="executeDelete" :loading="deleteDialog.loading">确认删除</a-button>
-                </div>
-            </template>
-        </a-modal>
-
-        <!-- Debug Dialog -->
-        <a-modal
-            v-model:visible="debugDialog.visible"
-            title="点位调试"
-            width="640px"
-            @cancel="debugDialog.visible = false"
-        >
-            <div class="debug-dialog-meta">
-                <span>{{ debugDialog.pointName }}</span>
-            </div>
-            <pre class="debug-dialog-content">{{ debugDialog.content }}</pre>
-            <template #footer>
-                <a-button type="primary" @click="debugDialog.visible = false">关闭</a-button>
-            </template>
-        </a-modal>
-
-        <!-- Write Dialog -->
-        <a-modal 
-            v-model:visible="writeDialog.visible" 
-            :width="480"
-            :mask-closable="false"
-            unmount-on-close
-            modal-class="write-value-modal"
-            title-align="start"
-            @cancel="writeDialog.visible = false"
-            @ok="submitWrite"
-        >
-            <template #title>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <span style="font-size: 16px; font-weight: 700; color: #0f172a;">写入数值</span>
-                    <span style="font-size: 11px; color: #64748b; font-family: monospace; text-transform: uppercase;">{{ getDataTypeLabel() }}</span>
-                </div>
-            </template>
-
-            <div style="padding: 16px;">
-                <!-- 设备信息 -->
-                <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px; background: var(--edgex-surface-inset); border: 1px solid #e2e8f0;">
-                    <div>
-                        <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">设备</div>
-                        <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.deviceID }}</div>
-                    </div>
-                    <div style="border-left: 1px solid #cbd5e1;"></div>
-                    <div>
-                        <div style="font-size: 10px; color: #64748b; text-transform: uppercase;">点位</div>
-                        <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.pointID }}</div>
-                    </div>
-                </div>
-
-                <!-- Boolean 类型 -->
-                <template v-if="isBoolType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">BOOL 布尔值</div>
-                    <a-radio-group v-model="writeDialog.valueBool" type="button">
-                        <a-radio :value="true"><strong>TRUE</strong> 真</a-radio>
-                        <a-radio :value="false"><strong>FALSE</strong> 假</a-radio>
-                    </a-radio-group>
-                </template>
-
-                <!-- String 类型 -->
-                <template v-else-if="isStringType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">STRING 字符串</div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        :placeholder="getStringInputPlaceholder()"
-                        size="large"
-                        autofocus
-                    />
-                </template>
-
-                <!-- ByteString (二进制) 类型 -->
-                <template v-else-if="isBinaryType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">BYTE STRING 二进制</div>
-                    <a-radio-group v-model="writeDialog.binaryEncoding" type="button" size="small">
-                        <a-radio value="hex">Hex</a-radio>
-                        <a-radio value="base64">Base64</a-radio>
-                    </a-radio-group>
-                    <a-input
-                        v-model="writeDialog.valueBinary"
-                        :placeholder="getBinaryWritePlaceholder()"
-                        size="large"
-                        style="margin-top: 8px; font-family: monospace;"
-                        autofocus
-                    />
-                    <div style="margin-top: 6px; font-size: 11px; color: #64748b;">示例: {{ getBinaryWriteHint() }}</div>
-                </template>
-
-                <!-- DateTime 类型 -->
-                <template v-else-if="isDateTimeType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">DATETIME 日期时间</div>
-                    <a-date-picker
-                        v-model="writeDialog.valueDateTime"
-                        show-time
-                        format="YYYY-MM-DD HH:mm:ss"
-                        size="large"
-                        style="width: 100%"
-                        autofocus
-                    />
-                </template>
-
-                <!-- Guid 类型 -->
-                <template v-else-if="isGuidType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">GUID 全局唯一标识符</div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        placeholder="12345678-1234-1234-1234-123456789abc"
-                        size="large"
-                        style="font-family: monospace;"
-                        autofocus
-                    />
-                </template>
-
-                <!-- StatusCode 类型 -->
-                <template v-else-if="isStatusCodeType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">STATUS CODE 状态码</div>
-                    <a-select
-                        v-model="writeDialog.valueStatusCode"
-                        :options="statusCodeOptions"
-                        placeholder="选择状态码"
-                        size="large"
-                        allow-search
-                        style="width: 100%"
-                    />
-                </template>
-
-                <!-- QualifiedName 类型 -->
-                <template v-else-if="isQualifiedNameType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">QUALIFIED NAME 限定名</div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        placeholder="命名空间:名称 (如 2:Temperature)"
-                        size="large"
-                        style="font-family: monospace;"
-                        autofocus
-                    />
-                </template>
-
-                <!-- LocalizedText 类型 -->
-                <template v-else-if="isLocalizedTextType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">LOCALIZED TEXT 本地化文本</div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        placeholder="请输入文本"
-                        size="large"
-                        autofocus
-                    />
-                </template>
-
-                <!-- NodeId 类型 -->
-                <template v-else-if="isNodeIdType(writeDialog.dataType)">
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">NODE ID 节点标识符</div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        placeholder="ns=2;s=Node 或 i=2255"
-                        size="large"
-                        style="font-family: monospace;"
-                        autofocus
-                    />
-                </template>
-
-                <!-- 数值类型 (Int, Float, Double) -->
-                <template v-else>
-                    <div style="margin-bottom: 8px; font-size: 12px; color: #64748b;">
-                        {{ getNumericTypeInfo() || '数值' }}
-                    </div>
-                    <a-input
-                        v-model="writeDialog.valueStr"
-                        placeholder="如 3.14 或 1e-5"
-                        size="large"
-                        autofocus
-                        @keydown.enter="submitWrite"
-                    />
-                    <div style="margin-top: 6px; font-size: 11px; color: #64748b;">支持整数、小数、科学计数法</div>
-                </template>
-            </div>
-
-            <template #footer>
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <a-button @click="writeDialog.visible = false">取消</a-button>
-                    <a-button 
-                        type="primary" 
-                        status="warning" 
-                        :loading="writeDialog.loading" 
-                        @click="submitWrite"
-                    >
-                        立即下发
-                    </a-button>
-                </div>
-            </template>
-        </a-modal>
-
-        <!-- Value Detail Dialog -->
-        <a-modal v-model:visible="valueDialog.visible" title="完整数值" width="700px">
-            <a-card>
-                <div class="pt-4">
-                    <a-textarea
-                        placeholder="原始值"
-                        v-model="valueDialog.value"
-                        :read-only="true"
-                        :auto-size="{ minRows: 3, maxRows: 10 }"
-                        class="mb-4"
-                    />
-
-
-                    <div v-if="valueDialog.isBase64">
-                        <div class="text-subtitle-1 mb-2 font-weight-bold">Base64 解码</div>
-                        <a-radio-group v-model="valueDialog.decodeType" @change="tryDecode" class="mb-4">
-                            <a-radio value="text">Text (UTF-8)</a-radio>
-                            <a-radio value="hex">Hex</a-radio>
-                            <a-radio value="json">JSON</a-radio>
-                        </a-radio-group>
-                        
-                        <a-textarea
-                            placeholder="解码结果"
-                            v-model="valueDialog.decodedValue"
-                            :read-only="true"
-                            :auto-size="{ minRows: 5, maxRows: 10 }"
-                            style="font-family: monospace;"
-                        />
-                    </div>
-                    <div v-else-if="numericFormats">
-                        <div class="text-subtitle-1 mb-3 font-weight-bold">数值格式转换</div>
-                        <a-row class="mb-3">
-                            <a-col :span="12" :sm="6">
-                                <div class="text-body-2 text-grey-darken-1 mb-1">字节数</div>
-                                <a-button-group>
-                                    <a-button :type="valueDialog.byteLength === 1 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 1">1 字节</a-button>
-                                    <a-button :type="valueDialog.byteLength === 2 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 2">2 字节</a-button>
-                                    <a-button :type="valueDialog.byteLength === 4 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 4">4 字节</a-button>
-                                    <a-button :type="valueDialog.byteLength === 8 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 8">8 字节</a-button>
-                                </a-button-group>
-                            </a-col>
-                            <a-col :span="12" :sm="6" v-if="valueWordOrderOptions.length">
-                                <div class="text-body-2 text-grey-darken-1 mb-1">字节 / 字序</div>
-                                <a-select
-                                    v-model="valueDialog.wordOrder"
-                                    :options="valueWordOrderOptions"
-                                    :field-names="{ label: 'label', value: 'value' }"
-                                    size="small"
-                                    style="width: 100%;"
-                                />
-                            </a-col>
-                        </a-row>
-                        <a-table :columns="valueFormatColumns" :data="valueFormatData" size="small" :bordered="true">
-                        </a-table>
-                    </div>
-                </div>
-                <div class="dialog-footer" style="display: flex; justify-content: flex-end; padding: 16px; border-top: 1px solid #e8e8e8;">
-                    <a-button type="primary" @click="valueDialog.visible = false">关闭</a-button>
-                </div>
-            </a-card>
-        </a-modal>
-
-        <!-- Help Drawer -->
-        <HelpDrawer
-            v-model:visible="helpVisible"
-            :channel-protocol="channelProtocol"
-        />
-
-        <!-- OPC-UA Scanner -->
-        <OpcuaScanner
-            v-model:visible="opcuaScannerVisible"
-            :channel-id="channelId"
-            :device-id="deviceId"
-            :device-config="deviceInfo?.config || {}"
-            :channel-config="channelInfo?.config || {}"
-            :existing-points="points"
-            @error="(message) => showMessage(message, 'error')"
-            @info="(message) => showMessage(message, 'info')"
-            @points-added="handlePointsAdded"
-        />
+      <div class="header-right header-actions point-header-actions">
+        <a-space size="small" wrap>
+          <a-button v-if="channelProtocol && channelProtocol.includes('modbus')" type="outline" status="warning" size="small" @click="openRegisterBlockDialog">
+            <template #icon><IconPlus /></template>
+            批量创建寄存器
+          </a-button>
+          <a-button type="outline" status="success" size="small" @click="openAddDialog">
+            <template #icon><IconPlus /></template>
+            新增点位
+          </a-button>
+          <a-button v-if="channelProtocol === 'bacnet-ip' || channelProtocol === 'opc-ua'" type="outline" size="small" @click="openDiscoverDialog">
+            <template #icon><IconScan /></template>
+            扫描点位
+          </a-button>
+          <a-button type="primary" size="small" @click="fetchPoints" :loading="loading">
+            <template #icon><IconRefresh /></template>
+            刷新
+          </a-button>
+          <a-button type="text" size="small" class="help-trigger-btn" @click="helpVisible = true">
+            <template #icon><IconQuestionCircle /></template>
+            配置指引
+          </a-button>
+        </a-space>
+      </div>
     </div>
+
+    <div class="point-list-toolbar">
+      <div class="point-list-toolbar__filters">
+        <a-input
+          v-model="filters.search"
+          placeholder="搜索点位 (ID/名称/地址)"
+          size="small"
+          allow-clear
+          class="point-list-toolbar__search"
+        >
+          <template #prefix><IconSearch /></template>
+        </a-input>
+        <a-select
+          v-model="filters.quality"
+          :options="[{ label: 'Good', value: 'Good' }, { label: 'Bad', value: 'Bad' }]"
+          placeholder="质量过滤"
+          mode="multiple"
+          size="small"
+          class="point-list-toolbar__select point-list-toolbar__select--sm"
+        />
+        <div class="point-list-toolbar__pager">
+          <span class="point-list-toolbar__pager-label">每页</span>
+          <a-select
+            v-model="pageSize"
+            :options="PAGE_SIZE_CHOICES"
+            size="small"
+            class="point-list-toolbar__select point-list-toolbar__select--sm point-list-toolbar__pager-select"
+          />
+        </div>
+      </div>
+      <div v-if="selection.selectedIds.length > 0" class="point-list-toolbar__batch">
+        <span class="point-list-toolbar__selected-count font-mono">已选 {{ selection.selectedIds.length }} 项</span>
+        <a-button type="text" size="small" @click="selection.selectedIds = []">
+          清除选择
+        </a-button>
+        <a-button type="outline" status="success" size="small" @click="goCreateVirtualShadow">
+          <template #icon><IconThunderbolt /></template>
+          拼虚拟设备 ({{ selection.selectedIds.length }})
+        </a-button>
+        <a-button status="danger" type="outline" size="small" @click="confirmBatchDelete">
+          <template #icon><IconDelete /></template>
+          批量删除 ({{ selection.selectedIds.length }})
+        </a-button>
+      </div>
+    </div>
+
+    <div class="list-detail-body">
+      <a-spin :loading="loading" class="list-detail-spin">
+        <div class="table-container">
+          <div class="table-toolbar table-toolbar--points">
+            <div class="left-title">{{ isModbusChannel ? 'MODBUS SLAVE VIEW' : 'POINT LIST' }}</div>
+          </div>
+          <ModbusSlavePointView
+            v-if="isModbusChannel"
+            :all-points="points"
+            :points="filteredPoints"
+            :selected-ids="selection.selectedIds"
+            :filter-key="modbusFilterKey"
+            :load-error="loadError"
+            :page-size="effectivePageSize"
+            @selection-change="onModbusSelectionChange"
+            @clear-filters="clearGlobalFilters"
+            @retry="fetchPoints({ force: true })"
+            @write="openWriteDialog"
+            @edit="openEditDialog"
+            @delete="confirmDelete"
+            @debug="openDebug"
+            @show-value="showFullValue"
+          />
+          <a-table
+            v-else
+            :columns="tableColumns"
+            :data="filteredPoints"
+            :pagination="paginationConfig"
+            :row-selection="rowSelection"
+            v-model:selected-keys="selection.selectedIds"
+            row-key="id"
+            class="industrial-table-fluid"
+            :bordered="{ wrapper: true, cell: true }"
+          >
+            <template #value="{ record }">
+              <a-tooltip :content="`${formatValue(record.value)} ${record.unit || ''} - ${getRegisterHint(record)}`">
+                <div @click="showFullValue(record)" class="value-cell cursor-pointer block truncate">
+                  <span class="value-text font-mono point-value-tick" :key="'v' + formatValue(record.value)">{{ formatValue(record.value) }}</span>
+                  <span v-if="record.unit" class="value-unit">{{ record.unit }}</span>
+                </div>
+              </a-tooltip>
+            </template>
+
+            <template #quality="{ record }">
+              <span class="table-cell-semantic">
+                <div class="status-display flex items-center">
+                  <IconCheckCircle v-if="isQualityGood(record.quality)" class="mr-1 text-emerald-500" />
+                  <IconCloseCircle v-else class="mr-1 text-red-500" />
+                  <span class="font-mono text-xs">{{ record.quality }}</span>
+                </div>
+              </span>
+            </template>
+
+            <template #readwrite="{ record }">
+              <div class="status-display flex items-center">
+                <IconEdit v-if="record.readwrite === 'RW' || record.readwrite === 'W'" class="mr-1 text-blue-500" />
+                <IconCheckCircle v-else class="mr-1 text-emerald-500" />
+                <span class="font-mono text-xs">{{ record.readwrite }}</span>
+              </div>
+            </template>
+
+            <template #timestamp="{ record }">
+              <a-tooltip v-if="record?.updated_at" :content="`更新 ${formatDate(record.updated_at)}`">
+                <div class="font-mono text-xs text-slate-500 cursor-default">
+                  {{ record && (record.collected_at || record.timestamp) ? formatDate(record.collected_at || record.timestamp) : 'N/A' }}
+                </div>
+              </a-tooltip>
+              <div v-else class="font-mono text-xs text-slate-500">
+                {{ record && (record.collected_at || record.timestamp) ? formatDate(record.collected_at || record.timestamp) : 'N/A' }}
+              </div>
+            </template>
+
+            <template #actions="{ record }">
+              <div class="actions-container flex gap-1">
+                <a-button
+                  v-if="record.readwrite === 'RW' || record.readwrite === 'W'"
+                  type="text"
+                  size="mini"
+                  class="hover:bg-slate-100"
+                  @click="openWriteDialog(record)"
+                >
+                  写入
+                </a-button>
+                            
+                <a-button
+                  type="text"
+                  size="mini"
+                  class="hover:bg-slate-100"
+                  @click="openEditDialog(record)"
+                >
+                  编辑
+                </a-button>
+                            
+                <a-button
+                  type="text"
+                  size="mini"
+                  status="danger"
+                  class="hover:bg-red-50"
+                  @click="confirmDelete(record)"
+                >
+                  删除
+                </a-button>
+                            
+                <a-button
+                  type="text"
+                  size="mini"
+                  status="info"
+                  class="hover:bg-blue-50"
+                  @click="openDebug(record)"
+                >
+                  调试
+                </a-button>
+              </div>
+            </template>
+
+            <template #empty>
+              <div class="empty-state">
+                <IconSearch size="48" class="text-slate-300" />
+                <div class="empty-text font-mono">暂无匹配的点位数据</div>
+                <div class="empty-actions">
+                  <a-button v-if="points.length === 0" type="primary" size="small" @click="openCloneDialog">
+                    <template #icon><IconCopy /></template>复制其它设备点位
+                  </a-button>
+                  <a-button v-else type="outline" size="small" @click="filters.search = ''; filters.quality = []">
+                    清除过滤器
+                  </a-button>
+                </div>
+              </div>
+            </template>
+          </a-table>
+        </div>
+      </a-spin>
+
+      <!-- Connection Status Footer -->
+      <div v-if="deviceInfo" class="terminal-info">
+        <span class="terminal-dot" :class="terminalDotClass"></span>
+        <span class="monospace-text">
+          连接状态:{{ deviceInfo.state === 0 ? '已连接' : deviceInfo.state === 1 ? '不稳定' : '已断开' }} | 协议: {{ formatProtocolTag(channelProtocol) }} | 连续通信:{{ deviceInfo.runtime?.success_count || 0 }} 次 | 最近失败:{{ deviceInfo.runtime?.last_fail_time && new Date(deviceInfo.runtime.last_fail_time).getFullYear() > 1 ? formatDate(deviceInfo.runtime.last_fail_time) : '无' }}
+        </span>
+      </div>
+    </div>
+
+    <a-modal v-model:visible="cloneDialog.visible" title="克隆其它设备点位" width="100%" :ok-loading="cloneDialog.loading" @ok="executeClone" @cancel="cloneDialog.visible = false">
+      <a-space direction="vertical" :size="16" fill>
+        <a-row :gutter="16">
+          <a-col :span="8">
+            <a-select
+              v-model="cloneDialog.selectedChannel"
+              :options="cloneDialog.channels"
+              placeholder="选择通道"
+              :loading="cloneDialog.loading"
+              @change="onCloneChannelChange"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-select
+              v-model="cloneDialog.selectedDevice"
+              :options="cloneDialog.devices"
+              placeholder="选择设备"
+              :loading="cloneDialog.loading"
+              @change="onCloneDeviceChange"
+            />
+          </a-col>
+          <a-col :span="8">
+            <a-input
+              v-model="cloneDialog.search"
+              placeholder="按名称或地址过滤"
+              allow-clear
+            >
+              <template #prefix><IconSearch /></template>
+            </a-input>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16" v-if="cloneDialog.points && cloneDialog.points.length > 0">
+          <a-col :span="24">
+            <a-space>
+              <a-checkbox
+                v-model="cloneDialog.selectAll"
+                @change="toggleCloneSelectAll"
+              >
+                全选
+              </a-checkbox>
+              <span class="text-slate-600">
+                已选择 {{ cloneDialog.selected.length }} / {{ cloneDialog.points.length }}
+              </span>
+            </a-space>
+          </a-col>
+        </a-row>
+        <a-table
+          :columns="cloneTableColumns"
+          :data="filteredClonePoints"
+          :pagination="false"
+          :scroll="{ y: 360 }"
+        >
+          <template #checkbox="{ record }">
+            <a-checkbox
+              v-model="cloneDialog.selected"
+              :value="record"
+            />
+          </template>
+        </a-table>
+        <a-empty v-if="!cloneDialog.loading && cloneDialog.points.length === 0" description="请选择通道与设备以加载点位" />
+      </a-space>
+    </a-modal>
+
+    <!-- Point Config Dialog (Add/Edit) -->
+    <a-modal 
+      v-model:visible="pointDialog.visible" 
+      :width="760"
+      :mask-closable="false"
+      unmount-on-close
+      modal-class="channel-config-modal"
+      :title="pointDialog.isEdit ? '编辑点位' : '新增点位'"
+      @cancel="pointDialog.visible = false"
+    >
+      <a-form :model="pointDialog.form" layout="vertical" class="channel-config-form point-config-form form-controls-md">
+        <div class="batch-form-fields">
+          <div class="batch-form-row">
+            <div class="form-field">
+              <div class="field-label">点位 ID</div>
+              <a-input
+                v-model="pointDialog.form.id"
+                placeholder="唯一标识符"
+                :disabled="pointDialog.isEdit"
+              />
+            </div>
+            <div class="form-field">
+              <div class="field-label">点位名称</div>
+              <a-input
+                v-model="pointDialog.form.name"
+                placeholder="点位名称"
+              />
+            </div>
+          </div>
+
+          <!-- Protocol Specific Configuration -->
+          <ModbusPointConfig
+            v-if="channelProtocol.startsWith('modbus')"
+            v-model:form="pointDialog.form"
+            :device-info="deviceInfo"
+          />
+                    
+          <BacnetPointConfig
+            v-else-if="channelProtocol === 'bacnet-ip'"
+            v-model:form="pointDialog.form"
+            :device-info="deviceInfo"
+          />
+                    
+          <OpcuaPointConfig
+            v-else-if="channelProtocol === 'opc-ua'"
+            v-model:form="pointDialog.form"
+            :device-info="deviceInfo"
+          />
+
+          <template v-else-if="channelProtocol === 'knxnet-ip'">
+            <div class="modal-section__title modal-section__title--sub">KNX 组地址</div>
+            <div class="advanced-block point-advanced-block">
+              <div class="batch-form-row">
+                <div class="form-field">
+                  <div class="field-label">主组</div>
+                  <a-input-number
+                    v-model="pointDialog.knx.mainGroup"
+                    :min="0"
+                    :max="31"
+                    :precision="0"
+                    placeholder="0-31"
+                    @change="updateKNXAddress"
+                  />
+                </div>
+                <div class="form-field">
+                  <div class="field-label">中组</div>
+                  <a-input-number
+                    v-model="pointDialog.knx.middleGroup"
+                    :min="0"
+                    :max="7"
+                    :precision="0"
+                    placeholder="0-7"
+                    @change="updateKNXAddress"
+                  />
+                </div>
+                <div class="form-field">
+                  <div class="field-label">子组</div>
+                  <a-input-number
+                    v-model="pointDialog.knx.subGroup"
+                    :min="0"
+                    :max="255"
+                    :precision="0"
+                    placeholder="0-255"
+                    @change="updateKNXAddress"
+                  />
+                </div>
+              </div>
+              <div class="batch-form-row">
+                <div class="form-field">
+                  <div class="field-label">个体地址（可选）</div>
+                  <a-input
+                    v-model="pointDialog.knx.individualAddress"
+                    placeholder="例如 1.1.1"
+                    @input="updateKNXAddress"
+                  />
+                </div>
+                <div class="form-field">
+                  <div class="field-label">位宽（可选）</div>
+                  <a-input-number
+                    v-model="pointDialog.knx.bitWidth"
+                    :min="0"
+                    :max="7"
+                    :precision="0"
+                    placeholder="0-7，0 为省略"
+                    allow-clear
+                    @change="updateKNXAddress"
+                  />
+                </div>
+              </div>
+              <div class="form-field">
+                <div class="field-label">生成地址预览</div>
+                <a-input
+                  v-model="pointDialog.form.address"
+                  readonly
+                  placeholder="main/middle/sub"
+                />
+              </div>
+            </div>
+          </template>
+                    
+          <!-- Other Protocols -->
+          <template v-else>
+            <div class="form-field">
+              <div class="field-label">{{ getProtocolAddressLabel() }}</div>
+              <a-input
+                v-model="pointDialog.form.address"
+                :placeholder="getProtocolAddressPlaceholder()"
+              />
+            </div>
+          </template>
+
+          <template v-if="channelProtocol.startsWith('modbus')">
+            <div class="modal-section__title modal-section__title--sub">高级设置</div>
+            <div class="advanced-block point-advanced-block">
+              <div class="point-advanced-fields">
+                <div class="form-field">
+                  <div class="field-label">数据格式（格式预设）</div>
+                  <div class="field-hint" title="常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设">常用组合一键填充字节数 / 解析类型 / 数据类型 / 字序，新手建议先选预设</div>
+                  <a-select
+                    v-model="formatPresetSelected"
+                    :options="filteredFormatPresets"
+                    clearable
+                    @update:value="onSelectFormatPreset"
+                  />
+                </div>
+                <div class="batch-form-row">
+                  <div class="form-field">
+                    <div class="field-label">解析类型（字节解析）</div>
+                    <div class="field-hint" title="原始字节如何被解读为数值；缩放后可以得到小数">原始字节如何被解读为数值；缩放后可以得到小数</div>
+                    <a-select
+                      v-model="pointDialog.parseType"
+                      :options="filteredParseTypes"
+                      @update:value="onParseTypeChange"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">数据类型（显示 / 存储 / 北向）</div>
+                    <div class="field-hint" title="缩放后的显示、存储和北向输出类型，可以与原始解析类型不同">缩放后的显示、存储和北向输出类型，可以与原始解析类型不同</div>
+                    <a-select
+                      v-model="pointDialog.form.datatype"
+                      :options="datatypeOptions"
+                      @update:value="onDatatypeChange"
+                    />
+                  </div>
+                </div>
+                <div v-if="parseTypeWarnings.length" class="field-warn-list">
+                  <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
+                </div>
+                <div class="batch-form-row">
+                  <div class="form-field">
+                    <div class="field-label">读公式模板</div>
+                    <a-select
+                      v-model="pointDialog.form.read_formula_template"
+                      :options="formulaTemplates"
+                      clearable
+                      @update:value="onSelectFormulaTemplate('read')"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">读公式 (使用变量 v)</div>
+                    <a-input
+                      v-model="pointDialog.form.read_formula"
+                      @input="validateFormula('read')"
+                    />
+                    <div v-if="formulaErrors.read" class="field-error">{{ formulaErrors.read }}</div>
+                  </div>
+                </div>
+                <div class="batch-form-row">
+                  <div class="form-field">
+                    <div class="field-label">读写权限</div>
+                    <a-select
+                      v-model="pointDialog.form.readwrite"
+                      :options="['R', 'RW']"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">写公式模板</div>
+                    <a-select
+                      v-model="pointDialog.form.write_formula_template"
+                      :options="formulaTemplates"
+                      clearable
+                      @update:value="onSelectFormulaTemplate('write')"
+                    />
+                  </div>
+                </div>
+                <div class="batch-form-row">
+                  <div class="form-field">
+                    <div class="field-label">写公式 (使用变量 v)</div>
+                    <a-input
+                      v-model="pointDialog.form.write_formula"
+                      @input="validateFormula('write')"
+                    />
+                    <div v-if="formulaErrors.write" class="field-error">{{ formulaErrors.write }}</div>
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">单位</div>
+                    <a-input v-model="pointDialog.form.unit" />
+                  </div>
+                </div>
+                <div class="batch-form-row">
+                  <div class="form-field">
+                    <div class="field-label">缩放比例</div>
+                    <a-input
+                      v-model="pointDialog.form.scale"
+                      inputmode="decimal"
+                      placeholder="1.0"
+                    />
+                  </div>
+                  <div class="form-field">
+                    <div class="field-label">偏移量</div>
+                    <a-input
+                      v-model="pointDialog.form.offset"
+                      inputmode="decimal"
+                      placeholder="0"
+                    />
+                  </div>
+                </div>
+                <div class="form-field">
+                  <div class="field-label">默认值</div>
+                  <a-input v-model="pointDialog.defaultValue" />
+                </div>
+              </div>
+              <div class="point-config-actions">
+                <a-button type="outline" @click="openQuickValidate">
+                  <template #icon><IconThunderbolt /></template>
+                  快速验证
+                </a-button>
+                <a-button type="outline" @click="openTemplateDialog">
+                  <template #icon><IconFile /></template>
+                  协议模板
+                </a-button>
+              </div>
+            </div>
+          </template>
+          <template v-else>
+            <div class="modal-section__title modal-section__title--sub">数据解析</div>
+            <div class="advanced-block point-advanced-block">
+              <a-row :gutter="[24, 16]" class="field-grid">
+                <a-col :span="24">
+                  <a-form-item field="formatPreset" label="数据格式（格式预设）">
+                    <a-select
+                      v-model="formatPresetSelected"
+                      :options="filteredFormatPresets"
+                      clearable
+                      @update:value="onSelectFormatPreset"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="8">
+                  <a-form-item field="byteLength" label="字节数">
+                    <a-select
+                      v-model="pointDialog.byteLength"
+                      :options="[1, 2, 4, 8]"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="8">
+                  <a-form-item field="wordOrderOption" label="WordOrder(字序)">
+                    <a-select
+                      v-model="pointDialog.wordOrderOption"
+                      :options="wordOrderOptionsForBytes"
+                      :disabled="pointDialog.byteLength === 1"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="8">
+                  <a-form-item field="parseType" label="解析类型（字节解析）">
+                    <a-select
+                      v-model="pointDialog.parseType"
+                      :options="filteredParseTypes"
+                      @update:value="onParseTypeChange"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="datatype" label="数据类型（显示 / 存储 / 北向）">
+                    <a-select
+                      v-model="pointDialog.form.datatype"
+                      :options="datatypeOptions"
+                      @update:value="onDatatypeChange"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col v-if="parseTypeWarnings.length" :span="24">
+                  <div class="field-warn-list">
+                    <div v-for="w in parseTypeWarnings" :key="w" class="field-warn">{{ w }}</div>
+                  </div>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="read_formula_template" label="读公式模板">
+                    <a-select
+                      v-model="pointDialog.form.read_formula_template"
+                      :options="formulaTemplates"
+                      clearable
+                      @update:value="onSelectFormulaTemplate('read')"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="read_formula" label="读公式 (使用变量 v)" :error="formulaErrors.read">
+                    <a-input
+                      v-model="pointDialog.form.read_formula"
+                      @input="validateFormula('read')"
+                    ></a-input>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="readwrite" label="读写权限">
+                    <a-select
+                      v-model="pointDialog.form.readwrite"
+                      :options="['R', 'RW']"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="write_formula_template" label="写公式模板">
+                    <a-select
+                      v-model="pointDialog.form.write_formula_template"
+                      :options="formulaTemplates"
+                      clearable
+                      @update:value="onSelectFormulaTemplate('write')"
+                    ></a-select>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="write_formula" label="写公式 (使用变量 v)" :error="formulaErrors.write">
+                    <a-input
+                      v-model="pointDialog.form.write_formula"
+                      @input="validateFormula('write')"
+                    ></a-input>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="unit" label="单位">
+                    <a-input
+                      v-model="pointDialog.form.unit"
+                    ></a-input>
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="scale" label="缩放比例">
+                    <a-input
+                      v-model="pointDialog.form.scale"
+                      placeholder="缩放比例"
+                      size="small"
+                      inputmode="decimal"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="offset" label="偏移量">
+                    <a-input
+                      v-model="pointDialog.form.offset"
+                      placeholder="偏移量"
+                      size="small"
+                      inputmode="decimal"
+                    />
+                  </a-form-item>
+                </a-col>
+                <a-col :span="12">
+                  <a-form-item field="defaultValue" label="默认值">
+                    <a-input
+                      v-model="pointDialog.defaultValue"
+                      placeholder="默认值"
+                      size="small"
+                    />
+                  </a-form-item>
+                </a-col>
+              </a-row>
+              <div class="point-config-actions">
+                <a-button type="outline" @click="openQuickValidate">
+                  <template #icon><IconThunderbolt /></template>
+                  快速验证
+                </a-button>
+                <a-button type="outline" @click="openTemplateDialog">
+                  <template #icon><IconFile /></template>
+                  协议模板
+                </a-button>
+              </div>
+            </div>
+          </template>
+        </div>
+      </a-form>
+
+      <template #footer>
+        <a-button @click="pointDialog.visible = false">取消</a-button>
+        <a-button type="primary" :loading="pointDialog.loading" @click="submitPoint">
+          保存配置
+        </a-button>
+      </template>
+    </a-modal>
+
+    <a-modal v-model="quickValidate.visible" :width="640">
+      <div class="vd-flex-between mb-3">
+        <span class="vd-title">快速验证当前解析配置</span>
+        <div class="vd-flex">
+          <a-tag
+            v-if="quickValidate.status"
+            :color="quickValidate.status === 'pass' ? 'green' : 'red'"
+            size="small"
+            class="mr-2"
+          >
+            {{ quickValidate.status === 'pass' ? '验证通过' : '未通过' }}
+          </a-tag>
+          <a-button type="text" size="small" @click="quickValidate.visible = false">
+            <template #icon><IconClose /></template>
+          </a-button>
+        </div>
+      </div>
+      <a-row :gutter="16">
+        <a-col :span="24">
+          <a-input
+            v-model="quickValidate.rawHex"
+            placeholder="原始十六进制报文 (例如: 01 0A FF 00)"
+            size="small"
+          />
+        </a-col>
+        <a-col :span="24">
+          <a-input
+            v-model="quickValidate.registerValues"
+            placeholder="寄存器值列表(可选, 以空格或逗号分隔, 支持0x前缀) 例如: 0x1234 0x5678 或 4660 22136"
+            size="small"
+          />
+        </a-col>
+        <a-col :span="24" :sm="12">
+          <a-input
+            v-model="quickValidate.registerBaseAddress"
+            placeholder="起始寄存器地址(仅用于标注) 例如: 40001"
+            size="small"
+          />
+        </a-col>
+        <a-col :span="24">
+          <a-input
+            v-model="quickValidate.expected"
+            placeholder="期望工程值(可选) 例如: 230.1 或 LongABCD 11112222"
+            size="small"
+          />
+        </a-col>
+        <a-col :span="24">
+          <div class="vd-caption mb-1">解析结果预览</div>
+          <div class="vd-codebox">
+            <span v-html="quickValidate.previewHtml"></span>
+          </div>
+        </a-col>
+      </a-row>
+      <div class="vd-dialog-footer">
+        <a-button type="text" @click="quickValidate.visible = false">关闭</a-button>
+        <a-button type="primary" @click="runQuickValidate">立即验证</a-button>
+        <a-button
+          type="secondary"
+          :disabled="quickValidate.status !== 'pass'"
+          @click="saveCurrentAsTemplate"
+        >
+          保存为模板
+        </a-button>
+      </div>
+    </a-modal>
+
+    <a-modal v-model="templateDialog.visible" :width="900">
+      <div class="vd-card-title mb-3">
+        <span class="vd-title">协议模板示例</span>
+        <div class="vd-spacer"></div>
+        <a-input
+          v-model="templateDialog.search"
+          placeholder="搜索模板(名称/描述)"
+          size="small"
+          allow-clear
+          class="vd-search"
+        />
+        <a-button type="text" size="small" @click="templateDialog.visible = false">
+          <template #icon><IconClose /></template>
+        </a-button>
+      </div>
+      <a-row :gutter="16">
+        <a-col
+          v-for="tpl in filteredPointTemplates"
+          :key="tpl.id"
+          :span="24" :md="12"
+        >
+          <div class="vd-template-card">
+            <div class="vd-flex-between mb-1">
+              <span class="vd-medium">{{ tpl.name }}</span>
+              <a-tag size="small" color="arcoblue">{{ tpl.protocol }}</a-tag>
+            </div>
+            <div class="vd-caption mb-2">{{ tpl.description }}</div>
+            <div class="vd-caption mb-1">
+              类型: {{ tpl.parseType }} / {{ tpl.datatype }},
+              字节数: {{ tpl.byteLength || 'N/A' }},
+              字序: {{ tpl.wordOrder || 'N/A' }},
+              单位: {{ tpl.unit || '-' }},
+              默认值: {{ tpl.defaultValue === '' ? '-' : tpl.defaultValue }},
+              权限: {{ tpl.readwrite }}
+            </div>
+            <div class="vd-flex mt-2">
+              <a-button type="primary" size="small" @click="applyTemplate(tpl)">套用模板</a-button>
+              <a-button class="vd-ml-2" type="text" size="small" @click="copyTemplate(tpl)">复制配置</a-button>
+            </div>
+          </div>
+        </a-col>
+      </a-row>
+      <div class="vd-dialog-footer">
+        <a-button type="primary" size="small" @click="templateDialog.visible = false">关闭</a-button>
+      </div>
+    </a-modal>
+
+    <a-modal v-model="helpDialog.visible" :width="900">
+      <div class="vd-flex-between mb-3">
+        <span class="vd-title">点位解码与公式使用帮助</span>
+        <a-button type="text" size="small" @click="helpDialog.visible = false">
+          <template #icon><IconClose /></template>
+        </a-button>
+      </div>
+      <a-input
+        v-model="helpDialog.search"
+        placeholder="搜索关键字 (协议 / 函数 / 示例)"
+        size="small"
+        allow-clear
+        class="mb-4"
+      />
+      <a-collapse multiple>
+        <a-collapse-item
+          v-for="section in filteredHelpSections"
+          :key="section.id"
+          :title="section.title"
+        >
+          <div>
+            <div v-for="item in section.items" :key="item.title" class="mb-4">
+              <div class="vd-flex-between mb-1">
+                <span class="vd-medium">{{ item.title }}</span>
+                <a-button
+                  v-if="item.snippet"
+                  type="text"
+                  size="small"
+                  @click="copySnippet(item.snippet)"
+                >
+                  复制示例
+                </a-button>
+              </div>
+              <div class="vd-caption mb-1">{{ item.desc }}</div>
+              <div v-if="item.snippet" class="vd-codebox vd-codebox--sm">{{ item.snippet }}</div>
+            </div>
+          </div>
+        </a-collapse-item>
+      </a-collapse>
+      <div class="vd-dialog-footer">
+        <a-button type="primary" size="small" @click="helpDialog.visible = false">关闭</a-button>
+      </div>
+    </a-modal>
+
+    <!-- BACnet Scanner Dialog -->
+    <BACnetScanner
+      v-if="channelProtocol === 'bacnet-ip'"
+      :visible="scanDialogVisible"
+      :channel-id="channelId"
+      :device-id="deviceId"
+      :channel-protocol="channelProtocol"
+      :existing-addresses="existingAddresses"
+      :device-info="deviceInfo"
+      @close="scanDialogVisible = false"
+      @refresh-points="handleRefreshPoints"
+    />
+
+
+    <a-modal
+      v-model:visible="registerBlockDialog.visible"
+      title="批量创建寄存器区块"
+      :width="760"
+      modal-class="channel-config-modal channel-config-modal--batch"
+      :ok-loading="registerBlockDialog.loading"
+      ok-text="生成点位"
+      @ok="submitRegisterBlock"
+      @cancel="registerBlockDialog.visible = false"
+    >
+      <p class="modal-intro modal-intro--compact">
+        按地址区间批量生成 Modbus 点位。合并模式下保留同 ID 现有点位配置。
+      </p>
+      <a-form layout="vertical" class="channel-config-form batch-modbus-form form-controls-md">
+        <div class="batch-form-fields">
+          <div class="form-field">
+            <div class="field-label">地址区间</div>
+            <div class="batch-range-control">
+              <a-input-number
+                v-model="registerBlockDialog.start"
+                :min="0"
+                :max="65535"
+                placeholder="0"
+              />
+              <span class="batch-range-sep">至</span>
+              <a-input-number
+                v-model="registerBlockDialog.end"
+                :min="0"
+                :max="65535"
+                placeholder="199"
+              />
+            </div>
+          </div>
+
+          <div class="batch-form-row">
+            <div class="form-field">
+              <div class="field-label">寄存器类型</div>
+              <a-select
+                v-model="registerBlockDialog.register_type"
+                :options="registerBlockRegisterTypes"
+                @change="onRegisterBlockTypeChange"
+              />
+            </div>
+            <div class="form-field">
+              <div class="field-label">数据类型</div>
+              <a-select
+                v-model="registerBlockDialog.datatype"
+                :options="registerBlockDatatypeOptions"
+                placeholder="选择数据类型"
+              />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <div class="field-label">读写</div>
+            <a-select
+              v-model="registerBlockDialog.readwrite"
+              :options="registerBlockReadWriteOptions"
+            />
+          </div>
+
+          <div class="form-field">
+            <div class="field-label">生成模式</div>
+            <a-radio-group v-model="registerBlockDialog.mode" direction="vertical" class="register-block-mode">
+              <a-radio value="merge">合并（保留现有点）</a-radio>
+              <a-radio value="replace">替换（仅保留新区间）</a-radio>
+            </a-radio-group>
+          </div>
+
+          <div class="batch-preview-block">
+            <div class="field-label batch-preview-block__label">创建预览</div>
+            <div class="batch-preview-stats batch-preview-stats--single">
+              <div class="batch-preview-stat batch-preview-stat--accent">
+                <span class="batch-preview-stat__value">{{ registerBlockCount }}</span>
+                <span class="batch-preview-stat__label">点位</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a-form>
+    </a-modal>
+
+    <!-- Delete Confirmation Dialog -->
+    <a-modal v-model:visible="deleteDialog.visible" width="400px" @ok="executeDelete" @cancel="deleteDialog.visible = false">
+      <template #title>
+        <div class="flex items-center gap-2">
+          <IconCloseCircle class="text-red-500" />
+          <span>确认删除</span>
+        </div>
+      </template>
+      <div class="text-center py-4">
+        <template v-if="deleteDialog.isBatch">
+          确定要批量删除选中的 <span class="text-red-500 font-bold">{{ deleteDialog.batchCount }}</span> 个点位吗？
+        </template>
+        <template v-else>
+          确定要删除点位 <span class="text-red-500 font-bold">{{ deleteDialog.point?.name || deleteDialog.point?.id }}</span> 吗？
+        </template>
+        <div class="mt-2 text-gray-400 text-sm">此操作不可撤销。</div>
+      </div>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <a-button @click="deleteDialog.visible = false">取消</a-button>
+          <a-button type="primary" status="danger" @click="executeDelete" :loading="deleteDialog.loading">确认删除</a-button>
+        </div>
+      </template>
+    </a-modal>
+
+    <!-- Debug Dialog -->
+    <a-modal
+      v-model:visible="debugDialog.visible"
+      title="点位调试"
+      width="640px"
+      @cancel="debugDialog.visible = false"
+    >
+      <div class="debug-dialog-meta">
+        <span>{{ debugDialog.pointName }}</span>
+      </div>
+      <pre class="debug-dialog-content">{{ debugDialog.content }}</pre>
+      <template #footer>
+        <a-button type="primary" @click="debugDialog.visible = false">关闭</a-button>
+      </template>
+    </a-modal>
+
+    <!-- Write Dialog -->
+    <a-modal 
+      v-model:visible="writeDialog.visible" 
+      :width="480"
+      :mask-closable="false"
+      unmount-on-close
+      modal-class="write-value-modal"
+      title-align="start"
+      @cancel="writeDialog.visible = false"
+      @ok="submitWrite"
+    >
+      <template #title>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 16px; font-weight: 700; color: var(--text-primary);">写入数值</span>
+          <span style="font-size: 11px; color: var(--text-secondary); font-family: monospace; text-transform: uppercase;">{{ getDataTypeLabel() }}</span>
+        </div>
+      </template>
+
+      <div style="padding: 16px;">
+        <!-- 设备信息 -->
+        <div style="display: flex; gap: 16px; margin-bottom: 16px; padding: 10px; background: var(--edgeCore-surface-inset); border: 1px solid var(--edgeCore-border);">
+          <div>
+            <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">设备</div>
+            <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.deviceID }}</div>
+          </div>
+          <div style="border-left: 1px solid var(--edgeCore-border);"></div>
+          <div>
+            <div style="font-size: 10px; color: var(--text-secondary); text-transform: uppercase;">点位</div>
+            <div style="font-size: 13px; font-weight: 600; font-family: monospace;">{{ writeDialog.pointID }}</div>
+          </div>
+        </div>
+
+        <!-- Boolean 类型 -->
+        <template v-if="isBoolType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">BOOL 布尔值</div>
+          <a-radio-group v-model="writeDialog.valueBool" type="button">
+            <a-radio :value="true"><strong>TRUE</strong> 真</a-radio>
+            <a-radio :value="false"><strong>FALSE</strong> 假</a-radio>
+          </a-radio-group>
+        </template>
+
+        <!-- String 类型 -->
+        <template v-else-if="isStringType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">STRING 字符串</div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            :placeholder="getStringInputPlaceholder()"
+            size="large"
+            autofocus
+          />
+        </template>
+
+        <!-- ByteString (二进制) 类型 -->
+        <template v-else-if="isBinaryType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">BYTE STRING 二进制</div>
+          <a-radio-group v-model="writeDialog.binaryEncoding" type="button" size="small">
+            <a-radio value="hex">Hex</a-radio>
+            <a-radio value="base64">Base64</a-radio>
+          </a-radio-group>
+          <a-input
+            v-model="writeDialog.valueBinary"
+            :placeholder="getBinaryWritePlaceholder()"
+            size="large"
+            style="margin-top: 8px; font-family: monospace;"
+            autofocus
+          />
+          <div style="margin-top: 6px; font-size: 11px; color: var(--text-secondary);">示例: {{ getBinaryWriteHint() }}</div>
+        </template>
+
+        <!-- DateTime 类型 -->
+        <template v-else-if="isDateTimeType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">DATETIME 日期时间</div>
+          <a-date-picker
+            v-model="writeDialog.valueDateTime"
+            show-time
+            format="YYYY-MM-DD HH:mm:ss"
+            size="large"
+            style="width: 100%"
+            autofocus
+          />
+        </template>
+
+        <!-- Guid 类型 -->
+        <template v-else-if="isGuidType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">GUID 全局唯一标识符</div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            placeholder="12345678-1234-1234-1234-123456789abc"
+            size="large"
+            style="font-family: monospace;"
+            autofocus
+          />
+        </template>
+
+        <!-- StatusCode 类型 -->
+        <template v-else-if="isStatusCodeType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">STATUS CODE 状态码</div>
+          <a-select
+            v-model="writeDialog.valueStatusCode"
+            :options="statusCodeOptions"
+            placeholder="选择状态码"
+            size="large"
+            allow-search
+            style="width: 100%"
+          />
+        </template>
+
+        <!-- QualifiedName 类型 -->
+        <template v-else-if="isQualifiedNameType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">QUALIFIED NAME 限定名</div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            placeholder="命名空间:名称 (如 2:Temperature)"
+            size="large"
+            style="font-family: monospace;"
+            autofocus
+          />
+        </template>
+
+        <!-- LocalizedText 类型 -->
+        <template v-else-if="isLocalizedTextType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">LOCALIZED TEXT 本地化文本</div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            placeholder="请输入文本"
+            size="large"
+            autofocus
+          />
+        </template>
+
+        <!-- NodeId 类型 -->
+        <template v-else-if="isNodeIdType(writeDialog.dataType)">
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">NODE ID 节点标识符</div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            placeholder="ns=2;s=Node 或 i=2255"
+            size="large"
+            style="font-family: monospace;"
+            autofocus
+          />
+        </template>
+
+        <!-- 数值类型 (Int, Float, Double) -->
+        <template v-else>
+          <div style="margin-bottom: 8px; font-size: 12px; color: var(--text-secondary);">
+            {{ getNumericTypeInfo() || '数值' }}
+          </div>
+          <a-input
+            v-model="writeDialog.valueStr"
+            placeholder="如 3.14 或 1e-5"
+            size="large"
+            autofocus
+            @keydown.enter="submitWrite"
+          />
+          <div style="margin-top: 6px; font-size: 11px; color: var(--text-secondary);">支持整数、小数、科学计数法</div>
+        </template>
+      </div>
+
+      <template #footer>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <a-button @click="writeDialog.visible = false">取消</a-button>
+          <a-button 
+            type="primary" 
+            status="warning" 
+            :loading="writeDialog.loading" 
+            @click="submitWrite"
+          >
+            立即下发
+          </a-button>
+        </div>
+      </template>
+    </a-modal>
+
+    <!-- Value Detail Dialog -->
+    <a-modal
+      v-model:visible="valueDialog.visible"
+      title="完整数值"
+      :width="900"
+      :footer="false"
+      :body-style="{ maxHeight: '82vh', overflowY: 'auto' }"
+      @cancel="valueDialog.visible = false"
+    >
+      <!-- 原始值: 设备侧真实报文字节，优先展示 -->
+      <div class="vd-section-title mb-2">原始值（设备报文）</div>
+      <div class="vd-codebox mb-1">{{ valueDialog.hasRaw ? valueDialog.rawHex : valueDialog.value }}</div>
+      <div v-if="valueDialog.hasRaw" class="mb-3" style="font-family: monospace; font-size: 12px; color: #6b7280;">
+        <span>字节：{{ valueDialog.rawBytes.map(b => '0x' + b.toString(16).toUpperCase().padStart(2, '0')).join(' ') }}</span>
+        <span style="margin-left: 12px;">整数：{{ valueDialog.rawInt }}</span>
+      </div>
+      <div v-else class="mb-3" style="font-family: monospace; font-size: 12px; color: #6b7280;">未获取到原始报文，以下基于显示值推算</div>
+
+      <!-- 转换后值: 缩放/显示工程值，明确与原始值区分 -->
+      <div class="vd-section-title mb-2">转换后值（缩放 / 显示）</div>
+      <div class="vd-codebox mb-4">{{ valueDialog.parsedValue }}</div>
+
+      <div v-if="valueDialog.isBase64">
+        <div class="vd-section-title mb-2">Base64 解码</div>
+        <a-radio-group v-model="valueDialog.decodeType" @change="tryDecode" class="mb-3">
+          <a-radio value="text">Text (UTF-8)</a-radio>
+          <a-radio value="hex">Hex</a-radio>
+          <a-radio value="json">JSON</a-radio>
+        </a-radio-group>
+        <div class="vd-codebox">{{ valueDialog.decodedValue }}</div>
+      </div>
+
+      <div v-else-if="numericFormats">
+        <div class="vd-section-title mb-3">数值格式转换（基于原始报文）</div>
+        <a-row class="mb-3" :gutter="16">
+          <a-col :span="24" :sm="12">
+            <div class="field-label mb-1">字节数</div>
+            <a-button-group>
+              <a-button :type="valueDialog.byteLength === 1 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 1">1 字节</a-button>
+              <a-button :type="valueDialog.byteLength === 2 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 2">2 字节</a-button>
+              <a-button :type="valueDialog.byteLength === 4 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 4">4 字节</a-button>
+              <a-button :type="valueDialog.byteLength === 8 ? 'primary' : 'outline'" size="small" @click="valueDialog.byteLength = 8">8 字节</a-button>
+            </a-button-group>
+          </a-col>
+          <a-col :span="24" :sm="12" v-if="valueWordOrderOptions.length">
+            <div class="field-label mb-1">字节 / 字序</div>
+            <a-select
+              v-model="valueDialog.wordOrder"
+              :options="valueWordOrderOptions"
+              :field-names="{ label: 'label', value: 'value' }"
+              size="small"
+              style="width: 100%;"
+            />
+          </a-col>
+        </a-row>
+        <!-- 紧凑三列网格：避免 8 字节时竖向表格撑爆屏幕 -->
+        <a-row :gutter="[8, 8]" class="vd-fmt-grid">
+          <a-col
+            v-for="row in valueFormatData"
+            :key="row.key"
+            :span="8"
+          >
+            <div class="vd-fmt-cell">
+              <div class="vd-fmt-key">{{ row.format }}</div>
+              <div class="vd-fmt-val">{{ row.value }}</div>
+            </div>
+          </a-col>
+        </a-row>
+      </div>
+    </a-modal>
+
+    <!-- Help Drawer -->
+    <HelpDrawer
+      v-model:visible="helpVisible"
+      :channel-protocol="channelProtocol"
+    />
+
+    <!-- OPC-UA Scanner -->
+    <OpcuaScanner
+      v-model:visible="opcuaScannerVisible"
+      :channel-id="channelId"
+      :device-id="deviceId"
+      :device-config="deviceInfo?.config || {}"
+      :channel-config="channelInfo?.config || {}"
+      :existing-points="points"
+      @error="(message) => showMessage(message, 'error')"
+      @info="(message) => showMessage(message, 'info')"
+      @points-added="handlePointsAdded"
+    />
+  </div>
 </template>
 
 <script setup>
@@ -1341,6 +1310,14 @@ const route = useRoute()
 const router = useRouter()
 const points = ref([])
 const deviceInfo = ref(null)
+
+// 连接状态语义着色：0 已连接 / 1 不稳定 / 其它 断开
+const terminalDotClass = computed(() => {
+  const s = deviceInfo.value?.state
+  if (s === 0) return 'terminal-dot--ok'
+  if (s === 1) return 'terminal-dot--warn'
+  return 'terminal-dot--off'
+})
 const loading = ref(false)
 const loadError = ref('')
 
@@ -1378,6 +1355,25 @@ const filters = reactive({
     quality: [],
 })
 
+// 每页条数选择：20 / 50 / 100 / 全部(0)。当选择"全部"时按当前过滤后的总数渲染单页。
+const PAGE_SIZE_CHOICES = [
+    { label: '20 条/页', value: 20 },
+    { label: '50 条/页', value: 50 },
+    { label: '100 条/页', value: 100 },
+    { label: '全部', value: 0 },
+]
+const pageSize = ref(20)
+const effectivePageSize = computed(() => (pageSize.value === 0
+    ? Math.max(filteredPoints.value.length, 1)
+    : pageSize.value))
+const paginationConfig = computed(() => ({
+    pageSize: effectivePageSize.value,
+    total: filteredPoints.value.length,
+    showTotal: true,
+    showJumper: true,
+    showPageSize: false,
+}))
+
 const modbusFilterKey = computed(() => JSON.stringify([
     filters.search.trim().toLowerCase(),
     [...filters.quality].sort(),
@@ -1403,12 +1399,17 @@ const mapDevicePoint = (p, now = new Date()) => enrichModbusPoint({
     id: p.id,
     name: p.name,
     address: p.address,
+    format: p.format || '',
     datatype: p.datatype || p.dataType,
+    parse_type: p.parse_type || p.parseType || '',
     unit: p.unit || '',
     readwrite: p.readwrite || 'R',
     register_type: p.register_type,
     function_code: p.function_code,
     slave_id: p.slave_id,
+    word_order: p.word_order || '',
+    scale: p.scale ?? 1,
+    offset: p.offset ?? 0,
     value: p.value ?? null,
     quality: p.quality || 'Bad',
     timestamp: p.timestamp || p.collected_at || now,
@@ -1747,6 +1748,7 @@ const pointDialog = reactive({
         address: '',
         format: '',
         datatype: 'float32',
+      parse_type: 'FLOAT32',
         readwrite: 'R',
         unit: '',
         scale: 1.0,
@@ -1778,6 +1780,38 @@ const datatypeOptions = [
 ]
 
 const formatPresets = [
+    {
+        id: 'UINT8',
+        label: 'UINT8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'UINT8',
+        wordOrder: 'AB',
+        datatype: 'uint8'
+    },
+    {
+        id: 'INT8',
+        label: 'INT8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'INT8',
+        wordOrder: 'AB',
+        datatype: 'int8'
+    },
+    {
+        id: 'BIT',
+        label: 'BIT (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'BIT',
+        wordOrder: 'AB',
+        datatype: 'bool'
+    },
+    {
+        id: 'BCD8',
+        label: 'BCD8 (1 字节 / 位段)',
+        bytes: 1,
+        parseType: 'BCD8',
+        wordOrder: 'AB',
+        datatype: 'uint8'
+    },
     {
         id: 'Signed',
         label: 'Signed (2 字节 / 1 寄存器)',
@@ -1918,7 +1952,52 @@ const wordOrderOptionsForBytes = computed(() => getWordOrderOptionsForBytes(poin
 
 const filteredParseTypes = computed(() => filterParseTypesByBytes(pointDialog.byteLength))
 
-const filteredFormatPresets = computed(() => formatPresets)
+// parseType 隐含的落库类型（_SWAP 只换字节序、不换类型）
+const parseTypeToDatatype = {
+    BIT: 'bool',
+    UINT8: 'uint8',
+    INT8: 'int8',
+    BCD8: 'uint8',
+    UINT16: 'uint16',
+    UINT16_SWAP: 'uint16',
+    INT16: 'int16',
+    INT16_SWAP: 'int16',
+    BCD16: 'uint16',
+    FLOAT16: 'float32',
+    UINT32: 'uint32',
+    UINT32_SWAP: 'uint32',
+    INT32: 'int32',
+    INT32_SWAP: 'int32',
+    FLOAT32: 'float32',
+    FLOAT32_SWAP: 'float32',
+    BCD32: 'uint32',
+    UINT64: 'uint64',
+    INT64: 'int64',
+    FLOAT64: 'float64',
+    FLOAT64_SWAP: 'float64',
+    STRING: 'string'
+}
+
+// 解析类型决定原始字节宽度，数据类型决定缩放后的输出类型。
+const parseTypeWarnings = computed(() => {
+    const warnings = []
+    const pt = pointDialog.parseType
+    if (!pt) return warnings
+
+    // 1) 解析类型要求的字节数 vs 当前字节数
+    const ptOpt = baseParseTypeOptions.find(o => o.value === pt)
+    if (ptOpt && ptOpt.bytes > 0 && ptOpt.bytes !== pointDialog.byteLength) {
+        warnings.push(`解析类型 ${pt} 需要 ${ptOpt.bytes} 字节，当前字节数为 ${pointDialog.byteLength}——后端按 ${pointDialog.byteLength} 字节读取，数值可能错乱（如浮点读成 0）`)
+    }
+
+    return warnings
+})
+
+// Arco a-select 的 options 要求 {label, value}；formatPresets 只有 id/label，
+// 缺 value 会导致选中值恒为 undefined（点不中、回显空白、转换不触发），这里补上。
+const filteredFormatPresets = computed(() =>
+    formatPresets.map(p => ({ ...p, value: p.id }))
+)
 
 const quickValidate = reactive({
     visible: false,
@@ -2112,7 +2191,10 @@ const runQuickValidate = () => {
     const slice = bytesNeeded > 0 ? buf.slice(0, bytesNeeded) : buf
     const reordered = reorderBytes(slice, pointDialog.byteLength, pointDialog.wordOrderOption)
     const rawValue = parseByType(reordered, pointDialog.parseType)
-    const engineValue = applyFormula(rawValue, pointDialog.form.read_formula, pointDialog.form.scale, pointDialog.form.offset)
+    const hasReadFormula = Boolean((pointDialog.form.read_formula || '').trim())
+    const engineValue = hasReadFormula
+      ? applyFormula(rawValue, pointDialog.form.read_formula, 1, 0)
+      : applyFormula(rawValue, '', pointDialog.form.scale, pointDialog.form.offset)
     const valueStr = engineValue === undefined ? '解析失败' : String(engineValue)
     const expectedInput = (quickValidate.expected || '').trim()
     let expected = expectedInput
@@ -2172,14 +2254,87 @@ const presetIdToFormat = (id) => {
     return id
 }
 
+// datatype → parseType 兜底映射（无格式预设可推断时使用，如 string/word 等）
+const datatypeToParseType = (dt) => {
+    const map = {
+        bool: 'BIT',
+        int8: 'INT8',
+        uint8: 'UINT8',
+        int16: 'INT16',
+        uint16: 'UINT16',
+        int32: 'INT32',
+        uint32: 'UINT32',
+        float32: 'FLOAT32',
+        float64: 'FLOAT64',
+        int64: 'INT64',
+        uint64: 'UINT64',
+        string: 'STRING'
+    }
+    return map[(dt || '').toLowerCase()] || null
+}
+
+  const parseTypeOption = (parseType) =>
+    baseParseTypeOptions.find(option => option.value === parseType)
+
+  const onParseTypeChange = (parseType) => {
+    const option = parseTypeOption(parseType)
+    if (!option) return
+
+    pointDialog.byteLength = option.bytes
+    const datatype = parseTypeToDatatype[parseType]
+    if (datatype) pointDialog.form.datatype = datatype
+    pointDialog.form.parse_type = parseType
+    formatPresetSelected.value = null
+  }
+
+  const onDatatypeChange = (datatype) => {
+    if (!datatype) return
+    pointDialog.form.datatype = datatype
+  }
+
 const inferPresetFromPoint = (p) => {
     if (!p) return null
     const dt = (p.datatype || '').toLowerCase()
+    const parseType = (p.parse_type || p.parseType || '').toUpperCase()
     const fmt = (p.format || '').toLowerCase()
     const wo = (p.word_order || '').toUpperCase()
 
     if (fmt === 'hex') return 'Hex'
     if (fmt === 'binary') return 'Binary'
+
+    // 格式预设描述原始字节解析，必须优先依据 parse_type，不能被
+    // 缩放后的显示/存储/北向 datatype 反向推断覆盖。
+    if (parseType === 'INT16' || parseType === 'INT16_SWAP') return 'Signed'
+    if (parseType === 'UINT16' || parseType === 'UINT16_SWAP') return 'Unsigned'
+    if (parseType === 'INT32' || parseType === 'INT32_SWAP') {
+        if (wo === 'CDAB') return 'LongCDAB'
+        if (wo === 'BADC') return 'LongBADC'
+        if (wo === 'DCBA') return 'LongDCBA'
+        return 'LongABCD'
+    }
+    if (parseType === 'FLOAT32' || parseType === 'FLOAT32_SWAP') {
+        if (wo === 'CDAB') return 'FloatCDAB'
+        if (wo === 'BADC') return 'FloatBADC'
+        if (wo === 'DCBA') return 'FloatDCBA'
+        return 'FloatABCD'
+    }
+    if (parseType === 'FLOAT64' || parseType === 'FLOAT64_SWAP') {
+        if (wo === 'CDAB') return 'DoubleGHEFCDAB'
+        if (wo === 'BADC') return 'DoubleBADCFEHG'
+        if (wo === 'DCBA') return 'DoubleHGFEDCBA'
+        return 'DoubleABCDEFGH'
+    }
+    if (parseType === 'BIT') return 'BIT'
+    if (parseType === 'INT8') return 'INT8'
+    if (parseType === 'UINT8') return 'UINT8'
+    if (parseType === 'BCD8') return 'BCD8'
+
+    if (dt === 'bool') return 'BIT'
+    if (dt === 'int8') return 'INT8'
+    if (dt === 'uint8') {
+        if (fmt === 'bcd8') return 'BCD8'
+        return 'UINT8'
+    }
 
     if (dt === 'int16') return 'Signed'
     if (dt === 'uint16') return 'Unsigned'
@@ -2220,6 +2375,7 @@ const onSelectFormatPreset = (id) => {
     pointDialog.wordOrderOption = preset.wordOrder
     pointDialog.parseType = preset.parseType
     pointDialog.form.datatype = preset.datatype
+    pointDialog.form.parse_type = preset.parseType
     pointDialog.form.format = presetIdToFormat(id)
     updateRecentFormats(id)
 }
@@ -2245,6 +2401,7 @@ const applyTemplate = (tpl) => {
     const name = tpl.name || ''
     pointDialog.form.name = name
     pointDialog.form.datatype = tpl.datatype || pointDialog.form.datatype
+    pointDialog.form.parse_type = tpl.parseType || pointDialog.form.parse_type
     pointDialog.form.unit = tpl.unit || ''
     pointDialog.form.readwrite = tpl.readwrite || 'R'
     pointDialog.form.read_formula = tpl.readFormula || ''
@@ -2709,6 +2866,7 @@ const openAddDialog = () => {
 		address: '',
         format: '',
 		datatype: 'float32',
+        parse_type: 'FLOAT32',
 		readwrite: 'R',
 		unit: '',
 		scale: 1.0,
@@ -2731,7 +2889,10 @@ const openAddDialog = () => {
     pointDialog.byteLength = 4
     pointDialog.wordOrderOption = 'ABCD'
     pointDialog.parseType = 'FLOAT32'
+    pointDialog.form.parse_type = 'FLOAT32'
     pointDialog.defaultValue = ''
+    // 重置格式预设，避免残留上一次编辑/新建的选择污染新点位
+    formatPresetSelected.value = null
 	
 	if (channelProtocol.value.startsWith('modbus')) {
 		// Get start_address from device config
@@ -2745,11 +2906,13 @@ const openAddDialog = () => {
 	} else if (channelProtocol.value === 'knxnet-ip') {
 		updateKNXAddress()
 		pointDialog.form.datatype = 'bool'
+    pointDialog.form.parse_type = 'UINT8'
 		pointDialog.byteLength = 1
 		pointDialog.parseType = 'UINT8'
 	} else if (channelProtocol.value === 'profinet-io') {
 		pointDialog.form.address = '3:1:0'
 		pointDialog.form.datatype = 'int16'
+    pointDialog.form.parse_type = 'INT16'
 		pointDialog.byteLength = 2
 		pointDialog.parseType = 'INT16'
 	} else if (channelProtocol.value === 'dlt645') {
@@ -2841,12 +3004,26 @@ const openEditDialog = (point) => {
     const presetId = inferPresetFromPoint(pointDialog.form)
     formatPresetSelected.value = presetId
 
+    // 同步恢复解析类型，避免残留上一次新建/编辑的脏值（如 FLOAT32）
+    const preset = presetId ? formatPresets.find(p => p.id === presetId) : null
+    pointDialog.parseType = pointDialog.form.parse_type || preset?.parseType || (datatypeToParseType(dt) || pointDialog.parseType)
+    const parseOption = parseTypeOption(pointDialog.parseType)
+    if (parseOption) pointDialog.byteLength = parseOption.bytes
+
     pointDialog.visible = true
 }
 
 const submitPoint = async () => {
     pointDialog.loading = true
     try {
+    const scale = Number(pointDialog.form.scale)
+    const offset = Number(pointDialog.form.offset)
+    if (!Number.isFinite(scale) || !Number.isFinite(offset)) {
+      throw new Error('缩放比例和偏移量必须是有效数字')
+    }
+    pointDialog.form.scale = scale
+    pointDialog.form.offset = offset
+
         if (channelProtocol.value === 'knxnet-ip') {
             updateKNXAddress()
         }
@@ -2856,8 +3033,16 @@ const submitPoint = async () => {
             : channelDeviceApiPath(channelId.value, deviceId.value, 'points')
         if (formatPresetSelected.value) {
             pointDialog.form.format = presetIdToFormat(formatPresetSelected.value)
+        } else if (!pointDialog.form.format) {
+            // 未显式选预设时，从 datatype/word_order 兜底推断设备协议类型，
+            // 保证"设备协议类型"列不出现空值（如 uint16 → Unsigned）
+            const inferredId = inferPresetFromPoint(pointDialog.form)
+            if (inferredId) {
+                pointDialog.form.format = presetIdToFormat(inferredId)
+            }
         }
         pointDialog.form.word_order = wordOrderToBackend(pointDialog.wordOrderOption)
+        pointDialog.form.parse_type = pointDialog.parseType
         
         // 添加寄存器类型和功能码
         pointDialog.form.register_type = pointDialog.registerType
@@ -3013,7 +3198,10 @@ const filteredClonePoints = computed(() => {
 })
 
 const executeClone = async () => {
-    if (!cloneDialog.selected || cloneDialog.selected.length === 0) return
+    if (!cloneDialog.selected || cloneDialog.selected.length === 0) {
+        showMessage('请先选择要复制的点位', 'warning')
+        return
+    }
     cloneDialog.loading = true
     try {
         const payload = cloneDialog.selected.map(p => ({
@@ -3033,6 +3221,8 @@ const executeClone = async () => {
         showMessage(`克隆完成：成功 ${payload.length} 个`, 'success')
         cloneDialog.visible = false
         await fetchPoints()
+    } catch (e) {
+        showMessage(`克隆失败：${e.message || '未知错误'}`, 'error')
     } finally {
         cloneDialog.loading = false
     }
@@ -3118,7 +3308,12 @@ const fetchPoints = async (options = {}) => {
                 if (Array.isArray(pts) && pts.length > 0) {
                     console.log('Background point fetch successful, updating points. Points:', pts.length)
                     console.log('First point data:', pts[0])
-                    points.value = pts.map(p => mapDevicePoint(p))
+                    // 接口可能缺失配置字段（format/word_order/scale/...），
+                    // 用设备信息缓存补齐，保证"设备协议类型"列与编辑回显不丢配置
+                    points.value = pts.map(p => {
+                        const cfg = (deviceInfo.value?.points || []).find(cp => cp.id === p.id) || {}
+                        return mapDevicePoint({ ...cfg, ...p })
+                    })
                     syncPointIndex()
                     loadError.value = ''
                 } else if (Array.isArray(pts)) {
@@ -3136,7 +3331,11 @@ const fetchPoints = async (options = {}) => {
                     request.get(channelDeviceApiPath(channelId.value, deviceId.value, 'points'))
                         .then(pts => {
                             if (Array.isArray(pts)) {
-                                points.value = pts.map(p => mapDevicePoint(p))
+                                // 与设备信息缓存合并，补齐接口缺失的配置字段（format 等）
+                                points.value = pts.map(p => {
+                                    const cfg = (deviceInfo.value?.points || []).find(cp => cp.id === p.id) || {}
+                                    return mapDevicePoint({ ...cfg, ...p })
+                                })
                                 syncPointIndex()
                                 loadError.value = ''
                                 if (pts.length === 0 && channelProtocol.value === 'opc-ua') {
@@ -3200,34 +3399,132 @@ const valueDialog = reactive({
     decodeType: 'text',
     isBase64: false,
     byteLength: 2,
-    wordOrder: 'AB'
+    wordOrder: 'AB',
+    // 设备侧真实原始报文（点击值后从调试接口拉取）
+    hasRaw: false,
+    rawBytes: null,
+    rawHex: '',
+    rawInt: '',
+    // 缩放 / 显示后的工程值（如 1234.5），与原始报文区分展示
+    parsedValue: '',
+    noRawNote: ''
 })
 
-const valueFormatColumns = [
-    {
-        title: '格式',
-        dataIndex: 'format',
-        key: 'format',
-        width: 140
-    },
-    {
-        title: '值',
-        dataIndex: 'value',
-        key: 'value',
-        render: (_, record) => {
-            return h('span', { style: 'font-family: monospace;' }, record.value)
-        }
+// ---- 原始报文 -> 数值格式转换 辅助函数 ----
+const base64ToBytes = (b64) => {
+    try {
+        const bin = atob(b64)
+        const arr = new Uint8Array(bin.length)
+        for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i)
+        return Array.from(arr)
+    } catch (e) {
+        return []
     }
-]
+}
+const bytesToHex = (bytes) => {
+    if (!bytes || bytes.length === 0) return ''
+    return '0x' + bytes.map(b => b.toString(16).toUpperCase().padStart(2, '0')).join('')
+}
+const rawBytesToBigInt = (bytes) => {
+    let v = 0n
+    for (const b of bytes) v = (v << 8n) + BigInt(b & 0xFF)
+    return v
+}
+// IEEE754 半精度浮点解码
+const halfToFloat = (h) => {
+    const s = (h >> 15) & 1
+    const e = (h >> 10) & 0x1F
+    const f = h & 0x3FF
+    if (e === 0) return (s ? -1 : 1) * Math.pow(2, -14) * (f / 1024)
+    if (e === 0x1F) return f ? NaN : (s ? -Infinity : Infinity)
+    return (s ? -1 : 1) * Math.pow(2, e - 15) * (1 + f / 1024)
+}
+// 打包 BCD 解码（每字节高/低半字节为十进制位）
+const bcdDecode = (bytes) => {
+    if (!bytes || bytes.length === 0) return null
+    let s = ''
+    for (const b of bytes) {
+        const hi = (b >> 4) & 0xF
+        const lo = b & 0xF
+        if (hi > 9 || lo > 9) return null
+        s += String(hi) + String(lo)
+    }
+    return s.replace(/^0+(?=\d)/, '')
+}
+// 基于给定字节与宽度，生成全部数值格式解释
+const buildNumericFormats = (bytes, byteLength) => {
+    if (!bytes || bytes.length === 0) return null
+    const view = new DataView(new Uint8Array(bytes).buffer)
+    let unsigned = 0n
+    for (const b of bytes) unsigned = (unsigned << 8n) + BigInt(b & 0xFF)
+    const bits = BigInt(byteLength * 8)
+    const signBit = 1n << (bits - 1n)
+    let signed = unsigned
+    if (unsigned & signBit) signed = unsigned - (1n << bits)
+    const hexDigits = Math.max(2, (byteLength * 8) / 4)
+    const hex = '0x' + unsigned.toString(16).toUpperCase().padStart(hexDigits, '0')
+    const binary = unsigned.toString(2).padStart(byteLength * 8, '0')
+    const rows = {
+        signed: signed.toString(),
+        unsigned: unsigned.toString(),
+        hex,
+        binary,
+        int8: bytes.map(b => String((b << 24) >> 24)).join(', '),
+        uint8: bytes.map(b => String(b & 0xFF)).join(', ')
+    }
+    if (byteLength >= 2) {
+        try { rows.int16 = view.getInt16(0, false).toString() } catch (e) {}
+        try { rows.uint16 = view.getUint16(0, false).toString() } catch (e) {}
+        try { rows.float16 = halfToFloat(view.getUint16(0, false)).toString() } catch (e) {}
+        const b16 = bcdDecode(bytes.slice(0, 2))
+        if (b16 !== null) rows.bcd16 = b16
+    }
+    if (byteLength >= 4 && bytes.length >= 4) {
+        try { rows.int32 = view.getInt32(0, false).toString() } catch (e) {}
+        try { rows.uint32 = view.getUint32(0, false).toString() } catch (e) {}
+        try { rows.float32 = view.getFloat32(0, false).toString() } catch (e) {}
+        const b32 = bcdDecode(bytes.slice(0, 4))
+        if (b32 !== null) rows.bcd32 = b32
+    }
+    if (byteLength >= 8 && bytes.length >= 8) {
+        try { rows.int64 = view.getBigInt64(0, false).toString() } catch (e) {}
+        try { rows.uint64 = view.getBigUint64(0, false).toString() } catch (e) {}
+        try { rows.float64 = view.getFloat64(0, false).toString() } catch (e) {}
+    }
+    return rows
+}
 
 const valueFormatData = computed(() => {
     if (!numericFormats.value) return []
-    return [
-        { format: '有符号整型', value: numericFormats.value.signed, key: 'signed' },
-        { format: '无符号整型', value: numericFormats.value.unsigned, key: 'unsigned' },
-        { format: '十六进制', value: numericFormats.value.hex, key: 'hex' },
-        { format: '二进制', value: numericFormats.value.binary, key: 'binary' }
+    const f = numericFormats.value
+    const bl = Number(valueDialog.byteLength) || 2
+    const rows = [
+        { format: '有符号整型', value: f.signed, key: 'signed' },
+        { format: '无符号整型', value: f.unsigned, key: 'unsigned' },
+        { format: '十六进制', value: f.hex, key: 'hex' },
+        { format: '二进制', value: f.binary, key: 'binary' }
     ]
+    if (bl >= 1) {
+        rows.push({ format: 'INT8（逐字节）', value: f.int8, key: 'int8' })
+        rows.push({ format: 'UINT8（逐字节）', value: f.uint8, key: 'uint8' })
+    }
+    if (bl >= 2) {
+        if (f.int16) rows.push({ format: 'INT16', value: f.int16, key: 'int16' })
+        if (f.uint16) rows.push({ format: 'UINT16', value: f.uint16, key: 'uint16' })
+        if (f.bcd16) rows.push({ format: 'BCD16', value: f.bcd16, key: 'bcd16' })
+    }
+    if (bl >= 4) {
+        if (f.int32) rows.push({ format: 'INT32', value: f.int32, key: 'int32' })
+        if (f.uint32) rows.push({ format: 'UINT32', value: f.uint32, key: 'uint32' })
+        if (f.float32) rows.push({ format: 'FLOAT32', value: f.float32, key: 'float32' })
+        if (f.bcd32) rows.push({ format: 'BCD32', value: f.bcd32, key: 'bcd32' })
+    }
+    if (bl >= 8) {
+        if (f.int64) rows.push({ format: 'INT64', value: f.int64, key: 'int64' })
+        if (f.uint64) rows.push({ format: 'UINT64', value: f.uint64, key: 'uint64' })
+        if (f.float64) rows.push({ format: 'FLOAT64', value: f.float64, key: 'float64' })
+    }
+    return rows
 })
 
 const valueWordOrderOptions = computed(() => {
@@ -3236,55 +3533,35 @@ const valueWordOrderOptions = computed(() => {
 })
 
 const numericFormats = computed(() => {
-    const raw = valueDialog.value
-    if (raw === '' || raw === null || raw === undefined) return null
-    const n = Number(raw)
-    if (!Number.isFinite(n)) return null
     const byteLength = Number(valueDialog.byteLength) || 2
-    const bits = BigInt(byteLength * 8)
-    try {
+    let bytes = null
+    if (valueDialog.hasRaw && valueDialog.rawBytes && valueDialog.rawBytes.length) {
+        // 优先：设备侧真实原始报文（按所选宽度截断/补零，再按字节序重排）
+        const full = valueDialog.rawBytes.slice(0, byteLength)
+        // 短于目标宽度的报文按「高位对齐（左对齐）」补零：现有字节置于高字节，
+        // 低位补 0。这样 2 字节 E400 在 4 字节模式下为 E4 00 00 00，
+        // INT16 取回 -7168（与原始 16 位值一致）。FLOAT32 取 0xE4000000 = -2.5353e30。
+        // 注：若期望 FLOAT32 = -9.44e21，其对应十六进制为 0xC8000000，与原始报文 0xE400 不符，
+        // 说明真实原始报文应为 4 字节（如 0xC8000000）；前端在 rawValue 完整为 4 字节时会自动正确解码。
+        while (full.length < byteLength) full.push(0)
+        bytes = reorderBytes(full, byteLength, byteLength > 1 ? valueDialog.wordOrder : '')
+    } else {
+        // 回退：无原始报文时，基于显示值整数反推字节（旧逻辑）
+        const n = Number(valueDialog.value)
+        if (!Number.isFinite(n)) return null
         let base = BigInt(Math.trunc(n))
-        const one = 1n
-        const mask = (one << bits) - one
+        const bits = BigInt(byteLength * 8)
+        const mask = (1n << bits) - 1n
         base = base & mask
-
-        const bytes = new Array(byteLength)
-        let tmp = base
+        const tmp = []
+        let t = base
         for (let i = byteLength - 1; i >= 0; i--) {
-            bytes[i] = Number(tmp & 0xFFn)
-            tmp >>= 8n
+            tmp[i] = Number(t & 0xFFn)
+            t >>= 8n
         }
-
-        let reordered = bytes
-        const wo = valueDialog.wordOrder || ''
-        if (byteLength > 1 && wo) {
-            reordered = reorderBytes(bytes, byteLength, wo)
-        }
-
-        let unsigned = 0n
-        for (const b of reordered) {
-            unsigned = (unsigned << 8n) + BigInt(b & 0xFF)
-        }
-
-        const signBit = 1n << (bits - 1n)
-        let signed = unsigned
-        if (unsigned & signBit) {
-            signed = unsigned - (one << bits)
-        }
-
-        const hexDigits = Math.max(2, (byteLength * 8) / 4)
-        const hex = '0x' + unsigned.toString(16).toUpperCase().padStart(hexDigits, '0')
-        const binary = unsigned.toString(2).padStart(byteLength * 8, '0')
-
-        return {
-            signed: signed.toString(),
-            unsigned: unsigned.toString(),
-            hex,
-            binary
-        }
-    } catch (e) {
-        return null
+        bytes = reorderBytes(tmp, byteLength, byteLength > 1 ? valueDialog.wordOrder : '')
     }
+    return buildNumericFormats(bytes, byteLength)
 })
 
 const isBase64 = (str) => {
@@ -3296,7 +3573,7 @@ const isBase64 = (str) => {
     }
 }
 
-const showFullValue = (payload) => {
+const showFullValue = async (payload) => {
     let val = payload
     let byteLength = valueDialog.byteLength
     let wordOrder = valueDialog.wordOrder
@@ -3315,13 +3592,72 @@ const showFullValue = (payload) => {
         val = JSON.stringify(val)
     }
 
-    valueDialog.value = String(val)
+    const displayValue = String(val)
+
+    // 复位原始报文状态
+    valueDialog.value = displayValue
     valueDialog.decodedValue = ''
     valueDialog.decodeType = 'text'
     valueDialog.byteLength = byteLength || 2
     valueDialog.wordOrder = valueDialog.byteLength > 1 ? (wordOrder || 'AB') : ''
+    valueDialog.hasRaw = false
+    valueDialog.rawBytes = null
+    valueDialog.rawHex = ''
+    valueDialog.rawInt = ''
+    valueDialog.parsedValue = ''
+    valueDialog.noRawNote = ''
+    valueDialog.isBase64 = isBase64(displayValue)
 
-    valueDialog.isBase64 = isBase64(valueDialog.value)
+    // 提取点位 ID 与 WS 已下发的原始报文（rawValue, base64）
+    let pointId = null
+    let rawValueB64 = null
+    if (payload && typeof payload === 'object') {
+        if ('id' in payload && payload.id) pointId = payload.id
+        if (payload.rawValue) rawValueB64 = payload.rawValue
+    }
+
+    // 把原始字节写入弹窗状态，并据此推导字节数/字序/转换后值
+    const applyRaw = (b64, parsed) => {
+        const bytes = base64ToBytes(b64)
+        if (bytes.length > 0) {
+            valueDialog.rawBytes = bytes
+            valueDialog.hasRaw = true
+            valueDialog.rawHex = bytesToHex(bytes)
+            valueDialog.rawInt = rawBytesToBigInt(bytes).toString()
+            valueDialog.byteLength = bytes.length === 1 ? 1
+                : (bytes.length === 2 ? 2
+                    : (bytes.length === 4 ? 4
+                        : (bytes.length === 8 ? 8 : valueDialog.byteLength)))
+            valueDialog.wordOrder = valueDialog.byteLength > 1 ? (wordOrder || 'AB') : ''
+            valueDialog.parsedValue = (typeof parsed === 'number') ? String(parsed) : displayValue
+            valueDialog.isBase64 = false
+        } else if (parsed !== undefined && parsed !== null) {
+            valueDialog.parsedValue = String(parsed)
+        }
+    }
+
+    if (rawValueB64) {
+        // WS 已随值下发原始报文，直接复用，无需再发 HTTP 请求
+        applyRaw(rawValueB64, payload.value)
+    } else if (pointId) {
+        // 回退：请求 /api/points/:id/debug 取原始报文
+        try {
+            const dbg = await request.get('/api/points/' + encodeURIComponent(pointId) + '/debug', { silent: true })
+            if (dbg && dbg.rawValue) {
+                applyRaw(dbg.rawValue, dbg.parsedValue)
+            } else if (dbg && dbg.parsedValue !== undefined && dbg.parsedValue !== null) {
+                valueDialog.parsedValue = String(dbg.parsedValue)
+            }
+        } catch (e) {
+            // 无调试信息（点位尚未采集过）：回退到基于显示值的转换
+            valueDialog.noRawNote = '未获取到原始报文（点位可能尚未采集），以下基于显示值推算。'
+        }
+    }
+
+    if (!valueDialog.parsedValue) {
+        valueDialog.parsedValue = displayValue
+    }
+
     if (valueDialog.isBase64) {
         tryDecode('text')
     }
@@ -3394,6 +3730,8 @@ const connectWs = () => {
                     if (data.collected_at) points.value[idx].collected_at = data.collected_at
                     if (data.updated_at) points.value[idx].updated_at = data.updated_at
                     points.value[idx].timestamp = data.collected_at || data.timestamp
+                    // 缓存 WS 下发的原始报文（base64），点击值弹窗时免一次 HTTP 请求
+                    if (data.raw_value) points.value[idx].rawValue = data.raw_value
                 }
             }
         } catch (e) { console.error(e) }
@@ -3539,6 +3877,8 @@ const openWriteDialog = (point) => {
 }
 
 const submitWrite = async () => {
+    if (writeDialog.loading) return
+    writeDialog.loading = true
     const closeLoading = Message.loading({
         content: '下发指令中...',
         duration: 0 // 手动关闭
@@ -3923,4 +4263,343 @@ const normalizeWriteValue = () => {
 
 <style scoped>
 /* v3.0 — styles in src/styles/ */
+
+.table-toolbar--points {
+  padding: var(--space-2) 0;
+}
+
+.left-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #94a3b8);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.point-list-toolbar__pager {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.point-list-toolbar__pager-label {
+  font-size: 12px;
+  color: var(--text-tertiary, #94a3b8);
+  white-space: nowrap;
+}
+.point-list-toolbar__pager-select {
+  width: 118px;
+}
+
+/* ── 精细化抛光：行间距与行级反馈 ── */
+.industrial-table-fluid :deep(.arco-table-td) {
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  border-bottom: 1px solid var(--border, rgba(15, 23, 42, 0.06)) !important;
+  vertical-align: middle;
+}
+.industrial-table-fluid :deep(.arco-table-tr:hover .arco-table-td) {
+  background: rgba(14, 165, 233, 0.04) !important;
+}
+.value-cell {
+  gap: 2px;
+}
+.value-text {
+  margin-bottom: 2px;
+  line-height: 1.35;
+}
+
+/* ── 数值变化动效：值刷新时上浮淡入 ── */
+.point-value-tick {
+  display: inline-block;
+  animation: pointValueTick 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform, color;
+}
+@keyframes pointValueTick {
+  0% {
+    opacity: 0.15;
+    transform: translateY(2px);
+    color: var(--primary);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    color: var(--text-primary);
+  }
+}
+
+/* ── 选择器动效 ── */
+.point-list-toolbar__pager-select :deep(.arco-select-view),
+.point-list-toolbar__select :deep(.arco-select-view) {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.point-list-toolbar__pager-select:hover :deep(.arco-select-view),
+.point-list-toolbar__select:hover :deep(.arco-select-view) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.12);
+}
+:global(.arco-select-popup .arco-select-option) {
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+/* ── 尊重系统降低动效偏好 ── */
+@media (prefers-reduced-motion: reduce) {
+  .point-value-tick {
+    animation: none;
+  }
+  .point-list-toolbar__pager-select :deep(.arco-select-view),
+  .point-list-toolbar__select :deep(.arco-select-view) {
+    transition: none;
+  }
+}
+
+/* ═══ 终态抛光：表格卡片气质 + 状态语义着色 + 检索框一致化 ═══ */
+.point-list-container .table-container {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, rgba(15, 23, 42, 0.08));
+  border-radius: var(--radius-lg, 14px);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 10px 24px -22px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+/* 检索框获得与下拉一致的聚焦呼应 */
+.point-list-toolbar__search :deep(.arco-input-inner-wrapper) {
+  border-radius: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.point-list-toolbar__search :deep(.arco-input-inner-wrapper:focus-within) {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+/* 分页栏整体居中：悬停出现引导提示，底部与容器边缘留 1.5px 空隙 */
+.point-list-container :deep(.arco-table-pagination) {
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  margin-bottom: 1.5px;
+  border-top: 1px dashed var(--border, rgba(15, 23, 42, 0.16));
+  padding-top: 14px;
+}
+.point-list-container :deep(.arco-table-pagination)::after {
+  content: '支持翻页 / 输入页码跳转';
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #fff;
+  background: rgba(17, 24, 39, 0.85);
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.point-list-container :deep(.arco-table-pagination:hover)::after {
+  opacity: 1;
+}
+
+/* ── 分页控件精修：圆角胶囊 + 主题高亮 + 等宽计数 ── */
+.point-list-container :deep(.arco-pagination-item) {
+  min-width: 28px;
+  height: 28px;
+  line-height: 26px;
+  border-radius: 8px;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  border: 1px solid transparent;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.point-list-container :deep(.arco-pagination-item-previous),
+.point-list-container :deep(.arco-pagination-item-next) {
+  border-radius: 8px;
+}
+.point-list-container :deep(.arco-pagination-item:hover) {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.point-list-container :deep(.arco-pagination-item-active),
+.point-list-container :deep(.arco-pagination-item-active:hover) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover, var(--primary)));
+  border-color: transparent;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 10px -3px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.point-list-container :deep(.arco-pagination-item-disabled),
+.point-list-container :deep(.arco-pagination-item-disabled:hover) {
+  background: transparent;
+  border-color: transparent;
+  color: var(--border, #d0d5dd);
+  cursor: not-allowed;
+}
+.point-list-container :deep(.arco-pagination-item:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--primary) 60%, transparent);
+  outline-offset: 2px;
+}
+.point-list-container :deep(.arco-pagination-total) {
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  color: var(--text-secondary, #4b5563);
+}
+.point-list-container :deep(.arco-pagination-jumper .arco-input-inner-wrapper) {
+  border-radius: 6px;
+}
+
+/* 连接状态圆点：按设备真实状态着色 */
+.terminal-dot--ok {
+  background: var(--edgeCore-success, #16a34a);
+  animation: pulse-dot 2s infinite;
+}
+.terminal-dot--warn {
+  background: #f59e0b;
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.18);
+}
+.terminal-dot--off {
+  background: #9ca3af;
+  animation: none;
+  box-shadow: 0 0 0 4px rgba(156, 163, 175, 0.16);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .terminal-dot--ok {
+    animation: none;
+  }
+  .point-list-toolbar__search :deep(.arco-input-inner-wrapper) {
+    transition: none;
+  }
+  .point-list-container :deep(.arco-table-pagination)::after {
+    transition: none;
+  }
+  .point-list-container :deep(.arco-pagination-item) {
+    transition: none;
+  }
+}
+
+.left-title::before {
+  content: '';
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--primary, rgb(22, 93, 255));
+}
+
+/* ── Value / helper dialogs: Arco-only replacements for dead Vuetify utility classes ── */
+.vd-section-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1d2129);
+}
+.vd-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1d2129);
+  white-space: nowrap;
+}
+.vd-caption {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-tertiary, #86909c);
+}
+.vd-medium {
+  font-weight: 500;
+}
+.vd-flex {
+  display: flex;
+  align-items: center;
+}
+.vd-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.vd-spacer {
+  flex: 1 1 auto;
+}
+.vd-ml-2 {
+  margin-left: 8px;
+}
+.vd-search {
+  width: 260px;
+  max-width: 50%;
+}
+.vd-card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.vd-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--edgeCore-border, #e5e6eb);
+}
+.vd-template-card {
+  padding: 12px;
+  border: 1px solid var(--edgeCore-border, #e5e6eb);
+  border-radius: 8px;
+  background: var(--color-fill-1, #fafafa);
+  height: 100%;
+  box-sizing: border-box;
+}
+.vd-codebox {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  padding: 12px;
+  border-radius: 6px;
+  background: var(--color-fill-2, #f7f8fa);
+  border: 1px solid var(--edgeCore-border, #e5e6eb);
+  color: var(--text-primary, #1d2129);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+.vd-codebox--sm {
+  padding: 8px;
+  font-size: 12px;
+}
+.vd-codebox :deep(.arco-textarea) {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+}
+
+/* 数值格式转换：紧凑三列网格（8 字节也能一屏展示，无嵌套框） */
+.vd-fmt-grid {
+  margin-top: 2px;
+}
+.vd-fmt-cell {
+  height: 100%;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: var(--color-fill-2, #f7f8fa);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.vd-fmt-key {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-tertiary, #86909c);
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vd-fmt-val {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-primary, #1d2129);
+  word-break: break-all;
+}
 </style>

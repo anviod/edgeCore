@@ -2,7 +2,7 @@
 
 > 规划与扩展项见 [TODO/Profinet IO 采集驱动](../TODO/Profinet%20IO/采集驱动Profinet%20IO.html)。
 
-EdgeX 南向 PROFINET IO 驱动，作为 IO 控制器通过 TCP（默认端口 34964）对 IO 设备进行非循环读写。
+edgeCore 南向 PROFINET IO 驱动，作为 IO 控制器通过 TCP（默认端口 34964）对 IO 设备进行非循环读写。
 
 ## 架构
 
@@ -63,7 +63,7 @@ Channel (profinet-io)
 
 ## 部署限制
 
-PROFINET IO 实时报文基于以太网帧传输，需将 EdgeX 部署在物理设备上并绑定真实网卡。不建议在 Docker 镜像或虚拟机中使用。
+PROFINET IO 实时报文基于以太网帧传输，需将 edgeCore 部署在物理设备上并绑定真实网卡。不建议在 Docker 镜像或虚拟机中使用。
 
 ## 前端集成清单
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/core"
+	"github.com/anviod/edgeCore/internal/core"
 )
 
 // TestOpcuaProtocol_SessionFramework is a skeleton for long-running OPC UA session

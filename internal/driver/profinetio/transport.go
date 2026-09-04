@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver"
 	"go.uber.org/zap"
 )
 

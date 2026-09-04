@@ -3,14 +3,15 @@ package core
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	drv "github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	drv "github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 
 	"go.uber.org/zap"
 )
@@ -90,7 +91,6 @@ func NewChannelManager(pipeline *DataPipeline, saveFunc func([]model.Channel) er
 	cm.scanEngineAdapter.scanEngine.SetIOProfileProvider(cm.deviceIOProfile)
 	cm.scanEngineAdapter.scanEngine.SetCircuitBreakerEventHandler(cm.recordCircuitBreakerEvent)
 	cm.soakMonitor = NewSoakMonitor(cm)
-	cm.soakMonitor.Start()
 
 	// Wire state manager events
 	cm.stateManager.OnStateChange = func(deviceID string, oldState, newState NodeState) {
@@ -101,12 +101,15 @@ func NewChannelManager(pipeline *DataPipeline, saveFunc func([]model.Channel) er
 			handler(deviceID, int(newState))
 		}
 	}
+	cm.soakMonitor.Start()
 
 	return cm
 }
 
 func (cm *ChannelManager) SetShadowCore(sc *ShadowCore) {
+	cm.mu.Lock()
 	cm.shadowCore = sc
+	cm.mu.Unlock()
 	cm.scanEngineAdapter.scanEngine.SetShadowCore(sc)
 }
 
@@ -114,7 +117,9 @@ func (cm *ChannelManager) SetShadowIngress(si *ShadowIngress) {
 	if si == nil {
 		return
 	}
+	cm.mu.Lock()
 	cm.shadowCore = si.shadowCore
+	cm.mu.Unlock()
 	cm.scanEngineAdapter.scanEngine.SetShadowIngress(si)
 }
 
@@ -570,16 +575,30 @@ func (cm *ChannelManager) UpdateChannel(ch *model.Channel) error {
 	return nil
 }
 
-// RemoveChannel 删除采集通道
+// RemoveChannel 删除采集通道，并级联清理该通道下的所有设备
 func (cm *ChannelManager) RemoveChannel(channelID string) error {
-	// 1. Stop channel
+	// 1. Stop channel (注销通道下所有设备的 ScanEngine 任务并断开驱动)
 	_ = cm.StopChannel(channelID)
 
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
-	if _, exists := cm.channels[channelID]; !exists {
+	ch, exists := cm.channels[channelID]
+	if !exists {
 		return fmt.Errorf("channel not found")
+	}
+
+	// 2. 级联清理通道下所有设备的状态数据（shadow / tag / stateManager），避免删除通道后残留
+	cm.stateManager.UnregisterNode(channelID)
+	for _, dev := range ch.Devices {
+		cm.stateManager.UnregisterNode(dev.ID)
+		if sc := cm.shadowCore; sc != nil {
+			// 设备可能从未建立影子状态，忽略"不存在"错误
+			_ = sc.DeleteShadowDevice(dev.ID)
+		}
+		if tr := cm.tagRegistry; tr != nil {
+			tr.UnregisterDevice(channelID, dev.ID)
+		}
 	}
 
 	delete(cm.channels, channelID)
@@ -587,7 +606,10 @@ func (cm *ChannelManager) RemoveChannel(channelID string) error {
 	delete(cm.driverMus, channelID)
 
 	_ = cm.saveChannels()
-	zap.L().Info("Channel removed", zap.String("channel_id", channelID))
+	zap.L().Info("Channel removed",
+		zap.String("channel_id", channelID),
+		zap.Int("devices_removed", len(ch.Devices)),
+	)
 	cm.notifyTopologyChange()
 	return nil
 }
@@ -645,8 +667,12 @@ func (cm *ChannelManager) tryConnectChannel(channelID string) {
 // StartChannel 启动一个采集通道
 func (cm *ChannelManager) StartChannel(channelID string) error {
 	cm.mu.RLock()
-	ch, ok := cm.channels[channelID]
+	chPtr, ok := cm.channels[channelID]
 	d, okDrv := cm.drivers[channelID]
+	var ch model.Channel
+	if ok && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !ok || !okDrv {
@@ -683,7 +709,7 @@ func (cm *ChannelManager) StartChannel(channelID string) error {
 			continue
 		}
 
-		if err := cm.registerDeviceToScanEngine(ch, dev); err != nil {
+		if err := cm.registerDeviceToScanEngine(&ch, dev); err != nil {
 			zap.L().Error("Failed to register device to ScanEngine", zap.String("device", dev.Name), zap.Error(err))
 		}
 	}
@@ -697,8 +723,12 @@ func (cm *ChannelManager) StartChannel(channelID string) error {
 // StopChannel 停止一个采集通道
 func (cm *ChannelManager) StopChannel(channelID string) error {
 	cm.mu.RLock()
-	ch, ok := cm.channels[channelID]
+	chPtr, ok := cm.channels[channelID]
 	d, okDrv := cm.drivers[channelID]
+	var ch model.Channel
+	if ok && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !ok || !okDrv {
@@ -722,7 +752,7 @@ func (cm *ChannelManager) GetChannels() []model.Channel {
 	defer cm.mu.RUnlock()
 	channels := make([]model.Channel, 0, len(cm.channels))
 	for _, ch := range cm.channels {
-		c := *ch
+		c := ch.DeepCopy()
 		if node := cm.stateManager.GetNode(c.ID); node != nil {
 			c.NodeRuntime = &model.NodeRuntime{
 				FailCount:     node.Runtime.FailCount,
@@ -786,6 +816,15 @@ func (cm *ChannelManager) GetChannel(channelID string) *model.Channel {
 
 	if ch, ok := cm.channels[channelID]; ok {
 		c := *ch
+		// Deep-copy devices so callers cannot mutate stored Points/Config
+		// through the shared slice/backing arrays.
+		if ch.Devices != nil {
+			devs := make([]model.Device, len(ch.Devices))
+			for i, dev := range ch.Devices {
+				devs[i] = dev.DeepCopy()
+			}
+			c.Devices = devs
+		}
 		if node := cm.stateManager.GetNode(c.ID); node != nil {
 			c.NodeRuntime = &model.NodeRuntime{
 				FailCount:     node.Runtime.FailCount,
@@ -807,10 +846,11 @@ func (cm *ChannelManager) GetChannelDevices(channelID string) []model.Device {
 
 	if ch, ok := cm.channels[channelID]; ok {
 		d := cm.drivers[channelID]
-		// Return a copy with state populated
+		// Return deep copies with state populated so callers may not mutate
+		// the stored device's Points/Config through the returned slice.
 		devices := make([]model.Device, len(ch.Devices))
 		for i, dev := range ch.Devices {
-			devices[i] = dev
+			devices[i] = dev.DeepCopy()
 			cm.applyDeviceRuntimeState(ch, d, &devices[i])
 			var metrics *model.DeviceMetrics
 			if mc := model.GetGlobalMetricsCollector(); mc != nil {
@@ -831,8 +871,9 @@ func (cm *ChannelManager) GetDevice(channelID, deviceID string) *model.Device {
 	if ch, ok := cm.channels[channelID]; ok {
 		for i, dev := range ch.Devices {
 			if dev.ID == deviceID {
-				// Return a copy with state populated
-				d := ch.Devices[i]
+				// Return a deep copy with state populated so callers may mutate
+				// Points/Config without corrupting the stored channel.
+				d := ch.Devices[i].DeepCopy()
 				driver := cm.drivers[channelID]
 				cm.applyDeviceRuntimeState(ch, driver, &d)
 				var metrics *model.DeviceMetrics
@@ -917,11 +958,21 @@ func (cm *ChannelManager) GetDevicePoints(channelID, deviceID string) ([]model.P
 			FunctionCode: point.FunctionCode,
 			Address:      point.Address,
 			DataType:     point.DataType,
+			ParseType:    point.ParseType,
 			Unit:         point.Unit,
 			Timestamp:    now,
 			Quality:      "Uncertain",
 			Value:        nil,
 			ReadWrite:    point.ReadWrite,
+			Format:       point.Format,
+			WordOrder:    point.WordOrder,
+			Scale:        point.Scale,
+			Offset:       point.Offset,
+			ReadFormula:  point.ReadFormula,
+			WriteFormula: point.WriteFormula,
+			Group:        point.Group,
+			ScanClass:    point.ScanClass,
+			ReportMode:   point.ReportMode,
 		})
 	}
 	return points, nil
@@ -962,10 +1013,20 @@ func (cm *ChannelManager) getDevicePointsFromShadow(dev *model.Device, slaveID u
 			FunctionCode: point.FunctionCode,
 			Address:      point.Address,
 			DataType:     point.DataType,
+			ParseType:    point.ParseType,
 			Unit:         point.Unit,
 			Quality:      "Bad",
 			Value:        nil,
 			ReadWrite:    point.ReadWrite,
+			Format:       point.Format,
+			WordOrder:    point.WordOrder,
+			Scale:        point.Scale,
+			Offset:       point.Offset,
+			ReadFormula:  point.ReadFormula,
+			WriteFormula: point.WriteFormula,
+			Group:        point.Group,
+			ScanClass:    point.ScanClass,
+			ReportMode:   point.ReportMode,
 		}
 		if sp, exists := shadow.Points[point.ID]; exists {
 			pd.Value = sp.Value
@@ -1491,7 +1552,11 @@ func (cm *ChannelManager) ScanChannel(ctx context.Context, channelID string, par
 	}
 	cm.mu.RLock()
 	d, okDrv := cm.drivers[channelID]
-	ch, okCh := cm.channels[channelID]
+	chPtr, okCh := cm.channels[channelID]
+	var ch model.Channel
+	if okCh && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !okDrv {
@@ -1551,7 +1616,185 @@ func (cm *ChannelManager) ScanChannel(ctx context.Context, channelID string, par
 	// Scan is a discovery operation (WhoIs/ReadProperty) that uses its own
 	// ephemeral client. Holding driverMus would block all ReadPoint/WritePoint
 	// on the same channel for the full discovery window.
-	return scanner.Scan(ctx, params)
+	result, err := scanner.Scan(ctx, params)
+	if err != nil {
+		return result, err
+	}
+
+	// Post-scan: auto-update existing BACnet device addresses.
+	// BACnet devices use dynamic UDP ports that change on reboot.
+	// When a scan discovers an existing device with a new port, persist it
+	// so the driver can reconnect without manual intervention.
+	// 扫描后自动更新已有 BACnet 设备地址：设备重启后 UDP 端口会变化，
+	// 扫描发现新端口后自动持久化，避免设备离线需要手动修正。
+	if okCh && ch.Protocol == "bacnet-ip" {
+		// Recover from any reflection/panic errors so the scan result
+		// is still returned to the caller. Address auto-update is a
+		// best-effort optimization, not a critical-path operation.
+		// 地址自动更新是尽力而为的优化操作，任何异常都不应影响扫描结果返回。
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					zap.L().Warn("autoUpdateBACnetAddresses panicked (recovered, scan result unaffected)",
+						zap.Any("panic", r),
+						zap.Stack("stack"))
+				}
+			}()
+			cm.autoUpdateBACnetAddresses(&ch, result)
+		}()
+	}
+
+	return result, nil
+}
+
+// autoUpdateBACnetAddresses extracts scan results via reflection and updates
+// existing devices whose IP or port has changed. Uses reflection to avoid a
+// hard dependency on the bacnet package's ScanResult type.
+// autoUpdateBACnetAddresses 通过反射提取扫描结果，更新 IP 或端口已变化的已有设备。
+func (cm *ChannelManager) autoUpdateBACnetAddresses(ch *model.Channel, scanResult any) {
+	if scanResult == nil {
+		return
+	}
+
+	// Build a lookup map: bacnet_device_id (int) → device ID (string)
+	deviceIDByBacnetID := make(map[int]string)
+	for _, dev := range ch.Devices {
+		if id, ok := getDeviceID(dev.Config); ok {
+			deviceIDByBacnetID[id] = dev.ID
+		}
+	}
+	if len(deviceIDByBacnetID) == 0 {
+		return
+	}
+
+	sliceVal := reflect.ValueOf(scanResult)
+	if sliceVal.Kind() != reflect.Slice {
+		return
+	}
+
+	updated := 0
+	for i := 0; i < sliceVal.Len(); i++ {
+		item := sliceVal.Index(i)
+		if item.Kind() == reflect.Ptr {
+			item = item.Elem()
+		}
+		if item.Kind() != reflect.Struct {
+			continue
+		}
+
+		// Extract fields by JSON tag (bacnet_device_id, ip, port, diff_status)
+		bacnetID := extractIntField(item, "DeviceID")
+		if bacnetID == 0 {
+			bacnetID = extractIntByJSONTag(item, "bacnet_device_id")
+		}
+		if bacnetID == 0 {
+			continue
+		}
+
+		// Only update existing devices (skip newly discovered ones)
+		diffStatus := extractStringByJSONTag(item, "diff_status")
+		if diffStatus == "new" {
+			continue
+		}
+
+		deviceKey, found := deviceIDByBacnetID[bacnetID]
+		if !found {
+			continue
+		}
+
+		ip := extractStringByJSONTag(item, "ip")
+		port := extractIntByJSONTag(item, "port")
+		if ip == "" || port <= 0 {
+			continue
+		}
+
+		// OnBACnetAddressDiscovered handles the actual config update + persistence
+		cm.OnBACnetAddressDiscovered(deviceKey, ip, port)
+		updated++
+	}
+
+	if updated > 0 {
+		zap.L().Info("ScanChannel: auto-updated BACnet device addresses",
+			zap.String("channel", ch.ID),
+			zap.Int("updated", updated),
+		)
+	}
+}
+
+// extractIntField extracts an int from a struct field by Go field name.
+// 安全提取 struct 字段的 int 值；非 struct 类型直接返回 0。
+func extractIntField(v reflect.Value, fieldName string) int {
+	if v.Kind() != reflect.Struct {
+		return 0
+	}
+	f := v.FieldByName(fieldName)
+	if !f.IsValid() {
+		return 0
+	}
+	switch f.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return int(f.Int())
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return int(f.Uint())
+	case reflect.Float32, reflect.Float64:
+		return int(f.Float())
+	}
+	return 0
+}
+
+// extractIntByJSONTag extracts an int from a struct field by its JSON tag.
+// 通过 JSON tag 匹配 struct 字段并提取 int 值。
+func extractIntByJSONTag(v reflect.Value, jsonTag string) int {
+	if v.Kind() != reflect.Struct {
+		return 0
+	}
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tag := field.Tag.Get("json")
+		tagName := strings.Split(tag, ",")[0]
+		if tagName == jsonTag {
+			f := v.Field(i)
+			switch f.Kind() {
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				return int(f.Int())
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				return int(f.Uint())
+			case reflect.Float32, reflect.Float64:
+				return int(f.Float())
+			}
+			return 0
+		}
+	}
+	// Fallback: try by field name
+	return extractIntField(v, jsonTag)
+}
+
+// extractStringByJSONTag extracts a string from a struct field by its JSON tag.
+// 通过 JSON tag 匹配 struct 字段并提取 string 值。
+func extractStringByJSONTag(v reflect.Value, jsonTag string) string {
+	if v.Kind() != reflect.Struct {
+		return ""
+	}
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		tag := field.Tag.Get("json")
+		tagName := strings.Split(tag, ",")[0]
+		if tagName == jsonTag {
+			f := v.Field(i)
+			if f.Kind() == reflect.String {
+				return f.String()
+			}
+			return ""
+		}
+	}
+	// Fallback: try by field name
+	f := v.FieldByName(jsonTag)
+	if f.IsValid() && f.Kind() == reflect.String {
+		return f.String()
+	}
+	return ""
 }
 
 // ScanDevice 扫描设备下的对象（点位）。ctx 应由调用方设置超时（OPC UA Browse 可达 180s）。
@@ -1561,7 +1804,11 @@ func (cm *ChannelManager) ScanDevice(ctx context.Context, channelID, deviceID st
 	}
 	cm.mu.RLock()
 	d, okDrv := cm.drivers[channelID]
-	ch, okCh := cm.channels[channelID]
+	chPtr, okCh := cm.channels[channelID]
+	var ch model.Channel
+	if okCh && chPtr != nil {
+		ch = chPtr.DeepCopy()
+	}
 	cm.mu.RUnlock()
 
 	if !okDrv || !okCh {
@@ -2284,6 +2531,7 @@ func (cm *ChannelManager) RemoveDevice(channelID, deviceID string) error {
 	// 停止设备
 	oldDev := &ch.Devices[idx]
 	cm.scanEngineAdapter.UnregisterDevice(oldDev.ID)
+	cm.stateManager.UnregisterNode(oldDev.ID)
 
 	// 从切片移除
 	ch.Devices = append(ch.Devices[:idx], ch.Devices[idx+1:]...)
@@ -2311,6 +2559,7 @@ func (cm *ChannelManager) RemoveDevices(channelID string, deviceIDs []string) er
 	for _, d := range ch.Devices {
 		if toRemove[d.ID] {
 			cm.scanEngineAdapter.UnregisterDevice(d.ID)
+			cm.stateManager.UnregisterNode(d.ID)
 		} else {
 			newDevices = append(newDevices, d)
 		}
@@ -2349,7 +2598,7 @@ func (cm *ChannelManager) saveChannels() error {
 	// Copy channel data under caller's lock
 	channels := make([]model.Channel, 0, len(cm.channels))
 	for _, c := range cm.channels {
-		channels = append(channels, *c)
+		channels = append(channels, c.DeepCopy())
 	}
 
 	// Save asynchronously to avoid holding cm.mu during disk I/O.

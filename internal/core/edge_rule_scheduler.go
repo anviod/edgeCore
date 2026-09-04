@@ -35,6 +35,13 @@ func newEdgeRuleScheduler(em *EdgeComputeManager, batchWindow time.Duration) *ed
 	}
 }
 
+// setBatchWindow updates the batch window in a thread-safe manner.
+func (s *edgeRuleScheduler) setBatchWindow(d time.Duration) {
+	s.mu.Lock()
+	s.batchWindow = d
+	s.mu.Unlock()
+}
+
 func (s *edgeRuleScheduler) schedule(task *ruleTask) {
 	s.mu.Lock()
 	if s.stopped {

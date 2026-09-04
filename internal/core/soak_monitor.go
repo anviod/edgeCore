@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 const (
@@ -374,7 +374,13 @@ func (cm *ChannelManager) collectSoakInstantMetrics() soakInstantMetrics {
 		return out
 	}
 
-	se := cm.scanEngineAdapter.scanEngine
+	cm.mu.RLock()
+	adapter := cm.scanEngineAdapter
+	cm.mu.RUnlock()
+	if adapter == nil {
+		return out
+	}
+	se := adapter.scanEngine
 	if se == nil {
 		return out
 	}

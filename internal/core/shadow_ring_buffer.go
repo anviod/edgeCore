@@ -3,7 +3,7 @@ package core
 import (
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // ShadowWriteRingBuffer is a fixed-capacity queue for shadow ingress messages.

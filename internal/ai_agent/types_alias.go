@@ -1,6 +1,6 @@
 package ai_agent
 
-import "github.com/anviod/edgex/internal/ai_agent/aitypes"
+import "github.com/anviod/edgeCore/internal/ai_agent/aitypes"
 
 type (
 	TaskStatus            = aitypes.TaskStatus

@@ -12,70 +12,64 @@ import EdgeCompute from '../views/EdgeCompute.vue'
 import SystemSettings from '../views/SystemSettings.vue'
 import LogViewer from '../views/LogViewer.vue'
 import Login from '../views/Login.vue'
-import NodeSync from '../views/NodeSync.vue'
 import Install from '../views/Install.vue'
 
 const routes = [
     {
         path: '/install',
         component: Install,
-        meta: { title: '系统安装配置' }
+        meta: { title: '系统安装配置', level: 0 }
     },
     {
         path: '/login',
         component: Login,
-        meta: { title: '登录' }
+        meta: { title: '登录', level: 0 }
     },
-    { 
-        path: '/', 
+    {
+        path: '/',
         component: Dashboard,
-        meta: { title: '首页监控' }
+        meta: { title: '首页监控', level: 1 }
     },
-    { 
-        path: '/logs', 
+    {
+        path: '/logs',
         component: LogViewer,
-        meta: { title: '系统日志' }
+        meta: { title: '系统日志', level: 1 }
     },
-    { 
-        path: '/system', 
+    {
+        path: '/system',
         component: SystemSettings,
-        meta: { title: '系统设置' }
+        meta: { title: '系统设置', level: 1 }
     },
-    { 
-        path: '/channels', 
+    {
+        path: '/channels',
         component: ChannelList,
-        meta: { title: '采集通道' }
+        meta: { title: '采集通道', level: 1 }
     },
-    { 
-        path: '/edge-compute', 
+    {
+        path: '/edge-compute',
         component: EdgeCompute,
-        meta: { title: '边缘计算' }
+        meta: { title: '边缘计算', level: 1 }
     },
-    { 
-        path: '/channels/:channelId/devices', 
+    {
+        path: '/channels/:channelId/devices',
         component: DeviceList,
-        meta: { title: '设备列表' } 
+        meta: { title: '设备列表', level: 2 }
     },
-    { 
+    {
         // (.*) allows OPC UA endpoint-style device IDs containing / and :
-        path: '/channels/:channelId/devices/:deviceId(.*)/points', 
+        path: '/channels/:channelId/devices/:deviceId(.*)/points',
         component: PointList,
-        meta: { title: '点位数据' }
+        meta: { title: '点位数据', level: 3 }
     },
-    { 
-        path: '/virtual-shadows', 
+    {
+        path: '/virtual-shadows',
         component: VirtualShadowDevices,
-        meta: { title: '虚拟设备' }
+        meta: { title: '虚拟设备', level: 1 }
     },
-    { 
-        path: '/northbound', 
+    {
+        path: '/northbound',
         component: Northbound,
-        meta: { title: '北向上报' }
-    },
-    { 
-        path: '/node-sync', 
-        component: NodeSync,
-        meta: { title: '节点同步' }
+        meta: { title: '北向上报', level: 1 }
     }
 ]
 

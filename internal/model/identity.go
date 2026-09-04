@@ -9,6 +9,20 @@ import (
 
 const shortIDAlphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
 
+// sanitizeID replaces path-unsafe characters (/, \, ?, #, spaces) with hyphens
+// so that the resulting ID can be safely used as a URL path parameter without
+// breaking the Fiber radix-tree router (e.g. "c/metrics28319" → "c-metrics28319").
+func sanitizeID(id string) string {
+	replacer := strings.NewReplacer(
+		"/", "-",
+		"\\", "-",
+		"?", "-",
+		"#", "-",
+		" ", "-",
+	)
+	return replacer.Replace(id)
+}
+
 // EnsureChannelID 确保通道具有非空 ID（优先使用 id，其次 name）。
 func EnsureChannelID(ch *Channel) error {
 	if ch == nil {
@@ -21,7 +35,7 @@ func EnsureChannelID(ch *Channel) error {
 	if id == "" {
 		return fmt.Errorf("channel ID or name is required")
 	}
-	ch.ID = id
+	ch.ID = sanitizeID(id)
 	return nil
 }
 
@@ -83,7 +97,7 @@ func EnsureDeviceID(dev *Device) error {
 	if id == "" {
 		return fmt.Errorf("device ID or name is required")
 	}
-	dev.ID = id
+	dev.ID = sanitizeID(id)
 	return nil
 }
 
@@ -99,7 +113,7 @@ func EnsurePointID(p *Point) error {
 	if id == "" {
 		return fmt.Errorf("point ID or name is required")
 	}
-	p.ID = id
+	p.ID = sanitizeID(id)
 	return nil
 }
 
@@ -111,7 +125,7 @@ func ensureNamedID(id, name, kind string) (string, error) {
 	if id == "" {
 		return "", fmt.Errorf("%s ID or name is required", kind)
 	}
-	return id, nil
+	return sanitizeID(id), nil
 }
 
 // NormalizeNorthboundForSave 校验北向通道 ID 并剔除运行时 Status 字段，供 edge.db 持久化使用。

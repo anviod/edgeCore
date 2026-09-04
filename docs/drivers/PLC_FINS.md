@@ -6,7 +6,7 @@ layout: default
 
 ## 概述
 
-EdgeX 通过 `omron-fins` 协议驱动与欧姆龙 PLC 通信，底层使用 [github.com/anviod/fins](https://github.com/anviod/fins) 库，支持 **TCP** 与 **UDP** 两种传输模式。
+edgeCore 通过 `omron-fins` 协议驱动与欧姆龙 PLC 通信，底层使用 [github.com/anviod/fins](https://github.com/anviod/fins) 库，支持 **TCP** 与 **UDP** 两种传输模式。
 
 ## 通道配置
 
@@ -58,7 +58,7 @@ config:
 ## 架构
 
 ```
-OmronFinsDriver (EdgeX)
+OmronFinsDriver (edgeCore)
     ├── TCP → fins.FinsTCPDriver (anviod/fins)
     └── UDP → udpBackend + udpScheduler (fins/udp + fins.Decoder)
 ```

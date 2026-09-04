@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Config modals (Channel / Device / Point dialogs)
+ * edgeCore v3.0 — Config modals (Channel / Device / Point dialogs)
  */
 
 .channel-config-modal.arco-modal {
@@ -361,4 +361,310 @@
   max-height: 70vh;
   overflow-y: auto;
   background: var(--surface);
+}
+
+/* ═══════════════════════════════════════
+   Device config modal — compact single-screen
+   ═══════════════════════════════════════ */
+.device-config-modal.arco-modal {
+  max-width: calc(100vw - 16px) !important;
+}
+
+.device-config-modal .arco-modal-body {
+  padding: var(--space-4) var(--space-6) !important;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.device-config-modal .device-config-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.device-config-modal .device-config-form > .arco-form-item,
+.device-config-modal .device-config-form > .arco-row {
+  margin-bottom: var(--space-2);
+}
+
+.device-config-modal .device-config-form .arco-form-item {
+  margin-bottom: 0;
+}
+
+.device-config-modal .device-config-form .arco-form-item-label-col {
+  padding-bottom: 6px;
+}
+
+.device-config-modal .device-config-form .arco-form-item-label {
+  font-size: 12px;
+}
+
+.device-config-modal .device-config-form .arco-input-wrapper,
+.device-config-modal .device-config-form .arco-select-view-single,
+.device-config-modal .device-config-form .arco-input-number-mode-embed .arco-input-number,
+.device-config-modal .device-config-form .arco-picker {
+  min-height: 38px;
+}
+
+.device-config-modal .device-config-form .arco-input-wrapper .arco-input,
+.device-config-modal .device-config-form .arco-input-number-mode-embed .arco-input-number .arco-input {
+  font-size: 13px;
+}
+
+.device-config-modal .device-config-form .arco-input-wrapper .arco-input,
+.device-config-modal .device-config-form .arco-input-wrapper {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+.device-config-modal .device-config-form .arco-select-view-single .arco-select-view-value {
+  font-size: 13px;
+}
+
+.device-config-modal .device-config-form .arco-input-number-mode-embed .arco-input-number {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.device-config-modal .device-config-form .arco-form-item-extra {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.device-config-modal .device-config-form .arco-form-item-message {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* ── section titles ── */
+.device-config-modal .device-section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-5) 0 var(--space-2);
+  line-height: 1.4;
+}
+
+.device-config-modal .device-section-title__bar {
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--primary);
+  flex-shrink: 0;
+}
+
+.device-config-modal .device-section-title__text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.device-config-modal .device-section-title__line {
+  flex: 1;
+  min-width: 24px;
+  height: 1px;
+  margin-left: 4px;
+  background: linear-gradient(90deg, var(--border) 0%, rgba(15, 23, 42, 0) 100%);
+}
+
+.device-config-modal .device-section-title .arco-switch {
+  flex-shrink: 0;
+}
+
+.device-config-modal .device-section-title:first-child {
+  margin-top: 0;
+}
+
+.device-config-modal .device-subsection-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--space-3) 0 var(--space-2);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.device-config-modal .device-subsection-title__bar {
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  background: var(--border-hover);
+  flex-shrink: 0;
+}
+
+/* ── advanced JSON collapse ── */
+.device-config-modal .device-json-collapse {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.device-config-modal .device-json-collapse .arco-collapse-item-header {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  padding: 8px 12px;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-config-modal .device-json-collapse .arco-collapse-item-header > :last-child {
+  flex-shrink: 0;
+}
+
+.device-config-modal .device-json-collapse .arco-collapse-item-content-box {
+  padding: 0 12px 10px;
+}
+
+.device-config-modal .device-json-collapse .arco-form-item {
+  margin-bottom: 0;
+}
+
+.device-config-modal .device-json-collapse .arco-textarea {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ── interaction polish ── */
+.device-config-modal .arco-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+.device-config-modal .arco-modal-body::-webkit-scrollbar-thumb {
+  border-radius: 3px;
+  background: var(--border-hover);
+}
+.device-config-modal .arco-modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+.device-config-modal .arco-input-wrapper:hover,
+.device-config-modal .arco-select-view-single:hover,
+.device-config-modal .arco-input-number-mode-embed:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg);
+}
+
+.device-config-modal .device-config-form .arco-switch {
+  transition: transform var(--transition-fast);
+}
+
+.device-config-modal .arco-modal-header {
+  border-bottom: 1px solid var(--border);
+}
+
+.device-config-modal .arco-modal-footer {
+  border-top: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════
+   Section cards — v3.1 polish
+   Industrial card-grouped layout (Siemens / EMQX paradigm)
+   ═══════════════════════════════════════ */
+
+.device-config-modal .device-form-section {
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  transition: border-color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.device-config-modal .device-form-section:last-child {
+  margin-bottom: 0;
+}
+
+.device-config-modal .device-form-section:hover {
+  border-color: var(--border-hover);
+}
+
+/* Section title inside card — divider style */
+.device-config-modal .device-form-section .device-section-title {
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.device-config-modal .device-form-section .device-section-title__bar {
+  height: 16px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--primary-hover) 100%);
+}
+
+/* Row spacing inside sections */
+.device-config-modal .device-form-section .arco-row {
+  margin-bottom: var(--space-2);
+}
+
+.device-config-modal .device-form-section .arco-row:last-child {
+  margin-bottom: 0;
+}
+
+/* Standalone form items inside sections (not wrapped in a-row) */
+.device-config-modal .device-form-section > .arco-form-item {
+  margin-bottom: var(--space-2);
+}
+
+.device-config-modal .device-form-section > .arco-form-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Subsection title inside section card */
+.device-config-modal .device-form-section .device-subsection-title {
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+/* JSON collapse inside section card — blend with parent, no nested box */
+.device-config-modal .device-form-section .device-json-collapse {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.device-config-modal .device-form-section .device-json-collapse .arco-collapse-item {
+  border: none;
+}
+
+.device-config-modal .device-form-section .device-json-collapse .arco-collapse-item-header {
+  padding: 0 0 var(--space-2);
+  border-radius: 0;
+}
+
+.device-config-modal .device-form-section .device-json-collapse .arco-collapse-item-content-box {
+  padding: 0;
+}
+
+/* Focus glow on form controls */
+.device-config-modal .device-config-form .arco-input-wrapper,
+.device-config-modal .device-config-form .arco-select-view-single,
+.device-config-modal .device-config-form .arco-input-number-mode-embed {
+  transition: border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+}
+
+.device-config-modal .device-config-form .arco-input-wrapper:focus-within,
+.device-config-modal .device-config-form .arco-select-view-single:focus-within,
+.device-config-modal .device-config-form .arco-input-number-mode-embed:focus-within {
+  border-color: var(--primary);
+  background-color: var(--bg);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.08);
+}
+
+/* Dark theme section cards */
+.dark-theme .device-config-modal .device-form-section {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.dark-theme .device-config-modal .device-form-section .device-json-collapse {
+  background: transparent;
+}
+
+@media (max-width: 640px) {
+  .device-config-modal.arco-modal {
+    width: calc(100vw - 32px) !important;
+  }
 }

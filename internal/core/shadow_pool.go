@@ -3,7 +3,7 @@ package core
 import (
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 const shadowPointsMapInitialCap = 8
@@ -40,13 +40,25 @@ func returnShadowPointsMap(m map[string]model.ShadowPoint) {
 // cloneShadowPointsForNotify 为订阅者提供只读快照；标量 value 浅拷贝，复合类型仍深拷贝。
 // 通知 map 生命周期由 GC 管理（订阅者可能异步持有引用）。
 func cloneShadowPointsForNotify(src map[string]model.ShadowPoint) map[string]model.ShadowPoint {
-	if src == nil {
+	return cloneShadowDeltaForNotify(nil, src)
+}
+
+// cloneShadowDeltaForNotify clones changed points and attaches PreviousValue from prevPoints.
+// previous_value is notify-only and must not be written into COW snapshots.
+func cloneShadowDeltaForNotify(prevPoints, changed map[string]model.ShadowPoint) map[string]model.ShadowPoint {
+	if changed == nil {
 		return nil
 	}
-	dst := make(map[string]model.ShadowPoint, len(src))
-	for k, v := range src {
+	dst := make(map[string]model.ShadowPoint, len(changed))
+	for k, v := range changed {
 		cloned := v
 		cloned.Value = cloneNotifyValue(v.Value)
+		cloned.PreviousValue = nil
+		if prevPoints != nil {
+			if old, ok := prevPoints[k]; ok {
+				cloned.PreviousValue = cloneNotifyValue(old.Value)
+			}
+		}
 		dst[k] = cloned
 	}
 	return dst

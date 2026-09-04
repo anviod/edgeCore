@@ -11,7 +11,7 @@ import (
 
 	bacnetlib "github.com/anviod/bacnet"
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // IsolationMockClient simulates devices with configurable latency/errors

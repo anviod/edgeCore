@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 )
 
 func TestProtocolAdapters_AdjustValidateDefaults(t *testing.T) {
@@ -325,7 +325,7 @@ func TestSystemManager_EffectiveHostnameConfig(t *testing.T) {
 	sm := NewSystemManager(cfg)
 
 	got := sm.effectiveHostnameConfig()
-	if got.Name != "edgex" {
+	if got.Name != "edgeCore" {
 		t.Fatalf("name = %q", got.Name)
 	}
 	if got.HTTPPort != 9090 || got.HTTPSPort != 443 {

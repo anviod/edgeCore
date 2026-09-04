@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -256,8 +256,8 @@ func (s *Server) handleMcpGetKey(c *fiber.Ctx) error {
 			"code":    "0",
 			"message": "success",
 			"data": fiber.Map{
-				"api_key":     "",
-				"key_set":     false,
+				"api_key": "",
+				"key_set": false,
 			},
 		})
 	}
@@ -265,8 +265,8 @@ func (s *Server) handleMcpGetKey(c *fiber.Ctx) error {
 		"code":    "0",
 		"message": "success",
 		"data": fiber.Map{
-			"api_key":     settings.McpApiKey,
-			"key_set":     true,
+			"api_key": settings.McpApiKey,
+			"key_set": true,
 		},
 	})
 }

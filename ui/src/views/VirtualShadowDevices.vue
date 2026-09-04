@@ -12,20 +12,20 @@
           <a-radio-group v-model="viewMode" type="button" size="small">
             <a-radio value="card">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="3" y="3" width="7" height="7" />
+                <rect x="14" y="3" width="7" height="7" />
+                <rect x="14" y="14" width="7" height="7" />
+                <rect x="3" y="14" width="7" height="7" />
               </svg>
             </a-radio>
             <a-radio value="list">
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="8" y1="6" x2="21" y2="6"/>
-                <line x1="8" y1="12" x2="21" y2="12"/>
-                <line x1="8" y1="18" x2="21" y2="18"/>
-                <line x1="3" y1="6" x2="3.01" y2="6"/>
-                <line x1="3" y1="12" x2="3.01" y2="12"/>
-                <line x1="3" y1="18" x2="3.01" y2="18"/>
+                <line x1="8" y1="6" x2="21" y2="6" />
+                <line x1="8" y1="12" x2="21" y2="12" />
+                <line x1="8" y1="18" x2="21" y2="18" />
+                <line x1="3" y1="6" x2="3.01" y2="6" />
+                <line x1="3" y1="12" x2="3.01" y2="12" />
+                <line x1="3" y1="18" x2="3.01" y2="18" />
               </svg>
             </a-radio>
           </a-radio-group>
@@ -153,64 +153,64 @@
           :expandable="expandable"
           :scroll="{ x: 960 }"
         >
-        <template #id="{ record }">
-          <a-tooltip :content="record.id">
-            <span class="cell-ellipsis mono-cell">{{ record.id }}</span>
-          </a-tooltip>
-        </template>
-        <template #name="{ record }">
-          <a-tooltip :content="nameTooltip(record)">
-            <span class="cell-ellipsis">{{ displayName(record) }}</span>
-          </a-tooltip>
-        </template>
-        <template #enable="{ record }">
-          <span class="table-cell-semantic">
-            <a-tag :color="record.enable ? 'green' : 'gray'" size="small" bordered>
-              {{ record.enable ? '启用' : '禁用' }}
-            </a-tag>
-          </span>
-        </template>
-        <template #points="{ record }">
-          <a-tooltip :content="`${record.points?.length || 0} 个点位`">
-            <span class="table-cell-count">{{ record.points?.length || 0 }}</span>
-          </a-tooltip>
-        </template>
-        <template #runtime="{ record }">
-          <span class="table-cell-semantic">
-            <span v-if="runtimeMap[record.id]" class="runtime-badge">
-              v{{ runtimeMap[record.id].version }}
-            </span>
-            <span v-else class="text-muted">—</span>
-          </span>
-        </template>
-        <template #ops="{ record }">
-          <div class="table-ops">
-            <a-button type="text" size="small" @click="openDetail(record)">查看值</a-button>
-            <a-button type="text" size="small" @click="openBuilder(record)">编辑</a-button>
-            <a-popconfirm content="确定删除该虚拟设备？" @ok="removeDevice(record.id)">
-              <a-button type="text" size="small" status="danger">删除</a-button>
-            </a-popconfirm>
-          </div>
-        </template>
-        <template #expand-row="{ record }">
-          <div class="expand-points">
-            <div
-              v-for="(pt, idx) in record.points || []"
-              :key="idx"
-              class="expand-point-row"
-            >
-              <a-tag :color="pt.mode === 'formula' ? 'arcoblue' : 'green'" size="small">
-                {{ pt.mode === 'formula' ? '计算' : '映射' }}
+          <template #id="{ record }">
+            <a-tooltip :content="record.id">
+              <span class="cell-ellipsis mono-cell">{{ record.id }}</span>
+            </a-tooltip>
+          </template>
+          <template #name="{ record }">
+            <a-tooltip :content="nameTooltip(record)">
+              <span class="cell-ellipsis">{{ displayName(record) }}</span>
+            </a-tooltip>
+          </template>
+          <template #enable="{ record }">
+            <span class="table-cell-semantic">
+              <a-tag :color="record.enable ? 'green' : 'gray'" size="small" bordered>
+                {{ record.enable ? '启用' : '禁用' }}
               </a-tag>
-              <span class="ep-id">{{ pt.point_id }}</span>
-              <span class="ep-name">{{ pt.name || '—' }}</span>
-              <code class="ep-expr">{{ pointExpr(pt) }}</code>
-              <span v-if="runtimePointValue(record.id, pt.point_id)" class="ep-value">
-                = {{ formatValue(runtimePointValue(record.id, pt.point_id)) }}
+            </span>
+          </template>
+          <template #points="{ record }">
+            <a-tooltip :content="`${record.points?.length || 0} 个点位`">
+              <span class="table-cell-count">{{ record.points?.length || 0 }}</span>
+            </a-tooltip>
+          </template>
+          <template #runtime="{ record }">
+            <span class="table-cell-semantic">
+              <span v-if="runtimeMap[record.id]" class="runtime-badge">
+                v{{ runtimeMap[record.id].version }}
               </span>
+              <span v-else class="text-muted">—</span>
+            </span>
+          </template>
+          <template #ops="{ record }">
+            <div class="table-ops">
+              <a-button type="text" size="small" @click="openDetail(record)">查看值</a-button>
+              <a-button type="text" size="small" @click="openBuilder(record)">编辑</a-button>
+              <a-popconfirm content="确定删除该虚拟设备？" @ok="removeDevice(record.id)">
+                <a-button type="text" size="small" status="danger">删除</a-button>
+              </a-popconfirm>
             </div>
-          </div>
-        </template>
+          </template>
+          <template #expand-row="{ record }">
+            <div class="expand-points">
+              <div
+                v-for="(pt, idx) in record.points || []"
+                :key="idx"
+                class="expand-point-row"
+              >
+                <a-tag :color="pt.mode === 'formula' ? 'arcoblue' : 'green'" size="small">
+                  {{ pt.mode === 'formula' ? '计算' : '映射' }}
+                </a-tag>
+                <span class="ep-id">{{ pt.point_id }}</span>
+                <span class="ep-name">{{ pt.name || '—' }}</span>
+                <code class="ep-expr">{{ pointExpr(pt) }}</code>
+                <span v-if="runtimePointValue(record.id, pt.point_id)" class="ep-value">
+                  = {{ formatValue(runtimePointValue(record.id, pt.point_id)) }}
+                </span>
+              </div>
+            </div>
+          </template>
         </a-table>
       </div>
     </a-spin>
@@ -219,7 +219,8 @@
     <a-modal
       v-model:visible="builderVisible"
       :title="editingId ? '编辑虚拟影子设备' : '新建虚拟影子设备'"
-      width="1140px"
+      :width="1140"
+      :style="{ maxWidth: 'calc(100vw - 48px)' }"
       modal-class="virtual-shadow-builder-modal"
       :mask-closable="false"
       unmount-on-close
@@ -372,12 +373,12 @@
                       </span>
                       <div class="device-card-body">
                         <div class="device-card-main">
-                          <span class="device-name" v-html="highlightMatch(dev.device_name, deviceSearch)" />
-                          <a-tag size="small" color="arcoblue">{{ dev.point_count }} 点</a-tag>
+                          <span class="device-name" v-html="highlightMatch(dev.device_name || dev.name || dev.device_id || '-', deviceSearch)" />
+                          <a-tag size="small" color="arcoblue">{{ dev.point_count ?? dev.pointCount ?? 0 }} 点</a-tag>
                         </div>
                         <div class="device-card-sub">
-                          <span>{{ dev.channel_name }}</span>
-                          <span class="device-id" v-html="'ID: ' + highlightMatch(dev.device_id, deviceSearch)" />
+                          <span>{{ dev.channel_name || dev.channel_id || '-' }}</span>
+                          <span class="device-id" v-html="'ID: ' + highlightMatch(dev.device_id || dev.id || '-', deviceSearch)" />
                         </div>
                       </div>
                       <a-button
@@ -452,70 +453,70 @@
                 />
               </div>
               <a-spin :loading="pointsLoading" class="point-list-spin">
-              <div
-                class="point-list"
-                :class="{ 'drag-over': pointListDragOver }"
-                @dragover.prevent="pointListDragOver = true"
-                @dragleave="pointListDragOver = false"
-              >
-                <template v-if="pointsLoading && filteredDevicePoints.length === 0">
-                  <div v-for="n in 6" :key="n" class="point-chip point-chip-skeleton">
-                    <div class="point-chip-body">
-                      <span class="point-chip-id skeleton-line" />
-                      <span class="point-chip-sub skeleton-line skeleton-line--short" />
-                    </div>
-                  </div>
-                </template>
                 <div
-                  v-for="src in filteredDevicePoints"
-                  :key="src.ref"
-                  class="point-chip"
-                  :class="{
-                    selected: selectedPointRefs.has(src.ref),
-                    'is-dragging': draggingRefs.has(src.ref)
-                  }"
-                  @click="togglePointSelection(src.ref)"
+                  class="point-list"
+                  :class="{ 'drag-over': pointListDragOver }"
+                  @dragover.prevent="pointListDragOver = true"
+                  @dragleave="pointListDragOver = false"
                 >
-                  <span
-                    class="drag-grip"
-                    title="拖拽"
-                    :draggable="!dragUsesPointer"
-                    @pointerdown.stop="onPointPointerDown($event, src)"
-                    @dragstart="onPointDragStart($event, src)"
-                    @dragend="onDragEnd"
-                    @click.stop
-                  >
-                    <icon-drag-dot-vertical />
-                  </span>
-                  <a-checkbox
-                    :model-value="selectedPointRefs.has(src.ref)"
-                    @mousedown.stop
-                    @click.stop
-                    @change="togglePointSelection(src.ref)"
-                  />
+                  <template v-if="pointsLoading && filteredDevicePoints.length === 0">
+                    <div v-for="n in 6" :key="n" class="point-chip point-chip-skeleton">
+                      <div class="point-chip-body">
+                        <span class="point-chip-id skeleton-line" />
+                        <span class="point-chip-sub skeleton-line skeleton-line--short" />
+                      </div>
+                    </div>
+                  </template>
                   <div
-                    class="point-chip-body point-chip-drag"
-                    :draggable="!dragUsesPointer"
-                    @pointerdown.stop="onPointPointerDown($event, src)"
-                    @dragstart="onPointDragStart($event, src)"
-                    @dragend="onDragEnd"
-                    @click.stop
+                    v-for="src in filteredDevicePoints"
+                    :key="src.ref"
+                    class="point-chip"
+                    :class="{
+                      selected: selectedPointRefs.has(src.ref),
+                      'is-dragging': draggingRefs.has(src.ref)
+                    }"
+                    @click="togglePointSelection(src.ref)"
                   >
-                    <span class="point-chip-id">{{ src.point_name || src.point_id }}</span>
-                    <span class="point-chip-sub">{{ src.point_id }}</span>
+                    <span
+                      class="drag-grip"
+                      title="拖拽"
+                      :draggable="!dragUsesPointer"
+                      @pointerdown.stop="onPointPointerDown($event, src)"
+                      @dragstart="onPointDragStart($event, src)"
+                      @dragend="onDragEnd"
+                      @click.stop
+                    >
+                      <icon-drag-dot-vertical />
+                    </span>
+                    <a-checkbox
+                      :model-value="selectedPointRefs.has(src.ref)"
+                      @mousedown.stop
+                      @click.stop
+                      @change="togglePointSelection(src.ref)"
+                    />
+                    <div
+                      class="point-chip-body point-chip-drag"
+                      :draggable="!dragUsesPointer"
+                      @pointerdown.stop="onPointPointerDown($event, src)"
+                      @dragstart="onPointDragStart($event, src)"
+                      @dragend="onDragEnd"
+                      @click.stop
+                    >
+                      <span class="point-chip-id">{{ src.point_name || src.point_id }}</span>
+                      <span class="point-chip-sub">{{ src.point_id }}</span>
+                    </div>
+                    <span v-if="sourceValue(src.ref)" class="point-chip-val">
+                      {{ formatValue(sourceValue(src.ref)) }}
+                    </span>
+                    <span
+                      v-else-if="selectedSourceDeviceOnline && valuesLoading"
+                      class="point-chip-val point-chip-val--loading"
+                    >
+                      …
+                    </span>
                   </div>
-                  <span v-if="sourceValue(src.ref)" class="point-chip-val">
-                    {{ formatValue(sourceValue(src.ref)) }}
-                  </span>
-                  <span
-                    v-else-if="selectedSourceDeviceOnline && valuesLoading"
-                    class="point-chip-val point-chip-val--loading"
-                  >
-                    …
-                  </span>
+                  <a-empty v-if="filteredDevicePoints.length === 0 && !pointsLoading" description="无匹配点位" />
                 </div>
-                <a-empty v-if="filteredDevicePoints.length === 0 && !pointsLoading" description="无匹配点位" />
-              </div>
               </a-spin>
               <div
                 v-if="selectedPointRefs.size"
@@ -1467,7 +1468,16 @@ async function searchSourceDevices() {
       const params = { channel_id: channelId, limit: 100 }
       if (q) params.q = q
       const res = await searchVirtualShadowDevices(params)
-      list = normalizeArrayResponse(res)
+      list = normalizeArrayResponse(res).map(dev => ({
+        key: `${channelId}::${dev.device_id || dev.id}`,
+        channel_id: channelId,
+        channel_name: channelName || dev.channel_name || channelId,
+        device_id: dev.device_id || dev.id,
+        device_name: dev.device_name || dev.name || dev.device_id || dev.id,
+        point_count: dev.point_count ?? dev.pointCount ?? 0,
+        online: dev.online ?? (dev.state === 0 || dev.state === 1),
+        state: dev.state ?? 2
+      }))
     }
 
     deviceSearchResults.value = list

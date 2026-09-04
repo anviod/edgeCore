@@ -41,6 +41,62 @@
           </a-card>
         </a-col>
       </a-row>
+      <!-- EAN Runtime 指标 -->
+      <template v-if="stats.ean_metrics">
+        <a-divider class="nb-stats-divider">EAN Runtime 指标</a-divider>
+        <a-row :gutter="16" class="nb-stats-grid">
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">Invoke 总数</div>
+              <div class="nb-stat-card__value">{{ stats.ean_metrics.total_invokes || 0 }}</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">成功率</div>
+              <div class="nb-stat-card__value nb-stat-card__value--success">{{ eanSuccessRate }}%</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">P50 延迟</div>
+              <div class="nb-stat-card__value">{{ stats.ean_metrics.p50_latency_ms || 0 }}ms</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">P99 延迟</div>
+              <div class="nb-stat-card__value nb-stat-card__value--warning">{{ stats.ean_metrics.p99_latency_ms || 0 }}ms</div>
+            </a-card>
+          </a-col>
+        </a-row>
+        <a-row :gutter="16" class="nb-stats-grid">
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">成功</div>
+              <div class="nb-stat-card__value nb-stat-card__value--success">{{ stats.ean_metrics.success_count || 0 }}</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">失败</div>
+              <div class="nb-stat-card__value nb-stat-card__value--danger">{{ stats.ean_metrics.failed_count || 0 }}</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">超时</div>
+              <div class="nb-stat-card__value nb-stat-card__value--warning">{{ stats.ean_metrics.timeout_count || 0 }}</div>
+            </a-card>
+          </a-col>
+          <a-col :span="6">
+            <a-card class="nb-stat-card" :bordered="false">
+              <div class="nb-stat-card__label">平均延迟</div>
+              <div class="nb-stat-card__value">{{ (stats.ean_metrics.avg_latency_ms || 0).toFixed(1) }}ms</div>
+            </a-card>
+          </a-col>
+        </a-row>
+      </template>
     </template>
 
     <template v-else-if="isOpcuaServerMode">
@@ -240,6 +296,11 @@ const successRate = computed(() => {
   const total = success + fail
   if (total === 0) return 0
   return Math.round((success / total) * 100)
+})
+
+const eanSuccessRate = computed(() => {
+  const rate = stats.value.ean_metrics?.success_rate || 0
+  return Math.round(rate * 100)
 })
 
 const formatThroughput = (bytes) => {

@@ -3,13 +3,13 @@ package network
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/miekg/dns"
 )
 
 func TestMDNSResponderAnswersHostnameARecord(t *testing.T) {
-	responder, err := newMDNSResponder("edgex.local.", []string{"192.168.1.10"}, []mdnsServiceDef{
-		{Instance: "edgex", Type: "_http._tcp", Port: 8080, TXT: []string{"path=/"}},
+	responder, err := newMDNSResponder("edgeCore.local.", []string{"192.168.1.10"}, []mdnsServiceDef{
+		{Instance: "edgeCore", Type: "_http._tcp", Port: 8080, TXT: []string{"path=/"}},
 	}, nil)
 	if err != nil {
 		t.Skipf("mDNS responder unavailable in this environment: %v", err)
@@ -17,7 +17,7 @@ func TestMDNSResponderAnswersHostnameARecord(t *testing.T) {
 	defer responder.Shutdown()
 
 	query := new(dns.Msg)
-	query.SetQuestion("edgex.local.", dns.TypeA)
+	query.SetQuestion("edgeCore.local.", dns.TypeA)
 
 	resp := new(dns.Msg)
 	resp.SetReply(query)
@@ -35,7 +35,7 @@ func TestMDNSResponderAnswersHostnameARecord(t *testing.T) {
 
 func TestBuildHostnameAccessStatus(t *testing.T) {
 	status := BuildHostnameAccessStatus(model.HostnameConfig{
-		Name:       "edgex",
+		Name:       "edgeCore",
 		HTTPPort:   8080,
 		EnableMDNS: true,
 	}, HostnameMDNSStatus{
@@ -46,7 +46,7 @@ func TestBuildHostnameAccessStatus(t *testing.T) {
 	if len(status.DirectURLs) != 1 || status.DirectURLs[0] != "http://192.168.1.6:8080" {
 		t.Fatalf("unexpected direct urls: %#v", status.DirectURLs)
 	}
-	if len(status.MDNSURLs) != 1 || status.MDNSURLs[0] != "http://edgex.local:8080" {
+	if len(status.MDNSURLs) != 1 || status.MDNSURLs[0] != "http://edgeCore.local:8080" {
 		t.Fatalf("unexpected mdns urls: %#v", status.MDNSURLs)
 	}
 }

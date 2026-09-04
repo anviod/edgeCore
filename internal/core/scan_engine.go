@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 	"go.uber.org/zap"
 )
 
@@ -115,22 +115,28 @@ type PriorityQueue []*ScanTask
 func (pq PriorityQueue) Len() int { return len(pq) }
 
 func (pq PriorityQueue) Less(i, j int) bool {
-	if pq[i].NextRun.Before(pq[j].NextRun) {
+	pq[i].mu.RLock()
+	iNext, iDeadline, iPriority := pq[i].NextRun, pq[i].DeadlineAt, pq[i].Priority
+	pq[i].mu.RUnlock()
+	pq[j].mu.RLock()
+	jNext, jDeadline, jPriority := pq[j].NextRun, pq[j].DeadlineAt, pq[j].Priority
+	pq[j].mu.RUnlock()
+	if iNext.Before(jNext) {
 		return true
 	}
-	if pq[j].NextRun.Before(pq[i].NextRun) {
+	if jNext.Before(iNext) {
 		return false
 	}
 	// EDF tie-break: earliest DeadlineAt among same NextRun.
-	if !pq[i].DeadlineAt.IsZero() && !pq[j].DeadlineAt.IsZero() {
-		if pq[i].DeadlineAt.Before(pq[j].DeadlineAt) {
+	if !iDeadline.IsZero() && !jDeadline.IsZero() {
+		if iDeadline.Before(jDeadline) {
 			return true
 		}
-		if pq[j].DeadlineAt.Before(pq[i].DeadlineAt) {
+		if jDeadline.Before(iDeadline) {
 			return false
 		}
 	}
-	return pq[i].Priority > pq[j].Priority
+	return iPriority > jPriority
 }
 
 func (pq PriorityQueue) Swap(i, j int) {
@@ -409,7 +415,10 @@ func (se *ScanEngine) nextReadyTime() time.Time {
 	if task == nil {
 		return time.Time{}
 	}
-	return task.NextRun
+	task.mu.RLock()
+	next := task.NextRun
+	task.mu.RUnlock()
+	return next
 }
 
 func (se *ScanEngine) processReadyTasks() {
@@ -464,7 +473,10 @@ func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
 
 	bestIdx := -1
 	for i, task := range *pq {
-		if now.Before(task.NextRun) {
+		task.mu.RLock()
+		nextRun, deadline, priority := task.NextRun, task.DeadlineAt, task.Priority
+		task.mu.RUnlock()
+		if now.Before(nextRun) {
 			continue
 		}
 		if bestIdx < 0 {
@@ -472,9 +484,13 @@ func (se *ScanEngine) popReadyTaskEDF(now time.Time) *ScanTask {
 			continue
 		}
 		best := (*pq)[bestIdx]
-		if task.DeadlineAt.Before(best.DeadlineAt) {
+		best.mu.RLock()
+		bestDeadline := best.DeadlineAt
+		bestPriority := best.Priority
+		best.mu.RUnlock()
+		if deadline.Before(bestDeadline) {
 			bestIdx = i
-		} else if task.DeadlineAt.Equal(best.DeadlineAt) && task.Priority > best.Priority {
+		} else if deadline.Equal(bestDeadline) && priority > bestPriority {
 			bestIdx = i
 		}
 	}
@@ -492,17 +508,22 @@ func (se *ScanEngine) enforceHardJitterClamp(now time.Time) {
 	pq := se.priorityQueue
 	for i := 0; i < pq.Len(); i++ {
 		task := (*pq)[i]
-		if task.DeadlineAt.IsZero() || !now.After(task.DeadlineAt) {
+		task.mu.RLock()
+		deadline := task.DeadlineAt
+		task.mu.RUnlock()
+		if deadline.IsZero() || !now.After(deadline) {
 			continue
 		}
 		if task.GetStatus() != ScanTaskStatusIdle {
 			continue
 		}
 		se.metrics.RecordMissDeadlineForChannel(taskShadowChannelID(task))
+		task.mu.Lock()
 		se.boostPriorityOnMiss(task)
 		task.NextRun = now
 		task.LastScheduledAt = now
 		task.DeadlineAt = now
+		task.mu.Unlock()
 		heap.Fix(pq, i)
 	}
 }
@@ -528,7 +549,9 @@ func (se *ScanEngine) enforceAntiStarvation(now time.Time) {
 	defer se.mu.Unlock()
 
 	for _, task := range se.tasks {
+		task.mu.Lock()
 		if task.NextRun.IsZero() {
+			task.mu.Unlock()
 			continue
 		}
 		if now.Sub(task.NextRun) > antiStarvationDuration {
@@ -542,15 +565,18 @@ func (se *ScanEngine) enforceAntiStarvation(now time.Time) {
 					zap.Duration("overdue", now.Sub(task.NextRun)),
 				)
 			}
-			if task.GetStatus() == ScanTaskStatusIdle {
+			if task.Status == ScanTaskStatusIdle {
 				se.metrics.RecordStarvationRescue()
 				task.Priority = 10
 				task.LastScheduledAt = now
 				task.NextRun = now
 				task.DeadlineAt = now.Add(taskJitterBound(se.config.JitterBound))
+				task.mu.Unlock()
 				heap.Push(se.priorityQueue, task)
+				continue
 			}
 		}
+		task.mu.Unlock()
 	}
 }
 
@@ -610,6 +636,11 @@ func (se *ScanEngine) executeTaskAsync(task *ScanTask) {
 
 	if se.collectFinalize != nil {
 		se.collectFinalize(task.DeviceKey, result)
+	}
+
+	// 检查执行期间是否已被 RemoveTasksByDeviceKey 停止，若是则不再重新入队。
+	if task.GetStatus() == ScanTaskStatusStopped {
+		return
 	}
 
 	task.SetStatus(ScanTaskStatusIdle)
@@ -1103,6 +1134,17 @@ func (se *ScanEngine) RemoveTasksByDeviceKey(deviceKey string) {
 				zap.String("taskID", taskID),
 				zap.String("deviceKey", deviceKey),
 			)
+		}
+	}
+
+	// 同步从优先队列中清除残留任务指针，防止 processReadyTasks 再次弹出执行。
+	pq := se.priorityQueue
+	for i := 0; i < pq.Len(); {
+		t := (*pq)[i]
+		if t.DeviceKey == deviceKey {
+			heap.Remove(pq, i)
+		} else {
+			i++
 		}
 	}
 }

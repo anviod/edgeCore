@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -184,6 +184,35 @@ func TestCoverage_DecoderRawAndScale(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Good", quality)
 	assert.InDelta(t, 105.0, val, 0.001)
+
+	readFormulaPoint := model.Point{DataType: "int16", ReadFormula: "v / 2", Scale: 0.1}
+	val, quality, err = dec.Decode(readFormulaPoint, []byte{0x03, 0xE8})
+	require.NoError(t, err)
+	assert.Equal(t, "Good", quality)
+	assert.Equal(t, int64(500), val)
+
+	writePoint := model.Point{DataType: "float32", ParseType: "INT16", Scale: 0.1}
+	regs, err := dec.Encode(writePoint, 1234.5)
+	require.NoError(t, err)
+	assert.Equal(t, []uint16{12345}, regs)
+
+	writeFormulaPoint := model.Point{DataType: "float32", ParseType: "INT16", WriteFormula: "v / 2", Scale: 0.1}
+	regs, err = dec.Encode(writeFormulaPoint, 1000)
+	require.NoError(t, err)
+	assert.Equal(t, []uint16{500}, regs)
+
+	compatibilityPoint := model.Point{DataType: "int16", ParseType: "INT32"}
+	assert.Equal(t, uint16(2), dec.GetPointRegisterCount(compatibilityPoint))
+	val, quality, err = dec.Decode(compatibilityPoint, []byte{0x00, 0x00, 0x01, 0x08})
+	require.NoError(t, err)
+	assert.Equal(t, "Good", quality)
+	assert.Equal(t, int32(264), val)
+
+	temperaturePoint := model.Point{DataType: "int16", ParseType: "INT16", Scale: 0.1}
+	val, quality, err = dec.Decode(temperaturePoint, []byte{0x01, 0x08})
+	require.NoError(t, err)
+	assert.Equal(t, "Good", quality)
+	assert.InDelta(t, 26.4, val, 0.001)
 
 	f32Point := model.Point{DataType: "float32"}
 	bits := math.Float32bits(3.14)

@@ -1,7 +1,7 @@
 ---
 layout: section-index
 title: 设备驱动
-description: EdgeX 南向采集驱动文档 — Modbus、BACnet、OPC UA、S7、EtherNet/IP、FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT
+description: edgeCore 南向采集驱动文档 — Modbus、BACnet、OPC UA、S7、EtherNet/IP、FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT
 hero_eyebrow: Southbound Drivers
 hero_lead: 南向采集驱动的设计文档、测试报告、优化方案与故障分析 — 覆盖 Modbus、BACnet、OPC UA、S7、EtherNet/IP、Omron FINS、SNMP、IEC 104、DL/T645、Mitsubishi MC、Profinet IO、KNXnet/IP、EtherCAT 等工业协议。
 hero_buttons:
@@ -88,6 +88,7 @@ hero_buttons:
 - [Modbus 心跳优化](MODBUS_HEARTBEAT_OPTIMIZATION.html) — 索引
 - [Modbus 智能探测](Modbus智能探测.html)
 - [边缘网关 Modbus 优化](边缘网关Modbus优化.html)
+- [Modbus 冷却防饿死机制](modbus冷却防饿死机制.html) — 设备级故障 vs 点位冷却（两点因分离）
 
 ### OPC UA
 - [OPC UA 设计](OPC_UA_Design.html)

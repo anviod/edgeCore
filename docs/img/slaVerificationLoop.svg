@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="960" height="460" viewBox="0 0 960 460" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">EdgeX SLA 验证闭环架构图</title>
+  <title id="title">edgeCore SLA 验证闭环架构图</title>
   <desc id="desc">运行时监测、可观测 API 与 CI/Soak 验证形成的严格正交无穿模 SLA 回归闭环（底部对齐版）</desc>
   <defs>
     <!-- 全局微渐变科技感底色 -->

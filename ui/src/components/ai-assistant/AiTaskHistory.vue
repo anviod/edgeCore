@@ -23,8 +23,8 @@
 
     <AiEmptyState
       v-else-if="!tasks.length"
-      title="暂无任务"
-      description="上传 PCAP 或文档开始协议分析"
+      :title="emptyTitle"
+      :description="emptyDescription"
     >
       <template #icon>
         <icon-unordered-list :size="22" />
@@ -57,17 +57,51 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { IconHistory, IconRefresh, IconUnorderedList } from '@arco-design/web-vue/es/icon'
 import AiEmptyState from './AiEmptyState.vue'
 import AiStatusBadge from './AiStatusBadge.vue'
 
-defineProps({
+const props = defineProps({
   tasks: { type: Array, default: () => [] },
   activeId: { type: String, default: '' },
-  loading: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false },
+  workspace: { type: String, default: '' }
 })
 
 defineEmits(['select', 'refresh'])
+
+const emptyMeta = computed(() => {
+  const map = {
+    protocol: {
+      title: '暂无协议分析任务',
+      description: '上传 PCAP、协议文档或监控表开始协议逆向'
+    },
+    validation: {
+      title: '暂无校验任务',
+      description: '上传 JSON/Excel 配置或在对话区描述待校验内容'
+    },
+    cases: {
+      title: '暂无验证用例',
+      description: '完成协议分析后可沉淀为可回放用例'
+    },
+    edge: {
+      title: '暂无边缘场景任务',
+      description: '描述场景需求，AI 将生成 EdgeRule 草稿包'
+    },
+    diagnostics: {
+      title: '暂无诊断任务',
+      description: '描述问题或上传日志、诊断快照开始联调诊断'
+    }
+  }
+  return map[props.workspace] || {
+    title: '暂无任务',
+    description: '在对话区描述需求或上传文件开始任务'
+  }
+})
+
+const emptyTitle = computed(() => emptyMeta.value.title)
+const emptyDescription = computed(() => emptyMeta.value.description)
 
 const shortId = (id) => id?.slice(-10) || '—'
 

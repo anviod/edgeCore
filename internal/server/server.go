@@ -9,6 +9,8 @@ import (
 	"io"
 	"log"
 	"math/rand/v2"
+	"net"
+	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -18,18 +20,21 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anviod/edgex/internal/ai_agent"
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/mcp"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/northbound/opcua"
-	"github.com/anviod/edgex/internal/pkg/logger"
-	"github.com/anviod/edgex/internal/storage"
-	syncpkg "github.com/anviod/edgex/internal/sync"
+	"github.com/anviod/edgeCore/internal/ai_agent"
+	"github.com/anviod/edgeCore/internal/capability"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/mcp"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/northbound/opcua"
+	"github.com/anviod/edgeCore/internal/pkg/logger"
+	"github.com/anviod/edgeCore/internal/storage"
+
+	"github.com/anviod/edgeCore/internal/update"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/websocket/v2"
 	"github.com/google/uuid"
 	"github.com/shirou/gopsutil/v4/cpu"
@@ -66,7 +71,6 @@ type Server struct {
 	sm                     *core.SystemManager
 	dsm                    *core.DeviceStorageManager
 	cfgManager             *config.ConfigManager
-	syncManager            *syncpkg.SyncManager
 	logBroadcaster         *logger.LogBroadcaster
 	randomWriteMu          sync.Mutex
 	randomWriteStop        chan struct{}
@@ -76,24 +80,30 @@ type Server struct {
 	listenAddr             string
 	serverMu               sync.Mutex
 	portSwitching          bool
+	shuttingDown           bool
 	aiAgent                *ai_agent.Agent
 	aiSettingsMem          *model.AICopilotSettings
 	mcpServer              *mcp.MCPServer // MCP 协议服务端（懒初始化）
+	eanRuntime             *capability.Runtime
+	eanRuntimeOnce         sync.Once
 	storageAttachHook      func(*storage.Storage)
 	runtimeStartHook       func()
 	shadowSubscribeOnce    sync.Once
 	runtimeCompactStop     chan struct{}
 	runtimeCompactOnce     sync.Once
 	runtimeCompactStopOnce sync.Once
+	updater                *update.Manager // 软件更新检查与一键升级
 }
 
-func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeline, nbm *core.NorthboundManager, ecm *core.EdgeComputeManager, sm *core.SystemManager, dsm *core.DeviceStorageManager, cfgManager *config.ConfigManager, syncManager *syncpkg.SyncManager, logBroadcaster *logger.LogBroadcaster) *Server {
+func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeline, nbm *core.NorthboundManager, ecm *core.EdgeComputeManager, sm *core.SystemManager, dsm *core.DeviceStorageManager, cfgManager *config.ConfigManager, logBroadcaster *logger.LogBroadcaster) *Server {
 	app := fiber.New(fiber.Config{
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
+		BodyLimit:    200 * 1024 * 1024, // 200MB：允许上传本地升级安装包
 		// Long scan/browse/export work must use async job APIs, not stretch these.
 	})
+	app.Use(recover.New())
 	app.Use(cors.New())
 
 	hub := newHub()
@@ -110,10 +120,10 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 		sm:             sm,
 		dsm:            dsm,
 		cfgManager:     cfgManager,
-		syncManager:    syncManager,
 		logBroadcaster: logBroadcaster,
 		startTime:      time.Now(),
 		logger:         zap.L(),
+		updater:        update.NewManager("", "", update.NewChecker("")),
 	}
 
 	// Inject ChannelManager into EdgeComputeManager
@@ -128,12 +138,16 @@ func NewServer(cm *core.ChannelManager, st *storage.Storage, pl *core.DataPipeli
 
 // SetVirtualShadowEngine 绑定虚拟影子引擎（公式点位增量计算）。
 func (s *Server) SetVirtualShadowEngine(vse *core.VirtualShadowEngine) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.virtualShadow = vse
 }
 
 // SetShadowCore 绑定影子设备核心，并订阅快照变更推送到 WebSocket。
 func (s *Server) SetShadowCore(sc *core.ShadowCore) {
+	s.serverMu.Lock()
 	s.shadowCore = sc
+	s.serverMu.Unlock()
 	if sc == nil {
 		return
 	}
@@ -166,22 +180,68 @@ func (s *Server) BroadcastShadowPoint(channelID, deviceID, pointID string, point
 		"collected_at": collectedAt,
 		"updated_at":   point.UpdatedAt,
 	}
+	// 随报文广播原始寄存器字节（base64），前端点击值即可看到真实设备报文，
+	// 免去再发一次 /api/points/:id/debug 的 HTTP 请求。
+	// 原始字节来自 MetricsCollector（每次读取都捕获，见 RecordPointDebug）。
+	if mc := model.GetGlobalMetricsCollector(); mc != nil {
+		if pm := mc.GetPointMetrics(pointID); pm != nil && len(pm.RawValue) > 0 {
+			msg["raw_value"] = pm.RawValue
+			log.Printf("[WS-RAW] point=%s rawHex=%X len=%d", pointID, pm.RawValue, len(pm.RawValue))
+		} else {
+			log.Printf("[WS-RAW] point=%s noRawValue (pm==%v)", pointID, pm != nil)
+		}
+	}
 	s.BroadcastValue(msg)
 }
 
 // SetStorageAttachHook 注册存储绑定回调（安装流程创建 DB 后回传 main 等组件）。
 func (s *Server) SetStorageAttachHook(fn func(*storage.Storage)) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.storageAttachHook = fn
 }
 
 // SetRuntimeStartHook 注册数据采集/北向启动回调（安装完成后或正常启动时调用）。
 func (s *Server) SetRuntimeStartHook(fn func()) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
 	s.runtimeStartHook = fn
+}
+
+func (s *Server) shadowCoreRef() *core.ShadowCore {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.shadowCore
+}
+
+func (s *Server) virtualShadowRef() *core.VirtualShadowEngine {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.virtualShadow
+}
+
+func (s *Server) virtualShadowManagerRef() *core.VirtualShadowManager {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.vsm
+}
+
+func (s *Server) runtimeStartCallback() func() {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.runtimeStartHook
+}
+
+func (s *Server) storageAttachCallback() func(*storage.Storage) {
+	s.serverMu.Lock()
+	defer s.serverMu.Unlock()
+	return s.storageAttachHook
 }
 
 func (s *Server) Start(addr string) error {
 	s.serverMu.Lock()
 	s.listenAddr = addr
+	app := s.app
 	s.serverMu.Unlock()
 
 	// 启动时发布点位元数据
@@ -193,7 +253,7 @@ func (s *Server) Start(addr string) error {
 		s.startRuntimeCompactLoop()
 	}
 
-	err := s.app.Listen(addr)
+	err := app.Listen(addr)
 	if err == nil {
 		return nil
 	}
@@ -203,12 +263,31 @@ func (s *Server) Start(addr string) error {
 	if switching {
 		s.portSwitching = false
 	}
+	shuttingDown := s.shuttingDown
 	s.serverMu.Unlock()
 	if switching {
 		s.logger.Info("Web server stopped for port switch", zap.String("addr", addr))
 		return nil
 	}
+	if shuttingDown {
+		s.logger.Info("Web server stopped for shutdown")
+		return nil
+	}
 	return err
+}
+
+// Shutdown 优雅关闭 Fiber HTTP 服务器，停止接受新请求。
+func (s *Server) Shutdown() {
+	s.serverMu.Lock()
+	s.shuttingDown = true
+	app := s.app
+	s.serverMu.Unlock()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := app.ShutdownWithContext(ctx); err != nil {
+		s.logger.Warn("Web server shutdown failed", zap.Error(err))
+	}
 }
 
 func (s *Server) SwitchPort(newPort int) error {
@@ -230,19 +309,23 @@ func (s *Server) SwitchPort(newPort int) error {
 		WriteTimeout: 60 * time.Second,
 		IdleTimeout:  120 * time.Second,
 	})
+	newApp.Use(recover.New())
 	newApp.Use(cors.New())
 	s.app = newApp
 	s.setupRoutes()
 	s.listenAddr = newAddr
 
-	go func() {
+	listener, err := net.Listen("tcp", newAddr)
+	if err != nil {
+		s.portSwitching = false
+		return err
+	}
+	go func(app *fiber.App, ln net.Listener) {
 		s.logger.Info("Web server restarting on new port", zap.String("addr", newAddr))
-		if err := s.app.Listen(newAddr); err != nil {
+		if err := app.Listener(ln); err != nil {
 			s.logger.Error("Web server failed on new port", zap.Error(err))
 		}
-	}()
-
-	time.Sleep(500 * time.Millisecond)
+	}(newApp, listener)
 	return nil
 }
 
@@ -413,6 +496,17 @@ func (s *Server) setupRoutes() {
 	api.Get("/mcp/key", s.handleMcpGetKey)
 	api.Post("/mcp/generate-key", s.handleMcpGenerateKey)
 
+	// EAN 2.0 Capability Runtime REST 端点（UI 专用，走 JWT）
+	api.Get("/capability/agent/status", s.handleEanAgentStatus)
+	api.Get("/capability/list", s.handleEanCapabilityList)
+	api.Get("/capability/list/:id", s.handleEanCapabilityDetail)
+	api.Post("/capability/invoke", s.handleEanInvoke)
+	api.Get("/capability/invoke/:id/status", s.handleEanInvokeStatus)
+	api.Get("/capability/discovery/agents", s.handleEanDiscoveryAgents)
+	api.Get("/capability/events/history", s.handleEanEventHistory)
+	api.Delete("/capability/events/history", s.handleEanEventClear)
+	api.Get("/capability/settings", s.handleEanSettings)
+
 	// 系统设置
 	api.Get("/system", s.getSystemConfig)
 	api.Put("/system", s.updateSystemConfig)
@@ -429,6 +523,11 @@ func (s *Server) setupRoutes() {
 	api.Get("/system/network/info", s.getNetworkInfo)
 	api.Get("/system/hostname/status", s.getHostnameAccessStatus)
 	api.Post("/system/network/connectivity", s.checkConnectivity)
+	api.Get("/system/update/check", s.handleUpdateCheck)
+	api.Post("/system/update/perform", s.handlePerformUpdate)
+	api.Get("/system/update/status", s.handleUpdateStatus)
+	api.Post("/system/update/upload", s.handleUploadPackage)
+	api.Post("/system/update/install-local", s.handleInstallLocal)
 
 	// 第一级：采集通道列表
 	api.Get("/channels", s.getChannels)
@@ -558,83 +657,6 @@ func (s *Server) setupRoutes() {
 	config.Get("/export", s.exportConfig)
 	config.Post("/import", s.importConfig)
 
-	// ===== 节点管理 API =====
-	node := api.Group("/node")
-	node.Get("/status", s.getNodeStatus)
-	node.Get("/info", s.getNodeInfo)
-	node.Post("/start", s.startNode)
-	node.Post("/stop", s.stopNode)
-	node.Get("/discover", s.getDiscoveredNodes)
-	node.Post("/connect/:peerId", s.connectToPeer)
-	node.Post("/disconnect/:peerId", s.disconnectFromPeer)
-	node.Post("/discovery/enable", s.enableDiscovery)
-	node.Post("/discovery/disable", s.disableDiscovery)
-
-	// ===== 群组管理 API =====
-	groups := api.Group("/groups")
-	groups.Get("", s.getGroups)
-	groups.Post("", s.createGroup)
-	groups.Get("/:groupId", s.getGroupDetail)
-	groups.Post("/:groupId/join", s.joinGroup)
-	groups.Post("/:groupId/leave", s.leaveGroup)
-	groups.Delete("/:groupId", s.deleteGroup)
-	groups.Get("/joined", s.getJoinedGroups)
-	groups.Post("/:groupId/members", s.addMemberToGroup)
-
-	// ===== 数据同步 API =====
-	sync := api.Group("/sync")
-	sync.Get("/status", s.getSyncStatus)
-	sync.Post("/trigger", s.triggerSync)
-	sync.Get("/consistency", s.checkConsistency)
-	sync.Post("/repair", s.repairConsistency)
-	sync.Post("/push", s.pushConfig)
-	sync.Post("/pull", s.pullConfig)
-	sync.Get("/history", s.getSyncHistory)
-	sync.Post("/cancel", s.cancelSync)
-	sync.Get("/node/:id/tree", s.getSyncNodeTree)
-	sync.Get("/node/:id/devices", s.getSyncNodeDevices)
-	sync.Get("/node/:id/device/:deviceId/points", s.getSyncNodePoints)
-	sync.Get("/node/:id/diff", s.getSyncNodeDiff)
-	sync.Post("/node/:id/takeover", s.startDeviceTakeover)
-	sync.Get("/takeovers", s.getTakeoverEvents)
-
-	// ===== 快照管理 API =====
-	snapshot := sync.Group("/node/:id")
-	snapshot.Get("/snapshots", s.getSnapshots)
-	snapshot.Post("/snapshots", s.createSnapshot)
-	snapshot.Get("/snapshots/:snapshotId", s.getSnapshot)
-	snapshot.Delete("/snapshots/:snapshotId", s.deleteSnapshot)
-	snapshot.Post("/snapshots/:snapshotId/restore", s.restoreSnapshot)
-	snapshot.Post("/clear", s.clearNodeConfig)
-	snapshot.Post("/pull", s.pullFromRemote)
-	snapshot.Post("/restore", s.restoreToRemote)
-	sync.Get("/snapshot-stats", s.getSnapshotStats)
-
-	// ===== 集群快照 API (bbolt 持久化) =====
-	cluster := api.Group("/cluster")
-	cluster.Get("/summary", s.getClusterSummary)
-	cluster.Get("/nodes", s.getClusterNodes)
-	cluster.Get("/nodes/:id", s.getClusterNode)
-	cluster.Get("/devices", s.getClusterDevices)
-	cluster.Get("/devices/:id", s.getClusterDevice)
-
-	// ===== 网络监控 API =====
-	network := api.Group("/network")
-	network.Get("/status", s.getNetworkStatus)
-	network.Get("/peers", s.getConnectedPeers)
-	network.Get("/stats", s.getNetworkStats)
-	network.Get("/logs", s.getNetworkLogs)
-	network.Post("/logs/clear", s.clearNetworkLogs)
-
-	// ===== 设备更换 API =====
-	deviceMig := api.Group("/device/migrate")
-	deviceMig.Post("/validate-code", s.validateDeviceCode)
-	deviceMig.Post("", s.migrateDeviceConfig)
-
-	// ===== 一键同步 API (0配置) =====
-	simpleSync := api.Group("/sync/simple")
-	simpleSync.Post("", s.simpleSync)
-
 	// ===== 数据管理 API =====
 	data := api.Group("/data")
 	data.Get("/stats", s.getDataStats)
@@ -651,6 +673,12 @@ func (s *Server) setupRoutes() {
 
 	// 静态资源（优先相对可执行文件目录，兼容未设置 WorkingDirectory 的部署）
 	uiDist := uiDistDir()
+	// 反缓存 Service Worker：必须在 Static / SPA 回退之前精确命中 /sw.js，
+	// 返回合法 SW 脚本并禁用 HTTP 缓存，确保发布后浏览器能拉到最新脚本清理旧缓存。
+	s.app.Get("/sw.js", func(c *fiber.Ctx) error {
+		c.Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		return c.SendFile(filepath.Join(uiDist, "sw.js"))
+	})
 	s.app.Static("/", uiDist)
 
 	// SPA Fallback: 所有未匹配的路由都返回 index.html
@@ -764,6 +792,11 @@ func (s *Server) addChannel(c *fiber.Ctx) error {
 		}
 	}
 
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
+	}
+
 	return c.JSON(ch)
 }
 
@@ -792,13 +825,37 @@ func (s *Server) updateChannel(c *fiber.Ctx) error {
 		}
 	}
 
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
+	}
+
 	return c.JSON(ch)
 }
 
 func (s *Server) removeChannel(c *fiber.Ctx) error {
 	id := c.Params("channelId")
+
+	// 收集该通道下的设备，删除通道时一并清理每个设备的历史存储数据
+	var deviceIDs []string
+	for _, d := range s.cm.GetChannelDevices(id) {
+		deviceIDs = append(deviceIDs, d.ID)
+	}
+
 	if err := s.cm.RemoveChannel(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// 级联删除通道下所有设备的历史数据，与单设备删除行为保持一致
+	for _, did := range deviceIDs {
+		if s.dsm != nil {
+			s.dsm.RemoveDevice(did)
+		}
+	}
+
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -1082,6 +1139,7 @@ func (s *Server) addDevice(c *fiber.Ctx) error {
 		}
 		if s.nbm != nil {
 			s.nbm.PublishPointsMetadata()
+			s.nbm.PublishDeviceReport()
 		}
 		summaries := make([]model.Device, len(created))
 		for i, d := range created {
@@ -1107,6 +1165,8 @@ func (s *Server) addDevice(c *fiber.Ctx) error {
 		// 触发点位元数据同步到 edgeOS
 		if s.nbm != nil {
 			s.nbm.PublishPointsMetadata()
+			// 触发设备清单重新上报（edgeCore/devices/report），确保 EdgeOS 设备列表更新
+			s.nbm.PublishDeviceReport()
 		}
 		return c.JSON(dev)
 
@@ -1139,6 +1199,8 @@ func (s *Server) updateDevice(c *fiber.Ctx) error {
 	// 触发点位元数据同步到 edgeOS
 	if s.nbm != nil {
 		s.nbm.PublishPointsMetadata()
+		// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+		s.nbm.PublishDeviceReport()
 	}
 	return c.JSON(dev)
 }
@@ -1152,6 +1214,10 @@ func (s *Server) removeDevice(c *fiber.Ctx) error {
 	}
 	if s.dsm != nil {
 		s.dsm.RemoveDevice(deviceId)
+	}
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -1170,6 +1236,10 @@ func (s *Server) removeDevices(c *fiber.Ctx) error {
 		for _, id := range ids {
 			s.dsm.RemoveDevice(id)
 		}
+	}
+	// 触发设备清单重新上报，确保 EdgeOS 设备列表更新
+	if s.nbm != nil {
+		s.nbm.PublishDeviceReport()
 	}
 	return c.SendStatus(200)
 }
@@ -1260,16 +1330,18 @@ func (s *Server) getDevicePoints(c *fiber.Ctx) error {
 	result := make([]map[string]any, 0, len(points))
 	for _, p := range points {
 		m := map[string]any{
-			"id":        p.ID,
-			"name":      p.Name,
-			"address":   p.Address,
-			"datatype":  p.DataType,
-			"value":     p.Value,
-			"quality":   p.Quality,
-			"timestamp": p.Timestamp,
-			"unit":      p.Unit,
-			"readwrite": p.ReadWrite,
-			"protocol":  protocol, // 增加协议字段
+			"id":         p.ID,
+			"name":       p.Name,
+			"address":    p.Address,
+			"datatype":   p.DataType,
+			"parse_type": p.ParseType,
+			"value":      p.Value,
+			"quality":    p.Quality,
+			"timestamp":  p.Timestamp,
+			"unit":       p.Unit,
+			"readwrite":  p.ReadWrite,
+			"protocol":   protocol, // 增加协议字段
+			"format":     p.Format, // 设备协议类型（如 Unsigned），供点位列表展示
 		}
 		if !p.CollectedAt.IsZero() {
 			m["collected_at"] = p.CollectedAt
@@ -1284,6 +1356,14 @@ func (s *Server) getDevicePoints(c *fiber.Ctx) error {
 			m["slave_id"] = p.SlaveID
 			m["register_type"] = p.RegisterType
 			m["function_code"] = p.FunctionCode
+			m["word_order"] = p.WordOrder
+			m["scale"] = p.Scale
+			m["offset"] = p.Offset
+			m["read_formula"] = p.ReadFormula
+			m["write_formula"] = p.WriteFormula
+			m["group"] = p.Group
+			m["scan_class"] = p.ScanClass
+			m["report_mode"] = p.ReportMode
 		case "bacnet-ip":
 			// BACnet 特定字段（如果有），当前 address 已包含必要信息
 		case "opc-ua":
@@ -1395,9 +1475,10 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 	channelID := c.Query("channel_id")
 	deviceID := c.Query("device_id")
 
-	if s.shadowCore != nil && deviceID != "" {
+	shadowCore := s.shadowCoreRef()
+	if shadowCore != nil && deviceID != "" {
 		shadowID := fmt.Sprintf("shadow-%s", deviceID)
-		shadow, err := s.shadowCore.GetShadowDevice(shadowID)
+		shadow, err := shadowCore.GetShadowDevice(shadowID)
 		if err == nil && shadow != nil {
 			if channelID == "" || shadow.ChannelID == "" || shadow.ChannelID == channelID {
 				filtered := make(map[string]any)
@@ -1418,7 +1499,7 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 			}
 		}
 
-		if vd, err := s.shadowCore.GetVirtualShadowDevice(deviceID); err == nil && vd != nil {
+		if vd, err := shadowCore.GetVirtualShadowDevice(deviceID); err == nil && vd != nil {
 			if channelID == "" || vd.ChannelID == "" || vd.ChannelID == channelID {
 				filtered := make(map[string]any)
 				for pid, pt := range vd.Points {
@@ -1474,6 +1555,32 @@ func (s *Server) getRealtimeValues(c *fiber.Ctx) error {
 	return c.JSON(filtered)
 }
 
+// writeErrorStatus 将写入错误映射为合适的 HTTP 状态码与友好提示。
+// BACnet 底层库会把设备返回的 Error APDU 格式化为 "error class X code Y"，
+// 其中 WriteAccessDenied 表示该点位在设备侧为只读、不可写（协议栈最佳实践.md 8.5）。
+func writeErrorStatus(err error) (int, string) {
+	if err == nil {
+		return fiber.StatusInternalServerError, "unknown error"
+	}
+	msg := err.Error()
+	lower := strings.ToLower(msg)
+	switch {
+	case strings.Contains(lower, "writeaccessdenied"):
+		if strings.Contains(lower, "propertyerror") {
+			return fiber.StatusUnprocessableEntity, "该点位属性不支持写入（WriteAccessDenied），请确认点位类型可写"
+		}
+		return fiber.StatusUnprocessableEntity, "该点位为只读，设备拒绝写入（WriteAccessDenied）。如确需写入，请选择可写点位或检查设备侧对象属性"
+	case strings.Contains(lower, "unknownobject") || strings.Contains(lower, "unknown object"):
+		return fiber.StatusNotFound, "点位对象不存在（UnknownObject），可能已被删除或地址有误"
+	case strings.Contains(lower, "read-only") || strings.Contains(lower, "readonly"):
+		return fiber.StatusUnprocessableEntity, "该点位被配置为只读，无法写入"
+	case strings.Contains(lower, "timeout") || strings.Contains(lower, "timed out") || strings.Contains(lower, "deadline"):
+		return fiber.StatusGatewayTimeout, "写入超时，请检查设备连接与网络"
+	default:
+		return fiber.StatusInternalServerError, msg
+	}
+}
+
 // writePoint 写入点位值
 func (s *Server) writePoint(c *fiber.Ctx) error {
 	var req struct {
@@ -1490,7 +1597,8 @@ func (s *Server) writePoint(c *fiber.Ctx) error {
 	// 调用 ChannelManager 执行写入
 	err := s.cm.WritePoint(req.ChannelID, req.DeviceID, req.PointID, req.Value)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		status, msg := writeErrorStatus(err)
+		return c.Status(status).JSON(fiber.Map{"error": msg})
 	}
 
 	return c.JSON(fiber.Map{"message": "write success"})
@@ -1518,7 +1626,7 @@ func (s *Server) handleWebSocket(c *websocket.Conn) {
 
 func (s *Server) broadcastLoop() {
 	// 影子设备已挂载时，WebSocket 由 SetShadowCore 订阅推送；避免 Pipeline 重复广播。
-	if s.shadowCore != nil {
+	if s.shadowCoreRef() != nil {
 		return
 	}
 	s.pipeline.AddHandler(func(val model.Value) {
@@ -1725,7 +1833,7 @@ func (s *Server) handleLogWebSocket(c *websocket.Conn) {
 
 // handleLogDownload serves the log file
 func (s *Server) handleLogDownload(c *fiber.Ctx) error {
-	return c.Download("logs/gateway.edgex.log", "gateway.edgex.log")
+	return c.Download("logs/gateway.edgeCore.log", "gateway.edgeCore.log")
 }
 
 func (s *Server) getOPCUAStats(c *fiber.Ctx) error {
@@ -1889,13 +1997,24 @@ func (s *Server) updateBACnetServerConfig(c *fiber.Ctx) error {
 	return c.JSON(northboundConfigJSON(savedCfg, warning))
 }
 
+// pathParamID 返回 URL 解码后的路由参数。Fiber 不会自动解码路径参数，
+// ID 含空格等字符时（如 "New BACnet Server"）会以 %20 编码到达，
+// 直接使用会导致配置查找失败。
+func pathParamID(c *fiber.Ctx, key string) string {
+	raw := c.Params(key)
+	if decoded, err := url.PathUnescape(raw); err == nil {
+		return decoded
+	}
+	return raw
+}
+
 // deleteBACnetServerConfig 删除 BACnet Server 配置
 // DELETE /api/northbound/bacnet_server/:id
 func (s *Server) deleteBACnetServerConfig(c *fiber.Ctx) error {
 	if s.nbm == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "Northbound manager not initialized"})
 	}
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	if err := s.nbm.DeleteBACnetServerConfig(id); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -1905,7 +2024,7 @@ func (s *Server) deleteBACnetServerConfig(c *fiber.Ctx) error {
 // syncBACnetServer 同步 BACnet Server 地址空间（热更新）
 // POST /api/northbound/bacnet_server/:id/sync
 func (s *Server) syncBACnetServer(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	if id == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "server id is required"})
 	}
@@ -1921,7 +2040,7 @@ func (s *Server) syncBACnetServer(c *fiber.Ctx) error {
 // getBACnetServerStats 获取 BACnet Server 运行统计
 // GET /api/northbound/bacnet_server/:id/stats
 func (s *Server) getBACnetServerStats(c *fiber.Ctx) error {
-	id := c.Params("id")
+	id := pathParamID(c, "id")
 	stats, err := s.nbm.GetBACnetServerStats(id)
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
@@ -1932,7 +2051,7 @@ func (s *Server) getBACnetServerStats(c *fiber.Ctx) error {
 // getBACnetServerWriteHistory 获取 BACnet Server 写入历史
 // GET /api/northbound/bacnet_server/:id/write-history?limit=100
 func (s *Server) getBACnetServerWriteHistory(c *fiber.Ctx) error {
-	serverID := c.Params("id")
+	serverID := pathParamID(c, "id")
 	limit := c.QueryInt("limit", 100)
 
 	history, err := s.nbm.GetBACnetServerWriteHistory(serverID, limit)
@@ -2094,6 +2213,10 @@ func (s *Server) updateEdgeOSMQTTConfig(c *fiber.Ctx) error {
 	if cfg.ID == "" {
 		cfg.ID = uuid.New().String()
 	}
+	// Phase 4 (EX-P4-03): V1 命令面全面下线——默认关闭 V1 命令 Topic 订阅；
+	// 命令统一走 EAN Invoke。显式 v1_command_enabled=true 可临时重开（仅调试用）。
+	// | Phase 4: V1 command plane fully retired — defaults off; commands use EAN Invoke exclusively.
+	cfg.V1CommandEnabled = false
 
 	warning, err := s.nbm.UpsertEdgeOSMQTTConfig(cfg)
 	if err != nil {
@@ -2184,6 +2307,10 @@ func (s *Server) updateEdgeOSNATSConfig(c *fiber.Ctx) error {
 	if cfg.ID == "" {
 		cfg.ID = uuid.New().String()
 	}
+	// Phase 4 (EX-P4-03): V1 命令面全面下线——默认关闭 V1 命令 Subject 订阅；
+	// 命令统一走 EAN Invoke。显式 v1_command_enabled=true 可临时重开（仅调试用）。
+	// | Phase 4: V1 command plane fully retired — defaults off; commands use EAN Invoke exclusively.
+	cfg.V1CommandEnabled = false
 
 	warning, err := s.nbm.UpsertEdgeOSNATSConfig(cfg)
 	if err != nil {
@@ -2480,735 +2607,6 @@ func (s *Server) importConfig(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "config imported successfully"})
 }
 
-// ===== 节点管理 API 处理函数 =====
-
-// getNodeStatus 获取节点状态
-func (s *Server) getNodeStatus(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.JSON(fiber.Map{
-			"status": "stopped",
-			"error":  "sync manager not initialized",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"status":    "running",
-		"peer_id":   s.syncManager.GetPeerIDString(),
-		"addresses": []string{},
-	})
-}
-
-// getNodeInfo 获取节点详细信息
-func (s *Server) getNodeInfo(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	// Get system configuration
-	cfg := s.sm.GetConfig()
-
-	// Get libp2p info
-	peerID := s.syncManager.GetPeerIDString()
-	peers := s.syncManager.GetConnectedPeers()
-
-	return c.JSON(fiber.Map{
-		"peer_id":         peerID,
-		"hostname":        cfg.Hostname.Name,
-		"connected_peers": len(peers),
-		"version":         "v1.0.0",
-		"uptime":          time.Since(s.startTime).String(),
-	})
-}
-
-// startNode 启动节点
-func (s *Server) startNode(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	if err := s.syncManager.Start(); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	// 自动发现并加入群组
-	s.syncManager.AutoJoinGroup()
-
-	return c.JSON(fiber.Map{
-		"message":   "node started",
-		"peer_id":   s.syncManager.GetPeerIDString(),
-		"status":    "running",
-		"timestamp": time.Now(),
-	})
-}
-
-// stopNode 停止节点
-func (s *Server) stopNode(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	s.syncManager.Stop()
-
-	return c.JSON(fiber.Map{
-		"message":   "node stopped",
-		"status":    "stopped",
-		"timestamp": time.Now(),
-	})
-}
-
-// getDiscoveredNodes 获取已发现的节点列表
-func (s *Server) getDiscoveredNodes(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	peers := s.syncManager.GetConnectedPeers()
-	result := make([]fiber.Map, 0, len(peers))
-	for _, peer := range peers {
-		result = append(result, fiber.Map{
-			"peer_id":   peer.ID.String(),
-			"address":   peer.Addr,
-			"status":    peer.Status,
-			"last_seen": peer.LastSeen,
-		})
-	}
-
-	return c.JSON(result)
-}
-
-// connectToPeer 连接到指定节点
-func (s *Server) connectToPeer(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	peerId := c.Params("peerId")
-	if peerId == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "peerId is required"})
-	}
-
-	// 尝试解析并连接
-	if err := s.syncManager.ConnectToPeerByID(peerId); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "connecting to peer",
-		"peer_id":   peerId,
-		"timestamp": time.Now(),
-	})
-}
-
-// disconnectFromPeer 断开与指定节点的连接
-func (s *Server) disconnectFromPeer(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	peerId := c.Params("peerId")
-	if peerId == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "peerId is required"})
-	}
-
-	if err := s.syncManager.DisconnectFromPeer(peerId); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "disconnected from peer",
-		"peer_id":   peerId,
-		"timestamp": time.Now(),
-	})
-}
-
-// enableDiscovery 启用自动发现
-func (s *Server) enableDiscovery(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	s.syncManager.EnableDiscovery()
-
-	return c.JSON(fiber.Map{
-		"message":   "discovery enabled",
-		"timestamp": time.Now(),
-	})
-}
-
-// disableDiscovery 禁用自动发现
-func (s *Server) disableDiscovery(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	s.syncManager.DisableDiscovery()
-
-	return c.JSON(fiber.Map{
-		"message":   "discovery disabled",
-		"timestamp": time.Now(),
-	})
-}
-
-// ===== 群组管理 API 处理函数 =====
-
-// getGroups 获取所有群组列表
-func (s *Server) getGroups(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groups := s.syncManager.GetAllGroups()
-	result := make([]fiber.Map, 0, len(groups))
-	for _, group := range groups {
-		result = append(result, fiber.Map{
-			"group_id":     group.GroupID,
-			"name":         group.Name,
-			"description":  group.Description,
-			"member_count": len(group.Members),
-			"created_at":   group.CreatedAt,
-			"updated_at":   group.UpdatedAt,
-		})
-	}
-
-	return c.JSON(result)
-}
-
-// createGroup 创建新群组
-func (s *Server) createGroup(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	var req struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	if req.Name == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "group name is required"})
-	}
-
-	groupID := uuid.New().String()
-	err := s.syncManager.CreateGroup(groupID, req.Name, req.Description)
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "group created",
-		"group_id":  groupID,
-		"timestamp": time.Now(),
-	})
-}
-
-// getGroupDetail 获取群组详情
-func (s *Server) getGroupDetail(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groupID := c.Params("groupId")
-	if groupID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "groupId is required"})
-	}
-
-	group, err := s.syncManager.GetGroup(groupID)
-	if err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"group_id":    group.GroupID,
-		"name":        group.Name,
-		"description": group.Description,
-		"members":     group.Members,
-		"created_at":  group.CreatedAt,
-		"updated_at":  group.UpdatedAt,
-	})
-}
-
-// joinGroup 加入群组
-func (s *Server) joinGroup(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groupID := c.Params("groupId")
-	if groupID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "groupId is required"})
-	}
-
-	nodeID := s.syncManager.GetPeerIDString()
-	if err := s.syncManager.JoinGroup(groupID, nodeID); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "joined group",
-		"group_id":  groupID,
-		"timestamp": time.Now(),
-	})
-}
-
-// leaveGroup 退出群组
-func (s *Server) leaveGroup(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groupID := c.Params("groupId")
-	if groupID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "groupId is required"})
-	}
-
-	if err := s.syncManager.LeaveGroup(groupID); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "left group",
-		"group_id":  groupID,
-		"timestamp": time.Now(),
-	})
-}
-
-// addMemberToGroup 添加成员到群组
-func (s *Server) addMemberToGroup(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groupID := c.Params("groupId")
-	if groupID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "groupId is required"})
-	}
-
-	var req struct {
-		PeerID string `json:"peerId"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	if req.PeerID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "peerId is required"})
-	}
-
-	if err := s.syncManager.AddMemberToGroup(groupID, req.PeerID); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "member added",
-		"group_id":  groupID,
-		"peer_id":   req.PeerID,
-		"timestamp": time.Now(),
-	})
-}
-
-// deleteGroup 删除群组
-func (s *Server) deleteGroup(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groupID := c.Params("groupId")
-	if groupID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "groupId is required"})
-	}
-
-	if err := s.syncManager.DeleteGroup(groupID); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "group deleted",
-		"group_id":  groupID,
-		"timestamp": time.Now(),
-	})
-}
-
-// getJoinedGroups 获取已加入的群组列表
-func (s *Server) getJoinedGroups(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	groups := s.syncManager.GetJoinedGroups()
-	result := make([]fiber.Map, 0, len(groups))
-	for _, group := range groups {
-		result = append(result, fiber.Map{
-			"group_id":     group.GroupID,
-			"name":         group.Name,
-			"description":  group.Description,
-			"member_count": len(group.Members),
-			"created_at":   group.CreatedAt,
-		})
-	}
-
-	return c.JSON(result)
-}
-
-// ===== 数据同步 API 处理函数 =====
-
-// getSyncStatus 获取同步状态
-func (s *Server) getSyncStatus(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-	return c.JSON(s.syncManager.GetStatus())
-}
-
-// triggerSync 触发手动同步
-func (s *Server) triggerSync(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req struct {
-		Type string `json:"type"` // full, delta, incremental
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	if req.Type == "" {
-		req.Type = "delta"
-	}
-
-	if err := s.syncManager.TriggerSync(req.Type); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{"message": "sync triggered", "type": req.Type})
-}
-
-// checkConsistency 检查数据一致性
-func (s *Server) checkConsistency(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	report, err := s.syncManager.CheckConsistency()
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(report)
-}
-
-// repairConsistency 修复不一致数据
-func (s *Server) repairConsistency(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	report, err := s.syncManager.CheckConsistency()
-	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	if report.OverallStatus == "consistent" {
-		return c.JSON(fiber.Map{"message": "data is already consistent"})
-	}
-
-	return c.JSON(fiber.Map{"message": "repair initiated", "report": report})
-}
-
-// pushConfig 推送配置到所有已加入群组
-func (s *Server) pushConfig(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req struct {
-		GroupIDs       []string `json:"groupIds"`
-		SyncAll        bool     `json:"syncAll"`
-		ForceOverwrite bool     `json:"forceOverwrite"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	log.Println("[Server] Pushing config to all peers")
-
-	// 触发全量同步
-	if err := s.syncManager.TriggerSync("full"); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "config push initiated",
-		"timestamp": time.Now(),
-	})
-}
-
-// pullConfig 从已加入群组拉取最新配置
-func (s *Server) pullConfig(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req struct {
-		NodeID string `json:"nodeId"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	log.Println("[Server] Pulling config from peers")
-
-	// 如果指定了节点ID，从特定节点拉取
-	if req.NodeID != "" && req.NodeID != "all" {
-		// 从指定节点拉取配置
-		snapshot, err := s.syncManager.PullFromRemote(req.NodeID)
-		if err != nil {
-			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-		}
-		return c.JSON(fiber.Map{
-			"message":   "config pulled from remote",
-			"node_id":   req.NodeID,
-			"snapshot":  snapshot,
-			"timestamp": time.Now(),
-		})
-	}
-
-	// 否则从所有节点拉取
-	if err := s.syncManager.TriggerSync("delta"); err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"message":   "config pull initiated from all peers",
-		"timestamp": time.Now(),
-	})
-}
-
-// getSyncHistory 获取同步历史记录
-func (s *Server) getSyncHistory(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	// Return mock sync history
-	history := []fiber.Map{
-		{
-			"id":         "sync-1",
-			"type":       "delta",
-			"status":     "completed",
-			"timestamp":  time.Now().Add(-10 * time.Minute),
-			"peer_count": 2,
-			"details":    "Synchronized channel configurations",
-		},
-		{
-			"id":         "sync-2",
-			"type":       "full",
-			"status":     "completed",
-			"timestamp":  time.Now().Add(-1 * time.Hour),
-			"peer_count": 3,
-			"details":    "Full configuration synchronization",
-		},
-	}
-
-	return c.JSON(fiber.Map{
-		"history": history,
-		"count":   len(history),
-	})
-}
-
-// cancelSync 取消正在进行的同步
-func (s *Server) cancelSync(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	log.Println("[Server] Canceling sync operation")
-
-	return c.JSON(fiber.Map{
-		"message":   "sync canceled",
-		"timestamp": time.Now(),
-	})
-}
-
-// ===== 网络监控 API 处理函数 =====
-
-// getNetworkStatus 获取网络状态
-func (s *Server) getNetworkStatus(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.JSON(fiber.Map{
-			"status": "disconnected",
-			"error":  "libp2p manager not initialized",
-		})
-	}
-
-	return c.JSON(fiber.Map{
-		"status":      "connected",
-		"peer_id":     s.syncManager.GetPeerIDString(),
-		"connections": len(s.syncManager.GetConnectedPeers()),
-	})
-}
-
-// getConnectedPeers 获取已连接的节点列表
-func (s *Server) getConnectedPeers(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	peers := s.syncManager.GetConnectedPeers()
-	result := make([]fiber.Map, 0, len(peers))
-	for _, peer := range peers {
-		result = append(result, fiber.Map{
-			"peer_id":   peer.ID.String(),
-			"address":   peer.Addr,
-			"status":    peer.Status,
-			"last_seen": peer.LastSeen,
-		})
-	}
-
-	return c.JSON(result)
-}
-
-// getNetworkStats 获取网络统计信息
-func (s *Server) getNetworkStats(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "libp2p manager not initialized"})
-	}
-
-	// Return mock network stats
-	return c.JSON(fiber.Map{
-		"connected_peers":     len(s.syncManager.GetConnectedPeers()),
-		"data_transfer_rate":  "1.2 MB/s",
-		"average_latency":     "15 ms",
-		"sync_success_rate":   "98.5%",
-		"total_data_transfer": "125 MB",
-		"uptime":              "2h 30m",
-	})
-}
-
-// getNetworkLogs 获取网络日志
-func (s *Server) getNetworkLogs(c *fiber.Ctx) error {
-	// Return mock network logs
-	logs := []fiber.Map{
-		{
-			"timestamp": time.Now().Add(-5 * time.Minute),
-			"level":     "INFO",
-			"message":   "Connected to peer: 12D3KooW...",
-		},
-		{
-			"timestamp": time.Now().Add(-10 * time.Minute),
-			"level":     "INFO",
-			"message":   "Discovered peer via mDNS: 12D3KooX...",
-		},
-		{
-			"timestamp": time.Now().Add(-15 * time.Minute),
-			"level":     "DEBUG",
-			"message":   "Synchronization completed successfully",
-		},
-	}
-
-	return c.JSON(fiber.Map{
-		"logs":  logs,
-		"count": len(logs),
-	})
-}
-
-// clearNetworkLogs 清除网络日志
-func (s *Server) clearNetworkLogs(c *fiber.Ctx) error {
-	log.Println("[Server] Network logs cleared")
-	return c.JSON(fiber.Map{
-		"message":   "logs cleared",
-		"timestamp": time.Now(),
-	})
-}
-
-// ===== 设备更换 API 处理函数 =====
-
-// validateDeviceCode 验证设备编码
-func (s *Server) validateDeviceCode(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req struct {
-		DeviceCode string `json:"device_code"`
-	}
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request"})
-	}
-
-	if req.DeviceCode == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "device_code is required"})
-	}
-
-	deviceCode, err := s.syncManager.ValidateDeviceCode(req.DeviceCode)
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.JSON(fiber.Map{
-		"valid": true,
-		"device_info": fiber.Map{
-			"protocol":      deviceCode.Protocol,
-			"vendor_id":     deviceCode.VendorID,
-			"model_id":      deviceCode.ModelID,
-			"serial_number": deviceCode.SerialNumber,
-		},
-	})
-}
-
-// migrateDeviceConfig 发起设备配置迁移
-func (s *Server) migrateDeviceConfig(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req syncpkg.ConfigMigrationRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request: " + err.Error()})
-	}
-
-	if req.DeviceCode == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "device_code is required"})
-	}
-	if req.TargetDeviceID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "target_device_id is required"})
-	}
-
-	return c.JSON(fiber.Map{"message": "migration initiated", "device_code": req.DeviceCode})
-}
-
-// ===== 一键同步 API 处理函数 =====
-
-// simpleSync 一键同步 - 只需要输入节点ID和设备编码即可完成同步
-// POST /api/sync/simple
-//
-//	{
-//	    "node_id": "node-001",
-//	    "device_code": "modbus-siemens-s71200-SN123456789-ABC123"
-//	}
-func (s *Server) simpleSync(c *fiber.Ctx) error {
-	if s.syncManager == nil {
-		return c.Status(503).JSON(fiber.Map{"error": "Sync manager not initialized"})
-	}
-
-	var req syncpkg.SimpleSyncRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid request: " + err.Error()})
-	}
-
-	if req.NodeID == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "node_id is required"})
-	}
-	if req.DeviceCode == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "device_code is required"})
-	}
-
-	return c.JSON(fiber.Map{"message": "simple sync initiated", "node_id": req.NodeID, "device_code": req.DeviceCode})
-}
-
 func (s *Server) getDataStats(c *fiber.Ctx) error {
 	if s.storage == nil {
 		return c.Status(503).JSON(fiber.Map{"error": "storage not available"})
@@ -3269,8 +2667,8 @@ func (s *Server) enrichRuntimeBucketStats(stats []storage.BucketStats) []storage
 		addRuntimeCount("bblot", minuteCache)
 	}
 
-	if s.shadowCore != nil {
-		_, pointCount := s.shadowCore.RuntimePointStats()
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		_, pointCount := shadowCore.RuntimePointStats()
 		if pointCount > 0 {
 			if idx, ok := runtimeIndex["shadow_values"]; ok {
 				stats[idx].RecordCount = pointCount
@@ -3416,8 +2814,8 @@ func (s *Server) clearAllRuntime(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error(), "cleared": cleared})
 	}
 
-	if s.shadowCore != nil {
-		s.shadowCore.ClearAllShadowDevices()
+	if shadowCore := s.shadowCoreRef(); shadowCore != nil {
+		shadowCore.ClearAllShadowDevices()
 	}
 
 	var edgeLogsCleared any

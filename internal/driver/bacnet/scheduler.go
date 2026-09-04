@@ -11,8 +11,8 @@ import (
 
 	bacnetlib "github.com/anviod/bacnet"
 	"github.com/anviod/bacnet/btypes"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/pkg/dataformat"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/pkg/dataformat"
 )
 
 // PointRuntime Runtime state of a point
@@ -117,7 +117,7 @@ func (s *PointScheduler) Read(ctx context.Context, points []model.Point) (map[st
 
 		// Batch Read Timeout = 3s (aligned with scan's ReadProperty timeout).
 		// Device 1234 room-simulator responds within 1-2s; 500ms was too short.
-		resp, err := s.client.ReadMultiPropertyWithTimeout(s.targetDevice, chunk, 3*time.Second)
+		resp, err := safeReadMultiProperty(s.client, s.targetDevice, chunk, 3*time.Second)
 		if err != nil {
 			// Set firstErr if this is the first error
 			if firstErr == nil {
@@ -377,10 +377,31 @@ func (s *PointScheduler) buildReadRequest(points []model.Point) (btypes.Multiple
 	// Group by Object ID
 	objects := make(map[string]*btypes.Object)
 
+	skipped := 0
 	for _, p := range points {
 		objType, instance, propID, err := parseAddress(p.Address)
 		if err != nil {
-			log.Printf("[ERROR] Invalid address for point %s: %v", p.Name, err)
+			skipped++
+			// Log once per point, then suppress to avoid log flooding.
+			// 每个点位仅记录一次错误日志，避免日志泛滥。
+			s.mu.Lock()
+			rt, exists := s.pointStates[p.ID]
+			if !exists {
+				rt = &PointRuntime{Point: p, State: "ERROR"}
+				s.pointStates[p.ID] = rt
+			}
+			alreadyBad := rt.State == "BAD_ADDRESS"
+			if !alreadyBad {
+				rt.State = "BAD_ADDRESS"
+				rt.FailCount++
+				s.mu.Unlock()
+				log.Printf("[ERROR] Invalid address for point %s (id=%s): %v — suppressing further logs for this point", p.Name, p.ID, err)
+			} else {
+				s.mu.Unlock()
+			}
+			// Put the point into cooldown so it's not retried every cycle.
+			// 将点位置于冷却期，避免每次采集循环都重试无效地址。
+			rt.CooldownUntil = time.Now().Add(5 * time.Minute)
 			continue
 		}
 
@@ -420,10 +441,24 @@ func (s *PointScheduler) buildReadRequest(points []model.Point) (btypes.Multiple
 		mpd.Objects = append(mpd.Objects, *obj)
 	}
 
+	// If all points had invalid addresses, return an error so the caller
+	// can distinguish "all points misconfigured" from "device unreachable".
+	// This prevents the recovery loop where the scheduler repeatedly tries
+	// to read zero objects, gets an empty result, and triggers device recovery.
+	// 当所有点位地址均无效时返回错误，避免空请求导致的恢复循环。
+	if len(mpd.Objects) == 0 && skipped > 0 {
+		return mpd, pointMap, fmt.Errorf("all %d points have invalid addresses (skipped)", skipped)
+	}
+
 	return mpd, pointMap, nil
 }
 
 func (s *PointScheduler) readSinglePropertiesWithTimeout(chunk btypes.MultiplePropertyData, pointMap map[string]model.Point, result map[string]model.Value, timeout time.Duration) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Printf("[BACnet] panic in readSinglePropertiesWithTimeout (recovered): %v", r)
+		}
+	}()
 	for _, obj := range chunk.Objects {
 		for _, prop := range obj.Properties {
 			// Construct PropertyData for Single Read

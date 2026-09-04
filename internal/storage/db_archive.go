@@ -98,7 +98,7 @@ func exportOpenDBAsTarGz(db *bbolt.DB, sourcePath, entryName, archiveType string
 		return nil, "", err
 	}
 
-	filename := fmt.Sprintf("edgex-%s-%s.tar.gz", archiveType, time.Now().Format("20060102-150405"))
+	filename := fmt.Sprintf("edgeCore-%s-%s.tar.gz", archiveType, time.Now().Format("20060102-150405"))
 	return archiveData, filename, nil
 }
 
@@ -209,7 +209,7 @@ func (s *Storage) ImportConfigDBArchive(archiveData []byte, opts ImportArchiveOp
 		return nil, err
 	}
 
-	tempDir, err := os.MkdirTemp("", "edgex-config-import-*")
+	tempDir, err := os.MkdirTemp("", "edgeCore-config-import-*")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp directory: %w", err)
 	}
@@ -281,7 +281,7 @@ func (s *Storage) ImportConfigDBArchive(archiveData []byte, opts ImportArchiveOp
 	}, nil
 }
 
-// FetchRemoteConfigArchive downloads a config tar.gz from a remote EdgeX gateway.
+// FetchRemoteConfigArchive downloads a config tar.gz from a remote edgeCore gateway.
 func FetchRemoteConfigArchive(host string, port int, token string, useHTTPS bool) ([]byte, string, error) {
 	host = strings.TrimSpace(host)
 	if host == "" {

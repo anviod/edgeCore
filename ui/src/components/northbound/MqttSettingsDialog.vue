@@ -36,7 +36,7 @@
             <a-row :gutter="16">
               <a-col :span="12">
                 <a-form-item label="Client ID">
-                  <a-input v-model="form.client_id" placeholder="edgex-01" class="mono-text">
+                  <a-input v-model="form.client_id" placeholder="edgeCore-01" class="mono-text">
                     <template #append>
                       <a-button type="text" size="mini" @click="autoFillTopics">生成推荐</a-button>
                     </template>
@@ -190,7 +190,7 @@ watch(() => props.visible, (val) => {
 })
 
 const autoFillTopics = () => {
-  if (!form.value.client_id) form.value.client_id = 'edgex'
+  if (!form.value.client_id) form.value.client_id = 'edgeCore'
   const root = 'things/{client_id}'
   form.value.topic = `${root}/up`
   form.value.subscribe_topic = `${root}/down/req`

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // TestNodeRegisterCommandMessageParsing tests parsing of node register command messages
@@ -125,8 +127,8 @@ func TestNodeRegistrationPayload(t *testing.T) {
 		},
 		Body: map[string]any{
 			"node_id":      nodeID,
-			"node_name":    "EdgeX Gateway Node",
-			"model":        "edgex",
+			"node_name":    "edgeCore Gateway Node",
+			"model":        "edgeCore",
 			"version":      "1.0.0",
 			"api_version":  "v1",
 			"capabilities": []string{"shadow-sync", "heartbeat", "device-control", "task-execution"},
@@ -158,11 +160,11 @@ func TestNodeRegistrationPayload(t *testing.T) {
 	if body["node_id"] != nodeID {
 		t.Errorf("Expected node_id '%s', got '%v'", nodeID, body["node_id"])
 	}
-	if body["node_name"] != "EdgeX Gateway Node" {
-		t.Errorf("Expected node_name 'EdgeX Gateway Node', got '%v'", body["node_name"])
+	if body["node_name"] != "edgeCore Gateway Node" {
+		t.Errorf("Expected node_name 'edgeCore Gateway Node', got '%v'", body["node_name"])
 	}
-	if body["model"] != "edgex" {
-		t.Errorf("Expected model 'edgex', got '%v'", body["model"])
+	if body["model"] != "edgeCore" {
+		t.Errorf("Expected model 'edgeCore', got '%v'", body["model"])
 	}
 	if body["version"] != "1.0.0" {
 		t.Errorf("Expected version '1.0.0', got '%v'", body["version"])
@@ -188,8 +190,8 @@ func TestResponseTopicGeneration(t *testing.T) {
 	messageID := "test-msg-001"
 
 	// Generate response topic (same as in sendCommandResponse)
-	topic := fmt.Sprintf("edgex/responses/%s/%s", nodeID, messageID)
-	expected := "edgex/responses/test-node-001/test-msg-001"
+	topic := fmt.Sprintf("edgeCore/responses/%s/%s", nodeID, messageID)
+	expected := "edgeCore/responses/test-node-001/test-msg-001"
 
 	if topic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, topic)
@@ -201,19 +203,19 @@ func TestResponseTopicGeneration(t *testing.T) {
 // TestRegisterTopicConstant tests the register command topic constant
 func TestRegisterTopicConstant(t *testing.T) {
 	// The topic that EdgeOS uses to trigger node re-registration
-	registerTopic := "edgex/cmd/nodes/register"
+	registerTopic := "edgeCore/cmd/nodes/register"
 
 	// Verify topic format
 	if registerTopic == "" {
 		t.Error("Register topic should not be empty")
 	}
-	if registerTopic != "edgex/cmd/nodes/register" {
-		t.Errorf("Expected topic 'edgex/cmd/nodes/register', got '%s'", registerTopic)
+	if registerTopic != "edgeCore/cmd/nodes/register" {
+		t.Errorf("Expected topic 'edgeCore/cmd/nodes/register', got '%s'", registerTopic)
 	}
 
 	// Verify it follows the pattern defined in the protocol spec
-	// Topic format: edgex/cmd/nodes/register (QoS 1, EdgeOS -> EdgeX)
-	expectedPattern := "edgex/cmd/nodes/register"
+	// Topic format: edgeCore/cmd/nodes/register (QoS 1, EdgeOS -> edgeCore)
+	expectedPattern := "edgeCore/cmd/nodes/register"
 	if registerTopic != expectedPattern {
 		t.Errorf("Topic should match pattern '%s', got '%s'", expectedPattern, registerTopic)
 	}
@@ -352,8 +354,8 @@ func TestDeviceReportMessageFormat(t *testing.T) {
 // TestDeviceReportTopicGeneration tests device report topic generation
 func TestDeviceReportTopicGeneration(t *testing.T) {
 	// Generate device report topic (same as in publishDeviceReport)
-	reportTopic := "edgex/devices/report"
-	expected := "edgex/devices/report"
+	reportTopic := "edgeCore/devices/report"
+	expected := "edgeCore/devices/report"
 
 	if reportTopic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, reportTopic)
@@ -370,7 +372,7 @@ func TestRegisterResponseParsing(t *testing.T) {
 			MessageID:     "resp-msg-001",
 			Timestamp:     time.Now().UnixMilli(),
 			Source:        "edgeos-server",
-			Destination:   "edgex-node-001",
+			Destination:   "edgeCore-node-001",
 			MessageType:   "node_register_response",
 			Version:       "1.0",
 			CorrelationID: "req-msg-001",
@@ -420,7 +422,7 @@ func TestRegisterResponseFailureHandling(t *testing.T) {
 			MessageID:     "resp-msg-002",
 			Timestamp:     time.Now().UnixMilli(),
 			Source:        "edgeos-server",
-			Destination:   "edgex-node-001",
+			Destination:   "edgeCore-node-001",
 			MessageType:   "node_register_response",
 			Version:       "1.0",
 			CorrelationID: "req-msg-002",
@@ -650,8 +652,8 @@ func TestPointReportMessageFormat(t *testing.T) {
 
 // TestPointReportSubjectConstant tests the point report topic constant
 func TestPointReportSubjectConstant(t *testing.T) {
-	reportTopic := "edgex/points/report"
-	expected := "edgex/points/report"
+	reportTopic := "edgeCore/points/report"
+	expected := "edgeCore/points/report"
 
 	if reportTopic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, reportTopic)
@@ -846,8 +848,8 @@ func TestDeviceOnlineTopicGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 	deviceID := "test-device-001"
 
-	topic := fmt.Sprintf("edgex/devices/%s/%s/online", nodeID, deviceID)
-	expected := "edgex/devices/test-node-001/test-device-001/online"
+	topic := fmt.Sprintf("edgeCore/devices/%s/%s/online", nodeID, deviceID)
+	expected := "edgeCore/devices/test-node-001/test-device-001/online"
 
 	if topic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, topic)
@@ -861,8 +863,8 @@ func TestDeviceOfflineTopicGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 	deviceID := "test-device-001"
 
-	topic := fmt.Sprintf("edgex/devices/%s/%s/offline", nodeID, deviceID)
-	expected := "edgex/devices/test-node-001/test-device-001/offline"
+	topic := fmt.Sprintf("edgeCore/devices/%s/%s/offline", nodeID, deviceID)
+	expected := "edgeCore/devices/test-node-001/test-device-001/offline"
 
 	if topic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, topic)
@@ -1079,22 +1081,22 @@ func TestWriteCommandTopicParsing(t *testing.T) {
 		expectedError    bool
 	}{
 		{
-			topic:            "edgex/cmd/test-node-001/test-device-001/write",
+			topic:            "edgeCore/cmd/test-node-001/test-device-001/write",
 			expectedDeviceID: "test-device-001",
 			expectedError:    false,
 		},
 		{
-			topic:            "edgex/cmd/test-node-001/device-123/write",
+			topic:            "edgeCore/cmd/test-node-001/device-123/write",
 			expectedDeviceID: "device-123",
 			expectedError:    false,
 		},
 		{
-			topic:            "edgex/cmd/test-node-001/write", // Invalid format
+			topic:            "edgeCore/cmd/test-node-001/write", // Invalid format
 			expectedDeviceID: "",
 			expectedError:    true,
 		},
 		{
-			topic:            "edgex/cmd/write", // Invalid format
+			topic:            "edgeCore/cmd/write", // Invalid format
 			expectedDeviceID: "",
 			expectedError:    true,
 		},
@@ -1594,8 +1596,8 @@ func TestHeartbeatTopicGeneration(t *testing.T) {
 	nodeID := "test-node-001"
 
 	// Generate heartbeat topic
-	topic := fmt.Sprintf("edgex/heartbeat/%s", nodeID)
-	expected := "edgex/heartbeat/test-node-001"
+	topic := fmt.Sprintf("edgeCore/heartbeat/%s", nodeID)
+	expected := "edgeCore/heartbeat/test-node-001"
 
 	if topic != expected {
 		t.Errorf("Expected topic '%s', got '%s'", expected, topic)
@@ -1657,5 +1659,35 @@ func TestHeartbeatStatusStrings(t *testing.T) {
 			t.Errorf("Expected status '%s', got '%s' for status %d", expected, statusStr, status)
 		}
 		t.Logf("Status %d mapped to '%s'", status, statusStr)
+	}
+}
+
+// TestEANEventAutoPublishEnabled verifies the EANEventAutoPublish gating helper
+// returns true only when both EANEnabled and EANEventAutoPublish are set.
+func TestEANEventAutoPublishEnabled(t *testing.T) {
+	cases := []struct {
+		name        string
+		enabled     bool
+		autoPublish bool
+		want        bool
+	}{
+		{"both off", false, false, false},
+		{"ean on auto off", true, false, false},
+		{"ean off auto on", false, true, false},
+		{"both on", true, true, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c := &Client{}
+			c.configMu.Lock()
+			c.config = model.EdgeOSMQTTConfig{
+				EANEnabled:          tc.enabled,
+				EANEventAutoPublish: tc.autoPublish,
+			}
+			c.configMu.Unlock()
+			if got := c.EANEventAutoPublishEnabled(); got != tc.want {
+				t.Errorf("EANEventAutoPublishEnabled() = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }

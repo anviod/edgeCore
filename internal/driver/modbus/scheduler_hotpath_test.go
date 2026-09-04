@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestPointScheduler_markPointFailed_IllegalAddress(t *testing.T) {
 	s := NewPointScheduler(newMockModbusTransport(), NewPointDecoder("ABCD", 0, 0), 256, 8, 0)
 	s.pointStates["pt-1"] = &PointRuntime{State: "OK"}
 
-	s.markPointFailed("pt-1", errors.New("modbus exception 2: illegal data address"))
+	s.markPointFailed("pt-1", errors.New("modbus exception 2: illegal data address"), true)
 	rt := s.pointStates["pt-1"]
 	if rt.State != "SKIPPED" {
 		t.Fatalf("state = %q, want SKIPPED", rt.State)
@@ -27,13 +27,30 @@ func TestPointScheduler_markPointFailed_RepeatedFailures(t *testing.T) {
 	s := NewPointScheduler(newMockModbusTransport(), NewPointDecoder("ABCD", 0, 0), 256, 8, 0)
 	s.pointStates["pt-2"] = &PointRuntime{State: "OK", FailCount: 2}
 
-	s.markPointFailed("pt-2", errors.New("timeout"))
+	s.markPointFailed("pt-2", errors.New("read length mismatch"), true)
 	rt := s.pointStates["pt-2"]
 	if rt.FailCount != 3 {
 		t.Fatalf("fail count = %d, want 3", rt.FailCount)
 	}
 	if rt.State != "SKIPPED" {
-		t.Fatalf("state = %q, want SKIPPED after 3 failures", rt.State)
+		t.Fatalf("state = %q, want SKIPPED after 3 point-level failures", rt.State)
+	}
+}
+
+// TestPointScheduler_markPointFailed_TimeoutDoesNotCool asserts a link-level
+// timeout is classified as a device fault, not a point fault: the point must not
+// accumulate failure counters nor enter SKIPPED (anti-starvation on recovery).
+func TestPointScheduler_markPointFailed_TimeoutDoesNotCool(t *testing.T) {
+	s := NewPointScheduler(newMockModbusTransport(), NewPointDecoder("ABCD", 0, 0), 256, 8, 0)
+	s.pointStates["pt-3"] = &PointRuntime{State: "OK", FailCount: 2}
+
+	s.markPointFailed("pt-3", errors.New("iot timeout"), true)
+	rt := s.pointStates["pt-3"]
+	if rt.FailCount != 0 {
+		t.Fatalf("fail count = %d, want 0 (timeout must not degrade the point)", rt.FailCount)
+	}
+	if rt.State != "OK" {
+		t.Fatalf("state = %q, want OK (point must stay readable for immediate recovery)", rt.State)
 	}
 }
 
@@ -115,6 +132,7 @@ func TestPointScheduler_Read_SkipsCooldownPoints(t *testing.T) {
 
 	s := NewPointScheduler(tr, NewPointDecoder("ABCD", 0, 0), 256, 8, 0)
 	s.pointStates["pt-skip"] = &PointRuntime{
+		Point:         model.Point{ID: "pt-skip", Address: "40001", DataType: "uint16", RegisterType: model.RegHolding},
 		State:         "SKIPPED",
 		CooldownUntil: time.Now().Add(time.Hour),
 	}
@@ -183,7 +201,7 @@ func TestPointScheduler_markPointSuccess_andPacketConfig(t *testing.T) {
 func TestPointScheduler_markPointFailed_TenFailures(t *testing.T) {
 	s := NewPointScheduler(newMockModbusTransport(), NewPointDecoder("ABCD", 0, 0), 256, 8, 0)
 	s.pointStates["pt-10"] = &PointRuntime{State: "OK", FailCount: 9}
-	s.markPointFailed("pt-10", errors.New("busy"))
+	s.markPointFailed("pt-10", errors.New("busy"), false)
 	rt := s.pointStates["pt-10"]
 	if rt.State != "SKIPPED" {
 		t.Fatalf("state = %q after 10 failures", rt.State)

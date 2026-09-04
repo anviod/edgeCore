@@ -29,7 +29,7 @@ layout: default
 
 ### 步骤 1: 更新依赖
 ```bash
-cd /path/to/edgex   # 仓库根目录
+cd /path/to/edgeCore   # 仓库根目录
 go mod tidy
 go mod download
 ```
@@ -71,7 +71,7 @@ cp conf/edgeos.example.yaml conf/edgeos.yaml
 
 ### 步骤 6: 启动服务
 ```bash
-# 启动 EdgeX 网关
+# 启动 edgeCore 网关
 ./gateway.exe
 
 # 或使用脚本
@@ -103,23 +103,23 @@ curl http://localhost:8082/api/northbound/config
 #### MQTT 测试
 ```bash
 # 订阅消息
-mosquitto_sub -h 127.0.0.1 -p 1883 -t "edgex/#" -v
+mosquitto_sub -h 127.0.0.1 -p 1883 -t "edgeCore/#" -v
 
 # 应该看到:
-# - edgex/nodes/register (节点注册)
-# - edgex/nodes/{node_id}/heartbeat (心跳)
-# - edgex/data/{node_id}/{device_id} (数据上报)
+# - edgeCore/nodes/register (节点注册)
+# - edgeCore/nodes/{node_id}/heartbeat (心跳)
+# - edgeCore/data/{node_id}/{device_id} (数据上报)
 ```
 
 #### NATS 测试
 ```bash
 # 订阅消息
-nats sub "edgex.>"
+nats sub "edgeCore.>"
 
 # 应该看到:
-# - edgex.nodes.register (节点注册)
-# - edgex.nodes.{node_id}.heartbeat (心跳)
-# - edgex.data.{node_id}.{device_id} (数据上报)
+# - edgeCore.nodes.register (节点注册)
+# - edgeCore.nodes.{node_id}.heartbeat (心跳)
+# - edgeCore.data.{node_id}.{device_id} (数据上报)
 ```
 
 ### 3. 命令响应验证
@@ -128,22 +128,22 @@ nats sub "edgex.>"
 ```bash
 # MQTT
 mosquitto_pub -h 127.0.0.1 -p 1883 \
-  -t "edgex/cmd/edgex-node-001/discover" \
+  -t "edgeCore/cmd/edgeCore-node-001/discover" \
   -m '{"header":{"message_type":"discover_command",...},"body":{...}}'
 
 # 应该在响应主题收到响应
-# edgex/responses/edgex-node-001/{message_id}
+# edgeCore/responses/edgeCore-node-001/{message_id}
 ```
 
 #### 写入命令
 ```bash
 # MQTT
 mosquitto_pub -h 127.0.0.1 -p 1883 \
-  -t "edgex/cmd/edgex-node-001/device-001/write" \
+  -t "edgeCore/cmd/edgeCore-node-001/device-001/write" \
   -m '{"header":{"message_type":"write_command",...},"body":{"points":{...}}}'
 
 # 应该在响应主题收到响应
-# edgex/responses/edgex-node-001/{message_id}
+# edgeCore/responses/edgeCore-node-001/{message_id}
 ```
 
 ### 4. 统计信息验证
@@ -168,10 +168,10 @@ curl http://localhost:8082/api/northbound/edgeos-mqtt/{id}/stats
 ### 1. 压力测试
 ```bash
 # 使用 MQTT 压力测试工具
-# mosquitto_pub -t "edgex/data/node-001/device-001" -l -p 10
+# mosquitto_pub -t "edgeCore/data/node-001/device-001" -l -p 10
 
 # 使用 NATS 压力测试工具
-# nats bench publish "edgex.data.node-001.device-001" -p 10
+# nats bench publish "edgeCore.data.node-001.device-001" -p 10
 ```
 
 ### 2. 监控指标
@@ -211,7 +211,7 @@ docker logs nats
 ### 问题 3: 消息丢失
 - 检查 QoS 级别设置
 - 检查网络稳定性
-- 查看 EdgeX 网关日志
+- 查看 edgeCore 网关日志
 - 检查设备映射配置
 
 ### 问题 4: 前端无法加载
@@ -269,10 +269,10 @@ go build
 ### 3. 日志监控
 ```bash
 # 实时查看日志
-tail -f logs/edgex-gateway.edgex.log | grep edgeOS
+tail -f logs/edgeCore-gateway.edgeCore.log | grep edgeOS
 
 # 过滤错误
-tail -f logs/edgex-gateway.edgex.log | grep "error\|Error\|ERROR"
+tail -f logs/edgeCore-gateway.edgeCore.log | grep "error\|Error\|ERROR"
 ```
 
 ## 验收标准

@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/anviod/edgex/internal/config"
-	"github.com/anviod/edgex/internal/core"
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/config"
+	"github.com/anviod/edgeCore/internal/core"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ func newInstallTestServer(t *testing.T) (*Server, *core.SystemManager, string) {
 
 	pipeline := core.NewDataPipeline(10)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, store, pipeline, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(cm, store, pipeline, nil, nil, sm, nil, cfgManager, nil)
 
 	return srv, sm, tmpDir
 }
@@ -47,7 +47,7 @@ func TestInstallStorageAttachHook(t *testing.T) {
 
 	pipeline := core.NewDataPipeline(10)
 	cm := core.NewChannelManager(pipeline, nil)
-	srv := NewServer(cm, nil, pipeline, nil, nil, sm, nil, cfgManager, nil, nil)
+	srv := NewServer(cm, nil, pipeline, nil, nil, sm, nil, cfgManager, nil)
 
 	var attached *storage.Storage
 	srv.SetStorageAttachHook(func(st *storage.Storage) {

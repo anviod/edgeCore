@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
+	"github.com/anviod/edgeCore/internal/driver"
 
 	go_ethernet_ip "github.com/anviod/ethernet-ip"
 	"go.uber.org/zap"

@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — 北向接口页（Dashboard / EdgeCompute 三级视觉对齐）
+ * edgeCore v3.0 — 北向接口页（Dashboard / EdgeCompute 三级视觉对齐）
  */
 
 /* ── page shell：全宽 + 24px section 间距 ── */
@@ -157,3 +157,29 @@
   color: rgb(var(--danger-6));
   background: transparent;
 }
+
+/* ── northbound motion polish ── */
+/* 入场由 App.vue 路由过渡统一处理；此处仅保留交互反馈 */
+
+.northbound-page .nb-card.arco-card {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.northbound-page .nb-card.arco-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.northbound-page .nb-card .arco-card-extra .arco-btn {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.northbound-page .nb-card .arco-card-extra .arco-btn:hover {
+  transform: scale(1.05);
+}
+

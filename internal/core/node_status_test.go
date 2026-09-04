@@ -158,6 +158,33 @@ func TestBackoffMechanism(t *testing.T) {
 	}
 }
 
+// TestUnregisterNode 测试节点注销
+func TestUnregisterNode(t *testing.T) {
+	manager := NewCommunicationManageTemplate()
+	manager.RegisterNode("ch1", "Channel 1")
+	manager.RegisterNode("dev1", "Device 1")
+	manager.RegisterNode("dev2", "Device 2")
+
+	if manager.GetNode("dev1") == nil {
+		t.Fatal("expected dev1 node to be registered")
+	}
+
+	// 注销单个设备节点
+	manager.UnregisterNode("dev1")
+	if manager.GetNode("dev1") != nil {
+		t.Error("expected dev1 node to be removed")
+	}
+	if manager.GetNode("dev2") == nil {
+		t.Error("expected dev2 node to remain")
+	}
+	if manager.GetNode("ch1") == nil {
+		t.Error("expected ch1 node to remain")
+	}
+
+	// 注销不存在的节点不应 panic
+	manager.UnregisterNode("nonexistent")
+}
+
 // TestConcurrentAccess 测试并发访问的安全性
 func TestConcurrentAccess(t *testing.T) {
 	manager := NewCommunicationManageTemplate()

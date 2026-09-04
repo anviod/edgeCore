@@ -1,4 +1,4 @@
-// Package bacnet 实现北向 BACnet Server，以从机模式对外暴露 EdgeX 点位数据。
+// Package bacnet 实现北向 BACnet Server，以从机模式对外暴露 edgeCore 点位数据。
 // BACnet Server 将南向设备的点位映射为 BACnet 标准对象（AnalogInput/BinaryInput等），
 // 支持 Who-Is/I-Am 设备发现、ReadProperty/WriteProperty 属性读写和 COV 订阅通知。
 package bacnet
@@ -15,10 +15,10 @@ import (
 
 	"github.com/anviod/bacnet/btypes"
 	"github.com/anviod/bacnet/server"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
-// Server 是 BACnet Server 的核心实现，将 EdgeX 南向设备和点位映射为 BACnet 对象。
+// Server 是 BACnet Server 的核心实现，将 edgeCore 南向设备和点位映射为 BACnet 对象。
 // 遵循 OPC UA Server 的架构模式：Start/Stop 生命周期管理、Update 数据流、SyncAddressSpace 热更新。
 type Server struct {
 	config       model.BACnetServerConfig
@@ -34,12 +34,12 @@ type Server struct {
 	writeHistory []WriteHistoryItem
 }
 
-// pointMapping 记录一个 EdgeX 点位到 BACnet 对象的映射关系
+// pointMapping 记录一个 edgeCore 点位到 BACnet 对象的映射关系
 type pointMapping struct {
 	ObjectType btypes.ObjectType     // BACnet 对象类型 (AnalogInput, BinaryInput, etc.)
 	Instance   btypes.ObjectInstance // BACnet 对象实例号
-	DeviceID   string                // 所属 EdgeX 设备 ID
-	PointID    string                // EdgeX 点位 ID
+	DeviceID   string                // 所属 edgeCore 设备 ID
+	PointID    string                // edgeCore 点位 ID
 	PointName  string                // 点位名称
 	Writable   bool                  // 是否可写
 }
@@ -120,7 +120,7 @@ func (s *Server) startLocked() error {
 	}
 	s.srv = srv
 
-	// 构建 BACnet 地址空间（将 EdgeX 点位映射为 BACnet 对象）
+	// 构建 BACnet 地址空间（将 edgeCore 点位映射为 BACnet 对象）
 	if err := s.buildAddressSpace(); err != nil {
 		s.srv.Close()
 		s.srv = nil
@@ -173,7 +173,7 @@ func (s *Server) buildDeviceConfig() *server.DeviceConfig {
 	if cfg.DeviceName == "" {
 		cfg.DeviceName = s.config.Name
 		if cfg.DeviceName == "" {
-			cfg.DeviceName = "EdgeX-Gateway"
+			cfg.DeviceName = "edgeCore-Gateway"
 		}
 	}
 	if cfg.VendorID == 0 {
@@ -290,7 +290,7 @@ func (s *Server) Update(v model.Value) {
 		return
 	}
 
-	// 将 EdgeX 值转换为 BACnet 兼容类型
+	// 将 edgeCore 值转换为 BACnet 兼容类型
 	bacnetValue := convertToBACnetValue(v.Value, mapping.ObjectType)
 
 	if err := s.srv.SetProperty(mapping.ObjectType, mapping.Instance, btypes.PROP_PRESENT_VALUE, bacnetValue); err != nil {
@@ -429,8 +429,8 @@ func (s *Server) buildAddressSpace() error {
 		sort.Slice(devices, func(i, j int) bool { return devices[i].ID < devices[j].ID })
 
 		for _, dev := range devices {
-			// 设备过滤
-			if len(s.config.Devices) > 0 && !s.config.Devices.AllowsDevice(dev.ID) {
+			// 设备过滤：仅显式启用的设备暴露到 BACnet 地址空间
+			if !s.config.Devices.AllowsDevice(dev.ID) {
 				continue
 			}
 
@@ -488,7 +488,7 @@ func (s *Server) buildAddressSpace() error {
 						{
 							Type:       btypes.PROP_DESCRIPTION,
 							ArrayIndex: btypes.ArrayAll,
-							Data:       fmt.Sprintf("EdgeX Point: %s/%s/%s", ch.Name, dev.Name, pt.Name),
+							Data:       fmt.Sprintf("edgeCore Point: %s/%s/%s", ch.Name, dev.Name, pt.Name),
 						},
 						{
 							Type:       btypes.PROP_STATUS_FLAGS,
@@ -549,7 +549,7 @@ func (s *Server) countObjects() int {
 	return count
 }
 
-// inferBACnetObjectType 根据 EdgeX 点位 DataType 推断 BACnet 对象类型
+// inferBACnetObjectType 根据 edgeCore 点位 DataType 推断 BACnet 对象类型
 // 映射规则:
 //   - float32/float64/float → AnalogInput(0) / AnalogValue(2)
 //   - bool → BinaryInput(3) / BinaryValue(5)
@@ -581,7 +581,7 @@ func inferBACnetObjectType(pt model.PointData) btypes.ObjectType {
 	}
 }
 
-// convertToBACnetValue 将 EdgeX 值转换为 BACnet 兼容的类型
+// convertToBACnetValue 将 edgeCore 值转换为 BACnet 兼容的类型
 func convertToBACnetValue(value any, objType btypes.ObjectType) any {
 	if value == nil {
 		return nil

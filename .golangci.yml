@@ -1,4 +1,4 @@
-# golangci-lint configuration for EdgeX EtherCAT driver
+# golangci-lint configuration for edgeCore EtherCAT driver
 # Run: golangci-lint run --build-tags sim --timeout 5m ./...
 
 run:

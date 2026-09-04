@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestNorthboundManager_ValidateChannelNameUnique(t *testing.T) {
@@ -80,6 +80,49 @@ func TestNorthboundManager_UpsertHTTP_RejectsDuplicateNameCrossProtocol(t *testi
 		t.Fatalf("expected duplicate name error, got %v", err)
 	}
 	if len(nm.config.HTTP) != 0 {
+		t.Fatalf("config should not be modified on validation failure")
+	}
+}
+
+func TestValidateNorthboundChannelID(t *testing.T) {
+	tests := []struct {
+		id      string
+		wantErr bool
+	}{
+		{id: "", wantErr: false},
+		{id: "bacnet_1785909123456", wantErr: false},
+		{id: "edgeos-mqtt_1785", wantErr: false},
+		{id: "ABC123_-xyz", wantErr: false},
+		{id: "New BACnet Server", wantErr: true},
+		{id: "带中文", wantErr: true},
+		{id: "id/with/slash", wantErr: true},
+		{id: "a.b", wantErr: true},
+		{id: "a@b", wantErr: true},
+	}
+	for _, tc := range tests {
+		err := validateNorthboundChannelID(tc.id)
+		if tc.wantErr && err == nil {
+			t.Fatalf("id %q: expected error", tc.id)
+		}
+		if !tc.wantErr && err != nil {
+			t.Fatalf("id %q: unexpected error: %v", tc.id, err)
+		}
+	}
+}
+
+func TestNorthboundManager_UpsertBACnetServer_RejectsInvalidID(t *testing.T) {
+	nm := NewNorthboundManager(model.NorthboundConfig{}, nil, nil, nil, func(cfg model.NorthboundConfig) error {
+		t.Fatal("saveFunc should not be called on validation failure")
+		return nil
+	})
+
+	_, _, err := nm.UpsertBACnetServerConfig(model.BACnetServerConfig{
+		ID: "New BACnet Server", Name: "合法名称", Enable: false,
+	})
+	if err == nil || !strings.Contains(err.Error(), "格式非法") {
+		t.Fatalf("expected invalid ID error, got %v", err)
+	}
+	if len(nm.config.BACnetServer) != 0 {
 		t.Fatalf("config should not be modified on validation failure")
 	}
 }

@@ -8,10 +8,10 @@
       <div class="sidebar-header">
         <div class="logo-icon">
           <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </div>
-        <span v-if="!drawerRail" class="logo-text">EdgeX</span>
+        <span v-if="!drawerRail" class="logo-text">edgeCore</span>
       </div>
 
       <nav class="sidebar-nav">
@@ -53,11 +53,26 @@
         <div v-if="!drawerRail" class="version-info">
           <span class="version-value">{{ systemVersion }}</span>
           <span v-if="buildTime" class="version-buildtime">{{ buildTime }}</span>
-          <span v-if="commitID" class="version-commit">{{ commitID }}</span>
         </div>
+        <button
+          class="check-update-btn"
+          :class="{ 'is-collapsed': drawerRail }"
+          :title="checkingUpdate ? '正在检查更新...' : '检查更新'"
+          @click="handleCheckUpdate"
+        >
+          <icon-refresh
+            class="check-update-icon"
+            :class="{ spinning: checkingUpdate }"
+            :size="drawerRail ? 16 : 13"
+          />
+          <span v-if="!drawerRail">检查更新</span>
+        </button>
         <button class="collapse-btn" @click="drawerRail = !drawerRail">
-          <icon-arrow-left v-if="!drawerRail" :size="14" />
-          <icon-arrow-right v-else :size="14" />
+          <icon-arrow-left
+            class="collapse-icon"
+            :class="{ 'is-collapsed': drawerRail }"
+            :size="14"
+          />
           <span v-if="!drawerRail">收起</span>
         </button>
       </div>
@@ -110,7 +125,7 @@
     <main class="main-content" :class="{ 'has-sidebar': !isLoginPage, 'is-collapsed': drawerRail }">
       <div v-if="!isLoginPage" class="page-container">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition :name="transitionName" mode="out-in">
             <component v-if="Component" :is="Component" :key="$route.fullPath" />
           </transition>
         </router-view>
@@ -123,6 +138,7 @@
     </main>
 
     <change-password-dialog ref="changePwdRef" />
+    <update-dialog ref="updateDialogRef" />
     <AiAssistantPanel ref="aiAssistantRef" />
 
     <a-modal
@@ -152,12 +168,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { globalState, showMessage } from './composables/useGlobalState'
 import { userStore } from '@/stores/user'
 import LoginApi from '@/api/login'
+import UpdateApi from '@/api/update'
 import ChangePasswordDialog from '@/components/ChangePasswordDialog.vue'
+import UpdateDialog from '@/components/UpdateDialog.vue'
 import AiAssistantIcon from '@/components/ai-assistant/AiAssistantIcon.vue'
 import AiAssistantPanel from '@/components/ai-assistant/AiAssistantPanel.vue'
 import { useAiAssistant } from './composables/useAiAssistant'
@@ -173,7 +191,23 @@ const router = useRouter()
 const drawerRail = ref(false)
 const snackbar = globalState.snackbar
 const user = userStore()
+const previousLevel = ref(1)
+
+const transitionName = computed(() => {
+  const toLevel = route.meta?.level ?? 1
+  if (toLevel > previousLevel.value) return 'page-slide'
+  if (toLevel < previousLevel.value) return 'page-back'
+  return 'fade'
+})
+
+watch(
+  () => route.path,
+  () => {
+    previousLevel.value = route.meta?.level ?? 1
+  }
+)
 const changePwdRef = ref(null)
+const updateDialogRef = ref(null)
 const restartModalVisible = ref(false)
 const isDarkTheme = ref(false)
 const aiAssistantRef = ref(null)
@@ -185,7 +219,6 @@ const openAiAssistant = () => {
 
 const systemVersion = ref('dev')
 const buildTime = ref('')
-const commitID = ref('')
 
 const isLoginPage = computed(() => route.path === '/login' || route.path === '/install')
 
@@ -204,10 +237,39 @@ const fetchSystemInfo = async () => {
     if (res.code === '0' && res.data) {
       systemVersion.value = `v${res.data.softVer || 'dev'}`
       buildTime.value = res.data.buildTime || ''
-      commitID.value = res.data.commitID || ''
     }
   } catch (e) {
     console.error('获取系统信息失败:', e)
+  }
+}
+
+// —— 软件更新 ——
+const checkingUpdate = ref(false)
+let autoCheckTriggered = false
+
+// 手动检查更新：始终弹出结果弹窗
+const handleCheckUpdate = async () => {
+  if (checkingUpdate.value) return
+  checkingUpdate.value = true
+  try {
+    await updateDialogRef.value?.checkNow(true)
+  } finally {
+    checkingUpdate.value = false
+  }
+}
+
+// 登录进入系统时自动检测新版本（仅触发一次），发现有新版则弹窗提示
+const maybeAutoCheckUpdate = async () => {
+  if (autoCheckTriggered || !updateDialogRef.value) return
+  autoCheckTriggered = true
+  await fetchSystemInfo()
+  try {
+    const res = await UpdateApi.checkUpdate()
+    if (res.code === '0' && res.data?.hasUpdate && res.data.latest) {
+      updateDialogRef.value?.checkNow(false)
+    }
+  } catch (e) {
+    console.error('自动检查更新失败:', e)
   }
 }
 
@@ -240,6 +302,14 @@ const handleClickOutside = (event) => {
   }
 }
 
+// 仅在进入登录后页面时自动检测新版本
+watch(
+  () => isLoginPage.value,
+  async (isLogin) => {
+    if (!isLogin) await maybeAutoCheckUpdate()
+  }
+)
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
   const savedTheme = localStorage.getItem('theme')
@@ -258,7 +328,7 @@ onMounted(() => {
       console.error('Failed to restore user info', e)
     }
   }
-  fetchSystemInfo()
+  if (!isLoginPage.value) maybeAutoCheckUpdate()
 })
 
 onUnmounted(() => {
@@ -295,3 +365,108 @@ const confirmRestart = () => {
   })
 }
 </script>
+
+<style scoped>
+.industrial-sidebar,
+.industrial-header,
+.main-content {
+  will-change: width, left, margin-left;
+}
+
+.collapse-icon {
+  transition: transform var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.collapse-icon.is-collapsed {
+  transform: rotate(180deg);
+}
+
+.ai-assistant-trigger {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.ai-assistant-trigger:hover {
+  transform: translateY(-1px);
+}
+
+.ai-assistant-trigger.mcp-glow {
+  animation: pulse-glow 2s var(--motion-ease-standard) infinite;
+}
+
+.dropdown-menu {
+  animation: scale-soft-in var(--motion-duration-fast) var(--motion-ease-decelerate);
+  transform-origin: top right;
+}
+
+.dropdown-item {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.dropdown-icon {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-bounce);
+}
+
+.dropdown-icon.is-open {
+  transform: rotate(180deg);
+}
+
+.check-update-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  margin-top: 2px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--color-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.check-update-btn:hover {
+  color: var(--color-primary-6);
+  background-color: var(--color-fill-1);
+  border-color: var(--color-border-2);
+}
+
+.check-update-btn.is-collapsed {
+  width: auto;
+  margin-top: 6px;
+}
+
+.check-update-icon {
+  transition: transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.check-update-icon.spinning {
+  animation: update-spin 1s linear infinite;
+}
+
+@keyframes update-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.user-avatar {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    transform var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.user-menu:hover .user-avatar {
+  transform: scale(1.05);
+}
+</style>
+

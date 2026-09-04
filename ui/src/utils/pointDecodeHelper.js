@@ -152,15 +152,17 @@ export const applyFormula = (raw, expr, scale, offset) => {
         return raw
     }
     let result = Number(v)
-    const s = typeof scale === 'number' ? scale : 1
-    const o = typeof offset === 'number' ? offset : 0
+    const parsedScale = Number(scale)
+    const parsedOffset = Number(offset)
+    const s = Number.isFinite(parsedScale) ? parsedScale : 1
+    const o = Number.isFinite(parsedOffset) ? parsedOffset : 0
     result = result * s + o
     const formula = (expr || '').trim()
     if (!formula) {
         return result
     }
     try {
-        // eslint-disable-next-line no-new-func
+         
         const fn = new Function('v', `return ${formula}`)
         return fn(result)
     } catch (e) {

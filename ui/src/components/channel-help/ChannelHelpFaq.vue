@@ -1,7 +1,7 @@
 <template>
   <a-collapse class="help-doc-faq" :bordered="false" expand-icon-position="right">
     <a-collapse-item
-      v-for="(item, index) in items"
+      v-for="item in items"
       :key="item.question"
       :header="item.question"
     >

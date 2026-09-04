@@ -1,4 +1,0 @@
-========== START: make test-soak-short ==========
-SOAK_DURATION=30 go test ./internal/integration/... -run TestSoak -count=1 -timeout=5m
-ok  	github.com/anviod/edgex/internal/integration	77.734s
-EXIT= ELAPSED=80s

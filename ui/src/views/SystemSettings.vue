@@ -34,9 +34,9 @@
         :network-backend="networkBackend"
         :connectivity-report="connectivityReport"
         :connectivity-checking="connectivityChecking"
-        @update:network-interfaces="(value) => networkInterfaces.value = value"
-        @update:connectivity-targets="(value) => connectivityTargets.value = value"
-        @update:static-routes="(value) => staticRoutes.value = value"
+        @update:network-interfaces="(value) => networkInterfaces = value"
+        @update:connectivity-targets="(value) => connectivityTargets = value"
+        @update:static-routes="(value) => staticRoutes = value"
         @save="saveConfig"
         @check-connectivity="runConnectivityCheck"
         :on-add-route="addRoute"
@@ -115,7 +115,7 @@ const haConfig = reactive({
 })
 
 const hostnameConfig = reactive({
-  name: 'edgex',
+  name: 'edgeCore',
   enable_mdns: true,
   enable_bare: true,
   http_port: 8080,

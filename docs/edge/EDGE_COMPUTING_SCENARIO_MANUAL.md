@@ -1,7 +1,7 @@
 ---
 layout: default
 title: 边缘计算场景手册
-description: EdgeX 边缘计算场景手册 — 典型工业场景配置示例
+description: edgeCore 边缘计算场景手册 — 典型工业场景配置示例
 ---
 
 # 边缘计算场景手册

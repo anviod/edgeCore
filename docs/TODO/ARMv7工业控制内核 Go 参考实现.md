@@ -580,7 +580,7 @@ func (f *Feedback) Record(ev RingEvent, slot RuleSlot, res ResultCode) {
 **交叉编译门禁**（已有）：
 
 ```bash
-GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -c ./internal/pipeline/ -o /tmp/edgex-pipeline-armv7.test
+GOOS=linux GOARCH=arm GOARM=7 CGO_ENABLED=0 go test -c ./internal/pipeline/ -o /tmp/edgeCore-pipeline-armv7.test
 ```
 
 ---

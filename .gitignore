@@ -3,12 +3,13 @@ node_modules/
 logs/
 ui/dist/
 logs/
-logs/gateway.edgex.log
+logs/gateway.edgeCore.log
 *.db
 .codebuddy/
 .idea/
 .trae/
 *.exe
+*.exe~
 dist/
 *.log
 *.txt
@@ -20,4 +21,5 @@ build/
 test/
 vendor/
 .workbuddy/
+dist-build/
 *.zip

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type rwStubDriver struct {
@@ -125,18 +125,17 @@ func TestChannelManager_ReadPoint(t *testing.T) {
 func TestChannelManager_PublishWrittenValue_Pipeline(t *testing.T) {
 	pipeline := NewDataPipeline(8)
 	pipeline.Start()
-	var got model.Value
-	pipeline.AddHandler(func(v model.Value) { got = v })
+	gotCh := make(chan model.Value, 1)
+	pipeline.AddHandler(func(v model.Value) { gotCh <- v })
 
 	cm := NewChannelManager(pipeline, nil)
 	cm.publishWrittenValue("ch1", "dev1", "p1", 3.14)
 
-	deadline := time.Now().Add(500 * time.Millisecond)
-	for time.Now().Before(deadline) {
-		if got.PointID == "p1" {
-			break
-		}
-		time.Sleep(10 * time.Millisecond)
+	var got model.Value
+	select {
+	case got = <-gotCh:
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("timed out waiting for pipeline value")
 	}
 	if got.Value != 3.14 {
 		t.Fatalf("pipeline value = %v", got.Value)

@@ -1,7 +1,7 @@
 ---
 layout: default
 title: OPC UA 客户端驱动设计方案
-description: EdgeX OPC UA 客户端驱动设计方案
+description: edgeCore OPC UA 客户端驱动设计方案
 ---
 
 # OPC UA 客户端驱动设计方案

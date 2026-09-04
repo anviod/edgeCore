@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/anviod/edgex/internal/model"
-	"github.com/anviod/edgex/internal/storage"
+	"github.com/anviod/edgeCore/internal/model"
+	"github.com/anviod/edgeCore/internal/storage"
 
 	"go.etcd.io/bbolt"
 )
@@ -93,7 +93,7 @@ func DefaultConfig() *Config {
 	cfg.EdgeRules = []model.EdgeRule{}
 	cfg.System = model.SystemConfig{
 		Hostname: model.HostnameConfig{
-			Name:       "edgex",
+			Name:       "edgeCore",
 			EnableMDNS: true,
 			EnableBare: true,
 			HTTPPort:   cfg.Server.Port,

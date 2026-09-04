@@ -1,5 +1,5 @@
 /*
- * EdgeX v3.0 — Install wizard (all steps)
+ * edgeCore v3.0 — Install wizard (all steps)
  * Scoped under .install-wrapper to avoid global conflicts
  */
 
@@ -116,8 +116,8 @@
 
 .install-wrapper .step.done .step-number {
   background: rgba(22, 163, 74, 0.1);
-  border-color: var(--edgex-success);
-  color: var(--edgex-success);
+  border-color: var(--edgeCore-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .step-label {
@@ -132,7 +132,7 @@
 }
 
 .install-wrapper .step.done .step-label {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .step-divider {
@@ -200,11 +200,11 @@
 }
 
 .install-wrapper .status.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .status.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .form-hint {
@@ -214,16 +214,16 @@
 }
 
 .install-wrapper .form-hint.success {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .form-hint.error {
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .password-rules {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   margin-top: var(--space-1);
 }
@@ -248,7 +248,7 @@
 }
 
 .install-wrapper .rule.pass {
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
   background: rgba(22, 163, 74, 0.06);
   border-color: rgba(22, 163, 74, 0.2);
 }
@@ -283,7 +283,7 @@
   background: rgba(239, 68, 68, 0.04);
   border: 1px solid rgba(239, 68, 68, 0.2);
   border-radius: var(--radius-sm);
-  color: var(--edgex-error);
+  color: var(--edgeCore-error);
   font-size: 13px;
 }
 
@@ -401,7 +401,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
+}
+
+.install-wrapper .install-complete-icon.install-fail-icon {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: var(--edgeCore-error);
+}
+
+.install-wrapper .install-complete-icon.install-fail-icon svg,
+.install-wrapper .install-complete-icon.install-fail-icon .arco-icon {
+  color: var(--edgeCore-error);
 }
 
 .install-wrapper .install-complete-icon svg,
@@ -409,7 +420,7 @@
   width: 40px;
   height: 40px;
   font-size: 40px;
-  color: var(--edgex-success);
+  color: var(--edgeCore-success);
 }
 
 .install-wrapper .install-complete-title {
@@ -471,4 +482,55 @@
   .install-wrapper .password-rules {
     flex-wrap: wrap;
   }
+}
+
+/* ── install wizard motion polish ── */
+/* 入场由 App.vue 路由过渡统一处理 */
+
+.install-wrapper .step {
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-ease-standard),
+    color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .step.active .step-number {
+  animation: scale-in var(--motion-duration-normal) var(--motion-ease-bounce);
+}
+
+.install-wrapper .step-divider {
+  transition: background-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .install-body {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .config-form,
+.install-wrapper .form-group {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .form-input,
+.install-wrapper .arco-input-wrapper {
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .password-rules {
+  transition:
+    color var(--motion-duration-fast) var(--motion-ease-standard),
+    border-color var(--motion-duration-fast) var(--motion-ease-standard);
+}
+
+.install-wrapper .install-progress-bar-wrap {
+  animation: fade-in-up var(--motion-duration-normal) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .install-progress-fill {
+  transition: width var(--motion-duration-slower) var(--motion-ease-decelerate);
+}
+
+.install-wrapper .install-complete-countdown .countdown {
+  animation: status-breathe 1.5s var(--motion-ease-standard) infinite;
 }

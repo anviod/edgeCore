@@ -26,7 +26,7 @@
   </defs>
   <rect width="100%" height="100%" fill="url(#bg_grad)"/>
   <rect width="100%" height="100%" fill="url(#grid)" />
-  <text x="700" y="36" text-anchor="middle" class="text-title">EdgeX V2.0 架构 · ScanEngine引擎</text>
+  <text x="700" y="36" text-anchor="middle" class="text-title">edgeCore V2.0 架构 · ScanEngine引擎</text>
   <g transform="translate(0, 52)">
     <g transform="translate(215, 0)">
       <rect width="200" height="100" rx="12" class="panel-bg" stroke="#f59e0b" filter="url(#glow)"/>

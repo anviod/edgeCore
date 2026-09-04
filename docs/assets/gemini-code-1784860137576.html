@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>edgeCore · 十二大工业 AI 核心特效 (含拟生蜂巢 Swarm V2)</title>
+<style>
+/* ============================================================
+   Theme variables
+   ============================================================ */
+:root {
+  --bg-deep: #090909;
+  --bg: #0D0D0F;
+  --bg-soft: #101114;
+  --bg-elevated: #16181B;
+  --bg-panel: #181A1D;
+  --bg-surface: #1C1D20;
+
+  --text: #FFFFFF;
+  --text-soft: #D7D7D7;
+  --text-muted: #AAAAAA;
+  --text-dim: #777777;
+
+  --gold: #C8A75B;
+  --gold-light: #DDBB73;
+  --gold-bright: #E8D5A3;
+  --gold-deep: #B38F43;
+  --gold-dark: #8F7341;
+  --gold-hover: #F0D48A;
+  --gold-glow: rgba(200, 167, 91, 0.25);
+  --gold-glow-strong: rgba(200, 167, 91, 0.45);
+  --gold-soft: rgba(200, 167, 91, 0.12);
+  --gold-bg: rgba(200, 167, 91, 0.08);
+  --gold-bg-strong: rgba(200, 167, 91, 0.10);
+  --gold-border: rgba(200, 167, 91, 0.25);
+  --gold-border-hover: rgba(221, 187, 115, 0.55);
+  --gold-line: rgba(200, 167, 91, 0.15);
+  --gold-ghost: rgba(200, 167, 91, 0.04);
+  --gold-ghost-strong: rgba(200, 167, 91, 0.06);
+
+  --radius-lg: 20px;
+  --radius-md: 14px;
+  --radius-sm: 10px;
+
+  --shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+  --shadow-gold: 0 10px 40px rgba(200, 167, 91, 0.12);
+}
+
+[data-theme="light"] {
+  --bg-deep: #F5F5F7;
+  --bg: #FAFAFA;
+  --bg-soft: #F0F0F2;
+  --bg-elevated: #E8E8ED;
+  --bg-panel: #FFFFFF;
+  --bg-surface: #FBFBFD;
+
+  --text: #1D1D1F;
+  --text-soft: #3A3A3C;
+  --text-muted: #6E6E73;
+  --text-dim: #999999;
+
+  --gold: #B8933F;
+  --gold-light: #A07D2C;
+  --gold-bright: #C8A75B;
+  --gold-deep: #8B6914;
+  --gold-dark: #6B5210;
+  --gold-hover: #D4A84B;
+  --gold-glow: rgba(184, 147, 63, 0.15);
+  --gold-glow-strong: rgba(184, 147, 63, 0.3);
+  --gold-soft: rgba(184, 147, 63, 0.08);
+  --gold-bg: rgba(184, 147, 63, 0.05);
+  --gold-bg-strong: rgba(184, 147, 63, 0.07);
+  --gold-border: rgba(184, 147, 63, 0.2);
+  --gold-border-hover: rgba(160, 125, 44, 0.45);
+  --gold-line: rgba(184, 147, 63, 0.12);
+  --gold-ghost: rgba(184, 147, 63, 0.03);
+  --gold-ghost-strong: rgba(184, 147, 63, 0.05);
+}
+
+/* Page layout */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, var(--gold-ghost-strong), transparent 60%),
+    var(--bg-deep);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  transition: background .4s ease, color .4s ease;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 28px;
+  background: rgba(9,9,9,0.75);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--gold-border);
+}
+.topbar h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: .5px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar h1 .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow-strong);
+}
+.topbar .sub { color: var(--text-dim); font-size: .8rem; font-weight: 400; margin-left: 4px; }
+
+.theme-toggle {
+  appearance: none;
+  cursor: pointer;
+  border: 1px solid var(--gold-border);
+  background: var(--gold-bg);
+  color: var(--gold-bright);
+  font-size: .82rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  transition: background .25s ease, transform .15s ease, box-shadow .25s ease;
+}
+.theme-toggle:hover { background: var(--gold-bg-strong); box-shadow: var(--shadow-gold); transform: translateY(-1px); }
+.theme-toggle:active { transform: translateY(0); }
+
+.intro {
+  max-width: 1100px;
+  margin: 28px auto 8px;
+  padding: 0 28px;
+  color: var(--text-muted);
+  font-size: .92rem;
+  line-height: 1.7;
+}
+.intro b { color: var(--gold-bright); font-weight: 600; }
+
+.grid {
+  max-width: 1180px;
+  margin: 24px auto 60px;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 22px;
+}
+
+.fx-card {
+  background: linear-gradient(180deg, var(--bg-panel), var(--bg-elevated));
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.fx-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow), var(--shadow-gold);
+  border-color: var(--gold-border-hover);
+}
+
+.fx-stage {
+  position: relative;
+  height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 60% at 50% 50%, var(--gold-ghost-strong), transparent 70%),
+    var(--bg-deep);
+}
+
+.fx-meta {
+  padding: 14px 18px 18px;
+  border-top: 1px solid var(--gold-line);
+  background: var(--bg-soft);
+}
+.fx-meta h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+  letter-spacing: 1px;
+  color: var(--gold-bright);
+}
+.fx-meta p {
+  margin: 0;
+  font-size: .78rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+/* Shared effect base */
+.fx-scene { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+.fx-viewport { position: relative; width: 300px; height: 300px; display: flex; align-items: center; justify-content: center; }
+
+.fx-logo {
+  position: absolute; z-index: 10;
+  width: 64px; height: 64px;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--gold-bright);
+  animation: fx-logo-breathe 3s ease-in-out infinite;
+}
+.fx-logo::before, .fx-logo::after {
+  content: ''; position: absolute;
+  top: 50%; left: 50%; width: 100%; height: 100%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid var(--gold-border-hover);
+  opacity: 0; pointer-events: none;
+  animation: fx-logo-ripple 3s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+}
+.fx-logo::after { animation-delay: 1.5s; }
+.fx-logo svg { position: relative; z-index: 2; width: 100%; height: 100%; filter: drop-shadow(0 0 14px var(--gold-glow-strong)); }
+.fx-logo-core { filter: drop-shadow(0 0 10px var(--gold-glow-strong)); }
+.fx-logo-orbit { transform-origin: 32px 32px; animation: fx-logo-spin 10s linear infinite; }
+
+@keyframes fx-logo-breathe {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(200,167,91,0.5)); transform: translate(-50%, -50%) scale(1); }
+  50% { filter: drop-shadow(0 0 22px rgba(200,167,91,0.95)); transform: translate(-50%, -50%) scale(1.04); }
+}
+@keyframes fx-logo-ripple {
+  0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.55; }
+  100% { transform: translate(-50%, -50%) scale(1.9); opacity: 0; }
+}
+@keyframes fx-logo-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+.fx-node {
+  position: absolute; top: 50%; left: 50%;
+  width: var(--d); height: var(--d);
+  margin: calc(-1 * var(--d) / 2) 0 0 calc(-1 * var(--d) / 2);
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 14px var(--gold-glow-strong), 0 0 28px var(--gold-glow);
+  transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a)));
+  animation: fx-node-pulse 2.4s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+@keyframes fx-node-pulse {
+  0%, 100% { opacity: 0.4; transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a))) scale(1); }
+  50% { opacity: 1; transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a))) scale(1.6); }
+}
+.fx-tick {
+  position: absolute; top: 50%; left: 50%;
+  width: 1px; height: var(--l);
+  margin: calc(-1 * var(--l) / 2) 0 0 -0.5px;
+  background: var(--gold-border);
+  transform: rotate(var(--a)) translateY(calc(-1 * var(--r)));
+  opacity: 0.35;
+}
+
+.fx-core, .fx-lattice, .fx-radar, .fx-field, .fx-beacon,
+.fx-nexus, .fx-pulse, .fx-matrix, .fx-orbit, .fx-beam, .fx-flux, .fx-swarm {
+  position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── Effect 1: Core ── */
+.fx-core__ring { position: absolute; top: 50%; left: 50%; border-radius: 50%; transform: translate(-50%, -50%); }
+.fx-core__ring--solid { width: 220px; height: 220px; border: 2.5px solid var(--gold-border-hover); animation: fx-core-spin 12s linear infinite; box-shadow: 0 0 50px var(--gold-glow-strong), inset 0 0 50px var(--gold-glow); }
+.fx-core__ring--dashed { width: 260px; height: 260px; border: 1.5px dashed var(--gold-border); opacity: 0.7; animation: fx-core-spin 18s linear infinite reverse; }
+.fx-core__ring--dotted { width: 300px; height: 300px; border: 1.5px dotted var(--gold-border); opacity: 0.55; animation: fx-core-spin 26s linear infinite; }
+.fx-core__ring--outer-ticks { width: 260px; height: 260px; border: none; animation: fx-core-spin 40s linear infinite; }
+.fx-core__nodes { position: absolute; inset: 0; pointer-events: none; }
+.fx-core__pulse-wave { position: absolute; top: 50%; left: 50%; width: 160px; height: 160px; margin: -80px 0 0 -80px; border-radius: 50%; border: 1.5px solid var(--gold-border-hover); opacity: 0; animation: fx-core-wave 3s ease-out infinite; }
+@keyframes fx-core-wave { 0% { transform: scale(0.5); opacity: 0.7; } 100% { transform: scale(1.9); opacity: 0; } }
+@keyframes fx-core-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* ── Effect 2: Lattice ── */
+.fx-lattice__svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: visible; z-index: 1; }
+.fx-lattice__guide { fill: none; stroke: var(--gold-border); stroke-width: 0.5; opacity: 0.1; stroke-dasharray: 2 4; }
+.fx-lattice__link { stroke: var(--gold-border); stroke-width: 1; opacity: 0.28; fill: none; }
+.fx-lattice__link--flow { stroke: var(--gold-border-hover); stroke-width: 1.2; stroke-dasharray: 4 6; opacity: 0.45; animation: fx-lattice-dash 3s linear infinite; }
+@keyframes fx-lattice-dash { to { stroke-dashoffset: -10; } }
+.fx-lattice__node { fill: var(--gold-bright); filter: drop-shadow(0 0 6px var(--gold-glow)); animation: fx-lattice-node-pulse 3s ease-in-out infinite; animation-delay: var(--delay); }
+@keyframes fx-lattice-node-pulse { 0%, 100% { opacity: 0.55; filter: drop-shadow(0 0 4px var(--gold-glow)); } 50% { opacity: 1; filter: drop-shadow(0 0 10px var(--gold-glow-strong)); } }
+.fx-lattice__pulses { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.fx-lattice__pulse { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 12px var(--gold-glow-strong), 0 0 24px var(--gold-glow); offset-distance: 0%; offset-rotate: 0deg; animation: fx-lattice-flow 3.5s linear infinite; animation-delay: var(--delay); }
+@keyframes fx-lattice-flow { 0% { offset-distance: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
+.fx-lattice__scan { position: absolute; top: 50%; left: 50%; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, var(--gold-glow) 25deg, transparent 50deg); opacity: 0.25; animation: fx-lattice-scan 8s linear infinite; pointer-events: none; }
+@keyframes fx-lattice-scan { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.fx-lattice__boundary { position: absolute; top: 50%; left: 50%; width: 260px; height: 260px; margin: -130px 0 0 -130px; border-radius: 50%; border: 1.5px solid var(--gold-border); opacity: 0.2; pointer-events: none; }
+
+/* ── Effect 3: Radar ── */
+.fx-radar__outer-ring { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border-hover); box-shadow: 0 0 16px var(--gold-glow), inset 0 0 16px var(--gold-glow); }
+.fx-radar__rings { position: absolute; width: 260px; height: 260px; border-radius: 50%; pointer-events: none; }
+.fx-radar__ring { position: absolute; border-radius: 50%; border: 1px dashed var(--gold-border); top: 50%; left: 50%; transform: translate(-50%, -50%); }
+.fx-radar__ring.r1 { width: 85px; height: 85px; opacity: 0.5; }
+.fx-radar__ring.r2 { width: 170px; height: 170px; opacity: 0.4; }
+.fx-radar__ring.r3 { width: 260px; height: 260px; border-style: solid; opacity: 0.2; }
+.fx-radar__crosshair { position: absolute; width: 260px; height: 260px; pointer-events: none; }
+.fx-radar__crosshair::before, .fx-radar__crosshair::after { content: ''; position: absolute; top: 50%; left: 50%; background: var(--gold-border); opacity: 0.4; }
+.fx-radar__crosshair::before { width: 100%; height: 1px; transform: translate(-50%, -50%); }
+.fx-radar__crosshair::after { width: 1px; height: 100%; transform: translate(-50%, -50%); }
+.fx-radar__sweep-arm { position: absolute; width: 260px; height: 260px; border-radius: 50%; animation: fx-radar-sweep 4s linear infinite; }
+.fx-radar__sweep-sector { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0deg, rgba(200,167,91,0.05) 30deg, rgba(200,167,91,0.35) 60deg, transparent 61deg); }
+@keyframes fx-radar-sweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+.fx-radar__blip-wrapper { position: absolute; top: 50%; left: 50%; width: 0; height: 0; transform: rotate(var(--a)) translateX(var(--r)); opacity: 0; animation: fx-radar-blip 3s ease-in-out infinite; animation-delay: var(--delay); }
+.fx-radar__blip { position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 12px var(--gold-glow-strong); }
+.fx-radar__target-box { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border: 1px solid var(--gold-bright); animation: fx-target-pulse 1s ease-in-out infinite; }
+@keyframes fx-target-pulse { 0%, 100% { transform: scale(1); opacity: 0.4; } 50% { transform: scale(1.3); opacity: 1; } }
+@keyframes fx-radar-blip { 0%, 100% { opacity: 0; } 20% { opacity: 1; } 40% { opacity: 0; } }
+
+/* ── Effect 4: Vector Field ── */
+.fx-field__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border); box-shadow: inset 0 0 18px var(--gold-glow); }
+.fx-field__polar-grid { position: absolute; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle at center, transparent 35%, var(--gold-ghost) 36%, transparent 37%), radial-gradient(circle at center, transparent 65%, var(--gold-ghost) 66%, transparent 67%); pointer-events: none; }
+.fx-field__cross-axis { position: absolute; width: 260px; height: 260px; pointer-events: none; }
+.fx-field__cross-axis::before, .fx-field__cross-axis::after { content: ''; position: absolute; top: 50%; left: 50%; background: var(--gold-border); opacity: 0.3; }
+.fx-field__cross-axis::before { width: 100%; height: 1px; transform: translate(-50%, -50%); }
+.fx-field__cross-axis::after { width: 1px; height: 100%; transform: translate(-50%, -50%); }
+.fx-field__reticle { position: absolute; width: 14px; height: 14px; border: 1.5px solid var(--gold-bright); opacity: 0.8; }
+.fx-field__reticle--tl { top: 22px; left: 22px; border-right: none; border-bottom: none; }
+.fx-field__reticle--tr { top: 22px; right: 22px; border-left: none; border-bottom: none; }
+.fx-field__reticle--bl { bottom: 22px; left: 22px; border-right: none; border-top: none; }
+.fx-field__reticle--br { bottom: 22px; right: 22px; border-left: none; border-top: none; }
+.fx-field__stream-line { position: absolute; top: 50%; left: 50%; width: 260px; height: 1px; margin-top: -0.5px; margin-left: -130px; transform: rotate(var(--a)); background: linear-gradient(90deg, transparent, var(--gold-line), transparent); }
+.fx-field__stream-packet { position: absolute; top: 50%; left: 50%; width: 12px; height: 2px; margin-top: -1px; margin-left: -6px; background: var(--gold-bright); box-shadow: 0 0 8px var(--gold-glow-strong); animation: fx-field-packet-flow 2.4s cubic-bezier(0.4, 0, 0.2, 1) infinite; animation-delay: var(--delay); transform: rotate(var(--a)) translateX(0); }
+@keyframes fx-field-packet-flow { 0% { transform: rotate(var(--a)) translateX(30px) scaleX(0.5); opacity: 0; } 30% { opacity: 1; } 70% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(120px) scaleX(1.5); opacity: 0; } }
+
+/* ── Effect 5: Beacon ── */
+.fx-beacon__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1px solid var(--gold-border); opacity: 0.25; }
+.fx-beacon__cone { position: absolute; bottom: 50%; left: 50%; width: 140px; height: 130px; margin-left: -70px; background: linear-gradient(0deg, rgba(200,167,91,0.35), transparent); clip-path: polygon(50% 100%, 10% 0%, 90% 0%); animation: fx-beacon-cone 2.5s ease-in-out infinite; }
+@keyframes fx-beacon-cone { 0%, 100% { opacity: 0.4; transform: scaleX(0.85); } 50% { opacity: 0.85; transform: scaleX(1.1); } }
+.fx-beacon__ring { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%; border: 1.5px solid var(--gold-border-hover); opacity: 0; animation: fx-beacon-ring 2.8s ease-out infinite; animation-delay: var(--delay); }
+@keyframes fx-beacon-ring { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(6.5); opacity: 0; } }
+
+/* ── Effect 6: Nexus ── */
+.fx-nexus__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border); box-shadow: inset 0 0 16px var(--gold-glow); }
+.fx-nexus__svg { position: absolute; width: 300px; height: 300px; top: 0; left: 0; pointer-events: none; }
+.fx-nexus__synapse { stroke: var(--gold-border); stroke-width: 1; opacity: 0.22; stroke-dasharray: 2 3; }
+.fx-nexus__synapse--active { stroke: var(--gold-border-hover); stroke-width: 1.2; opacity: 0.55; stroke-dasharray: 4 6; animation: fx-synapse-dash 2.5s linear infinite; }
+@keyframes fx-synapse-dash { to { stroke-dashoffset: -20; } }
+.fx-nexus__node-halo { fill: none; stroke: var(--gold-bright); stroke-width: 1; opacity: 0; animation: fx-node-halo 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite; animation-delay: var(--delay); }
+@keyframes fx-node-halo { 0% { r: 2px; opacity: 0.8; } 100% { r: 6px; opacity: 0; } }
+.fx-nexus__node-core { fill: var(--gold-bright); filter: drop-shadow(0 0 4px var(--gold-glow-strong)); transform-box: fill-box; transform-origin: center; animation: fx-node-fire 2.2s ease-in-out infinite alternate; animation-delay: var(--delay); }
+@keyframes fx-node-fire { 0% { opacity: 0.3; transform: scale(0.85); } 100% { opacity: 1; transform: scale(1.15); filter: drop-shadow(0 0 6px var(--gold-hover)); } }
+.fx-nexus__svg-impulse { fill: var(--gold-bright); filter: drop-shadow(0 0 6px var(--gold-glow-strong)); offset-distance: 0%; animation: fx-impulse-travel var(--dur) cubic-bezier(0.4, 0, 0.2, 1) infinite; animation-delay: var(--delay); }
+@keyframes fx-impulse-travel { 0% { offset-distance: 0%; opacity: 0; transform: scale(0.5); } 15% { opacity: 1; transform: scale(1); } 85% { opacity: 1; transform: scale(1); } 100% { offset-distance: 100%; opacity: 0; transform: scale(0.5); } }
+
+/* ── Effect 7: Pulse ── */
+.fx-pulse__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border); box-shadow: 0 0 12px var(--gold-glow); }
+.fx-pulse__wave { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; border: 1.5px solid var(--gold-border-hover); opacity: 0; animation: fx-pulse-expand 2.5s cubic-bezier(0.1, 0.8, 0.3, 1) infinite; animation-delay: var(--delay); }
+@keyframes fx-pulse-expand { 0% { transform: scale(0.8); opacity: 0.8; } 100% { transform: scale(4.3); opacity: 0; } }
+
+/* ── Effect 8: Matrix ── */
+.fx-matrix__frame { position: absolute; width: 260px; height: 260px; border: 1px solid var(--gold-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.fx-matrix__grid { width: 180px; height: 180px; display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); gap: 12px; }
+.fx-matrix__dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold-bright); opacity: 0.2; margin: auto; transition: opacity 0.3s, transform 0.3s; animation: fx-matrix-blink 2.5s ease-in-out infinite; animation-delay: var(--delay); }
+@keyframes fx-matrix-blink { 0%, 100% { opacity: 0.2; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.4); box-shadow: 0 0 8px var(--gold-glow-strong); } }
+.fx-matrix__scanbar { position: absolute; width: 220px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold-bright), transparent); box-shadow: 0 0 10px var(--gold-glow-strong); animation: fx-matrix-scan 3s ease-in-out infinite alternate; }
+@keyframes fx-matrix-scan { 0% { transform: translateY(-90px); opacity: 0.2; } 50% { opacity: 1; } 100% { transform: translateY(90px); opacity: 0.2; } }
+
+/* ── Effect 9: Orbit Matrix ── */
+.fx-orbit__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border); box-shadow: inset 0 0 20px var(--gold-glow); }
+.fx-orbit__ring-3d { position: absolute; top: 50%; left: 50%; width: var(--w); height: var(--h); margin: calc(-1 * var(--h) / 2) 0 0 calc(-1 * var(--w) / 2); border-radius: 50%; border: 1.2px solid var(--gold-border-hover); transform: rotate(var(--rot)) rotateX(65deg); animation: fx-orbit-spin var(--dur) linear infinite var(--dir); }
+@keyframes fx-orbit-spin { from { transform: rotate(var(--rot)) rotateX(65deg) rotateZ(0deg); } to { transform: rotate(var(--rot)) rotateX(65deg) rotateZ(360deg); } }
+.fx-orbit__satellite { position: absolute; top: 0; left: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 10px var(--gold-glow-strong); }
+
+/* ── Effect 10: Data Beam ── */
+.fx-beam__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1px dashed var(--gold-border); opacity: 0.35; }
+.fx-beam__axis { position: absolute; top: 50%; left: 50%; width: 260px; height: 2px; margin: -1px 0 0 -130px; background: linear-gradient(90deg, transparent, var(--gold-border), var(--gold-bright), var(--gold-border), transparent); transform: rotate(var(--a)); opacity: 0.6; }
+.fx-beam__pulse { position: absolute; top: 50%; left: 50%; width: 10px; height: 10px; margin: -5px 0 0 -5px; border-radius: 50%; background: var(--gold-bright); box-shadow: 0 0 14px var(--gold-glow-strong); animation: fx-beam-shoot 2.2s cubic-bezier(0.2, 0.8, 0.4, 1) infinite; animation-delay: var(--delay); transform: rotate(var(--a)) translateX(0); }
+@keyframes fx-beam-shoot { 0% { transform: rotate(var(--a)) translateX(0) scale(0.5); opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(130px) scale(1.2); opacity: 0; } }
+.fx-beam__receiver { position: absolute; top: 50%; left: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border: 1.5px solid var(--gold-bright); transform: rotate(var(--a)) translateX(130px) rotate(45deg); box-shadow: 0 0 8px var(--gold-glow); }
+
+/* ── Effect 11: Flux Field (磁束流场) ── */
+.fx-flux__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1.5px solid var(--gold-border); box-shadow: inset 0 0 15px var(--gold-glow); }
+.fx-flux__svg { position: absolute; width: 300px; height: 300px; top: 0; left: 0; pointer-events: none; }
+.fx-flux__arc-cw { fill: none; stroke: var(--gold-border-hover); stroke-width: 1.5; stroke-dasharray: 60 120; transform-origin: 150px 150px; animation: fx-spin-cw 8s linear infinite; }
+.fx-flux__arc-ccw { fill: none; stroke: var(--gold-bright); stroke-width: 1.2; stroke-dasharray: 40 100; stroke-opacity: 0.7; transform-origin: 150px 150px; animation: fx-spin-ccw 11s linear infinite; }
+@keyframes fx-spin-cw { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fx-spin-ccw { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+.fx-flux__spark { fill: var(--gold-bright); filter: drop-shadow(0 0 6px var(--gold-glow-strong)); animation: fx-spark-twinkle 1.8s ease-in-out infinite alternate; animation-delay: var(--delay); }
+@keyframes fx-spark-twinkle { 0% { opacity: 0.2; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.4); } }
+
+/* ── Effect 12: Quantum Swarm V2 (拟生蜂巢生态) ── */
+.fx-swarm__boundary { position: absolute; width: 260px; height: 260px; border-radius: 50%; border: 1px dashed var(--gold-border); opacity: 0.3; }
+.fx-swarm__svg { position: absolute; width: 300px; height: 300px; top: 0; left: 0; pointer-events: none; }
+
+/* 蜂巢高能核心脉冲 */
+.fx-swarm__hive-core {
+  position: absolute; top: 50%; left: 50%; width: 80px; height: 80px; margin: -40px 0 0 -40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-glow-strong) 0%, rgba(200, 167, 91, 0.05) 60%, transparent 80%);
+  animation: fx-hive-pulse 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+/* =========================================================
+   飞行粒子 & 动画配置（降速 + 随机路径）
+   ========================================================= */
+
+/* 1. 轨迹 A：轻微上拱弧线，缓慢飞行 */
+@keyframes flyPathA {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  50% {
+    transform: translate(120px, -25px) scale(1);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(250px, -5px) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* 2. 轨迹 B：波浪下沉弧线 */
+@keyframes flyPathB {
+  0% {
+    transform: translate(0, 0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  60% {
+    transform: translate(140px, 30px) scale(1.1);
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(280px, 10px) scale(0.4);
+    opacity: 0;
+  }
+}
+
+/* 3. 轨迹 C：S 型随机扰动轨迹 */
+@keyframes flyPathC {
+  0% {
+    transform: translate(0, 0) scale(0.4);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(90px, -15px) scale(0.9);
+  }
+  70% {
+    transform: translate(190px, 15px) scale(1);
+  }
+  100% {
+    transform: translate(300px, -20px) scale(0.3);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   粒子应用类（不同时长、不同延迟、不同路径）
+   ========================================================= */
+
+.fly-particle {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+/* 粒子 1：慢速、轨迹 A */
+.fly-particle-1 {
+  animation: flyPathA 5.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: 0s;
+}
+
+/* 粒子 2：中慢速、轨迹 B、延迟启动 */
+.fly-particle-2 {
+  animation: flyPathB 4.6s cubic-bezier(0.25, 0.1, 0.25, 1) infinite;
+  animation-delay: 1.8s;
+}
+
+/* 粒子 3：极慢速、轨迹 C、交错延迟 */
+.fly-particle-3 {
+  animation: flyPathC 6.5s ease-in-out infinite;
+  animation-delay: 3.2s;
+}
+
+/* 轨道微弱导轨 */
+.fx-swarm__orbit-guide { fill: none; stroke: var(--gold-border); stroke-width: 0.6; stroke-dasharray: 2 6; opacity: 0.2; }
+
+/* 1. 守卫蜂（Inner Guard）—— 绕巢紧密高频巡逻 */
+.fx-swarm__bee--guard {
+  fill: #FFFFFF;
+  filter: drop-shadow(0 0 6px var(--gold-bright));
+  offset-distance: 0%;
+  animation: fx-bee-guard-flight var(--dur) linear infinite;
+  animation-delay: var(--delay);
+}
+@keyframes fx-bee-guard-flight {
+  0% { offset-distance: 0%; opacity: 0.5; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2) translate(var(--jx, 1px), var(--jy, -1px)); }
+  100% { offset-distance: 100%; opacity: 0.5; transform: scale(0.8); }
+}
+
+/* 2. 巡游工蜂（Patrol Worker）—— 沿领地曲线做拟生抖动飞行 */
+.fx-swarm__bee--patrol {
+  fill: var(--gold-bright);
+  filter: drop-shadow(0 0 5px var(--gold-glow-strong));
+  offset-distance: 0%;
+  animation: fx-bee-patrol-flight var(--dur) cubic-bezier(0.37, 0, 0.63, 1) infinite;
+  animation-delay: var(--delay);
+}
+@keyframes fx-bee-patrol-flight {
+  0% { offset-distance: 0%; opacity: 0.3; transform: scale(0.7); }
+  25% { opacity: 0.9; transform: scale(1.1) translate(var(--jx, 2px), var(--jy, -2px)); }
+  60% { opacity: 0.95; transform: scale(1) translate(calc(-1 * var(--jx, 2px)), var(--jy, 2px)); }
+  100% { offset-distance: 100%; opacity: 0.3; transform: scale(0.7); }
+}
+
+/* 3. 采蜜/归巢蜂（Forager Out/In）—— 具备明显的出巢离心与急速向心归巢特效 */
+.fx-swarm__bee--forager {
+  fill: var(--gold-light);
+  filter: drop-shadow(0 0 7px var(--gold-glow-strong));
+  offset-distance: 0%;
+  animation: fx-bee-forager-life var(--dur) cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation-delay: var(--delay);
+}
+@keyframes fx-bee-forager-life {
+  0% { offset-distance: 0%; opacity: 0.1; transform: scale(0.4) translate(0, 0); }
+  /* 出巢远航 */
+  30% { opacity: 0.9; transform: scale(1.2) translate(var(--jx, 3px), var(--jy, -3px)); }
+  /* 远距离领地采集 */
+  50% { opacity: 1; transform: scale(1.1) translate(calc(-1 * var(--jx, 3px)), calc(-1 * var(--jy, 3px))); }
+  /* 急速向心归巢：蜂群向蜂巢（Logo）大幅靠拢聚拢 */
+  75% {
+    opacity: 1;
+    transform: scale(0.5) translate(var(--cx, 0px), var(--cy, 0px));
+    filter: drop-shadow(0 0 12px #FFFFFF);
+  }
+  100% { offset-distance: 100%; opacity: 0.1; transform: scale(0.4) translate(0, 0); }
+}
+
+/* Responsive */
+@media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1><span class="dot"></span>edgeCore<span class="sub">十二大工业 AI 核心特效 · 完整独立版</span></h1>
+    <button class="theme-toggle" id="themeToggle">切换亮色</button>
+  </div>
+
+  <p class="intro">
+    已将 <b>Quantum Swarm（量子蜂群）</b> 全面升级为生物蜂巢生态系统。涵盖<b>守卫蜂、巡游蜂、出/归巢蜂</b>三类生态角色与非线性飞行抖动，严格封闭于 <b>260px 核心圆域</b> 内部。
+  </p>
+
+  <div class="grid" id="grid"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var logoSvg = '<svg class="fx-logo-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path class="fx-logo-hex" d="M32 4L56 18v28L32 60 8 46V18L32 4z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>' +
+    '<path class="fx-logo-inner" d="M32 14l14 8v16l-14 8-14-8V22l14-8z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" opacity="0.6"/>' +
+    '<path class="fx-logo-rays" d="M32 4v10M56 18L46 22M56 46L46 42M32 60V50M8 46l10-4M8 18l10 4" stroke="currentColor" stroke-width="1" opacity="0.4"/>' +
+    '<g class="fx-logo-nodes"><circle cx="32" cy="4" r="2.2" fill="currentColor"/><circle cx="56" cy="18" r="2.2" fill="currentColor"/><circle cx="56" cy="46" r="2.2" fill="currentColor"/><circle cx="32" cy="60" r="2.2" fill="currentColor"/><circle cx="8" cy="46" r="2.2" fill="currentColor"/><circle cx="8" cy="18" r="2.2" fill="currentColor"/></g>' +
+    '<circle class="fx-logo-core" cx="32" cy="32" r="5.5" fill="currentColor"/>' +
+    '<circle class="fx-logo-orbit" cx="32" cy="32" r="11" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 4" opacity="0.75" fill="none"/>' +
+    '</svg>';
+  var logo = '<div class="fx-logo">' + logoSvg + '</div>';
+
+  function generateNodes(count, radius, size, delayOffset) {
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      var angle = (360 / count * i).toFixed(1);
+      var delay = ((i * 0.12) + (delayOffset || 0)).toFixed(2);
+      html += '<span class="fx-node" style="--a:' + angle + 'deg;--r:' + radius + 'px;--d:' + size + 'px;--delay:' + delay + 's"></span>';
+    }
+    return html;
+  }
+
+  function generateTicks(count, radius, length) {
+    var html = '';
+    for (var i = 0; i < count; i++) {
+      var angle = (360 / count * i).toFixed(1);
+      html += '<span class="fx-tick" style="--a:' + angle + 'deg;--r:' + radius + 'px;--l:' + length + 'px"></span>';
+    }
+    return html;
+  }
+
+  function buildScene(type) {
+    var innerContent = '';
+
+    if (type === 'core') {
+      innerContent =
+        '<div class="fx-core">' + logo +
+          '<div class="fx-core__ring fx-core__ring--solid"></div>' +
+          '<div class="fx-core__ring fx-core__ring--dashed"></div>' +
+          '<div class="fx-core__ring fx-core__ring--dotted"></div>' +
+          '<div class="fx-core__ring fx-core__ring--outer-ticks">' + generateTicks(36, 130, 5) + '</div>' +
+          '<div class="fx-core__nodes fx-core__nodes--inner">' + generateNodes(12, 105, 5, 0) + '</div>' +
+          '<div class="fx-core__nodes fx-core__nodes--outer">' + generateNodes(12, 130, 6, 0.5) + '</div>' +
+          '<span class="fx-core__pulse-wave"></span>' +
+        '</div>';
+
+    } else if (type === 'lattice') {
+      var latticeNodes = [];
+      var ringConfigs = [{ r: 65, offset: -90, size: 5 }, { r: 120, offset: -90, size: 6 }];
+      for (var ri = 0; ri < ringConfigs.length; ri++) {
+        var rc = ringConfigs[ri];
+        for (var ni = 0; ni < 4; ni++) {
+          var ang = (90 * ni + rc.offset) * Math.PI / 180;
+          latticeNodes.push({
+            x: Math.round(rc.r * Math.cos(ang)),
+            y: Math.round(rc.r * Math.sin(ang)),
+            ring: ri + 1, size: rc.size, delay: (ni * 0.2 + ri * 0.3).toFixed(2)
+          });
+        }
+      }
+      var latticeLinks = [];
+      for (var si = 0; si < 4; si++) {
+        latticeLinks.push([-1, si, 'flow']);
+        latticeLinks.push([si, si + 4, 'flow']);
+      }
+      for (var ri2 = 0; ri2 < 2; ri2++) {
+        for (var ci = 0; ci < 4; ci++) {
+          latticeLinks.push([ri2 * 4 + ci, ri2 * 4 + (ci + 1) % 4, '']);
+        }
+      }
+      var guideSvg = '<circle class="fx-lattice__guide" cx="0" cy="0" r="65"/><circle class="fx-lattice__guide" cx="0" cy="0" r="120"/>';
+      var linkSvg = '';
+      for (var l = 0; l < latticeLinks.length; l++) {
+        var lk = latticeLinks[l];
+        var n1 = lk[0] === -1 ? { x: 0, y: 0 } : latticeNodes[lk[0]];
+        var n2 = lk[1] === -1 ? { x: 0, y: 0 } : latticeNodes[lk[1]];
+        var flowCls = lk[2] === 'flow' ? ' fx-lattice__link--flow' : '';
+        linkSvg += '<line class="fx-lattice__link' + flowCls + '" x1="' + n1.x + '" y1="' + n1.y + '" x2="' + n2.x + '" y2="' + n2.y + '"/>';
+      }
+      var nodeSvg = '';
+      for (var n = 0; n < latticeNodes.length; n++) {
+        var nd = latticeNodes[n];
+        nodeSvg += '<circle class="fx-lattice__node fx-lattice__node--r' + nd.ring + '" cx="' + nd.x + '" cy="' + nd.y + '" r="' + nd.size + '" style="--delay:' + nd.delay + 's"/>';
+      }
+      var pulseHtml = '';
+      for (var sp = 0; sp < 4; sp++) {
+        var r1n = latticeNodes[sp];
+        var r2n = latticeNodes[sp + 4];
+        pulseHtml += '<span class="fx-lattice__pulse" style="offset-path: path(\'M 150 150 L ' + (r1n.x + 150) + ' ' + (r1n.y + 150) + ' L ' + (r2n.x + 150) + ' ' + (r2n.y + 150) + '\');--delay:' + (sp * 0.35).toFixed(2) + 's"></span>';
+      }
+      innerContent =
+        '<div class="fx-lattice">' + logo +
+          '<svg class="fx-lattice__svg" viewBox="-150 -150 300 300">' +
+            '<g class="fx-lattice__links">' + guideSvg + linkSvg + '</g>' +
+            '<g class="fx-lattice__nodes">' + nodeSvg + '</g>' +
+          '</svg>' +
+          '<div class="fx-lattice__pulses">' + pulseHtml + '</div>' +
+          '<div class="fx-lattice__scan"></div>' +
+          '<div class="fx-lattice__boundary"></div>' +
+        '</div>';
+
+    } else if (type === 'radar') {
+      var blips = '';
+      var samplePoints = [{r: 45, a: 40}, {r: 80, a: 130}, {r: 105, a: 220}, {r: 60, a: 310}];
+      for (var b = 0; b < samplePoints.length; b++) {
+        var pt = samplePoints[b];
+        blips +=
+          '<div class="fx-radar__blip-wrapper" style="--r:' + pt.r + 'px;--a:' + pt.a + 'deg;--delay:' + (b * 0.7).toFixed(2) + 's">' +
+            '<span class="fx-radar__blip"></span>' +
+            (b % 2 === 0 ? '<span class="fx-radar__target-box"></span>' : '') +
+          '</div>';
+      }
+      innerContent =
+        '<div class="fx-radar">' + logo +
+          '<div class="fx-radar__outer-ring"></div>' +
+          '<div class="fx-radar__rings">' +
+            '<span class="fx-radar__ring r1"></span>' +
+            '<span class="fx-radar__ring r2"></span>' +
+            '<span class="fx-radar__ring r3"></span>' +
+          '</div>' +
+          '<div class="fx-radar__crosshair"></div>' +
+          '<div class="fx-radar__degrees">' + generateTicks(24, 130, 4) + '</div>' +
+          '<div class="fx-radar__sweep-arm"><span class="fx-radar__sweep-sector"></span></div>' +
+          blips +
+        '</div>';
+
+    } else if (type === 'field') {
+      var streamAngles = [15, 45, 75, 105, 135, 165, 195, 225, 255, 285, 315, 345];
+      var streamLines = '';
+      var streamPackets = '';
+      for (var s = 0; s < streamAngles.length; s++) {
+        var sa = streamAngles[s];
+        streamLines += '<div class="fx-field__stream-line" style="--a:' + sa + 'deg"></div>';
+        streamPackets += '<div class="fx-field__stream-packet" style="--a:' + sa + 'deg;--delay:' + (s * 0.2).toFixed(2) + 's"></div>';
+      }
+      innerContent =
+        '<div class="fx-field">' + logo +
+          '<div class="fx-field__boundary"></div>' +
+          '<div class="fx-field__polar-grid"></div>' +
+          '<div class="fx-field__cross-axis"></div>' +
+          '<div class="fx-field__reticle fx-field__reticle--tl"></div>' +
+          '<div class="fx-field__reticle fx-field__reticle--tr"></div>' +
+          '<div class="fx-field__reticle fx-field__reticle--bl"></div>' +
+          '<div class="fx-field__reticle fx-field__reticle--br"></div>' +
+          '<div class="fx-field__ticks">' + generateTicks(24, 130, 4) + '</div>' +
+          streamLines +
+          streamPackets +
+        '</div>';
+
+    } else if (type === 'beacon') {
+      var rings = '';
+      for (var k = 0; k < 4; k++) {
+        rings += '<span class="fx-beacon__ring" style="--delay:' + (k * 0.7).toFixed(2) + 's"></span>';
+      }
+      innerContent =
+        '<div class="fx-beacon">' + logo +
+          '<div class="fx-beacon__boundary"></div>' +
+          '<div class="fx-beacon__cone"></div>' +
+          rings +
+        '</div>';
+
+    } else if (type === 'nexus') {
+      var neuralClusters = [
+        { x: 125, y: 125, delay: '0.2s', size: 3.2 },
+        { x: 175, y: 125, delay: '0.8s', size: 3.2 },
+        { x: 150, y: 180, delay: '1.4s', size: 3.2 },
+        { x: 92,  y: 150, delay: '0.5s', size: 3.5 },
+        { x: 125, y: 92,  delay: '1.1s', size: 3.5 },
+        { x: 175, y: 92,  delay: '1.7s', size: 3.5 },
+        { x: 208, y: 150, delay: '0.9s', size: 3.5 },
+        { x: 175, y: 208, delay: '2.1s', size: 3.5 },
+        { x: 125, y: 208, delay: '1.3s', size: 3.5 },
+        { x: 65,  y: 110, delay: '1.6s', size: 2.8 },
+        { x: 150, y: 52,  delay: '0.4s', size: 2.8 },
+        { x: 235, y: 110, delay: '2.3s', size: 2.8 },
+        { x: 226, y: 182, delay: '1.0s', size: 2.8 },
+        { x: 150, y: 248, delay: '1.8s', size: 2.8 },
+        { x: 65,  y: 190, delay: '0.7s', size: 2.8 }
+      ];
+
+      var synapses = [
+        [0, 1, true], [1, 2, true], [2, 0, false],
+        [0, 3, true], [0, 4, false], [1, 5, true], [1, 6, true],
+        [2, 7, true], [2, 8, false],
+        [3, 4, false], [4, 5, true], [5, 6, false],
+        [6, 7, true], [7, 8, false], [8, 3, true],
+        [3, 9, true], [4, 10, true], [5, 11, false],
+        [6, 12, true], [7, 13, true], [8, 14, false],
+        [9, 14, false], [10, 11, true], [12, 13, false]
+      ];
+
+      var svgContent = '';
+      var impulsesSvg = '';
+
+      for (var s = 0; s < synapses.length; s++) {
+        var edge = synapses[s];
+        var nA = neuralClusters[edge[0]];
+        var nB = neuralClusters[edge[1]];
+        var isActive = edge[2];
+        var cls = isActive ? 'fx-nexus__synapse fx-nexus__synapse--active' : 'fx-nexus__synapse';
+        svgContent += '<line class="' + cls + '" x1="' + nA.x + '" y1="' + nA.y + '" x2="' + nB.x + '" y2="' + nB.y + '"/>';
+
+        if (isActive) {
+          var dur = (1.8 + (s % 4) * 0.4).toFixed(1) + 's';
+          var del = ((s * 0.2) % 2.0).toFixed(2) + 's';
+          impulsesSvg += '<circle class="fx-nexus__svg-impulse" r="2.5" style="offset-path: path(\'M ' + nA.x + ' ' + nA.y + ' L ' + nB.x + ' ' + nB.y + '\');--dur:' + dur + ';--delay:' + del + '"/>';
+        }
+      }
+
+      for (var n = 0; n < neuralClusters.length; n++) {
+        var nc = neuralClusters[n];
+        svgContent += '<circle class="fx-nexus__node-halo" cx="' + nc.x + '" cy="' + nc.y + '" style="--delay:' + nc.delay + '"/>';
+        svgContent += '<circle class="fx-nexus__node-core" cx="' + nc.x + '" cy="' + nc.y + '" r="' + nc.size + '" style="--delay:' + nc.delay + '"/>';
+      }
+
+      innerContent =
+        '<div class="fx-nexus">' + logo +
+          '<div class="fx-nexus__boundary"></div>' +
+          '<div class="fx-nexus__ticks">' + generateTicks(24, 130, 4) + '</div>' +
+          '<svg class="fx-nexus__svg" viewBox="0 0 300 300">' +
+            '<defs>' +
+              '<clipPath id="nexus-clip"><circle cx="150" cy="150" r="128"/></clipPath>' +
+            '</defs>' +
+            '<g clip-path="url(#nexus-clip)">' + svgContent + impulsesSvg + '</g>' +
+          '</svg>' +
+        '</div>';
+
+    } else if (type === 'pulse') {
+      var pRings = '';
+      for (var i = 0; i < 3; i++) {
+        pRings += '<span class="fx-pulse__wave" style="--delay:' + (i * 0.8).toFixed(2) + 's"></span>';
+      }
+      innerContent =
+        '<div class="fx-pulse">' + logo +
+          '<div class="fx-pulse__boundary"></div>' +
+          '<div class="fx-pulse__ticks">' + generateTicks(36, 125, 6) + '</div>' +
+          pRings +
+        '</div>';
+
+    } else if (type === 'matrix') {
+      var dots = '';
+      for (var i = 0; i < 36; i++) {
+        dots += '<span class="fx-matrix__dot" style="--delay:' + (Math.random() * 2).toFixed(2) + 's"></span>';
+      }
+      innerContent =
+        '<div class="fx-matrix">' + logo +
+          '<div class="fx-matrix__frame">' +
+            '<div class="fx-matrix__grid">' + dots + '</div>' +
+            '<div class="fx-matrix__scanbar"></div>' +
+          '</div>' +
+        '</div>';
+
+    } else if (type === 'orbit') {
+      var oRings = [
+        { w: 250, h: 250, rot: 15,  dur: '8s',  dir: 'normal' },
+        { w: 220, h: 220, rot: 75,  dur: '12s', dir: 'reverse' },
+        { w: 260, h: 260, rot: 135, dur: '10s', dir: 'normal' }
+      ];
+      var ringHtml = '';
+      for (var r = 0; r < oRings.length; r++) {
+        var item = oRings[r];
+        ringHtml +=
+          '<div class="fx-orbit__ring-3d" style="--w:' + item.w + 'px;--h:' + item.h + 'px;--rot:' + item.rot + 'deg;--dur:' + item.dur + ';--dir:' + item.dir + '">' +
+            '<span class="fx-orbit__satellite"></span>' +
+          '</div>';
+      }
+      innerContent =
+        '<div class="fx-orbit">' + logo +
+          '<div class="fx-orbit__boundary"></div>' +
+          '<div class="fx-orbit__ticks">' + generateTicks(24, 130, 4) + '</div>' +
+          ringHtml +
+        '</div>';
+
+    } else if (type === 'beam') {
+      var beamAxes = '';
+      var beamPulses = '';
+      var receivers = '';
+      var angles = [0, 45, 90, 135, 180, 225, 270, 315];
+      for (var a = 0; a < angles.length; a++) {
+        var ang = angles[a];
+        if (ang < 180) {
+          beamAxes += '<div class="fx-beam__axis" style="--a:' + ang + 'deg"></div>';
+        }
+        beamPulses += '<div class="fx-beam__pulse" style="--a:' + ang + 'deg;--delay:' + (a * 0.25).toFixed(2) + 's"></div>';
+        receivers += '<div class="fx-beam__receiver" style="--a:' + ang + 'deg"></div>';
+      }
+      innerContent =
+        '<div class="fx-beam">' + logo +
+          '<div class="fx-beam__boundary"></div>' +
+          beamAxes + beamPulses + receivers +
+        '</div>';
+
+    } else if (type === 'flux') {
+      var fluxSparks = '';
+      for (var fs = 0; fs < 8; fs++) {
+        var fAngle = (fs * 45) * Math.PI / 180;
+        var fxX = Math.round(150 + 105 * Math.cos(fAngle));
+        var fxY = Math.round(150 + 105 * Math.sin(fAngle));
+        fluxSparks += '<circle class="fx-flux__spark" cx="' + fxX + '" cy="' + fxY + '" r="2.8" style="--delay:' + (fs * 0.25).toFixed(2) + 's"/>';
+      }
+      innerContent =
+        '<div class="fx-flux">' + logo +
+          '<div class="fx-flux__boundary"></div>' +
+          '<div class="fx-flux__ticks">' + generateTicks(24, 130, 4) + '</div>' +
+          '<svg class="fx-flux__svg" viewBox="0 0 300 300">' +
+            '<defs><clipPath id="flux-clip"><circle cx="150" cy="150" r="128"/></clipPath></defs>' +
+            '<g clip-path="url(#flux-clip)">' +
+              '<circle class="fx-flux__arc-cw" cx="150" cy="150" r="105"/>' +
+              '<circle class="fx-flux__arc-ccw" cx="150" cy="150" r="80"/>' +
+              '<circle class="fx-flux__arc-cw" cx="150" cy="150" r="58" style="animation-duration: 5s; stroke-width: 1;"/>' +
+              fluxSparks +
+            '</g>' +
+          '</svg>' +
+        '</div>';
+
+    /* ============================================================
+       EFFECT 12: Quantum Swarm V2 (拟生蜂巢生态)
+       ============================================================ */
+    } else if (type === 'swarm') {
+      // 蜂巢轨迹定义：守卫近轨、巡逻双交错轨道、采蜜/归巢向心轨
+      var pathGuard = "M 150 105 A 45 45 0 1 1 150 195 A 45 45 0 1 1 150 105 Z";
+      var pathPatrolA = "M 150 45 C 240 45, 250 255, 150 255 C 50 255, 60 45, 150 45 Z";
+      var pathPatrolB = "M 45 150 C 45 60, 255 50, 255 150 C 255 240, 45 230, 45 150 Z";
+      var pathForager = "M 150 150 C 260 30, 260 270, 150 150 C 40 270, 40 30, 150 150 Z";
+
+      var beesHtml = '';
+
+      // 1. 生成 8 只守卫蜂 (Guard Bees)
+      for (var g = 0; g < 8; g++) {
+        var gDur = (4.0 + (g % 3) * 0.5).toFixed(1) + 's';
+        var gDel = (g * 0.45).toFixed(2) + 's';
+        var jx = ((Math.random() - 0.5) * 4).toFixed(1) + 'px';
+        var jy = ((Math.random() - 0.5) * 4).toFixed(1) + 'px';
+        beesHtml += '<circle class="fx-swarm__bee--guard" r="2.2" style="offset-path: path(\'' + pathGuard + '\');--dur:' + gDur + ';--delay:' + gDel + ';--jx:' + jx + ';--jy:' + jy + ';"/>';
+      }
+
+      // 2. 生成 20 只巡游工蜂 (Patrol Workers)
+      for (var p = 0; p < 20; p++) {
+        var pPath = (p % 2 === 0) ? pathPatrolA : pathPatrolB;
+        var pDur = (7.5 + (p % 4) * 0.8).toFixed(1) + 's';
+        var pDel = (p * 0.35).toFixed(2) + 's';
+        var pJx = ((Math.random() - 0.5) * 6).toFixed(1) + 'px';
+        var pJy = ((Math.random() - 0.5) * 6).toFixed(1) + 'px';
+        beesHtml += '<circle class="fx-swarm__bee--patrol" r="2.6" style="offset-path: path(\'' + pPath + '\');--dur:' + pDur + ';--delay:' + pDel + ';--jx:' + pJx + ';--jy:' + pJy + ';"/>';
+      }
+
+      // 3. 生成 8 只采蜜/归巢蜂 (Forager Bees) —— 包含向心归巢偏移量参数
+      for (var f = 0; f < 8; f++) {
+        var fDur = (9.0 + (f % 2) * 1.2).toFixed(1) + 's';
+        var fDel = (f * 0.8).toFixed(2) + 's';
+        var cx = (Math.sin(f * 1.2) * 18).toFixed(1) + 'px';
+        var cy = (Math.cos(f * 1.2) * 18).toFixed(1) + 'px';
+        var fJx = ((Math.random() - 0.5) * 8).toFixed(1) + 'px';
+        var fJy = ((Math.random() - 0.5) * 8).toFixed(1) + 'px';
+        beesHtml += '<circle class="fx-swarm__bee--forager" r="3.0" style="offset-path: path(\'' + pathForager + '\');--dur:' + fDur + ';--delay:' + fDel + ';--cx:' + cx + ';--cy:' + cy + ';--jx:' + fJx + ';--jy:' + fJy + ';"/>';
+      }
+
+      innerContent =
+        '<div class="fx-swarm">' + logo +
+          '<div class="fx-swarm__hive-core"></div>' +
+          '<div class="fx-swarm__boundary"></div>' +
+          '<div class="fx-swarm__ticks">' + generateTicks(24, 130, 4) + '</div>' +
+          '<svg class="fx-swarm__svg" viewBox="0 0 300 300">' +
+            '<defs><clipPath id="swarm-clip"><circle cx="150" cy="150" r="128"/></clipPath></defs>' +
+            '<g clip-path="url(#swarm-clip)">' +
+              '<path class="fx-swarm__orbit-guide" d="' + pathGuard + '"/>' +
+              '<path class="fx-swarm__orbit-guide" d="' + pathPatrolA + '"/>' +
+              '<path class="fx-swarm__orbit-guide" d="' + pathPatrolB + '"/>' +
+              '<path class="fx-swarm__orbit-guide" d="' + pathForager + '"/>' +
+              beesHtml +
+            '</g>' +
+          '</svg>' +
+        '</div>';
+    }
+
+    return '<div class="fx-scene"><div class="fx-viewport">' + innerContent + '</div></div>';
+  }
+
+  var effects = [
+    { key: 'core',    name: 'Core',          spec: '最大半径 130px · 双轨道节点 + 核心反应堆' },
+    { key: 'lattice', name: 'Lattice',       spec: '最大半径 130px · 拓扑网格 + 数据流脉冲' },
+    { key: 'radar',   name: 'Radar',         spec: '最大半径 130px · 雷达扫描 + 目标锁定框' },
+    { key: 'field',   name: 'Vector Field',  spec: '最大半径 130px · 工业数据流矢量场 + 角标定位' },
+    { key: 'beacon',  name: 'Beacon',        spec: '最大半径 130px · 高能光束 + 扩散辐射环' },
+    { key: 'nexus',   name: 'Nexus',         spec: '最大半径 130px · ClipPath硬裁切 + 坐标几何收回' },
+    { key: 'pulse',   name: 'Pulse',         spec: '最大半径 130px · 同心脉冲波 + 36刻度盘' },
+    { key: 'matrix',  name: 'Matrix',        spec: '最大半径 130px · 6×6 矩阵点阵 + 上下扫描线' },
+    { key: 'orbit',   name: 'Orbit Matrix',  spec: '最大半径 130px · 三维仪轨矩阵 + 逆向卫星点' },
+    { key: 'beam',    name: 'Data Beam',     spec: '最大半径 130px · 八向脉冲数据束 + 边界接收端' },
+    { key: 'flux',    name: 'Flux Field',    spec: '最大半径 130px · 双向磁束流场 + 切线闪烁火花' },
+    { key: 'swarm',   name: 'Quantum Swarm', spec: '最大半径 130px · 守卫/巡逻/归巢三阶拟生蜂巢生态' }
+  ];
+
+  var grid = document.getElementById('grid');
+  effects.forEach(function (t) {
+    var card = document.createElement('div');
+    card.className = 'fx-card';
+
+    var stage = document.createElement('div');
+    stage.className = 'fx-stage';
+    stage.innerHTML = buildScene(t.key);
+
+    var meta = document.createElement('div');
+    meta.className = 'fx-meta';
+    meta.innerHTML = '<h3>' + t.name + '</h3><p>' + t.spec + '</p>';
+
+    card.appendChild(stage);
+    card.appendChild(meta);
+    grid.appendChild(card);
+  });
+
+  // Theme toggle
+  var btn = document.getElementById('themeToggle');
+  btn.addEventListener('click', function () {
+    var root = document.documentElement;
+    var isLight = root.getAttribute('data-theme') === 'light';
+    var next = isLight ? 'dark' : 'light';
+    root.setAttribute('data-theme', next);
+    btn.textContent = next === 'light' ? '切换暗色' : '切换亮色';
+  });
+})();
+</script>
+</body>
+</html>

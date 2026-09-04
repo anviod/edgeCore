@@ -3,7 +3,7 @@ package core
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestVirtualShadowManager_SearchSourceDevices(t *testing.T) {

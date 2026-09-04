@@ -41,9 +41,9 @@
               <div class="nb-help-topic-card__label">NBIRTH Topic (节点出生)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/NBIRTH/{{ nodeId || 'EdgeX' }}
+                  spBv1.0/{{ groupId || '采集通' }}/NBIRTH/{{ nodeId || 'edgeCore' }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NBIRTH/${nodeId || 'EdgeX'}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NBIRTH/${nodeId || 'edgeCore'}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>
@@ -55,9 +55,9 @@
               <div class="nb-help-topic-card__label">DBIRTH Topic (设备出生)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/DBIRTH/{{ nodeId || 'EdgeX' }}/{{ deviceId }}
+                  spBv1.0/{{ groupId || '采集通' }}/DBIRTH/{{ nodeId || 'edgeCore' }}/{{ deviceId }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DBIRTH/${nodeId || 'EdgeX'}/${deviceId}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DBIRTH/${nodeId || 'edgeCore'}/${deviceId}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>
@@ -95,9 +95,9 @@
               <div class="nb-help-topic-card__label">NCMD Topic (节点命令)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/NCMD/{{ nodeId || 'EdgeX' }}
+                  spBv1.0/{{ groupId || '采集通' }}/NCMD/{{ nodeId || 'edgeCore' }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NCMD/${nodeId || 'EdgeX'}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NCMD/${nodeId || 'edgeCore'}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>
@@ -109,9 +109,9 @@
               <div class="nb-help-topic-card__label">DCMD Topic (设备命令)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/DCMD/{{ nodeId || 'EdgeX' }}/{{ deviceId }}
+                  spBv1.0/{{ groupId || '采集通' }}/DCMD/{{ nodeId || 'edgeCore' }}/{{ deviceId }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DCMD/${nodeId || 'EdgeX'}/${deviceId}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DCMD/${nodeId || 'edgeCore'}/${deviceId}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>
@@ -149,9 +149,9 @@
               <div class="nb-help-topic-card__label">NDEATH Topic (节点死亡)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/NDEATH/{{ nodeId || 'EdgeX' }}
+                  spBv1.0/{{ groupId || '采集通' }}/NDEATH/{{ nodeId || 'edgeCore' }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NDEATH/${nodeId || 'EdgeX'}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/NDEATH/${nodeId || 'edgeCore'}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>
@@ -163,9 +163,9 @@
               <div class="nb-help-topic-card__label">DDEATH Topic (设备死亡)</div>
               <div class="nb-help-code-row">
                 <span class="nb-help-code-row__text">
-                  spBv1.0/{{ groupId || '采集通' }}/DDEATH/{{ nodeId || 'EdgeX' }}/{{ deviceId }}
+                  spBv1.0/{{ groupId || '采集通' }}/DDEATH/{{ nodeId || 'edgeCore' }}/{{ deviceId }}
                 </span>
-                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DDEATH/${nodeId || 'EdgeX'}/${deviceId}`)">
+                <a-button type="text" size="mini" @click="copyToClipboard(`spBv1.0/${groupId || '采集通'}/DDEATH/${nodeId || 'edgeCore'}/${deviceId}`)">
                   <template #icon><icon-copy :size="12" /></template>
                 </a-button>
               </div>

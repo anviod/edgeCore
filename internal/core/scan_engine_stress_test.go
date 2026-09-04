@@ -3,11 +3,12 @@ package core
 import (
 	"context"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/driver"
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/driver"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 type mockDriver struct{}
@@ -108,8 +109,7 @@ func TestScanEngine_ShadowIntegration(t *testing.T) {
 func TestBackpressureController_Stress(t *testing.T) {
 	bc := NewBackpressureController(10, 100)
 
-	successCount := 0
-	failCount := 0
+	var successCount, failCount atomic.Int64
 	wg := sync.WaitGroup{}
 	wg.Add(100)
 
@@ -117,20 +117,20 @@ func TestBackpressureController_Stress(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			if bc.Allow("device1", 5) {
-				successCount++
+				successCount.Add(1)
 				time.Sleep(10 * time.Millisecond)
 				bc.Release("device1")
 			} else {
-				failCount++
+				failCount.Add(1)
 			}
 		}()
 	}
 
 	wg.Wait()
 
-	t.Logf("成功: %d, 失败: %d", successCount, failCount)
+	t.Logf("成功: %d, 失败: %d", successCount.Load(), failCount.Load())
 
-	if failCount > 0 {
+	if failCount.Load() > 0 {
 		t.Logf("背压机制生效，成功限制了并发请求")
 	}
 }
@@ -174,7 +174,7 @@ func TestResourceController_Stress(t *testing.T) {
 		QueueLimit:      1000,
 	})
 
-	successCount := 0
+	var successCount atomic.Int64
 	wg := sync.WaitGroup{}
 
 	for i := 0; i < 100; i++ {
@@ -183,7 +183,7 @@ func TestResourceController_Stress(t *testing.T) {
 			defer wg.Done()
 			if rc.CanExecute() {
 				rc.Acquire()
-				successCount++
+				successCount.Add(1)
 				time.Sleep(50 * time.Millisecond)
 				rc.Release()
 			}
@@ -192,9 +192,9 @@ func TestResourceController_Stress(t *testing.T) {
 
 	wg.Wait()
 
-	t.Logf("资源控制测试完成，成功获取资源: %d", successCount)
+	t.Logf("资源控制测试完成，成功获取资源: %d", successCount.Load())
 
-	if successCount <= 50 {
+	if successCount.Load() <= 50 {
 		t.Log("资源限制生效")
 	}
 }

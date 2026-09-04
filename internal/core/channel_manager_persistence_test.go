@@ -2,18 +2,17 @@ package core
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestChannelManager_AddDeviceAndPoint_PersistViaSaveFunc(t *testing.T) {
-	var saved []model.Channel
-	saveCh := make(chan struct{})
+	saveCh := make(chan []model.Channel, 4)
 	cm := NewChannelManager(nil, func(channels []model.Channel) error {
-		saved = channels
-		saveCh <- struct{}{}
+		saveCh <- channels
 		return nil
 	})
 	defer cm.cancel()
@@ -51,11 +50,20 @@ func TestChannelManager_AddDeviceAndPoint_PersistViaSaveFunc(t *testing.T) {
 		t.Fatalf("AddPoint: %v", err)
 	}
 
-	<-saveCh // wait for async save
-	if len(saved) == 0 {
-		t.Fatal("saveFunc was never called")
+	var last []model.Channel
+	deadline := time.After(time.Second)
+	for {
+		select {
+		case saved := <-saveCh:
+			last = saved
+			if len(last) > 0 && len(last[0].Devices) > 0 && len(last[0].Devices[0].Points) > 0 {
+				goto savedFinal
+			}
+		case <-deadline:
+			t.Fatal("saveFunc did not persist the final point")
+		}
 	}
-	last := saved
+savedFinal:
 	if len(last) != 1 {
 		t.Fatalf("expected 1 channel in save, got %d", len(last))
 	}
@@ -87,11 +95,11 @@ func TestPointUpdateRequiresDeviceRestart(t *testing.T) {
 }
 
 func TestChannelManager_UpdatePoint_NotifiesTopology(t *testing.T) {
-	var notified int
+	var notified atomic.Int64
 	cm := NewChannelManager(nil, func(channels []model.Channel) error { return nil })
 	defer cm.cancel()
 	cm.SetTopologyChangeHandler(func() {
-		notified++
+		notified.Add(1)
 	})
 
 	channelID := "ch-topology"
@@ -130,8 +138,8 @@ func TestChannelManager_UpdatePoint_NotifiesTopology(t *testing.T) {
 		t.Fatal("expected no southbound device restart for readwrite-only update")
 	}
 	time.Sleep(700 * time.Millisecond)
-	if notified != 1 {
-		t.Fatalf("expected topology notification once, got %d", notified)
+	if notified.Load() != 1 {
+		t.Fatalf("expected topology notification once, got %d", notified.Load())
 	}
 	if cm.channels[channelID].Devices[0].Points[0].ReadWrite != "RW" {
 		t.Fatalf("point readwrite not updated: %s", cm.channels[channelID].Devices[0].Points[0].ReadWrite)

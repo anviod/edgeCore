@@ -2,21 +2,22 @@ package core
 
 import (
 	"context"
+	"sync/atomic"
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 // Reusing MockDeviceWriter logic for this test file
 type TestDeviceWriter struct {
-	WriteCount int
-	LastValue  any
+	WriteCount atomic.Int64
+	LastValue  atomic.Value
 }
 
 func (m *TestDeviceWriter) WritePoint(channelID, deviceID, pointID string, value any) error {
-	m.WriteCount++
-	m.LastValue = value
+	m.WriteCount.Add(1)
+	m.LastValue.Store(value)
 	return nil
 }
 
@@ -48,11 +49,11 @@ func TestEdgeAction_DirectWrite(t *testing.T) {
 		t.Fatalf("Execution failed: %v", err)
 	}
 
-	if mockWriter.WriteCount != 1 {
-		t.Errorf("Expected 1 write, got %d", mockWriter.WriteCount)
+	if mockWriter.WriteCount.Load() != 1 {
+		t.Errorf("Expected 1 write, got %d", mockWriter.WriteCount.Load())
 	}
-	if mockWriter.LastValue != "123" {
-		t.Errorf("Expected value '123', got %v", mockWriter.LastValue)
+	if mockWriter.LastValue.Load() != "123" {
+		t.Errorf("Expected value '123', got %v", mockWriter.LastValue.Load())
 	}
 }
 
@@ -79,11 +80,11 @@ func TestEdgeAction_DirectWrite_Fallback(t *testing.T) {
 		t.Fatalf("Execution failed: %v", err)
 	}
 
-	if mockWriter.WriteCount != 1 {
-		t.Errorf("Expected 1 write, got %d", mockWriter.WriteCount)
+	if mockWriter.WriteCount.Load() != 1 {
+		t.Errorf("Expected 1 write, got %d", mockWriter.WriteCount.Load())
 	}
-	if mockWriter.LastValue != 999 {
-		t.Errorf("Expected value 999, got %v", mockWriter.LastValue)
+	if mockWriter.LastValue.Load() != 999 {
+		t.Errorf("Expected value 999, got %v", mockWriter.LastValue.Load())
 	}
 }
 
@@ -117,16 +118,16 @@ func TestEdgeAction_FrequencyLimit(t *testing.T) {
 	em.executeActions(model.EdgeRule{ID: ruleID}, actions, val, env, nil)
 	time.Sleep(10 * time.Millisecond) // Wait for goroutine
 
-	if mockWriter.WriteCount != 1 {
-		t.Errorf("First execution failed. Writes: %d", mockWriter.WriteCount)
+	if mockWriter.WriteCount.Load() != 1 {
+		t.Errorf("First execution failed. Writes: %d", mockWriter.WriteCount.Load())
 	}
 
 	// 2nd Execution (Immediate): Should be skipped
 	em.executeActions(model.EdgeRule{ID: ruleID}, actions, val, env, nil)
 	time.Sleep(10 * time.Millisecond)
 
-	if mockWriter.WriteCount != 1 {
-		t.Errorf("Second execution should be skipped. Writes: %d", mockWriter.WriteCount)
+	if mockWriter.WriteCount.Load() != 1 {
+		t.Errorf("Second execution should be skipped. Writes: %d", mockWriter.WriteCount.Load())
 	}
 
 	// Wait for interval
@@ -136,7 +137,7 @@ func TestEdgeAction_FrequencyLimit(t *testing.T) {
 	em.executeActions(model.EdgeRule{ID: ruleID}, actions, val, env, nil)
 	time.Sleep(10 * time.Millisecond)
 
-	if mockWriter.WriteCount != 2 {
-		t.Errorf("Third execution failed. Writes: %d", mockWriter.WriteCount)
+	if mockWriter.WriteCount.Load() != 2 {
+		t.Errorf("Third execution failed. Writes: %d", mockWriter.WriteCount.Load())
 	}
 }

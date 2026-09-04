@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestShadowNotifyPool_BoundedWorkers(t *testing.T) {
@@ -162,10 +162,10 @@ func TestShadowCore_ApplyShadowWrites_Batch(t *testing.T) {
 	defer sc.Stop()
 
 	var notifyCount atomic.Int64
-	var lastDelta int
+	var lastDelta atomic.Int64
 	sc.Subscribe(func(_ string, points map[string]model.ShadowPoint) {
 		notifyCount.Add(1)
-		lastDelta = len(points)
+		lastDelta.Store(int64(len(points)))
 	})
 
 	msgs := make([]model.ShadowIngressMessage, 3)
@@ -195,8 +195,8 @@ func TestShadowCore_ApplyShadowWrites_Batch(t *testing.T) {
 	if notifyCount.Load() != 1 {
 		t.Fatalf("expected 1 notify for same device batch, got %d", notifyCount.Load())
 	}
-	if lastDelta != 3 {
-		t.Fatalf("expected merged delta of 3 points, got %d", lastDelta)
+	if lastDelta.Load() != 3 {
+		t.Fatalf("expected merged delta of 3 points, got %d", lastDelta.Load())
 	}
 }
 

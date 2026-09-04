@@ -3,7 +3,7 @@ package opcua
 import (
 	"testing"
 
-	"github.com/anviod/edgex/internal/model"
+	"github.com/anviod/edgeCore/internal/model"
 )
 
 func TestServer_DeviceFiltering(t *testing.T) {
@@ -41,27 +41,27 @@ func TestServer_DeviceFiltering(t *testing.T) {
 		expectDev2    bool
 	}{
 		{
-			name:          "Empty Config (Allow All)",
+			name:          "Empty Config (No Allow All)",
 			configDevices: nil,
-			expectDev1:    true,
-			expectDev2:    true,
+			expectDev1:    false,
+			expectDev2:    false,
 		},
 		{
-			name:          "Empty Map (Allow All)",
+			name:          "Empty Map (No Allow All)",
 			configDevices: model.OpcUaDeviceMap{},
-			expectDev1:    true,
-			expectDev2:    true,
+			expectDev1:    false,
+			expectDev2:    false,
 		},
 		{
 			name:          "Dev1 Enabled Only",
 			configDevices: model.OpcUaDeviceMap{"dev1": {Enable: true}},
 			expectDev1:    true,
-			expectDev2:    true,
+			expectDev2:    false,
 		},
 		{
 			name:          "Dev2 Enabled Only",
 			configDevices: model.OpcUaDeviceMap{"dev2": {Enable: true}},
-			expectDev1:    true,
+			expectDev1:    false,
 			expectDev2:    true,
 		},
 		{

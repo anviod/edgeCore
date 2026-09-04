@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# ARMv7 cross-compile benchmark helper for EdgeX ScanEngine SLA verification.
+# ARMv7 cross-compile benchmark helper for edgeCore ScanEngine SLA verification.
 # Run on linux/arm host or via qemu-user when hardware is unavailable.
 set -euo pipefail
 
@@ -11,10 +11,10 @@ export GOARCH=arm
 export GOARM=7
 export CGO_ENABLED=0
 
-echo "==> EdgeX ARMv7 benchmark (GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM CGO_ENABLED=$CGO_ENABLED)"
+echo "==> edgeCore ARMv7 benchmark (GOOS=$GOOS GOARCH=$GOARCH GOARM=$GOARM CGO_ENABLED=$CGO_ENABLED)"
 echo "    Host: $(uname -s)/$(uname -m)"
 
-OUT="${TMPDIR:-/tmp}/edgex-armv7-bench.test"
+OUT="${TMPDIR:-/tmp}/edgeCore-armv7-bench.test"
 go test -tags=bench -c ./internal/core/ -o "$OUT"
 
 if command -v qemu-arm >/dev/null 2>&1; then
@@ -28,7 +28,7 @@ else
   echo "WARN: qemu-arm not found — cross-compile only"
   echo "Cross-compiled test binary: $OUT"
   echo "Copy to ARMv7 board and run:"
-  echo "  Q3_BENCH_DURATION=60 ./edgex-armv7-bench.test -test.run TestARMv7_Q3BenchmarkGate -test.v"
+  echo "  Q3_BENCH_DURATION=60 ./edgeCore-armv7-bench.test -test.run TestARMv7_Q3BenchmarkGate -test.v"
 fi
 
 echo "==> Done. See docs/testing/shadow_armv7_performance_2026Q3.md for acceptance thresholds."
