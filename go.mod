@@ -25,7 +25,7 @@ require (
 	github.com/simonvetter/modbus v1.6.4
 	github.com/stretchr/testify v1.11.1
 	github.com/thinkgos/go-iecp5 v1.0.0
-	go.etcd.io/bbolt v1.5.0-rc.0
+	go.etcd.io/bbolt v1.5.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/net v0.59.0
 	golang.org/x/sync v0.23.0
