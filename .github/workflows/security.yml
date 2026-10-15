@@ -181,7 +181,7 @@ jobs:
           artifact-name: edgeCore-sbom.cyclonedx.json
 
       - name: Scan SBOM for vulnerabilities (grype)
-        uses: anchore/scan-action@v6
+        uses: anchore/scan-action@v7
         with:
           sbom: edgeCore-sbom.spdx.json
           severity-cutoff: high
