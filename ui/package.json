@@ -22,7 +22,7 @@
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
     "@vue/test-utils": "^2.4.11",
-    "eslint": "^9.39.2",
+    "eslint": "^10.12.0",
     "eslint-plugin-vue": "^9.33.0",
     "jsdom": "^28.1.0",
     "less": "^4.6.4",
