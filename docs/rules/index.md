@@ -30,56 +30,56 @@ hero_buttons:
 ## 九大规则族
 
 <div class="card-grid">
-  <div class="doc-card">
-    <p class="doc-card__code">CONN · 6 条</p>
-    <h3>连接生命周期契约</h3>
-    <p>「连接已关闭」是可验证状态：停新 I/O → 在途结束 → 资源释放 → 后台任务退出 → 切换完成，五事件齐备才允许安装新连接；含代际标识与 ReleaseUncertain。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">REC · 12 条</p>
-    <h3>南向恢复约束</h3>
-    <p>重建准入铁律：设备未全部离线禁止重建；故障五分类；恢复范围与证据一致；看门狗防抖、全局限流、单 PLC 单连接、断网按目标路径判定。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">BUD · 6 条</p>
-    <h3>恢复预算</h3>
-    <p>重试职责划分、任务整体时间预算、退避 / 冷却 / 限流职责表、单资源重连节流、控制写入幂等性、共享连接 deadline 协调。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">SCAN · 6 条</p>
-    <h3>采集调度与防饿死</h3>
-    <p>端到端数据新鲜度链条、时间戳族与数据质量、负载过载策略、阈值族拆分、采样与数值变化分离、任务合并语义约束。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">SAFE · 2 条</p>
-    <h3>panic 存活保障</h3>
-    <p>recover 四层语义与三态分类（RecoveredAndContinue / RestartWorker / ComponentFailed）；进度监控区分「goroutine 活着」与「功能在推进」。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">SHUTDOWN · 2 条</p>
-    <h3>优雅关停</h3>
-    <p>先关南向、最后关日志的硬序契约；六阶段可等待屏障、全局 + 单阶段预算、升级交接与退出前资源采样。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">OBS · 3 条</p>
-    <h3>可观测性契约</h3>
-    <p>关键事件字段与脱敏规则、指标基数预算、限频统计补偿——日志记事件、指标记趋势、内部状态支撑实时决策。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">DRV · 2 条</p>
-    <h3>驱动能力矩阵</h3>
-    <p>接口存在 ≠ 恢复能力完成：生命周期、并发保护、取消超时、故障分类、资源释放验证等统一要求；豁免须六要素 + 生命周期字段。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">TEST · 5 条</p>
-    <h3>验收门禁</h3>
-    <p>验收矩阵、恢复成功六判据、PR 检查表、发布四态判定与阻断规则、门禁量化——未验证不等价于通过。</p>
-  </div>
-  <div class="doc-card">
-    <p class="doc-card__code">C-1 ~ C-17</p>
-    <h3>缺口清单</h3>
-    <p>17 项已登记缺口逐条标注关联规则与成熟度，是落地优先级与版本记录的共同基线；无编号的新增约束应先入清单再进代码。</p>
-  </div>
+<div class="doc-card">
+<p class="doc-card__code">CONN · 6 条</p>
+<h3>连接生命周期契约</h3>
+<p>「连接已关闭」是可验证状态：停新 I/O → 在途结束 → 资源释放 → 后台任务退出 → 切换完成，五事件齐备才允许安装新连接；含代际标识与 ReleaseUncertain。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">REC · 12 条</p>
+<h3>南向恢复约束</h3>
+<p>重建准入铁律：设备未全部离线禁止重建；故障五分类；恢复范围与证据一致；看门狗防抖、全局限流、单 PLC 单连接、断网按目标路径判定。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">BUD · 6 条</p>
+<h3>恢复预算</h3>
+<p>重试职责划分、任务整体时间预算、退避 / 冷却 / 限流职责表、单资源重连节流、控制写入幂等性、共享连接 deadline 协调。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">SCAN · 6 条</p>
+<h3>采集调度与防饿死</h3>
+<p>端到端数据新鲜度链条、时间戳族与数据质量、负载过载策略、阈值族拆分、采样与数值变化分离、任务合并语义约束。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">SAFE · 2 条</p>
+<h3>panic 存活保障</h3>
+<p>recover 四层语义与三态分类（RecoveredAndContinue / RestartWorker / ComponentFailed）；进度监控区分「goroutine 活着」与「功能在推进」。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">SHUTDOWN · 2 条</p>
+<h3>优雅关停</h3>
+<p>先关南向、最后关日志的硬序契约；六阶段可等待屏障、全局 + 单阶段预算、升级交接与退出前资源采样。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">OBS · 3 条</p>
+<h3>可观测性契约</h3>
+<p>关键事件字段与脱敏规则、指标基数预算、限频统计补偿——日志记事件、指标记趋势、内部状态支撑实时决策。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">DRV · 2 条</p>
+<h3>驱动能力矩阵</h3>
+<p>接口存在 ≠ 恢复能力完成：生命周期、并发保护、取消超时、故障分类、资源释放验证等统一要求；豁免须六要素 + 生命周期字段。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">TEST · 5 条</p>
+<h3>验收门禁</h3>
+<p>验收矩阵、恢复成功六判据、PR 检查表、发布四态判定与阻断规则、门禁量化——未验证不等价于通过。</p>
+</div>
+<div class="doc-card">
+<p class="doc-card__code">C-1 ~ C-17</p>
+<h3>缺口清单</h3>
+<p>17 项已登记缺口逐条标注关联规则与成熟度，是落地优先级与版本记录的共同基线；无编号的新增约束应先入清单再进代码。</p>
+</div>
 </div>
 
 ## 栏目导航
@@ -87,6 +87,7 @@ hero_buttons:
 | 页面 | 内容 |
 |------|------|
 | [工程铁律与恢复细则（全文）](工程铁律与恢复细则.html) | v2.4 完整规则文本：§0 核心铁律与治理、细则 1 防饿死、细则 2 连接生命周期、南向恢复约束、恢复预算、panic 存活、优雅关停、可观测性、驱动矩阵、验收门禁、缺口清单、修订路线与评审风险登记 |
+| [2026 Q4 合规评审与改进计划](../2026Q4_工程铁律合规评审与改进计划.html) | 代码级系统评审结论（九族合规总览、新发现问题 N-1~N-14、文档一致性修正 6 处）与 28 项改进任务（优先级 / 责任角色 / 实施周期 / 验收标准） |
 | [开发原则与验收标准](../DEVELOPMENT_PRINCIPLES.html) | 战略层：两条核心铁律的原始声明与验收框架 |
 | [发布门禁](../RELEASE_GATE.html) | G-Industrial 门禁与量化阈值落点（TEST-005 衔接） |
 | [采集路径并发与恢复设计](../architecture/11. 采集路径并发与恢复设计.html) | 架构层恢复设计背景 |
@@ -110,15 +111,16 @@ hero_buttons:
 | 连接关闭与资源释放 | C-1 · C-8 | 逐协议先关后开缺专项测试；ReleaseUncertain 状态未实现 |
 | 错误分类与 deadline | C-12 · C-13 | 错误字符串分类未做联合判定；共享连接 deadline 未专项审计 |
 | 重连节流与写安全 | C-9 · C-16 | 单资源节流未实现；写幂等性声明与结果待确认流程缺失 |
-| 统一恢复编排覆盖 | C-3 | omron-fins / mitsubishi-slmp / snmp 未纳入 ConnectionManager |
+| 统一恢复编排覆盖 | C-3 | omron / mitsubishi / snmp 已绑 linkMu 但未接入 ConnectionManager（2026-10-17 评审更正原记载）；ice104 断线后无自动重连 |
 | 调度与数据质量 | C-6 | 时间戳族与点位级新鲜度未实现 |
-|  panic 与关停 | C-5 · C-7 · C-14 | 循环存活验证、关停阶段屏障与全局预算未落地 |
-| 测试与发布 | C-11 · C15 · C-17 | 槽位耗尽测试缺失；门禁量化阈值待建；驱动能力新字段待建档 |
+| panic 与关停 | C-5 · C-7 · C-14 | 循环存活验证、关停阶段屏障与全局预算未落地 |
+| 测试与发布 | C-11 · C-15 · C-17 | 槽位耗尽测试缺失；门禁量化阈值待建；驱动能力新字段待建档 |
 
 ## 修订记录
 
 | 版本 | 日期 | 要点 |
 |------|------|------|
+| 发布后评审 | 2026-10-17 | 系统性代码级评审（四组并行）：九族均「部分合规」，C-1~C-17 全部确认存在，新发现问题 N-1~N-14，形成 [2026 Q4 改进计划](../2026Q4_工程铁律合规评审与改进计划.html) |
 | v2.4 | 2026-10-16 | 纳入其他章节专项评审：错误联合判定、写幂等性、deadline 协调、任务合并语义、panic 三态、关停屏障、量化门禁 |
 | v2.3 | 2026-10-16 | 纳入工业现场专项评审：重建准入四条件合取、ReleaseUncertain、单资源重连节流 |
 | v2.2 | 2026-10-16 | 恢复路径分工：链路有存活设备期间，离线设备由防饿死机制探测恢复 |
