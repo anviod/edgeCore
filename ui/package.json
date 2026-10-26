@@ -9,23 +9,23 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@arco-design/web-vue": "^2.57.0",
+    "@arco-design/web-vue": "^2.59.0",
     "@mdi/font": "^7.0.0",
-    "axios": "^1.13.3",
+    "axios": "^1.20.0",
     "crypto-js": "^4.2.0",
-    "dompurify": "^3.3.1",
+    "dompurify": "^3.4.17",
     "pinia": "^3.0.4",
-    "vue": "^3.4.0",
-    "vue-i18n": "^11.2.8",
+    "vue": "^3.5.44",
+    "vue-i18n": "^11.4.16",
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",
-    "@vue/test-utils": "^2.4.11",
+    "@vue/test-utils": "^2.5.1",
     "eslint": "^9.39.2",
     "eslint-plugin-vue": "^9.33.0",
     "jsdom": "^28.1.0",
-    "less": "^4.6.4",
+    "less": "^4.9.1",
     "vite": "^5.4.21",
     "vitest": "^2.1.8"
   }
