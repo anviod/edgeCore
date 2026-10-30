@@ -219,7 +219,7 @@ func NewStorageWithBackend(dataDir, backend string) (*Storage, error) {
 		return nil, fmt.Errorf("unknown storage backend %q (supported: bbolt, sqlite)", backend)
 	}
 
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
 		return nil, fmt.Errorf("failed to create data directory %s: %w", dataDir, err)
 	}
 
@@ -327,6 +327,7 @@ func ReadBackendChoice(dataDir string) string {
 	if dataDir == "" {
 		dataDir = "data"
 	}
+	// #nosec G304 -- dataDir 为服务端内部数据目录，BackendMetaFile 为固定文件名常量
 	raw, err := os.ReadFile(filepath.Join(dataDir, BackendMetaFile))
 	if err != nil {
 		return BackendBbolt

@@ -154,6 +154,7 @@ func (w *AsyncRotateWriter) rotate() error {
 // 会保留源文件，截断的 .gz 也不会被误当作成功归档。
 func (w *AsyncRotateWriter) compressLogFile(source, target string) error {
 	// Open the source file
+	// #nosec G304 -- source/target 由日志轮转器自身生成的文件路径，非外部输入
 	src, err := os.Open(source)
 	if err != nil {
 		return err
@@ -161,6 +162,7 @@ func (w *AsyncRotateWriter) compressLogFile(source, target string) error {
 	defer src.Close()
 
 	// Create the target gzip file
+	// #nosec G304 -- 同上，轮转归档目标路径由轮转器生成
 	dst, err := os.Create(target)
 	if err != nil {
 		return err

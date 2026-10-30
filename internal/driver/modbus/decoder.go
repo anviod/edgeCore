@@ -185,9 +185,13 @@ func (d *PointDecoder) decodeRaw(point model.Point, b []byte) (any, error) {
 
 	switch dataType {
 	case "int16":
+		// 16 位寄存器值按补码位模式重解释为 int16，是 Modbus int16 点型的定义行为
+		//（如 0xFFFF 读作 -1），非溢出。
 		if swapsBytes16(point) {
+			// #nosec G115 -- 位模式补码重解释
 			return int16(binary.LittleEndian.Uint16(b)), nil
 		}
+		// #nosec G115 -- 位模式补码重解释
 		return int16(binary.BigEndian.Uint16(b)), nil
 	case "uint16":
 		if swapsBytes16(point) {
@@ -206,6 +210,7 @@ func (d *PointDecoder) decodeRaw(point model.Point, b []byte) (any, error) {
 			return nil, fmt.Errorf("not enough bytes for int32")
 		}
 		orderedBytes := d.applyByteOrder(b)
+		// #nosec G115 -- 32 位寄存器值按补码位模式重解释为 int32，同 int16 点型定义行为
 		return int32(binary.BigEndian.Uint32(orderedBytes)), nil
 	case "uint32":
 		if len(b) < 4 {
@@ -287,22 +292,40 @@ func (d *PointDecoder) convertFormattedValue(point model.Point, fmtType dataform
 		}
 
 		if dt == "int16" {
+			if i < math.MinInt16 || i > math.MaxInt16 {
+				return nil, fmt.Errorf("value %d out of range for int16", i)
+			}
 			return int16(i), nil
 		}
 		if dt == "uint16" {
+			if i < 0 || i > math.MaxUint16 {
+				return nil, fmt.Errorf("value %d out of range for uint16", i)
+			}
 			return uint16(i), nil
 		}
 		if dt == "int32" {
+			if i < math.MinInt32 || i > math.MaxInt32 {
+				return nil, fmt.Errorf("value %d out of range for int32", i)
+			}
 			return int32(i), nil
 		}
 		if dt == "uint32" {
+			if i < 0 || i > math.MaxUint32 {
+				return nil, fmt.Errorf("value %d out of range for uint32", i)
+			}
 			return uint32(i), nil
 		}
 
 		if byteLen == 2 {
+			if i < math.MinInt16 || i > math.MaxInt16 {
+				return nil, fmt.Errorf("value %d out of range for 16-bit register", i)
+			}
 			return int16(i), nil
 		}
 		if byteLen == 4 {
+			if i < math.MinInt32 || i > math.MaxInt32 {
+				return nil, fmt.Errorf("value %d out of range for 32-bit register", i)
+			}
 			return int32(i), nil
 		}
 
@@ -396,6 +419,9 @@ func (d *PointDecoder) applyFormula(expr string, value any) (any, error) {
 	case int:
 		number = int64(v)
 	case uint:
+		if uint64(v) > math.MaxInt64 {
+			return nil, fmt.Errorf("value %d overflows int64", v)
+		}
 		number = int64(v)
 	case float64:
 		number = int64(v)
@@ -483,28 +509,47 @@ func (d *PointDecoder) encodeRaw(point model.Point, value any) ([]uint16, error)
 	rawType := rawDataType(point)
 	switch rawType {
 	case "int16", "uint16":
-		var intVal uint16
+		// 统一归一到 int64 后按点型域校验：int16 允许负数（补码位模式写入寄存器），
+		// uint16 仅接受非负；超范围拒绝写入，避免整数收窄静默回绕把错误值写进寄存器。
+		var n int64
 		switch v := value.(type) {
 		case float64:
-			intVal = uint16(v)
+			if v != v || v < math.MinInt16 || v > math.MaxUint16 {
+				return nil, fmt.Errorf("value %v out of range for 16-bit register", v)
+			}
+			n = int64(v)
 		case int:
-			intVal = uint16(v)
+			n = int64(v)
 		case int64:
-			intVal = uint16(v)
+			n = v
 		case int32:
-			intVal = uint16(v)
+			n = int64(v)
 		case uint32:
-			intVal = uint16(v)
+			n = int64(v)
 		case int16:
-			intVal = uint16(v)
+			n = int64(v)
 		case uint16:
-			intVal = v
+			n = int64(v)
 		case string:
-			i, _ := strconv.Atoi(v)
-			intVal = uint16(i)
+			i, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid integer value %q: %w", v, err)
+			}
+			n = i
 		default:
 			return nil, fmt.Errorf("unsupported value type: %T", value)
 		}
+		if rawType == "int16" {
+			if n < math.MinInt16 || n > math.MaxInt16 {
+				return nil, fmt.Errorf("value %d out of range for int16", n)
+			}
+		} else {
+			if n < 0 || n > math.MaxUint16 {
+				return nil, fmt.Errorf("value %d out of range for uint16", n)
+			}
+		}
+		// #nosec G115 -- 已按点型域校验；int16 负数为补码位模式重解释（Modbus 寄存器定义行为）
+		intVal := uint16(n)
 		// 与读取侧一致：点位自身 word order 要求 16 位字节交换时，写寄存器值先行换序
 		if swapsBytes16(point) {
 			intVal = intVal<<8 | intVal>>8
@@ -543,24 +588,42 @@ func (d *PointDecoder) encodeRaw(point model.Point, value any) ([]uint16, error)
 		return []uint16{reg1, reg2}, nil
 
 	case "int32", "uint32":
-		var uVal uint32
+		// 同 16 位分支：归一到 int64 后按点型域校验，int32 允许负数（补码位模式），uint32 仅非负。
+		var n int64
 		switch v := value.(type) {
 		case float64:
-			uVal = uint32(v)
+			if v != v || v < math.MinInt32 || v > math.MaxUint32 {
+				return nil, fmt.Errorf("value %v out of range for 32-bit register", v)
+			}
+			n = int64(v)
 		case int:
-			uVal = uint32(v)
+			n = int64(v)
 		case int64:
-			uVal = uint32(v)
+			n = v
 		case int32:
-			uVal = uint32(v)
+			n = int64(v)
 		case uint32:
-			uVal = v
+			n = int64(v)
 		case string:
-			i, _ := strconv.ParseInt(v, 10, 64)
-			uVal = uint32(i)
+			i, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("invalid integer value %q: %w", v, err)
+			}
+			n = i
 		default:
 			return nil, fmt.Errorf("unsupported value type for int32/uint32: %T", value)
 		}
+		if rawType == "int32" {
+			if n < math.MinInt32 || n > math.MaxInt32 {
+				return nil, fmt.Errorf("value %d out of range for int32", n)
+			}
+		} else {
+			if n < 0 || n > math.MaxUint32 {
+				return nil, fmt.Errorf("value %d out of range for uint32", n)
+			}
+		}
+		// #nosec G115 -- 已按点型域校验；int32 负数为补码位模式重解释（Modbus 寄存器定义行为）
+		uVal := uint32(n)
 
 		bytes := make([]byte, 4)
 		binary.BigEndian.PutUint32(bytes, uVal)

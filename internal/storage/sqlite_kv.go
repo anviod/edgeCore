@@ -110,6 +110,8 @@ func (s *sqliteKV) BackupTo(dstPath string) error {
 	defer s.writeMu.Unlock()
 	_ = os.Remove(dstPath)
 	quoted := strings.ReplaceAll(dstPath, "'", "''")
+	// #nosec G202 -- SQLite VACUUM INTO 不支持参数绑定，路径中的单引号已转义（' → ''），
+	// 且 dstPath 为服务端生成的快照临时路径，非用户输入
 	_, err := s.writeConn.ExecContext(context.Background(), "VACUUM INTO '"+quoted+"'")
 	if err != nil {
 		return fmt.Errorf("failed to backup sqlite db: %w", err)

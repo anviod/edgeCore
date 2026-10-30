@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
+	"math"
 	"math/big"
 	"net"
 	"net/url"
@@ -396,8 +397,9 @@ func (s *Server) ensureCert(certFile, keyFile, appURI string) error {
 	regenerate := false
 	if _, err := os.Stat(certFile); err == nil {
 		if _, err := os.Stat(keyFile); err == nil {
-			// Check if certificate has correct URI
-			certPEM, err := os.ReadFile(certFile)
+		// Check if certificate has correct URI
+		// #nosec G304 -- certFile 由 MaterializeServerCerts 物化或为网关默认自签证书路径，非外部输入
+		certPEM, err := os.ReadFile(certFile)
 			if err == nil {
 				block, _ := pem.Decode(certPEM)
 				if block != nil {
@@ -471,6 +473,7 @@ func (s *Server) ensureCert(certFile, keyFile, appURI string) error {
 		return err
 	}
 
+	// #nosec G304 -- 写入网关自身自签证书，路径来自受信配置而非外部输入
 	certOut, err := os.Create(certFile)
 	if err != nil {
 		return err
@@ -478,6 +481,7 @@ func (s *Server) ensureCert(certFile, keyFile, appURI string) error {
 	pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
 	certOut.Close()
 
+	// #nosec G304 -- 写入网关自身自签私钥，路径来自受信配置而非外部输入
 	keyOut, err := os.Create(keyFile)
 	if err != nil {
 		return err
@@ -1061,6 +1065,14 @@ func inferShadowPointDataType(val any, fallback string) string {
 	}
 }
 
+// toInt32Checked 将 int 安全收窄到 int32，超出可表示范围时返回 false（gosec G115）。
+func toInt32Checked(v int) (int32, bool) {
+	if v < math.MinInt32 || v > math.MaxInt32 {
+		return 0, false
+	}
+	return int32(v), true
+}
+
 func (s *Server) systemInfoLoop(ctx context.Context) {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
@@ -1073,14 +1085,18 @@ func (s *Server) systemInfoLoop(ctx context.Context) {
 			var mem runtime.MemStats
 			runtime.ReadMemStats(&mem)
 			s.updateSystemNode("MemoryUsage", float64(mem.Alloc)/1024/1024)
-			s.updateSystemNode("Goroutines", int32(runtime.NumGoroutine()))
+			if n, ok := toInt32Checked(runtime.NumGoroutine()); ok {
+				s.updateSystemNode("Goroutines", n)
+			}
 
 			uptime := int64(time.Since(startTime).Seconds())
 			s.updateSystemNode("Uptime", uptime)
 
 			// Update Client Count
 			clientCount := s.getClientCount()
-			s.updateSystemNode("ClientCount", int32(clientCount))
+			if n, ok := toInt32Checked(clientCount); ok {
+				s.updateSystemNode("ClientCount", n)
+			}
 
 			// Update internal stats
 			s.mu.Lock()
@@ -1093,24 +1109,21 @@ func (s *Server) systemInfoLoop(ctx context.Context) {
 }
 
 func (s *Server) getClientCount() int {
-	portStr := fmt.Sprintf(":%d", s.config.Port)
-	var cmd *exec.Cmd
-
-	if runtime.GOOS == "windows" {
-		// netstat -an | find ":PORT" | find "ESTABLISHED" /c
-		cmd = exec.Command("cmd", "/C", fmt.Sprintf("netstat -an | find \"%s\" | find \"ESTABLISHED\" /c", portStr))
-	} else {
-		// netstat -an | grep :PORT | grep ESTABLISHED | wc -l
-		cmd = exec.Command("sh", "-c", fmt.Sprintf("netstat -an | grep '%s' | grep ESTABLISHED | wc -l", portStr))
-	}
-
-	out, err := cmd.Output()
+	// 固定命令行参数执行 netstat，输出在 Go 侧逐行统计，
+	// 避免 shell 管道与变量拼接（gosec G204），且消除 cmd/sh 平台差异。
+	// 匹配规则与原 find/grep 管道一致：行内同时包含 ":<port>" 与 "ESTABLISHED"。
+	out, err := exec.Command("netstat", "-an").Output()
 	if err != nil {
 		return 0
 	}
 
-	countStr := strings.TrimSpace(string(out))
-	count, _ := strconv.Atoi(countStr)
+	portStr := fmt.Sprintf(":%d", s.config.Port)
+	count := 0
+	for _, line := range strings.Split(string(out), "\n") {
+		if strings.Contains(line, portStr) && strings.Contains(line, "ESTABLISHED") {
+			count++
+		}
+	}
 	return count
 }
 

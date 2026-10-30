@@ -289,6 +289,7 @@ func (m *Manager) download(ctx context.Context, url, dst string) error {
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("http %d", resp.StatusCode)
 	}
+	// #nosec G304 -- dst 为服务端生成的升级包下载目标路径，非外部输入
 	f, err := os.Create(dst)
 	if err != nil {
 		return err
@@ -300,6 +301,7 @@ func (m *Manager) download(ctx context.Context, url, dst string) error {
 
 // verifySHA256FromFile 读取 SHA256SUMS，校验 archive 的哈希是否匹配。
 func verifySHA256FromFile(sumPath, archPath, assetName string) (bool, error) {
+	// #nosec G304 -- sumPath/archPath 均为服务端升级流程自产的文件路径
 	data, err := os.ReadFile(sumPath)
 	if err != nil {
 		return false, err
@@ -316,6 +318,7 @@ func verifySHA256FromFile(sumPath, archPath, assetName string) (bool, error) {
 		return false, nil // 校验文件中未找到该归档条目 → 保守中止
 	}
 	h := sha256.New()
+	// #nosec G304 -- 同上，archPath 为服务端下载的升级归档路径
 	f, err := os.Open(archPath)
 	if err != nil {
 		return false, err
@@ -329,6 +332,7 @@ func verifySHA256FromFile(sumPath, archPath, assetName string) (bool, error) {
 
 // untar 解压 tar.gz 归档到 dest。
 func untar(src, dest string) error {
+	// #nosec G304 -- src 为服务端下载的升级归档路径；条目路径穿越防护见下方检查
 	f, err := os.Open(src)
 	if err != nil {
 		return err
@@ -362,6 +366,7 @@ func untar(src, dest string) error {
 			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
 				return err
 			}
+			// #nosec G304 -- target 已通过上方路径穿越检查（限定在 dest 内）
 			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(hdr.Mode))
 			if err != nil {
 				return err
@@ -378,11 +383,13 @@ func untar(src, dest string) error {
 
 // copyFile 复制源文件到目标并设置权限。
 func copyFile(src, dst string, mode os.FileMode) error {
+	// #nosec G304 -- src/dst 均为升级安装流程内部生成的文件路径
 	in, err := os.Open(src)
 	if err != nil {
 		return err
 	}
 	defer in.Close()
+	// #nosec G304 -- 同上，dst 由升级流程指定
 	out, err := os.OpenFile(dst, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 	if err != nil {
 		return err

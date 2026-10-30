@@ -71,6 +71,7 @@ func ExportDBAsTarGz(dbPath, entryName, archiveType string) ([]byte, string, err
 // openKVFileByMagic 按文件头魔数打开磁盘上任意后端的数据库文件（跨后端读取）。
 func openKVFileByMagic(dbPath string) (KVDB, error) {
 	head := make([]byte, 32)
+	// #nosec G304 -- dbPath 为服务端内部配置库路径（导出/校验流程自产），非外部输入
 	f, err := os.Open(dbPath)
 	if err != nil {
 		return nil, err
@@ -113,6 +114,7 @@ func exportKVAsTarGz(db KVDB, sourcePath, entryName, archiveType string) ([]byte
 	if err := db.BackupTo(tmpPath); err != nil {
 		return nil, "", fmt.Errorf("failed to snapshot database: %w", err)
 	}
+	// #nosec G304 -- tmpPath 由 os.CreateTemp 以固定前缀生成，完全受信
 	dbBytes, err := os.ReadFile(tmpPath)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to read database snapshot: %w", err)

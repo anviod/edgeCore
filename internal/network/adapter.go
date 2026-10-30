@@ -62,6 +62,7 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 
 	if v4DHCP {
 		// Set DHCP
+		// #nosec G204 -- 命令固定为 netsh 且参数数组传递（不经 shell）；iface.Name 来自系统接口枚举而非自由文本
 		cmd := exec.Command("netsh", "interface", "ip", "set", "address", iface.Name, "dhcp")
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to enable IPv4 DHCP: %s, output: %s", err, output)

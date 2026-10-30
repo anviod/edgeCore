@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net"
 	"os"
 	"sort"
@@ -627,7 +628,8 @@ func (d *OpcUaDriver) buildClientOptions(config map[string]any) ([]opcua.Option,
 		if certFile == "" || keyFile == "" {
 			return nil, fmt.Errorf("auth_method=Certificate requires certificate_file and private_key_file")
 		}
-		certBytes, err := os.ReadFile(certFile)
+		// #nosec G304 -- 证书路径来自运维在通道配置中填写的受信字段 certificate_file，非外部输入
+	certBytes, err := os.ReadFile(certFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read cert file: %w", err)
 		}
@@ -1489,9 +1491,17 @@ func (d *OpcUaDriver) parseWriteValue(value any, dataType string) (any, error) {
 		case uint32:
 			return ua.StatusCode(v), nil
 		case int:
-			return ua.StatusCode(v), nil
+			code, ok := toUint32Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for StatusCode", v)
+			}
+			return ua.StatusCode(code), nil
 		case int64:
-			return ua.StatusCode(v), nil
+			code, ok := toUint32Checked(v)
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for StatusCode", v)
+			}
+			return ua.StatusCode(code), nil
 		case float64:
 			return ua.StatusCode(uint32(v)), nil
 		case string:
@@ -1581,9 +1591,17 @@ func (d *OpcUaDriver) parseWriteValue(value any, dataType string) (any, error) {
 		case uint8:
 			return v, nil
 		case int:
-			return uint8(v), nil
+			n, ok := toUint8Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for Byte", v)
+			}
+			return n, nil
 		case int64:
-			return uint8(v), nil
+			n, ok := toUint8Checked(v)
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for Byte", v)
+			}
+			return n, nil
 		case float64:
 			return uint8(v), nil
 		case string:
@@ -1735,17 +1753,95 @@ func (d *OpcUaDriver) createWriteVariant(dataType string, value any) *ua.Variant
 
 // ===== Variant 创建辅助函数 =====
 
+// ===== 范围受限整型收窄辅助（gosec G115） =====
+//
+// 写点值超出目标 OPC UA 类型可表示范围时返回 false，由调用方拒绝本次写入，
+// 避免整数转换静默回绕把错误值写进 PLC。范围内值经守卫检查后收窄。
+
+func toInt8Checked(v int64) (int8, bool) {
+	if v < math.MinInt8 || v > math.MaxInt8 {
+		return 0, false
+	}
+	return int8(v), true
+}
+
+func toInt16Checked(v int64) (int16, bool) {
+	if v < math.MinInt16 || v > math.MaxInt16 {
+		return 0, false
+	}
+	return int16(v), true
+}
+
+func toInt32Checked(v int64) (int32, bool) {
+	if v < math.MinInt32 || v > math.MaxInt32 {
+		return 0, false
+	}
+	return int32(v), true
+}
+
+// 有符号源 → 无符号目标：额外拒绝负数。
+func toUint8Checked(v int64) (uint8, bool) {
+	if v < 0 || v > math.MaxUint8 {
+		return 0, false
+	}
+	return uint8(v), true
+}
+
+func toUint16Checked(v int64) (uint16, bool) {
+	if v < 0 || v > math.MaxUint16 {
+		return 0, false
+	}
+	return uint16(v), true
+}
+
+func toUint32Checked(v int64) (uint32, bool) {
+	if v < 0 || v > math.MaxUint32 {
+		return 0, false
+	}
+	return uint32(v), true
+}
+
+// 无符号源 → 无符号目标：仅需上界检查。
+func uintToUint8Checked(v uint64) (uint8, bool) {
+	if v > math.MaxUint8 {
+		return 0, false
+	}
+	return uint8(v), true
+}
+
+func uintToUint16Checked(v uint64) (uint16, bool) {
+	if v > math.MaxUint16 {
+		return 0, false
+	}
+	return uint16(v), true
+}
+
+func uintToUint32Checked(v uint64) (uint32, bool) {
+	if v > math.MaxUint32 {
+		return 0, false
+	}
+	return uint32(v), true
+}
+
 func createInt32Variant(value any) *ua.Variant {
 	var v int32
 	switch val := value.(type) {
 	case int32:
 		v = val
 	case int64:
-		v = int32(val)
+		n, ok := toInt32Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = int32(val)
 	case int:
-		v = int32(val)
+		n, ok := toInt32Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case string:
 		if n, err := strconv.ParseInt(val, 10, 32); err == nil {
 			v = int32(n)
@@ -1762,13 +1858,25 @@ func createInt16Variant(value any) *ua.Variant {
 	case int16:
 		v = val
 	case int32:
-		v = int16(val)
+		n, ok := toInt16Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int64:
-		v = int16(val)
+		n, ok := toInt16Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = int16(val)
 	case int:
-		v = int16(val)
+		n, ok := toInt16Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case string:
 		if n, err := strconv.ParseInt(val, 10, 16); err == nil {
 			v = int16(n)
@@ -1785,13 +1893,25 @@ func createUint32Variant(value any) *ua.Variant {
 	case uint32:
 		v = val
 	case uint64:
-		v = uint32(val)
+		n, ok := uintToUint32Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = uint32(val)
 	case uint:
-		v = uint32(val)
+		n, ok := uintToUint32Checked(uint64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int:
-		v = uint32(val)
+		n, ok := toUint32Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case string:
 		if n, err := strconv.ParseUint(val, 10, 32); err == nil {
 			v = uint32(n)
@@ -1808,15 +1928,31 @@ func createUint16Variant(value any) *ua.Variant {
 	case uint16:
 		v = val
 	case uint32:
-		v = uint16(val)
+		n, ok := uintToUint16Checked(uint64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case uint64:
-		v = uint16(val)
+		n, ok := uintToUint16Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = uint16(val)
 	case uint:
-		v = uint16(val)
+		n, ok := uintToUint16Checked(uint64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int:
-		v = uint16(val)
+		n, ok := toUint16Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case string:
 		if n, err := strconv.ParseUint(val, 10, 16); err == nil {
 			v = uint16(n)
@@ -1860,6 +1996,9 @@ func createUint64Variant(value any) *ua.Variant {
 	case uint:
 		v = uint64(val)
 	case int:
+		if val < 0 {
+			return nil
+		}
 		v = uint64(val)
 	case string:
 		if n, err := strconv.ParseUint(val, 10, 64); err == nil {
@@ -1956,11 +2095,23 @@ func createSByteVariant(value any) *ua.Variant {
 	case int8:
 		v = val
 	case int:
-		v = int8(val)
+		n, ok := toInt8Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int32:
-		v = int8(val)
+		n, ok := toInt8Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int64:
-		v = int8(val)
+		n, ok := toInt8Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = int8(val)
 	case string:
@@ -1979,13 +2130,29 @@ func createByteVariant(value any) *ua.Variant {
 	case uint8:
 		v = val
 	case uint:
-		v = uint8(val)
+		n, ok := uintToUint8Checked(uint64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case uint32:
-		v = uint8(val)
+		n, ok := uintToUint8Checked(uint64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int:
-		v = uint8(val)
+		n, ok := toUint8Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = n
 	case int64:
-		v = uint8(val)
+		n, ok := toUint8Checked(val)
+		if !ok {
+			return nil
+		}
+		v = n
 	case float64:
 		v = uint8(val)
 	case string:
@@ -2071,11 +2238,23 @@ func createStatusCodeVariant(value any) *ua.Variant {
 	case uint32:
 		v = ua.StatusCode(val)
 	case uint64:
-		v = ua.StatusCode(val)
+		n, ok := uintToUint32Checked(val)
+		if !ok {
+			return nil
+		}
+		v = ua.StatusCode(n)
 	case int:
-		v = ua.StatusCode(val)
+		n, ok := toUint32Checked(int64(val))
+		if !ok {
+			return nil
+		}
+		v = ua.StatusCode(n)
 	case int64:
-		v = ua.StatusCode(val)
+		n, ok := toUint32Checked(val)
+		if !ok {
+			return nil
+		}
+		v = ua.StatusCode(n)
 	case float64:
 		v = ua.StatusCode(uint32(val))
 	case string:
@@ -2879,7 +3058,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return uint16(v), nil
 		case int:
-			return uint16(v), nil
+			n, ok := toUint16Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for uint16", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2894,7 +3077,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return int16(v), nil
 		case int:
-			return int16(v), nil
+			n, ok := toInt16Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for int16", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2909,7 +3096,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return int8(v), nil
 		case int:
-			return int8(v), nil
+			n, ok := toInt8Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for int8", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2924,7 +3115,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return uint8(v), nil
 		case int:
-			return uint8(v), nil
+			n, ok := toUint8Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for uint8", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2939,7 +3134,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return uint32(v), nil
 		case int:
-			return uint32(v), nil
+			n, ok := toUint32Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for uint32", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2954,7 +3153,11 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return int32(v), nil
 		case int:
-			return int32(v), nil
+			n, ok := toInt32Checked(int64(v))
+			if !ok {
+				return nil, fmt.Errorf("value %d out of range for int32", v)
+			}
+			return n, nil
 		}
 		s := asString(val)
 		if f, err := strconv.ParseFloat(s, 64); err == nil {
@@ -2969,6 +3172,9 @@ func castValue(val any, dataType string) (any, error) {
 		case float64:
 			return uint64(v), nil
 		case int:
+			if v < 0 {
+				return nil, fmt.Errorf("value %d out of range for uint64", v)
+			}
 			return uint64(v), nil
 		}
 		s := asString(val)
@@ -3043,6 +3249,7 @@ func parseCertificateBytes(data []byte) ([]byte, error) {
 // loadRSAPrivateKey loads an RSA private key from a PEM (PKCS#1 "RSA PRIVATE KEY"
 // or PKCS#8 "PRIVATE KEY") or raw DER encoded file, regardless of file extension.
 func loadRSAPrivateKey(path string) (*rsa.PrivateKey, error) {
+	// #nosec G304 -- 私钥路径来自运维在通道配置中填写的受信字段 private_key_file，非外部输入
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err

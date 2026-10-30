@@ -71,7 +71,7 @@ func main() {
 	// 1. 初始化流程：检测任一后端的配置库是否存在且为空
 	// （bbolt: config.db / sqlite: config.sqlite，后端选择记录在 data/storage.meta）
 	dataDir := "data"
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0750); err != nil {
 		zap.L().Fatal("Failed to create data directory", zap.String("dir", dataDir), zap.Error(err))
 	}
 

@@ -76,6 +76,7 @@ func parseLocalName(fileName, format string) (version, arch string, ok bool) {
 func validateContent(path, format string) error {
 	switch format {
 	case "tar.gz":
+		// #nosec G304 -- path 为服务端保存的升级包文件路径，仅用于格式校验
 		f, err := os.Open(path)
 		if err != nil {
 			return err
@@ -127,6 +128,7 @@ func validateContent(path, format string) error {
 }
 
 func readHead(path string, n int) ([]byte, error) {
+	// #nosec G304 -- 同 validateContent：服务端升级包路径，仅读头部魔数
 	f, err := os.Open(path)
 	if err != nil {
 		return nil, err

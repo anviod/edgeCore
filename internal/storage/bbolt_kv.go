@@ -111,6 +111,7 @@ func (b *bboltKV) BackupTo(dstPath string) error {
 	if _, err := os.Stat(b.db.Path()); err != nil {
 		return fmt.Errorf("database file does not exist: %s", b.db.Path())
 	}
+	// #nosec G304 -- dstPath 由导出/备份流程在服务端生成（os.CreateTemp 或固定备份目录），非外部输入
 	f, err := os.Create(dstPath)
 	if err != nil {
 		return fmt.Errorf("failed to create backup file: %w", err)

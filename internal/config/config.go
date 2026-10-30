@@ -274,7 +274,7 @@ func dumpDroppedEntries(kind string, entries any) {
 		zap.L().Error("failed to marshal dropped entries for dump", zap.String("kind", kind), zap.Error(err))
 		return
 	}
-	if err := os.MkdirAll("data", 0755); err != nil {
+	if err := os.MkdirAll("data", 0750); err != nil {
 		zap.L().Error("failed to create data dir for dropped entries dump", zap.Error(err))
 		return
 	}

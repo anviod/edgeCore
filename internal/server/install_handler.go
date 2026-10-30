@@ -190,6 +190,8 @@ func (s *Server) checkPath(c *fiber.Ctx) error {
 	}
 
 	testFile := filepath.Join(req.Path, ".test_write_access")
+	// #nosec G304 -- 安装向导「目录可写探测」接口：path 为管理员在安装页面选择的数据目录，
+	// 该接口的功能就是检测给定目录可写性（仅创建并删除探测文件，不读取内容）
 	file, err := os.Create(testFile)
 	if err != nil {
 		return c.JSON(fiber.Map{

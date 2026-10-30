@@ -90,7 +90,7 @@ func MaterializeTrustedCerts(cfg model.OPCUAConfig) (baseDir string, err error) 
 	rejectedDir := filepath.Join(dir, "rejected")
 	crlDir := filepath.Join(dir, "crl")
 	for _, d := range []string{trustedDir, rejectedDir, crlDir} {
-		if err := os.MkdirAll(d, 0o755); err != nil {
+		if err := os.MkdirAll(d, 0o700); err != nil {
 			return "", err
 		}
 	}
