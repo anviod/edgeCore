@@ -16,7 +16,7 @@
     "dompurify": "^3.3.1",
     "pinia": "^3.0.4",
     "vue": "^3.4.0",
-    "vue-i18n": "^11.2.8",
+    "vue-i18n": "^11.4.16",
     "vue-router": "^4.2.0"
   },
   "devDependencies": {
