@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os/exec"
 	"regexp"
 	"runtime"
 	"strconv"
@@ -62,13 +61,12 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 
 	if v4DHCP {
 		// Set DHCP
-		// #nosec G204 -- 命令固定为 netsh 且参数数组传递（不经 shell）；iface.Name 来自系统接口枚举而非自由文本
-		cmd := exec.Command("netsh", "interface", "ip", "set", "address", iface.Name, "dhcp")
+		cmd := netCmd("netsh", "interface", "ip", "set", "address", iface.Name, "dhcp")
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to enable IPv4 DHCP: %s, output: %s", err, output)
 		}
 		// Set DNS DHCP
-		exec.Command("netsh", "interface", "ip", "set", "dns", iface.Name, "dhcp").Run()
+		netCmd("netsh", "interface", "ip", "set", "dns", iface.Name, "dhcp").Run()
 	} else if len(v4Configs) > 0 {
 		// Set Static
 		// 1. Set the primary IP (this overwrites existing)
@@ -96,14 +94,14 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 			}
 		}
 
-		cmd := exec.Command("netsh", args...)
+		cmd := netCmd("netsh", args...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to set static IP: %s, output: %s", err, output)
 		}
 
 		// Set Interface Metric if specified
 		if iface.InterfaceMetric > 0 {
-			exec.Command("netsh", "interface", "ip", "set", "interface", iface.Name, "metric="+strconv.Itoa(iface.InterfaceMetric)).Run()
+			netCmd("netsh", "interface", "ip", "set", "interface", iface.Name, "metric="+strconv.Itoa(iface.InterfaceMetric)).Run()
 		}
 
 		// 2. Add additional IPs
@@ -112,7 +110,7 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 			mask = net.CIDRMask(cfg.Prefix, 32)
 			maskStr = fmt.Sprintf("%d.%d.%d.%d", mask[0], mask[1], mask[2], mask[3])
 			// syntax: add address "Name" IP Mask
-			addCmd := exec.Command("netsh", "interface", "ip", "add", "address", iface.Name, cfg.Address, maskStr)
+			addCmd := netCmd("netsh", "interface", "ip", "add", "address", iface.Name, cfg.Address, maskStr)
 			if out, err := addCmd.CombinedOutput(); err != nil {
 				fmt.Printf("Warning: failed to add secondary IP %s: %s\n", cfg.Address, out)
 			}
@@ -129,13 +127,13 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 	}
 
 	if v6DHCP {
-		exec.Command("netsh", "interface", "ipv6", "set", "address", iface.Name, "dhcp").Run()
-		exec.Command("netsh", "interface", "ipv6", "set", "dns", iface.Name, "dhcp").Run()
+		netCmd("netsh", "interface", "ipv6", "set", "address", iface.Name, "dhcp").Run()
+		netCmd("netsh", "interface", "ipv6", "set", "dns", iface.Name, "dhcp").Run()
 	} else if len(v6Configs) > 0 {
 		// Set Primary IPv6
 		primary := v6Configs[0]
 		// netsh interface ipv6 set address interface="Name" address=IP/Prefix
-		cmd := exec.Command("netsh", "interface", "ipv6", "set", "address",
+		cmd := netCmd("netsh", "interface", "ipv6", "set", "address",
 			fmt.Sprintf("interface=%s", iface.Name),
 			fmt.Sprintf("address=%s/%d", primary.Address, primary.Prefix))
 		if out, err := cmd.CombinedOutput(); err != nil {
@@ -145,7 +143,7 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 		// Additional IPv6
 		for i := 1; i < len(v6Configs); i++ {
 			cfg := v6Configs[i]
-			cmd := exec.Command("netsh", "interface", "ipv6", "add", "address",
+			cmd := netCmd("netsh", "interface", "ipv6", "add", "address",
 				fmt.Sprintf("interface=%s", iface.Name),
 				fmt.Sprintf("address=%s/%d", cfg.Address, cfg.Prefix))
 			cmd.Run()
@@ -162,7 +160,7 @@ func (a *WindowsAdapter) ApplyInterfaceConfig(iface model.NetworkInterface) erro
 				if gw.Metric > 0 {
 					args = append(args, fmt.Sprintf("metric=%d", gw.Metric))
 				}
-				exec.Command("netsh", args...).Run()
+				netCmd("netsh", args...).Run()
 			}
 		}
 	}
@@ -189,7 +187,7 @@ func (a *WindowsAdapter) ApplyStaticRoute(route model.StaticRoute) error {
 			netshArgs = append(netshArgs, fmt.Sprintf("metric=%d", route.Metric))
 		}
 
-		cmd := exec.Command("netsh", netshArgs...)
+		cmd := netCmd("netsh", netshArgs...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to add ipv6 route: %s, output: %s", err, output)
 		}
@@ -206,7 +204,7 @@ func (a *WindowsAdapter) ApplyStaticRoute(route model.StaticRoute) error {
 		netshArgs = append(netshArgs, "metric="+strconv.Itoa(route.Metric))
 	}
 
-	cmd := exec.Command("netsh", netshArgs...)
+	cmd := netCmd("netsh", netshArgs...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to add route: %s, output: %s", err, output)
 	}
@@ -225,7 +223,7 @@ func (a *WindowsAdapter) RemoveStaticRoute(route model.StaticRoute) error {
 		if route.Gateway != "" {
 			netshArgs = append(netshArgs, fmt.Sprintf("nexthop=%s", route.Gateway))
 		}
-		cmd := exec.Command("netsh", netshArgs...)
+		cmd := netCmd("netsh", netshArgs...)
 		if output, err := cmd.CombinedOutput(); err != nil {
 			return fmt.Errorf("failed to delete ipv6 route: %s, output: %s", err, output)
 		}
@@ -237,7 +235,7 @@ func (a *WindowsAdapter) RemoveStaticRoute(route model.StaticRoute) error {
 		route.Interface,
 		route.Gateway,
 	}
-	cmd := exec.Command("netsh", netshArgs...)
+	cmd := netCmd("netsh", netshArgs...)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("failed to delete route: %s, output: %s", err, output)
 	}
@@ -259,7 +257,7 @@ func (a *WindowsAdapter) GetInterfaces() ([]model.NetworkInterface, error) {
 	// Gather extra info from netsh
 	nameMap := make(map[string]netshInfo) // Interface Name -> Info
 
-	cmd := exec.Command("netsh", "interface", "ip", "show", "config")
+	cmd := netCmd("netsh", "interface", "ip", "show", "config")
 	output, _ := cmd.Output()
 
 	// Simple parser for netsh output
@@ -424,7 +422,7 @@ func (a *WindowsAdapter) GetRoutes() ([]model.StaticRoute, error) {
 
 func (a *WindowsAdapter) getRoutesByContext(context string) ([]model.StaticRoute, error) {
 	// Using netsh interface {context} show route
-	cmd := exec.Command("netsh", "interface", context, "show", "route")
+	cmd := netCmd("netsh", "interface", context, "show", "route")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -500,7 +498,7 @@ func (a *WindowsAdapter) ValidateConnectivity(targets []model.ConnectivityTarget
 		switch target.Type {
 		case "gateway", "ip":
 			// Ping
-			cmd := exec.Command("ping", "-n", "1", "-w", strconv.Itoa(target.Timeout*1000), target.Target)
+			cmd := netCmd("ping", "-n", "1", "-w", strconv.Itoa(target.Timeout*1000), target.Target)
 			if err := cmd.Run(); err == nil {
 				result.Success = true
 				result.Message = "Ping successful"

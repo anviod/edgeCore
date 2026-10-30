@@ -90,7 +90,7 @@ func loadDefaultGateways() map[string][]model.GatewayConfig {
 	if _, err := exec.LookPath("ip"); err != nil {
 		return nil
 	}
-	output, err := exec.Command("ip", "route", "show", "default").Output()
+	output, err := netCmd("ip", "route", "show", "default").Output()
 	if err != nil {
 		return nil
 	}
@@ -104,7 +104,7 @@ func detectDHCPSource(ifaceName string, backend PersistBackend) string {
 	if _, err := exec.LookPath("nmcli"); err != nil {
 		return "Static"
 	}
-	output, err := exec.Command("nmcli", "-g", "IP4.METHOD,IP6.METHOD", "device", "show", ifaceName).Output()
+	output, err := netCmd("nmcli", "-g", "IP4.METHOD,IP6.METHOD", "device", "show", ifaceName).Output()
 	if err != nil {
 		return "Static"
 	}
@@ -122,7 +122,7 @@ func applyRuntimeInterfaceConfig(iface model.NetworkInterface) error {
 		return nil
 	}
 
-	_ = exec.Command("ip", "addr", "flush", "dev", iface.Name).Run()
+	_ = netCmd("ip", "addr", "flush", "dev", iface.Name).Run()
 
 	for _, ip := range iface.IPConfigs {
 		if !ip.Enabled {
@@ -130,9 +130,9 @@ func applyRuntimeInterfaceConfig(iface model.NetworkInterface) error {
 		}
 		if ip.Source == "DHCP" {
 			if ip.Version == "IPv6" || strings.Contains(ip.Address, ":") {
-				go exec.Command("dhclient", "-6", iface.Name).Run()
+				go netCmd("dhclient", "-6", iface.Name).Run()
 			} else {
-				go exec.Command("dhclient", iface.Name).Run()
+				go netCmd("dhclient", iface.Name).Run()
 			}
 			continue
 		}
@@ -140,12 +140,12 @@ func applyRuntimeInterfaceConfig(iface model.NetworkInterface) error {
 			continue
 		}
 		cidr := fmt.Sprintf("%s/%d", ip.Address, ip.Prefix)
-		if err := exec.Command("ip", "addr", "add", cidr, "dev", iface.Name).Run(); err != nil {
+		if err := netCmd("ip", "addr", "add", cidr, "dev", iface.Name).Run(); err != nil {
 			return fmt.Errorf("failed to add address %s: %w", cidr, err)
 		}
 	}
 
-	if err := exec.Command("ip", "link", "set", iface.Name, "up").Run(); err != nil {
+	if err := netCmd("ip", "link", "set", iface.Name, "up").Run(); err != nil {
 		return fmt.Errorf("failed to bring up %s: %w", iface.Name, err)
 	}
 
@@ -157,7 +157,7 @@ func applyRuntimeInterfaceConfig(iface model.NetworkInterface) error {
 		if gw.Metric > 0 {
 			args = append(args, "metric", strconv.Itoa(gw.Metric))
 		}
-		_ = exec.Command("ip", args...).Run()
+		_ = netCmd("ip", args...).Run()
 	}
 	return nil
 }
@@ -181,7 +181,7 @@ func applyRuntimeStaticRoute(route model.StaticRoute) error {
 	if route.Metric > 0 {
 		args = append(args, "metric", strconv.Itoa(route.Metric))
 	}
-	return exec.Command("ip", args...).Run()
+	return netCmd("ip", args...).Run()
 }
 
 func removeRuntimeStaticRoute(route model.StaticRoute) error {
@@ -200,7 +200,7 @@ func removeRuntimeStaticRoute(route model.StaticRoute) error {
 	if route.Interface != "" {
 		args = append(args, "dev", route.Interface)
 	}
-	return exec.Command("ip", args...).Run()
+	return netCmd("ip", args...).Run()
 }
 
 func discoverInterfacesFromNet(backend PersistBackend) ([]model.NetworkInterface, error) {

@@ -13,6 +13,7 @@ func writeSystemConfigFile(path, content string) error {
 		return err
 	}
 	tmp := path + ".edgeCore.tmp"
+	// #nosec G304 -- tmp 由本函数基于服务端网络配置文件路径派生（原子写临时文件），非外部输入
 	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o644)
 	if err != nil {
 		return err

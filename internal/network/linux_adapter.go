@@ -70,7 +70,7 @@ func (a *LinuxAdapter) GetRoutes() ([]model.StaticRoute, error) {
 	if _, err := exec.LookPath("ip"); err != nil {
 		return nil, nil
 	}
-	cmd := exec.Command("ip", "route", "show")
+	cmd := netCmd("ip", "route", "show")
 	output, err := cmd.Output()
 	if err != nil {
 		return nil, err
@@ -141,7 +141,7 @@ func (a *LinuxAdapter) ValidateConnectivity(targets []model.ConnectivityTarget) 
 
 		switch target.Type {
 		case "gateway", "ip":
-			cmd := exec.Command("ping", "-c", "1", "-W", strconv.Itoa(timeout), target.Target)
+			cmd := netCmd("ping", "-c", "1", "-W", strconv.Itoa(timeout), target.Target)
 			if err := cmd.Run(); err == nil {
 				result.Success = true
 				result.Message = "Ping successful"

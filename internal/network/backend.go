@@ -91,7 +91,7 @@ func systemdServiceActive(unit string) bool {
 	if _, err := exec.LookPath("systemctl"); err != nil {
 		return false
 	}
-	return exec.Command("systemctl", "is-active", "--quiet", unit).Run() == nil
+	return netCmd("systemctl", "is-active", "--quiet", unit).Run() == nil
 }
 
 func hasNetplanConfig() bool {

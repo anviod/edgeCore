@@ -25,6 +25,7 @@ func certStoreDir(channelID string) string {
 // 截断。rename 只保证命名原子性，不保证内容落盘，故 tmp 先 fsync。
 func writeFileAtomic(path string, data []byte, perm os.FileMode) error {
 	tmp := path + ".tmp"
+	// #nosec G304 -- tmp 由本函数基于网关自身证书存储路径派生（原子写临时文件），非外部输入
 	f, err := os.OpenFile(tmp, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perm)
 	if err != nil {
 		return err
