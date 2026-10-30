@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"math/rand"
 	"net"
 	"strconv"
@@ -783,10 +784,16 @@ func (d *BACnetDriver) WritePoint(ctx context.Context, point model.Point, value 
 			writeVal = v
 		}
 		if p, ok := valMap["priority"]; ok {
+			// NPDU priority 为 8 位字段：超出 [0,255] 的非法值忽略，保留默认优先级
 			if pInt, ok := p.(int); ok {
-				priority = btypes.NPDUPriority(pInt)
+				if pInt >= 0 && pInt <= math.MaxUint8 {
+					priority = btypes.NPDUPriority(pInt)
+				}
 			} else if pFloat, ok := p.(float64); ok {
-				priority = btypes.NPDUPriority(int(pFloat))
+				pInt := int(pFloat)
+				if pInt >= 0 && pInt <= math.MaxUint8 {
+					priority = btypes.NPDUPriority(pInt)
+				}
 			}
 		}
 	}
@@ -809,8 +816,14 @@ func (d *BACnetDriver) WritePoint(ctx context.Context, point model.Point, value 
 			}
 		case "int16", "int32", "int":
 			if v, ok := writeVal.(float64); ok {
+				if v < math.MinInt32 || v > math.MaxInt32 {
+					return fmt.Errorf("value %v out of range for int32", v)
+				}
 				writeVal = int32(v)
 			} else if v, ok := writeVal.(int); ok {
+				if v < math.MinInt32 || v > math.MaxInt32 {
+					return fmt.Errorf("value %d out of range for int32", v)
+				}
 				writeVal = int32(v)
 			} else if v, ok := writeVal.(string); ok {
 				if i, err := strconv.ParseInt(v, 10, 32); err == nil {
@@ -819,8 +832,14 @@ func (d *BACnetDriver) WritePoint(ctx context.Context, point model.Point, value 
 			}
 		case "uint16", "uint32", "uint":
 			if v, ok := writeVal.(float64); ok {
+				if v < 0 || v > math.MaxUint32 {
+					return fmt.Errorf("value %v out of range for uint32", v)
+				}
 				writeVal = uint32(v)
 			} else if v, ok := writeVal.(int); ok {
+				if v < 0 || v > math.MaxUint32 {
+					return fmt.Errorf("value %d out of range for uint32", v)
+				}
 				writeVal = uint32(v)
 			} else if v, ok := writeVal.(string); ok {
 				if i, err := strconv.ParseUint(v, 10, 32); err == nil {

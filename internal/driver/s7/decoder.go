@@ -2,6 +2,7 @@ package s7
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -445,11 +446,50 @@ func toUint16(v interface{}) uint16 {
 	}
 }
 
+// clampInt16 将数值饱和钳制到 int16 可表示范围（防御性收窄，gosec G115）。
+func clampInt16(v float64) int16 {
+	if v != v || v < math.MinInt16 {
+		return math.MinInt16
+	}
+	if v > math.MaxInt16 {
+		return math.MaxInt16
+	}
+	return int16(v)
+}
+
+// clampInt32 将数值饱和钳制到 int32 可表示范围。
+func clampInt32(v float64) int32 {
+	if v != v || v < math.MinInt32 {
+		return math.MinInt32
+	}
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	return int32(v)
+}
+
+// clampUint32 将数值饱和钳制到 uint32 可表示范围。
+func clampUint32(v float64) uint32 {
+	if v != v || v < 0 {
+		return 0
+	}
+	if v > math.MaxUint32 {
+		return math.MaxUint32
+	}
+	return uint32(v)
+}
+
 func toInt16(v interface{}) int16 {
 	switch val := v.(type) {
 	case float64:
-		return int16(val)
+		return clampInt16(val)
 	case int:
+		if val < math.MinInt16 {
+			return math.MinInt16
+		}
+		if val > math.MaxInt16 {
+			return math.MaxInt16
+		}
 		return int16(val)
 	case string:
 		n, _ := strconv.ParseInt(val, 10, 16)
@@ -462,8 +502,14 @@ func toInt16(v interface{}) int16 {
 func toUint32(v interface{}) uint32 {
 	switch val := v.(type) {
 	case float64:
-		return uint32(val)
+		return clampUint32(val)
 	case int:
+		if val < 0 {
+			return 0
+		}
+		if val > math.MaxUint32 {
+			return math.MaxUint32
+		}
 		return uint32(val)
 	case string:
 		n, _ := strconv.ParseUint(val, 10, 32)
@@ -476,8 +522,14 @@ func toUint32(v interface{}) uint32 {
 func toInt32(v interface{}) int32 {
 	switch val := v.(type) {
 	case float64:
-		return int32(val)
+		return clampInt32(val)
 	case int:
+		if val < math.MinInt32 {
+			return math.MinInt32
+		}
+		if val > math.MaxInt32 {
+			return math.MaxInt32
+		}
 		return int32(val)
 	case string:
 		n, _ := strconv.ParseInt(val, 10, 32)

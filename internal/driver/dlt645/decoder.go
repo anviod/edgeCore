@@ -152,6 +152,10 @@ func BuildWriteFrame(meterAddr [AddrLen]byte, dataID [DataIDLen]byte, payload []
 }
 
 func buildFrame(meterAddr [AddrLen]byte, control byte, data []byte) []byte {
+	// DLT645 长度域为单字节：帧体超过 255 字节无法编码，返回 nil 由调用方拒绝发送
+	if len(data) > 255 {
+		return nil
+	}
 	length := byte(len(data))
 	frame := make([]byte, 0, 12+len(data))
 	frame = append(frame, FrameStart)

@@ -167,7 +167,7 @@ func (s *simulationStore) read(slot, subslot, index, length int) []byte {
 	if !ok || len(buf) <= index {
 		out := make([]byte, length)
 		for i := range out {
-			out[i] = byte((index + i) % 256)
+			out[i] = byte((index + i) & 0xFF)
 		}
 		return out
 	}
@@ -178,7 +178,7 @@ func (s *simulationStore) read(slot, subslot, index, length int) []byte {
 	out := make([]byte, length)
 	copy(out, buf[index:end])
 	for i := end - index; i < length; i++ {
-		out[i] = byte((index + i) % 256)
+		out[i] = byte((index + i) & 0xFF)
 	}
 	return out
 }

@@ -2,6 +2,7 @@ package dlt645
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 )
@@ -95,7 +96,14 @@ func parseTransportConfig(cfg map[string]any) transportConfig {
 	if tc.maxRetries <= 0 {
 		tc.maxRetries = getCfgInt(cfg, "max_retries", tc.maxRetries)
 	}
-	tc.maxFailCount = int32(getCfgInt(cfg, "max_fail_count", int(tc.maxFailCount)))
+	// 配置值为 int，饱和钳制到 int32 域防止计数器溢出
+	if mf := getCfgInt(cfg, "max_fail_count", int(tc.maxFailCount)); mf < math.MinInt32 {
+		tc.maxFailCount = math.MinInt32
+	} else if mf > math.MaxInt32 {
+		tc.maxFailCount = math.MaxInt32
+	} else {
+		tc.maxFailCount = int32(mf)
+	}
 	tc.preambleBytes = getCfgInt(cfg, "preambleBytes", tc.preambleBytes)
 
 	return tc

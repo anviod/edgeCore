@@ -187,7 +187,7 @@ func (d *BACnetDriver) applyDiscoveredDeviceLocked(deviceID int, configuredIP st
 			zap.Int("configured_port", configuredPort))
 		resolvedPort = configuredPort
 		if len(found.Addr.Mac) >= 6 {
-			found.Addr.Mac[4] = byte(configuredPort >> 8)
+			found.Addr.Mac[4] = byte((configuredPort >> 8) & 0xFF)
 			found.Addr.Mac[5] = byte(configuredPort & 0xFF)
 		}
 		found.Port = configuredPort

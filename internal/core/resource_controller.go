@@ -1,6 +1,7 @@
 package core
 
 import (
+	"math"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -22,6 +23,18 @@ type ResourceController struct {
 	stopCh          chan struct{}
 }
 
+// int32Limit 将配置的 int 上限饱和钳制到 int32 域，
+// 避免与 int32 原子计数器比较时溢出回绕（gosec G115）。
+func int32Limit(v int) int32 {
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	if v < 0 {
+		return 0
+	}
+	return int32(v)
+}
+
 func NewResourceController(limits ResourceLimits) *ResourceController {
 	return &ResourceController{
 		limits: limits,
@@ -30,11 +43,11 @@ func NewResourceController(limits ResourceLimits) *ResourceController {
 }
 
 func (rc *ResourceController) CanExecute() bool {
-	if atomic.LoadInt32(&rc.goroutineCount) >= int32(rc.limits.GoroutineLimit) {
+	if atomic.LoadInt32(&rc.goroutineCount) >= int32Limit(rc.limits.GoroutineLimit) {
 		return false
 	}
 
-	if atomic.LoadInt32(&rc.connectionCount) >= int32(rc.limits.ConnectionLimit) {
+	if atomic.LoadInt32(&rc.connectionCount) >= int32Limit(rc.limits.ConnectionLimit) {
 		return false
 	}
 
@@ -51,7 +64,7 @@ func (rc *ResourceController) Release() {
 
 func (rc *ResourceController) AcquireConnection() bool {
 	count := atomic.AddInt32(&rc.connectionCount, 1)
-	if count > int32(rc.limits.ConnectionLimit) {
+	if count > int32Limit(rc.limits.ConnectionLimit) {
 		atomic.AddInt32(&rc.connectionCount, -1)
 		return false
 	}
@@ -74,14 +87,14 @@ func (rc *ResourceController) Monitor(wg *sync.WaitGroup) {
 			goroutines := atomic.LoadInt32(&rc.goroutineCount)
 			connections := atomic.LoadInt32(&rc.connectionCount)
 
-			if goroutines > int32(rc.limits.GoroutineLimit)*9/10 {
+			if goroutines > int32Limit(rc.limits.GoroutineLimit)*9/10 {
 				zap.L().Warn("[Resource] goroutine接近上限",
 					zap.Int32("current", goroutines),
 					zap.Int("limit", rc.limits.GoroutineLimit),
 				)
 			}
 
-			if connections > int32(rc.limits.ConnectionLimit)*9/10 {
+			if connections > int32Limit(rc.limits.ConnectionLimit)*9/10 {
 				zap.L().Warn("[Resource] 连接数接近上限",
 					zap.Int32("current", connections),
 					zap.Int("limit", rc.limits.ConnectionLimit),

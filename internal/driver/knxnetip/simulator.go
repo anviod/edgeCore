@@ -239,7 +239,10 @@ func (s *Simulator) handleTunneling(body []byte) []byte {
 			data = []byte{0}
 		}
 
-		respCEMI := buildGroupValueResponseCEMI(parsed.Destination, s.knxAddr, data)
+		respCEMI, err := buildGroupValueResponseCEMI(parsed.Destination, s.knxAddr, data)
+		if err != nil {
+			return confirm
+		}
 		ind := buildTunnelingIndication(ch, s.nextSeq(), respCEMI)
 		return ind
 	}
@@ -259,8 +262,12 @@ func (s *Simulator) nextSeq() byte {
 	return s.seq
 }
 
-func buildGroupValueResponseCEMI(destGroup, srcAddr uint16, data []byte) []byte {
+func buildGroupValueResponseCEMI(destGroup, srcAddr uint16, data []byte) ([]byte, error) {
 	payloadLen := 1 + len(data)
+	// 同 protocol.go：CEMI 长度字节为 6 位域，超长拒绝编码
+	if payloadLen > 15 {
+		return nil, fmt.Errorf("group value response too large: %d bytes (max 14 data)", len(data))
+	}
 	cemi := make([]byte, 9+payloadLen)
 	cemi[0] = cemiLDataInd
 	cemi[1] = 0
@@ -271,7 +278,7 @@ func buildGroupValueResponseCEMI(destGroup, srcAddr uint16, data []byte) []byte 
 	cemi[8] = byte(payloadLen)
 	cemi[9] = apciGroupValueResp
 	copy(cemi[10:], data)
-	return cemi
+	return cemi, nil
 }
 
 func binaryBigEndianPutUint16(b []byte, v uint16) {

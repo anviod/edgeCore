@@ -569,6 +569,10 @@ func toUint64(v interface{}) uint64 {
 
 // writeClass2Attribute 使用现有的连接进行 Class 2 属性写入
 func (s *ENIPScheduler) writeClass2Attribute(tcp *ENIPClient, attrID int, data []byte) error {
+	// 路径段 0x30 为 8 位属性 ID 编码，超出 [0,255] 会静默截断写错属性
+	if attrID < 0 || attrID > 255 {
+		return fmt.Errorf("attribute ID %d out of range for 8-bit path encoding", attrID)
+	}
 	pathData := []byte{
 		0x20, 0x02, // Class ID: Class 2
 		0x24, 0x01, // Instance ID: Instance 1
@@ -614,6 +618,10 @@ func (s *ENIPScheduler) writeClass2Attribute(tcp *ENIPClient, attrID int, data [
 
 // readClass2Attribute 使用现有的连接进行 Class 2 属性读取
 func (s *ENIPScheduler) readClass2Attribute(tcp *ENIPClient, attrID int) ([]byte, error) {
+	// 路径段 0x30 为 8 位属性 ID 编码，超出 [0,255] 会静默截断读错属性
+	if attrID < 0 || attrID > 255 {
+		return nil, fmt.Errorf("attribute ID %d out of range for 8-bit path encoding", attrID)
+	}
 	pathData := []byte{
 		0x20, 0x02, // Class ID: Class 2
 		0x24, 0x01, // Instance ID: Instance 1

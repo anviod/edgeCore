@@ -188,6 +188,10 @@ func (t *ICE104Transport) sendIFrame(ctx context.Context, asdu []byte) error {
 	binary.LittleEndian.PutUint16(ctrl[2:4], uint16(recv<<1))
 
 	apduLen := 4 + len(asdu)
+	// IEC 60870-5-104 长度域为单字节（标准上限 253），超长帧无法编码
+	if apduLen > 255 {
+		return fmt.Errorf("APDU too large: %d bytes (max 255)", apduLen)
+	}
 	frame := make([]byte, 0, apduLen+2)
 	frame = append(frame, startByte, byte(apduLen))
 	frame = append(frame, ctrl...)

@@ -229,7 +229,12 @@ func buildGroupValueReadCEMI(destGroup uint16, srcAddr uint16) []byte {
 	return cemi
 }
 
-func buildGroupValueWriteCEMI(destGroup uint16, srcAddr uint16, data []byte) []byte {
+func buildGroupValueWriteCEMI(destGroup uint16, srcAddr uint16, data []byte) ([]byte, error) {
+	// CEMI 数据长度字节为 6 位域（cemi[8] = 1+len(data)，KNX 单帧数据 ≤14 字节），
+	// 超长会导致长度字节回绕、帧被对端错误解析
+	if len(data) > 14 {
+		return nil, fmt.Errorf("group value payload too large: %d bytes (max 14)", len(data))
+	}
 	cemi := make([]byte, 10+len(data))
 	cemi[0] = cemiLDataReq
 	cemi[1] = 0
@@ -240,7 +245,7 @@ func buildGroupValueWriteCEMI(destGroup uint16, srcAddr uint16, data []byte) []b
 	cemi[8] = byte(1 + len(data))
 	cemi[9] = apciGroupValueWrite
 	copy(cemi[10:], data)
-	return cemi
+	return cemi, nil
 }
 
 type cemiData struct {

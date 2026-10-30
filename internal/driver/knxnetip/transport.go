@@ -313,7 +313,10 @@ func (t *KNXTransport) ReadGroup(ctx context.Context, group uint16) ([]byte, err
 }
 
 func (t *KNXTransport) WriteGroup(ctx context.Context, group uint16, payload []byte) error {
-	cemi := buildGroupValueWriteCEMI(group, t.srcAddr, payload)
+	cemi, err := buildGroupValueWriteCEMI(group, t.srcAddr, payload)
+	if err != nil {
+		return err
+	}
 	seq := byte(t.nextSeq())
 	req := buildTunnelingRequest(byte(t.channelID.Load()), seq, cemi)
 	respFrame, err := t.transact(ctx, req)

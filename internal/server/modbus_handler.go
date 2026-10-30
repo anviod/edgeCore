@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/anviod/edgeCore/internal/core"
@@ -134,6 +135,10 @@ func parseGenerateRegistersRequest(body []byte) (generateRegistersRequest, error
 	}
 	if req.FunctionCode == 0 {
 		if n, ok := readInt("function_code", "functionCode"); ok {
+			// Modbus 功能码为单字节域，超范围拒绝请求而非静默截断
+			if n < 0 || n > 255 {
+				return req, fmt.Errorf("function_code %d out of range [0, 255]", n)
+			}
 			req.FunctionCode = byte(n)
 		}
 	}
@@ -239,6 +244,10 @@ func parseBatchModbusSlavesRequest(body []byte) (batchModbusSlavesRequest, error
 	}
 	if req.FunctionCode == 0 {
 		if n, ok := readInt("function_code", "functionCode"); ok {
+			// Modbus 功能码为单字节域，超范围拒绝请求而非静默截断
+			if n < 0 || n > 255 {
+				return req, fmt.Errorf("function_code %d out of range [0, 255]", n)
+			}
 			req.FunctionCode = byte(n)
 		}
 	}

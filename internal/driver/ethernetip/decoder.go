@@ -126,9 +126,18 @@ func (d *ENIPDecoder) EncodeValue(value interface{}, dataType string) ([]byte, e
 		case int8:
 			return []byte{byte(v)}, nil
 		case int:
-			return []byte{byte(v)}, nil
+			// CIP SINT 为 8 位有符号：域校验后负数按补码位模式编码
+			if v < math.MinInt8 || v > math.MaxInt8 {
+				return nil, fmt.Errorf("value %d out of range for SINT", v)
+			}
+			// #nosec G115 -- 已域校验，int8 负数为补码位模式重解释
+			return []byte{uint8(int8(v))}, nil
 		case float64:
-			return []byte{byte(int(v))}, nil
+			if v != v || v < math.MinInt8 || v > math.MaxInt8 {
+				return nil, fmt.Errorf("value %v out of range for SINT", v)
+			}
+			// #nosec G115 -- 同上
+			return []byte{uint8(int8(int(v)))}, nil
 		default:
 			return nil, fmt.Errorf("unsupported data type for encoding: %T", value)
 		}
@@ -212,10 +221,19 @@ func (d *ENIPDecoder) EncodeValue(value interface{}, dataType string) ([]byte, e
 		case uint8:
 			return []byte{v}, nil
 		case uint:
+			if uint64(v) > math.MaxUint8 {
+				return nil, fmt.Errorf("value %d out of range for USINT", v)
+			}
 			return []byte{uint8(v)}, nil
 		case int:
+			if v < 0 || v > math.MaxUint8 {
+				return nil, fmt.Errorf("value %d out of range for USINT", v)
+			}
 			return []byte{uint8(v)}, nil
 		case float64:
+			if v != v || v < 0 || v > math.MaxUint8 {
+				return nil, fmt.Errorf("value %v out of range for USINT", v)
+			}
 			return []byte{uint8(v)}, nil
 		default:
 			return nil, fmt.Errorf("unsupported data type for encoding: %T", value)

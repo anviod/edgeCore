@@ -262,6 +262,9 @@ func (t *DLT645Transport) waitSendInterval() {
 // ReadData sends a read request and returns the response value bytes (without DI prefix).
 func (t *DLT645Transport) ReadData(ctx context.Context, meterAddr [AddrLen]byte, dataID [DataIDLen]byte) ([]byte, error) {
 	frame := BuildReadFrame(meterAddr, dataID)
+	if frame == nil {
+		return nil, fmt.Errorf("read frame too large (data length > 255)")
+	}
 	resp, err := t.transact(ctx, frame)
 	if err != nil {
 		return nil, err
@@ -277,6 +280,9 @@ func (t *DLT645Transport) ReadData(ctx context.Context, meterAddr [AddrLen]byte,
 // WriteData sends a write request with encoded payload (password + data per meter spec).
 func (t *DLT645Transport) WriteData(ctx context.Context, meterAddr [AddrLen]byte, dataID [DataIDLen]byte, payload []byte) error {
 	frame := BuildWriteFrame(meterAddr, dataID, payload)
+	if frame == nil {
+		return fmt.Errorf("write frame too large (data length > 255)")
+	}
 	resp, err := t.transact(ctx, frame)
 	if err != nil {
 		return err

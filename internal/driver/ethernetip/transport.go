@@ -3,6 +3,7 @@ package ethernetip
 import (
 	"context"
 	"fmt"
+	"math"
 	"net"
 	"reflect"
 	"sync"
@@ -14,6 +15,17 @@ import (
 	go_ethernet_ip "github.com/anviod/ethernet-ip"
 	"go.uber.org/zap"
 )
+
+// clampInt32 将配置值饱和钳制到 int32 可表示范围（gosec G115 防御性收窄）。
+func clampInt32(v float64) int32 {
+	if v != v || v < math.MinInt32 {
+		return math.MinInt32
+	}
+	if v > math.MaxInt32 {
+		return math.MaxInt32
+	}
+	return int32(v)
+}
 
 type ENIPClient = go_ethernet_ip.EIPTCP
 
@@ -108,10 +120,11 @@ func (t *ENIPTransport) parseConfig() {
 		t.maxRetries = v
 	}
 
+	// 配置值为 int，饱和钳制到 int32 域防止计数器溢出
 	if v, ok := t.cfg["max_fail_count"].(float64); ok {
-		t.maxFailCount = int32(v)
+		t.maxFailCount = clampInt32(v)
 	} else if v, ok := t.cfg["max_fail_count"].(int); ok {
-		t.maxFailCount = int32(v)
+		t.maxFailCount = clampInt32(float64(v))
 	}
 
 	if v, ok := t.cfg["collect_cycle"].(float64); ok {
