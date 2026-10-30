@@ -20,7 +20,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           # --new-from-rev 需要基线 ref 的完整提交历史
           fetch-depth: 0
@@ -51,7 +51,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: actions/setup-go@v7
@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Set up Go
         uses: actions/setup-go@v7
