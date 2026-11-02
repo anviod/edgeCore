@@ -24,7 +24,6 @@ const dataComponentStub = {
     'update:selectedKeys',
     'update:activeKey',
     'page-change',
-    'page-size-change',
   ],
   template: '<div v-bind="$attrs"><slot /><slot name="title" /></div>',
 }
@@ -114,7 +113,7 @@ describe('ModbusSlavePointView', () => {
     expect(wrapper.getComponent('[data-testid="modbus-point-table"]').props('data').map((p) => p.id)).toEqual(['ir1'])
   })
 
-  it('keeps independent pagination, resets current on filterKey, and clamps on structure shrink', async () => {
+  it('keeps independent page cursors, resets on filterKey/pageSize, and clamps on structure shrink', async () => {
     const makeGroup = (prefix, registerType, count) =>
       Array.from({ length: count }, (_, i) => point(`${prefix}-${i}`, registerType, i))
 
@@ -126,56 +125,57 @@ describe('ModbusSlavePointView', () => {
     ]
     let points = allPoints
 
-    const wrapper = mountView({ allPoints, points, filterKey: '["",[]]' })
+    const wrapper = mountView({ allPoints, points, filterKey: '["",[]]', pageSize: 20 })
 
     const table = () => wrapper.getComponent('[data-testid="modbus-point-table"]')
 
+    // 页大小由父级“每页”选择器统一控制，组件内不再提供条数切换器
     expect(table().props('pagination')).toMatchObject({
       current: 1,
-      pageSize: 10,
-      pageSizeOptions: [10, 20, 50, 100],
-      showPageSize: true,
+      pageSize: 20,
+      showPageSize: false,
       showTotal: true,
     })
 
     await table().vm.$emit('page-change', 2)
-    await table().vm.$emit('page-size-change', 20)
-    await wrapper.vm.$nextTick()
-
-    expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 20 })
-    await table().vm.$emit('page-change', 2)
     await wrapper.vm.$nextTick()
     expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 20 })
 
+    // 各分组页码独立：holding 首次进入从第 1 页开始
     await wrapper.getComponent('[data-testid="modbus-tabs"]').vm.$emit('update:activeKey', 'holding')
     await wrapper.vm.$nextTick()
+    expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 20 })
 
     await table().vm.$emit('page-change', 3)
-    await table().vm.$emit('page-size-change', 10)
     await wrapper.vm.$nextTick()
-    expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 10 })
-    await table().vm.$emit('page-change', 3)
-    await wrapper.vm.$nextTick()
-    expect(table().props('pagination')).toMatchObject({ current: 3, pageSize: 10 })
+    expect(table().props('pagination')).toMatchObject({ current: 3, pageSize: 20 })
 
+    // 切回 coil：保留其第 2 页
     await wrapper.getComponent('[data-testid="modbus-tabs"]').vm.$emit('update:activeKey', 'coil')
     await wrapper.vm.$nextTick()
     expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 20 })
 
-    await wrapper.setProps({ filterKey: '["temp",[]]' })
-    await wrapper.vm.$nextTick()
-    expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 20 })
-
-    await wrapper.getComponent('[data-testid="modbus-tabs"]').vm.$emit('update:activeKey', 'holding')
+    // 父级调整页大小：所有分组页码收敛到第 1 页
+    await wrapper.setProps({ pageSize: 10 })
     await wrapper.vm.$nextTick()
     expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 10 })
 
-    await wrapper.setProps({ filterKey: '["",[]]' })
+    await table().vm.$emit('page-change', 3)
+    await wrapper.vm.$nextTick()
+    expect(table().props('pagination')).toMatchObject({ current: 3, pageSize: 10 })
+
+    // 筛选条件变化：所有分组页码重置到第 1 页
+    await wrapper.setProps({ filterKey: '["temp",[]]' })
+    await wrapper.vm.$nextTick()
+    expect(table().props('pagination')).toMatchObject({ current: 1, pageSize: 10 })
+
+    await wrapper.getComponent('[data-testid="modbus-tabs"]').vm.$emit('update:activeKey', 'holding')
     await wrapper.vm.$nextTick()
     await table().vm.$emit('page-change', 3)
     await wrapper.vm.$nextTick()
     expect(table().props('pagination')).toMatchObject({ current: 3, pageSize: 10 })
 
+    // 结构收缩：holding 25 → 12，页大小 10 时最多 2 页，当前页收敛到 2
     allPoints = [
       ...makeGroup('c', 'coil', 25),
       ...makeGroup('di', 'discrete_input', 25),
@@ -187,7 +187,7 @@ describe('ModbusSlavePointView', () => {
     await wrapper.vm.$nextTick()
     expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 10 })
 
-    // 缩减为 0：空态无表；恢复到 25 条后应仍为第 1 页（证明曾收敛到 1，而非停留在 2）
+    // 缩减为 0：空态无表；页码收敛到 1
     allPoints = [
       ...makeGroup('c', 'coil', 25),
       ...makeGroup('di', 'discrete_input', 25),
@@ -198,6 +198,7 @@ describe('ModbusSlavePointView', () => {
     await wrapper.vm.$nextTick()
     expect(wrapper.find('[data-testid="modbus-point-table"]').exists()).toBe(false)
 
+    // 恢复到 25 条后应仍为第 1 页（证明曾收敛到 1，而非停留在 2）
     allPoints = [
       ...makeGroup('c', 'coil', 25),
       ...makeGroup('di', 'discrete_input', 25),
@@ -213,7 +214,7 @@ describe('ModbusSlavePointView', () => {
     await wrapper.vm.$nextTick()
     await table().vm.$emit('page-change', 2)
     await wrapper.vm.$nextTick()
-    expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 20 })
+    expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 10 })
 
     const valueUpdated = points.map((p) =>
       p.id.startsWith('c-')
@@ -222,7 +223,7 @@ describe('ModbusSlavePointView', () => {
     )
     await wrapper.setProps({ allPoints: valueUpdated, points: valueUpdated })
     await wrapper.vm.$nextTick()
-    expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 20 })
+    expect(table().props('pagination')).toMatchObject({ current: 2, pageSize: 10 })
   })
 
   it('merges selection across tabs, pages, and filters from global selectedIds', async () => {
@@ -364,7 +365,7 @@ describe('ModbusSlavePointView', () => {
     expect(wrapper.html()).not.toMatch(/outline\s*:\s*none/i)
 
     const table = wrapper.getComponent('[data-testid="modbus-point-table"]')
-    expect(table.props('scroll')).toEqual({ x: 1126 })
+    expect(table.props('scroll')).toEqual({ x: 1198 })
 
     const activeTab = wrapper.find('.arco-tabs-tab-active')
     expect(activeTab.exists()).toBe(true)
