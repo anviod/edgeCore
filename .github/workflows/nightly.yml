@@ -56,7 +56,7 @@ jobs:
           CGO_ENABLED=0 go test ./internal/integration/ -count=1 -timeout 30m -v 2>&1 | tee integration.log
 
       - name: Upload integration test logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: integration-logs
@@ -91,7 +91,7 @@ jobs:
           CGO_ENABLED=0 SOAK_DURATION=${SOAK_DURATION} go test ./internal/integration/ -run TestSoak -count=1 -timeout 80m -v 2>&1 | tee soak.log
 
       - name: Upload soak logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: soak-logs
@@ -133,7 +133,7 @@ jobs:
           cat bench-summary.txt
 
       - name: Upload benchmark logs
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: bench-logs
@@ -168,7 +168,7 @@ jobs:
           go tool cover -func=cover.out | tail -5
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: coverage
