@@ -462,7 +462,13 @@ func (d *BACnetDriver) enrichObjects(client bacnetlib.Client, dev btypes.Device,
 							} else if v, ok := prop.Data.(uint32); ok {
 								results[idx].Units = units.Unit(v).String()
 							} else if v, ok := prop.Data.(float64); ok {
-								results[idx].Units = units.Unit(int(v)).String()
+								n := int(v)
+								if n < 0 {
+									n = 0
+								} else if n > 65535 {
+									n = 65535
+								}
+								results[idx].Units = units.Unit(uint16(n)).String()
 							}
 						case btypes.PropPresentValue:
 							if deep {

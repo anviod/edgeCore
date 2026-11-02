@@ -82,7 +82,7 @@ func parseGroupAddress(s string) (uint16, error) {
 		if main < 0 || main > 31 || sub < 0 || sub > 2047 {
 			return 0, fmt.Errorf("group address out of range: %s", s)
 		}
-		return uint16((main&0x1F)<<11 | (sub & 0x7FF)), nil
+		return uint16(((main&0x1F)<<11 | (sub & 0x7FF)) & 0xFFFF), nil
 	case 3:
 		main, err := strconv.Atoi(fields[0])
 		if err != nil {
@@ -99,7 +99,7 @@ func parseGroupAddress(s string) (uint16, error) {
 		if main < 0 || main > 31 || middle < 0 || middle > 7 || sub < 0 || sub > 255 {
 			return 0, fmt.Errorf("group address out of range: %s", s)
 		}
-		return uint16((main&0x1F)<<11 | (middle&0x07)<<8 | (sub & 0xFF)), nil
+		return uint16(((main&0x1F)<<11 | (middle&0x07)<<8 | (sub & 0xFF)) & 0xFFFF), nil
 	default:
 		return 0, fmt.Errorf("invalid group address format: %s", s)
 	}
@@ -122,7 +122,7 @@ func parseIndividualAddress(s string) (uint16, error) {
 	if err != nil || device < 0 || device > 255 {
 		return 0, fmt.Errorf("invalid device in individual address: %s", s)
 	}
-	return uint16((area&0x0F)<<12 | (line&0x0F)<<8 | (device & 0xFF)), nil
+	return uint16(((area&0x0F)<<12 | (line&0x0F)<<8 | (device & 0xFF)) & 0xFFFF), nil
 }
 
 func formatGroupAddress(addr uint16) string {

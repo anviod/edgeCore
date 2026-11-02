@@ -423,6 +423,11 @@ func toInt8(v interface{}) int8 {
 	case float64:
 		return int8(val)
 	case int:
+		if val < -128 {
+			val = -128
+		} else if val > 127 {
+			val = 127
+		}
 		return int8(val)
 	case string:
 		n, _ := strconv.ParseInt(val, 10, 8)

@@ -536,6 +536,9 @@ func parseAddress(addr string) (btypes.ObjectType, uint32, btypes.PropertyType, 
 	// 1. Parse Object Type
 	var objType btypes.ObjectType
 	if val, err := strconv.Atoi(parts[0]); err == nil {
+		if val < 0 || val > 65535 {
+			return 0, 0, 0, fmt.Errorf("invalid object type: %s", parts[0])
+		}
 		objType = btypes.ObjectType(val)
 	} else {
 		objType = btypes.GetType(parts[0])

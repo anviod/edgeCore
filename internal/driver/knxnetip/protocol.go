@@ -50,7 +50,7 @@ func buildHeader(serviceType uint16, bodyLen int) []byte {
 	buf[0] = headerLen
 	buf[1] = 0x10
 	binary.BigEndian.PutUint16(buf[2:4], serviceType)
-	binary.BigEndian.PutUint16(buf[4:6], uint16(total))
+	binary.BigEndian.PutUint16(buf[4:6], uint16(total&0xFFFF))
 	return buf
 }
 

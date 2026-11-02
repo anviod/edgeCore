@@ -63,7 +63,7 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 		if f, ok := v.(float64); ok {
 			batchSize = uint16(f)
 		} else if i, ok := v.(int); ok {
-			batchSize = uint16(i)
+			batchSize = uint16(i & 0xFFFF)
 		}
 	}
 
@@ -80,14 +80,14 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 	if v, ok := config.Config["start_address"]; ok {
 		switch val := v.(type) {
 		case int:
-			addressBase = uint16(val)
+			addressBase = uint16(val & 0xFFFF)
 		case float64:
 			addressBase = uint16(val)
 		}
 	} else if v, ok := config.Config["address_base"]; ok {
 		switch val := v.(type) {
 		case int:
-			addressBase = uint16(val)
+			addressBase = uint16(val & 0xFFFF)
 		case float64:
 			addressBase = uint16(val)
 		}
@@ -271,14 +271,14 @@ func (d *ModbusDriver) SetDeviceConfig(config map[string]any) error {
 	if v, ok := config["start_address"]; ok {
 		switch val := v.(type) {
 		case int:
-			addressBase = uint16(val)
+			addressBase = uint16(val & 0xFFFF)
 		case float64:
 			addressBase = uint16(val)
 		}
 	} else if v, ok := config["address_base"]; ok {
 		switch val := v.(type) {
 		case int:
-			addressBase = uint16(val)
+			addressBase = uint16(val & 0xFFFF)
 		case float64:
 			addressBase = uint16(val)
 		}
@@ -286,14 +286,14 @@ func (d *ModbusDriver) SetDeviceConfig(config map[string]any) error {
 		if v, ok := d.config.Config["start_address"]; ok {
 			switch val := v.(type) {
 			case int:
-				addressBase = uint16(val)
+				addressBase = uint16(val & 0xFFFF)
 			case float64:
 				addressBase = uint16(val)
 			}
 		} else if v, ok := d.config.Config["address_base"]; ok {
 			switch val := v.(type) {
 			case int:
-				addressBase = uint16(val)
+				addressBase = uint16(val & 0xFFFF)
 			case float64:
 				addressBase = uint16(val)
 			}

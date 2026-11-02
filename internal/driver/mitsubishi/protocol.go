@@ -38,7 +38,7 @@ func buildReadFrame(cfg frameConfig, addr *MCAddress, byteLen int, isBit bool) [
 	frame[4] = 0xFF
 	frame[5] = 0x03
 	frame[6] = byte(cfg.stationNo & 0xFF)
-	binary.LittleEndian.PutUint16(frame[7:9], uint16(dataLen))
+	binary.LittleEndian.PutUint16(frame[7:9], uint16(dataLen&0xFFFF))
 	binary.LittleEndian.PutUint16(frame[9:11], 0x000A) // 2.5s monitoring timer
 	binary.LittleEndian.PutUint16(frame[11:13], cmdBatchReadWord)
 	if isBit {
@@ -49,7 +49,7 @@ func buildReadFrame(cfg frameConfig, addr *MCAddress, byteLen int, isBit bool) [
 
 	offset := addr.readOffset()
 	putDeviceAddress(frame[15:19], offset, addr.DeviceCode)
-	binary.LittleEndian.PutUint16(frame[19:21], uint16(pointCount))
+	binary.LittleEndian.PutUint16(frame[19:21], uint16(pointCount&0xFFFF))
 	return frame
 }
 
@@ -68,7 +68,7 @@ func buildWriteFrame(cfg frameConfig, addr *MCAddress, data []byte, isBit bool) 
 	frame[4] = 0xFF
 	frame[5] = 0x03
 	frame[6] = byte(cfg.stationNo & 0xFF)
-	binary.LittleEndian.PutUint16(frame[7:9], uint16(dataLen))
+	binary.LittleEndian.PutUint16(frame[7:9], uint16(dataLen&0xFFFF))
 	binary.LittleEndian.PutUint16(frame[9:11], 0x000A)
 	binary.LittleEndian.PutUint16(frame[11:13], cmdBatchWriteWord)
 	if isBit {
@@ -79,7 +79,7 @@ func buildWriteFrame(cfg frameConfig, addr *MCAddress, data []byte, isBit bool) 
 
 	offset := addr.readOffset()
 	putDeviceAddress(frame[15:19], offset, addr.DeviceCode)
-	binary.LittleEndian.PutUint16(frame[19:21], uint16(pointCount))
+	binary.LittleEndian.PutUint16(frame[19:21], uint16(pointCount&0xFFFF))
 	copy(frame[21:], data)
 	return frame
 }

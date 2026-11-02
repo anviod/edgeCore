@@ -417,7 +417,11 @@ func (s *ENIPScheduler) WritePoint(ctx context.Context, p model.Point, value int
 	// 获取连接配置
 	var cfg *go_ethernet_ip.Config
 	if s.transport.port != 0 {
-		cfg = &go_ethernet_ip.Config{TCPPort: uint16(s.transport.port)}
+		port := s.transport.port
+		if port < 0 || port > 65535 {
+			return fmt.Errorf("invalid TCP port: %d", port)
+		}
+		cfg = &go_ethernet_ip.Config{TCPPort: uint16(port)}
 	}
 	conn, err := go_ethernet_ip.NewTCP(s.transport.ip, cfg)
 	if err != nil {

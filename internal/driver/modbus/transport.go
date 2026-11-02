@@ -161,6 +161,11 @@ func NewModbusTransport(cfg model.DriverConfig) *ModbusTransport {
 		if f, ok := v.(float64); ok {
 			maxFailCount = int32(f)
 		} else if i, ok := v.(int); ok {
+			if i < 0 {
+				i = 0
+			} else if i > 2147483647 {
+				i = 2147483647
+			}
 			maxFailCount = int32(i)
 		}
 	}

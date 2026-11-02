@@ -122,6 +122,6 @@ func localHPAIFromConn(conn *net.UDPConn, protocol byte) hpai {
 	}
 	var port int
 	fmt.Sscanf(portStr, "%d", &port)
-	h.port = uint16(port)
+	h.port = uint16(port & 0xFFFF)
 	return h
 }

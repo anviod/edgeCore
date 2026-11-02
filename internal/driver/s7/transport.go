@@ -67,7 +67,7 @@ var plcDefaults = map[string]struct {
 	Rack         int
 	Slot         int
 	ConnType     int
-	MaxFailCount int
+	MaxFailCount int32
 	DefaultCycle time.Duration
 }{
 	"s7-200smart": {Rack: 0, Slot: 1, ConnType: ConnTypeS7Basic, MaxFailCount: 3, DefaultCycle: 60 * time.Second},
@@ -199,7 +199,7 @@ func (t *S7Transport) parseConfig() {
 				t.connType = defaults.ConnType
 			}
 			if _, exists := t.cfg["max_fail_count"]; !exists {
-				t.maxFailCount = int32(defaults.MaxFailCount)
+				t.maxFailCount = defaults.MaxFailCount
 			}
 			if _, exists := t.cfg["collect_cycle"]; !exists {
 				t.collectCycle = defaults.DefaultCycle
@@ -245,7 +245,13 @@ func (t *S7Transport) parseConfig() {
 	t.pduSize = getCfgInt(t.cfg, "pdu_size", 4096)
 
 	// Max fail count (基于采集失败的连接健康检测)
-	t.maxFailCount = int32(getCfgInt(t.cfg, "max_fail_count", int(t.maxFailCount)))
+	maxFailCount := getCfgInt(t.cfg, "max_fail_count", int(t.maxFailCount))
+	if maxFailCount < 0 {
+		maxFailCount = 0
+	} else if maxFailCount > 2147483647 {
+		maxFailCount = 2147483647
+	}
+	t.maxFailCount = int32(maxFailCount)
 
 	// Collect cycle
 	if v, ok := t.cfg["collect_cycle"]; ok {

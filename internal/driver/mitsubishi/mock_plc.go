@@ -141,7 +141,7 @@ func (m *MockPLC) buildReadResponse(req []byte, device string, offset, count int
 	resp[0] = 0xD0
 	resp[1] = 0x00
 	copy(resp[2:7], req[2:7])
-	binary.LittleEndian.PutUint16(resp[7:9], uint16(respDataLen))
+	binary.LittleEndian.PutUint16(resp[7:9], uint16(respDataLen&0xFFFF))
 	binary.LittleEndian.PutUint16(resp[9:11], endCodeOK)
 	copy(resp[11:], payload)
 	return resp

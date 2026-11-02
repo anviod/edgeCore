@@ -45,7 +45,13 @@ func parseDeviceConfig(raw map[string]any) deviceConfig {
 		cfg.IP = v
 	}
 	cfg.Port = intFromAny(raw["port"], cfg.Port)
-	cfg.CommonAddress = uint16(intFromAny(raw["commonAddress"], int(cfg.CommonAddress)))
+	commonAddress := intFromAny(raw["commonAddress"], int(cfg.CommonAddress))
+	if commonAddress < 0 {
+		commonAddress = 0
+	} else if commonAddress > 65535 {
+		commonAddress = 65535
+	}
+	cfg.CommonAddress = uint16(commonAddress)
 	cfg.GeneralCallInterval = secondsFromAny(raw["generalCallInterval"], cfg.GeneralCallInterval)
 	cfg.ClockSyncInterval = secondsFromAny(raw["clockSyncInterval"], cfg.ClockSyncInterval)
 	cfg.PulseInterval = secondsFromAny(raw["pulseInterval"], cfg.PulseInterval)
