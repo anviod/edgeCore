@@ -46,6 +46,7 @@ func boltLockTimeoutHint(dbPath string) string {
 
 // boltDBLockHolders reports PIDs from lsof when the DB file is open elsewhere (Unix).
 func boltDBLockHolders(dbPath string) string {
+	// #nosec G204 -- 可执行文件固定为 lsof，dbPath 作为独立参数传入，不经 shell
 	cmd := exec.Command("lsof", "-t", dbPath)
 	out, err := cmd.Output()
 	if err != nil || len(bytes.TrimSpace(out)) == 0 {

@@ -558,7 +558,7 @@ func parseAddress(addr string) (btypes.ObjectType, uint32, btypes.PropertyType, 
 	propID := btypes.PropPresentValue
 	if len(parts) > 2 {
 		if val, err := strconv.Atoi(parts[2]); err == nil {
-			propID = btypes.PropertyType(val)
+			propID = btypes.PropertyType(val & 0xFFFFFFFF)
 		} else {
 			p, err := btypes.Get(parts[2])
 			if err != nil {

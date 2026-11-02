@@ -117,7 +117,7 @@ func (t *SNMPTransport) GetBulk(baseOID string, community string, maxRepetitions
 	if !t.cfg.isV3() && community != "" {
 		t.client.Community = community
 	}
-	result, err := t.client.GetBulk([]string{baseOID}, 0, uint32(maxRepetitions))
+	result, err := t.client.GetBulk([]string{baseOID}, 0, uint32(maxRepetitions&0xFFFFFFFF))
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (t *SNMPTransport) Set(oid string, value interface{}, asnType gosnmp.Asn1BE
 func (t *SNMPTransport) buildClient() (*gosnmp.GoSNMP, error) {
 	client := &gosnmp.GoSNMP{
 		Target:    t.cfg.TargetIP,
-		Port:      uint16(t.cfg.TargetPort),
+		Port:      uint16(t.cfg.TargetPort & 0xFFFF),
 		Timeout:   t.cfg.Timeout,
 		Retries:   t.cfg.Retries,
 		MaxOids:   gosnmp.MaxOids,

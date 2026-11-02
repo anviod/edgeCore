@@ -283,5 +283,5 @@ func buildGroupValueResponseCEMI(destGroup, srcAddr uint16, data []byte) ([]byte
 
 func binaryBigEndianPutUint16(b []byte, v uint16) {
 	b[0] = byte(v >> 8)
-	b[1] = byte(v)
+	b[1] = byte(v & 0xFF)
 }

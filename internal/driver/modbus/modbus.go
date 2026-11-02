@@ -47,7 +47,7 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 	if v, ok := config.Config["slave_id"]; ok {
 		switch val := v.(type) {
 		case int:
-			d.slaveID = uint8(val)
+			d.slaveID = uint8(val & 0xFF)
 		case float64:
 			d.slaveID = uint8(val)
 		}
@@ -131,8 +131,9 @@ func (d *ModbusDriver) Init(config model.DriverConfig) error {
 	return nil
 }
 
-func (d *ModbusDriver) performMTUProbe() {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+func (d *ModbusDriver) performMTUProbe(parent context.Context) {
+	// 探测脱离调用方取消信号：Connect 返回后请求级 ctx 可能立即取消，探测失败仅回落默认值
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), 5*time.Second)
 	defer cancel()
 
 	if mtu, err := d.transport.DetectMTU(ctx); err == nil {
@@ -164,7 +165,7 @@ func (d *ModbusDriver) Connect(ctx context.Context) error {
 	// Probe only after the transport is connected. Starting this from Init
 	// races with configuration/scheduler setup and can probe test hooks before
 	// the caller has finished wiring the driver.
-	go d.performMTUProbe()
+	go d.performMTUProbe(ctx)
 	return nil
 }
 
@@ -260,7 +261,7 @@ func (d *ModbusDriver) SetDeviceConfig(config map[string]any) error {
 	if v, ok := config["slave_id"]; ok {
 		switch val := v.(type) {
 		case int:
-			d.slaveID = uint8(val)
+			d.slaveID = uint8(val & 0xFF)
 		case float64:
 			d.slaveID = uint8(val)
 		}
@@ -320,7 +321,7 @@ func (d *ModbusDriver) SetDeviceConfig(config map[string]any) error {
 	if v, ok := config["batchSize"]; ok {
 		switch val := v.(type) {
 		case int:
-			batchSize = uint16(val)
+			batchSize = uint16(val & 0xFFFF)
 		case float64:
 			batchSize = uint16(val)
 		}
@@ -340,7 +341,7 @@ func applySchedulerIOConfig(scheduler *PointScheduler, config map[string]any) {
 	if v, ok := config["max_gap"]; ok {
 		switch val := v.(type) {
 		case int:
-			scheduler.SetGroupThreshold(uint16(val))
+			scheduler.SetGroupThreshold(uint16(val & 0xFFFF))
 		case float64:
 			scheduler.SetGroupThreshold(uint16(val))
 		}
@@ -348,7 +349,7 @@ func applySchedulerIOConfig(scheduler *PointScheduler, config map[string]any) {
 	if v, ok := config["group_threshold"]; ok {
 		switch val := v.(type) {
 		case int:
-			scheduler.SetGroupThreshold(uint16(val))
+			scheduler.SetGroupThreshold(uint16(val & 0xFFFF))
 		case float64:
 			scheduler.SetGroupThreshold(uint16(val))
 		}
@@ -356,7 +357,7 @@ func applySchedulerIOConfig(scheduler *PointScheduler, config map[string]any) {
 	if v, ok := config["batchSize"]; ok {
 		switch val := v.(type) {
 		case int:
-			scheduler.SetMaxPacketSize(uint16(val))
+			scheduler.SetMaxPacketSize(uint16(val & 0xFFFF))
 		case float64:
 			scheduler.SetMaxPacketSize(uint16(val))
 		}

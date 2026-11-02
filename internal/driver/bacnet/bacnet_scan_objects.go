@@ -154,7 +154,7 @@ func (d *BACnetDriver) scanDeviceObjectsEx(client bacnetlib.Client, devID int, d
 		addr := datalink.IPPortToAddress(parsedIP, devPort)
 		dev = btypes.Device{
 			Addr:     *addr,
-			ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(devID)},
+			ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(devID & 0xFFFFFFFF)},
 			DeviceID: devID,
 			Ip:       devIP,
 			Port:     devPort,
@@ -458,9 +458,9 @@ func (d *BACnetDriver) enrichObjects(client bacnetlib.Client, dev btypes.Device,
 							}
 						case btypes.PropUnits:
 							if v, ok := prop.Data.(btypes.Enumerated); ok {
-								results[idx].Units = units.Unit(v).String()
+								results[idx].Units = units.Unit(uint16(v & 0xFFFF)).String()
 							} else if v, ok := prop.Data.(uint32); ok {
-								results[idx].Units = units.Unit(v).String()
+								results[idx].Units = units.Unit(uint16(v & 0xFFFF)).String()
 							} else if v, ok := prop.Data.(float64); ok {
 								n := int(v)
 								if n < 0 {
@@ -503,7 +503,7 @@ func (d *BACnetDriver) scanObjectsViaPropList(client bacnetlib.Client, dev btype
 		Object: btypes.Object{
 			ID: btypes.ObjectID{
 				Type:     btypes.DeviceType,
-				Instance: btypes.ObjectInstance(devID),
+				Instance: btypes.ObjectInstance(devID & 0xFFFFFFFF),
 			},
 			Properties: []btypes.Property{
 				{Type: btypes.PropObjectList, ArrayIndex: btypes.ArrayAll},

@@ -51,7 +51,7 @@ func resolveTypeID(group, dataType string) byte {
 }
 
 func encodeIOA(ioa uint32) []byte {
-	return []byte{byte(ioa), byte(ioa >> 8), byte(ioa >> 16)}
+	return []byte{byte(ioa & 0xFF), byte((ioa >> 8) & 0xFF), byte((ioa >> 16) & 0xFF)}
 }
 
 func decodeIOA(b []byte) uint32 {

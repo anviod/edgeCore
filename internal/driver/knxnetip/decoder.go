@@ -34,6 +34,7 @@ func DecodeValue(data []byte, dataType string, addr *ParsedAddress, scale, offse
 		}
 		return (data[0] & 0x01) != 0, nil
 	case "INT8":
+		// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 		v := int8(data[0])
 		return applyScale(float64(v), scale, offset), nil
 	case "UINT8":
@@ -43,6 +44,7 @@ func DecodeValue(data []byte, dataType string, addr *ParsedAddress, scale, offse
 		if len(data) < 2 {
 			return nil, fmt.Errorf("need 2 bytes for INT16")
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		v := int16(binary.BigEndian.Uint16(data[:2]))
 		return applyScale(float64(v), scale, offset), nil
 	case "UINT16":
@@ -55,6 +57,7 @@ func DecodeValue(data []byte, dataType string, addr *ParsedAddress, scale, offse
 		if len(data) < 4 {
 			return nil, fmt.Errorf("need 4 bytes for INT32")
 		}
+		// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 		v := int32(binary.BigEndian.Uint32(data[:4]))
 		return applyScale(float64(v), scale, offset), nil
 	case "UINT32":
@@ -101,14 +104,14 @@ func EncodeValue(value any, dataType string, addr *ParsedAddress) ([]byte, error
 		if err != nil {
 			return nil, err
 		}
-		return []byte{byte(n)}, nil
+		return []byte{byte(n & 0xFF)}, nil
 	case "INT16", "UINT16":
 		n, err := toInt64(value)
 		if err != nil {
 			return nil, err
 		}
 		buf := make([]byte, 2)
-		binary.BigEndian.PutUint16(buf, uint16(n))
+		binary.BigEndian.PutUint16(buf, uint16(n&0xFFFF))
 		return buf, nil
 	case "INT32", "UINT32":
 		n, err := toInt64(value)
@@ -116,7 +119,7 @@ func EncodeValue(value any, dataType string, addr *ParsedAddress) ([]byte, error
 			return nil, err
 		}
 		buf := make([]byte, 4)
-		binary.BigEndian.PutUint32(buf, uint32(n))
+		binary.BigEndian.PutUint32(buf, uint32(n&0xFFFFFFFF))
 		return buf, nil
 	case "FLOAT":
 		f, err := toFloat64(value)

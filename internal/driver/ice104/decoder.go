@@ -112,6 +112,7 @@ func decodeObjectBody(typeID byte, payload []byte) (value any, quality string, s
 		if len(payload) < 3 {
 			return nil, quality, 0, fmt.Errorf("short M_ME_NA payload")
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		raw := int16(binary.LittleEndian.Uint16(payload[:2]))
 		value = float64(raw) / 32768.0
 		if payload[2]&0x80 != 0 {
@@ -122,6 +123,7 @@ func decodeObjectBody(typeID byte, payload []byte) (value any, quality string, s
 		if len(payload) < 3 {
 			return nil, quality, 0, fmt.Errorf("short M_ME_NB payload")
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		value = int16(binary.LittleEndian.Uint16(payload[:2]))
 		if payload[2]&0x80 != 0 {
 			quality = "Bad"

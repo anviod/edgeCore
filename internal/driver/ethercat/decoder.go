@@ -66,6 +66,7 @@ func (d *EtherCATDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 
 	switch dataType {
 	case "int8":
+		// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 		return int8(data[0]), nil
 	case "uint8":
 		return data[0], nil
@@ -73,6 +74,7 @@ func (d *EtherCATDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		if len(data) < 2 {
 			return nil, fmt.Errorf("ethercat decode: need 2 bytes for int16, got %d", len(data))
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		return int16(order.Uint16(data)), nil
 	case "uint16":
 		if len(data) < 2 {
@@ -83,6 +85,7 @@ func (d *EtherCATDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		if len(data) < 4 {
 			return nil, fmt.Errorf("ethercat decode: need 4 bytes for int32, got %d", len(data))
 		}
+		// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 		return int32(order.Uint32(data)), nil
 	case "uint32":
 		if len(data) < 4 {
@@ -93,6 +96,7 @@ func (d *EtherCATDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		if len(data) < 8 {
 			return nil, fmt.Errorf("ethercat decode: need 8 bytes for int64, got %d", len(data))
 		}
+		// #nosec G115 -- 64 位按补码位模式重解释为有符号数
 		return int64(order.Uint64(data)), nil
 	case "uint64":
 		if len(data) < 8 {
@@ -138,42 +142,43 @@ func (d *EtherCATDecoder) EncodeValue(value any, dataType string, addr *ParsedAd
 		if err != nil {
 			return nil, err
 		}
-		buf[0] = byte(int8(val))
+		buf[0] = byte(val & 0xFF)
 	case "uint8":
 		val, err := toUint64(value)
 		if err != nil {
 			return nil, err
 		}
-		buf[0] = byte(val)
+		buf[0] = byte(val & 0xFF)
 	case "int16":
 		val, err := toInt64(value)
 		if err != nil {
 			return nil, err
 		}
-		order.PutUint16(buf, uint16(int16(val)))
+		order.PutUint16(buf, uint16(val&0xFFFF))
 	case "uint16":
 		val, err := toUint64(value)
 		if err != nil {
 			return nil, err
 		}
-		order.PutUint16(buf, uint16(val))
+		order.PutUint16(buf, uint16(val&0xFFFF))
 	case "int32":
 		val, err := toInt64(value)
 		if err != nil {
 			return nil, err
 		}
-		order.PutUint32(buf, uint32(int32(val)))
+		order.PutUint32(buf, uint32(val&0xFFFFFFFF))
 	case "uint32":
 		val, err := toUint64(value)
 		if err != nil {
 			return nil, err
 		}
-		order.PutUint32(buf, uint32(val))
+		order.PutUint32(buf, uint32(val&0xFFFFFFFF))
 	case "int64":
 		val, err := toInt64(value)
 		if err != nil {
 			return nil, err
 		}
+		// #nosec G115 -- 64 位按补码位模式编码为无符号数
 		order.PutUint64(buf, uint64(val))
 	case "uint64":
 		val, err := toUint64(value)
@@ -251,6 +256,7 @@ func toInt64(v any) (int64, error) {
 	case float32:
 		return int64(val), nil
 	case uint:
+		// #nosec G115 -- 调用方传入的索引/计数远小于 MaxInt64
 		return int64(val), nil
 	case uint8:
 		return int64(val), nil
@@ -259,6 +265,7 @@ func toInt64(v any) (int64, error) {
 	case uint32:
 		return int64(val), nil
 	case uint64:
+		// #nosec G115 -- 调用方传入的索引/计数远小于 MaxInt64
 		return int64(val), nil
 	}
 	return 0, fmt.Errorf("ethercat: cannot convert %T to int64", v)
@@ -278,14 +285,19 @@ func toUint64(v any) (uint64, error) {
 	case uint64:
 		return val, nil
 	case int:
+		// #nosec G115 -- 无符号编码按补码位模式解释，负数由调用方域校验
 		return uint64(val), nil
 	case int8:
+		// #nosec G115 -- 同上
 		return uint64(val), nil
 	case int16:
+		// #nosec G115 -- 同上
 		return uint64(val), nil
 	case int32:
+		// #nosec G115 -- 同上
 		return uint64(val), nil
 	case int64:
+		// #nosec G115 -- 同上
 		return uint64(val), nil
 	case float64:
 		return uint64(val), nil

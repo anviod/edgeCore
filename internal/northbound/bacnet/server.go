@@ -156,7 +156,7 @@ func (s *Server) startLocked() error {
 // buildDeviceConfig 从 BACnetServerConfig 构建底层库的 DeviceConfig
 func (s *Server) buildDeviceConfig() *server.DeviceConfig {
 	cfg := &server.DeviceConfig{
-		DeviceID:   btypes.ObjectInstance(s.config.DeviceID),
+		DeviceID:   btypes.ObjectInstance(s.config.DeviceID & 0xFFFFFFFF),
 		DeviceName: s.config.DeviceName,
 		VendorID:   s.config.VendorID,
 		Interface:  s.config.Interface,
@@ -671,15 +671,16 @@ func toUint32(v any) uint32 {
 	case float32:
 		return uint32(val)
 	case int:
-		return uint32(val)
+		return uint32(val & 0xFFFFFFFF)
 	case int32:
+		// #nosec G115 -- 32 位有符号值按补码位模式转为 uint32
 		return uint32(val)
 	case int64:
-		return uint32(val)
+		return uint32(val & 0xFFFFFFFF)
 	case uint:
-		return uint32(val)
+		return uint32(val & 0xFFFFFFFF)
 	case uint64:
-		return uint32(val)
+		return uint32(val & 0xFFFFFFFF)
 	case bool:
 		if val {
 			return 1

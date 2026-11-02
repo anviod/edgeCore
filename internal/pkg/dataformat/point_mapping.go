@@ -3,6 +3,7 @@ package dataformat
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -146,10 +147,10 @@ func FormatScalar(p model.Point, defaultWordOrder string, raw any) (any, error) 
 	switch cfg.Type {
 	case FormatExpr16, FormatHexString, FormatBinaryString:
 		buf = make([]byte, 2)
-		binary.BigEndian.PutUint16(buf, uint16(value))
+		binary.BigEndian.PutUint16(buf, uint16(value&0xFFFF))
 	default:
 		buf = make([]byte, 4)
-		binary.BigEndian.PutUint32(buf, uint32(value))
+		binary.BigEndian.PutUint32(buf, uint32(value&0xFFFFFFFF))
 	}
 
 	s, err := FormatPoint(buf, cfg.Order, cfg.Type, cfg.ReadExpr)
@@ -170,13 +171,15 @@ func FormatScalar(p model.Point, defaultWordOrder string, raw any) (any, error) 
 
 	switch dt {
 	case "int16":
+		// #nosec G115 -- 按 int16 位宽截断格式化结果
 		return int16(intVal), nil
 	case "uint16":
-		return uint16(intVal), nil
+		return uint16(intVal & 0xFFFF), nil
 	case "int32":
+		// #nosec G115 -- 按 int32 位宽截断格式化结果
 		return int32(intVal), nil
 	case "uint32":
-		return uint32(intVal), nil
+		return uint32(intVal & 0xFFFFFFFF), nil
 	case "bool", "boolean", "bit":
 		return intVal != 0, nil
 	default:
@@ -208,6 +211,9 @@ func toInt64(v any) (int64, bool) {
 	case int64:
 		return t, true
 	case uint:
+		if t > math.MaxInt64 {
+			return 0, false
+		}
 		return int64(t), true
 	case uint8:
 		return int64(t), true
@@ -216,6 +222,9 @@ func toInt64(v any) (int64, bool) {
 	case uint32:
 		return int64(t), true
 	case uint64:
+		if t > math.MaxInt64 {
+			return 0, false
+		}
 		return int64(t), true
 	case float32:
 		return int64(t), true

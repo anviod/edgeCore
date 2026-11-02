@@ -431,7 +431,7 @@ func (d *BACnetDriver) discoverDevice(deviceID int, ip string, port int) error {
 			addr := datalink.IPPortToAddress(parsedIP, port)
 			found := btypes.Device{
 				Addr:     *addr,
-				ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID)},
+				ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID & 0xFFFFFFFF)},
 				DeviceID: deviceID,
 				Ip:       ip,
 				Port:     port,
@@ -722,7 +722,7 @@ func (d *BACnetDriver) probeDevice(client bacnetlib.Client, deviceID int, ip str
 			addr := datalink.IPPortToAddress(parsedIP, port)
 			found := btypes.Device{
 				Addr:     *addr,
-				ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID)},
+				ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID & 0xFFFFFFFF)},
 				DeviceID: deviceID,
 				Ip:       ip,
 				Port:     port,
@@ -856,7 +856,7 @@ func (d *BACnetDriver) WritePoint(ctx context.Context, point model.Point, value 
 			if v, ok := writeVal.(float64); ok {
 				writeVal = btypes.Enumerated(v)
 			} else if v, ok := writeVal.(int); ok {
-				writeVal = btypes.Enumerated(v)
+				writeVal = btypes.Enumerated(v & 0xFFFFFFFF)
 			}
 		}
 	}
@@ -1014,7 +1014,7 @@ func (d *BACnetDriver) SetDeviceConfig(config map[string]any) error {
 					addr := datalink.IPPortToAddress(parsedIP, port)
 					device := btypes.Device{
 						Addr:     *addr,
-						ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(newID)},
+						ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(newID & 0xFFFFFFFF)},
 						DeviceID: newID,
 						Ip:       ip,
 						Port:     port,
@@ -1421,7 +1421,7 @@ func readPropertyString(client bacnetlib.Client, dev btypes.Device, propID btype
 		Object: btypes.Object{
 			ID: btypes.ObjectID{
 				Type:     btypes.DeviceType,
-				Instance: btypes.ObjectInstance(dev.DeviceID),
+				Instance: btypes.ObjectInstance(dev.DeviceID & 0xFFFFFFFF),
 			},
 			Properties: []btypes.Property{
 				{Type: propID, ArrayIndex: btypes.ArrayAll},
@@ -1466,7 +1466,7 @@ func (d *BACnetDriver) readDevicePropStr(dev btypes.Device, propID btypes.Proper
 		Object: btypes.Object{
 			ID: btypes.ObjectID{
 				Type:     btypes.DeviceType,
-				Instance: btypes.ObjectInstance(dev.DeviceID),
+				Instance: btypes.ObjectInstance(dev.DeviceID & 0xFFFFFFFF),
 			},
 			Properties: []btypes.Property{
 				{

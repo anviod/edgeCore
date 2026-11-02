@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -1158,14 +1159,14 @@ func (cm *ChannelManager) GetDevicePoints(channelID, deviceID string) ([]model.P
 		case float64:
 			slaveID = uint8(val)
 		case int:
-			slaveID = uint8(val)
+			slaveID = uint8(val & 0xFF)
 		case int64:
-			slaveID = uint8(val)
+			slaveID = uint8(val & 0xFF)
 		case uint8:
 			slaveID = val
 		case string:
 			if i, err := strconv.Atoi(val); err == nil {
-				slaveID = uint8(i)
+				slaveID = uint8(i & 0xFF)
 			}
 		}
 	}
@@ -1527,7 +1528,7 @@ func (cm *ChannelManager) WritePoint(channelID, deviceID, pointID string, value 
 			if slaveIDUint, ok := slaveID.(float64); ok {
 				d.SetSlaveID(uint8(slaveIDUint))
 			} else if slaveIDInt, ok := slaveID.(int); ok {
-				d.SetSlaveID(uint8(slaveIDInt))
+				d.SetSlaveID(uint8(slaveIDInt & 0xFF))
 			}
 		}
 		config := buildDriverDeviceConfig(ch, dev.Config, map[string]any{
@@ -1650,7 +1651,7 @@ func (cm *ChannelManager) ReadPoint(channelID, deviceID, pointID string) (model.
 			if slaveIDUint, ok := slaveID.(float64); ok {
 				d.SetSlaveID(uint8(slaveIDUint))
 			} else if slaveIDInt, ok := slaveID.(int); ok {
-				d.SetSlaveID(uint8(slaveIDInt))
+				d.SetSlaveID(uint8(slaveIDInt & 0xFF))
 			}
 		}
 		config := buildDriverDeviceConfig(ch, dev.Config, map[string]any{
@@ -1726,7 +1727,7 @@ func (cm *ChannelManager) ReadAllPoints(channelID, deviceID string) ([]model.Val
 			case float64:
 				d.SetSlaveID(uint8(v))
 			case int:
-				d.SetSlaveID(uint8(v))
+				d.SetSlaveID(uint8(v & 0xFF))
 			}
 		}
 		d.SetDeviceConfig(buildDriverDeviceConfig(ch, dev.Config, map[string]any{
@@ -2070,7 +2071,11 @@ func extractIntField(v reflect.Value, fieldName string) int {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return int(f.Int())
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return int(f.Uint())
+		u := f.Uint()
+		if u > math.MaxInt64 {
+			return 0
+		}
+		return int(u)
 	case reflect.Float32, reflect.Float64:
 		return int(f.Float())
 	}
@@ -2094,7 +2099,11 @@ func extractIntByJSONTag(v reflect.Value, jsonTag string) int {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				return int(f.Int())
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				return int(f.Uint())
+				u := f.Uint()
+				if u > math.MaxInt64 {
+					return 0
+				}
+				return int(u)
 			case reflect.Float32, reflect.Float64:
 				return int(f.Float())
 			}

@@ -1459,8 +1459,8 @@ func (c *Client) collectSystemMetrics() SystemMetrics {
 	memoryUsed := int64(0)
 	if memStats, err := mem.VirtualMemory(); err == nil {
 		memoryUsage = memStats.UsedPercent
-		memoryTotal = int64(memStats.Total)
-		memoryUsed = int64(memStats.Used)
+		memoryTotal = int64(memStats.Total & 0x7FFFFFFFFFFFFFFF)
+		memoryUsed = int64(memStats.Used & 0x7FFFFFFFFFFFFFFF)
 	}
 
 	// Get disk stats
@@ -1469,8 +1469,8 @@ func (c *Client) collectSystemMetrics() SystemMetrics {
 	diskUsed := int64(0)
 	if diskStats, err := disk.Usage("/"); err == nil {
 		diskUsage = diskStats.UsedPercent
-		diskTotal = int64(diskStats.Total)
-		diskUsed = int64(diskStats.Used)
+		diskTotal = int64(diskStats.Total & 0x7FFFFFFFFFFFFFFF)
+		diskUsed = int64(diskStats.Used & 0x7FFFFFFFFFFFFFFF)
 	}
 
 	return SystemMetrics{

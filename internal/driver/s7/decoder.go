@@ -214,6 +214,7 @@ func (d *S7Decoder) DecodeValue(buffer []byte, area *S7Area, dataType string) (i
 		return buffer[0], nil
 
 	case "int8":
+		// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 		return int8(buffer[0]), nil
 
 	case "uint16":
@@ -311,8 +312,10 @@ func (d *S7Decoder) EncodeValue(buffer []byte, area *S7Area, dataType string, va
 	case "int8":
 		switch v := value.(type) {
 		case int8:
+			// #nosec G115 -- int8 按补码位模式编码为单字节
 			buffer[0] = byte(v)
 		default:
+			// #nosec G115 -- int8 按补码位模式编码为单字节
 			buffer[0] = byte(toInt8(value))
 		}
 
@@ -409,7 +412,7 @@ func toUint8(v interface{}) uint8 {
 	case float64:
 		return uint8(val)
 	case int:
-		return uint8(val)
+		return uint8(val & 0xFF)
 	case string:
 		n, _ := strconv.ParseUint(val, 10, 8)
 		return uint8(n)
@@ -442,7 +445,7 @@ func toUint16(v interface{}) uint16 {
 	case float64:
 		return uint16(val)
 	case int:
-		return uint16(val)
+		return uint16(val & 0xFFFF)
 	case string:
 		n, _ := strconv.ParseUint(val, 10, 16)
 		return uint16(n)

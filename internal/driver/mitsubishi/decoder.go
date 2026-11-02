@@ -66,6 +66,7 @@ func (d *MCDecoder) DecodeValue(data []byte, addr *MCAddress, dataType string) (
 		if len(data) < 1 {
 			return nil, fmt.Errorf("insufficient data")
 		}
+		// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 		return int8(data[0]), nil
 	case "UINT8":
 		if len(data) < 1 {
@@ -76,6 +77,7 @@ func (d *MCDecoder) DecodeValue(data []byte, addr *MCAddress, dataType string) (
 		if len(data) < 2 {
 			return nil, fmt.Errorf("insufficient data")
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		return int16(binary.LittleEndian.Uint16(data[:2])), nil
 	case "UINT16":
 		if len(data) < 2 {
@@ -86,6 +88,7 @@ func (d *MCDecoder) DecodeValue(data []byte, addr *MCAddress, dataType string) (
 		if len(data) < 4 {
 			return nil, fmt.Errorf("insufficient data")
 		}
+		// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 		return int32(binary.LittleEndian.Uint32(data[:4])), nil
 	case "UINT32":
 		if len(data) < 4 {
@@ -96,6 +99,7 @@ func (d *MCDecoder) DecodeValue(data []byte, addr *MCAddress, dataType string) (
 		if len(data) < 8 {
 			return nil, fmt.Errorf("insufficient data")
 		}
+		// #nosec G115 -- 64 位按补码位模式重解释为有符号数
 		return int64(binary.LittleEndian.Uint64(data[:8])), nil
 	case "UINT64":
 		if len(data) < 8 {
@@ -118,6 +122,7 @@ func (d *MCDecoder) DecodeValue(data []byte, addr *MCAddress, dataType string) (
 		if len(data) < 2 {
 			return nil, fmt.Errorf("insufficient data")
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		return int16(binary.LittleEndian.Uint16(data[:2])), nil
 	}
 }
@@ -146,20 +151,20 @@ func (d *MCDecoder) EncodeValue(addr *MCAddress, dataType string, value interfac
 		if err != nil {
 			return nil, false, err
 		}
-		return []byte{byte(int8(v))}, false, nil
+		return []byte{byte(v & 0xFF)}, false, nil
 	case "UINT8":
 		v, err := toUint64(value)
 		if err != nil {
 			return nil, false, err
 		}
-		return []byte{byte(v)}, false, nil
+		return []byte{byte(v & 0xFF)}, false, nil
 	case "INT16":
 		v, err := toInt64(value)
 		if err != nil {
 			return nil, false, err
 		}
 		buf := make([]byte, 2)
-		binary.LittleEndian.PutUint16(buf, uint16(int16(v)))
+		binary.LittleEndian.PutUint16(buf, uint16(v&0xFFFF))
 		return buf, false, nil
 	case "UINT16":
 		v, err := toUint64(value)
@@ -167,7 +172,7 @@ func (d *MCDecoder) EncodeValue(addr *MCAddress, dataType string, value interfac
 			return nil, false, err
 		}
 		buf := make([]byte, 2)
-		binary.LittleEndian.PutUint16(buf, uint16(v))
+		binary.LittleEndian.PutUint16(buf, uint16(v&0xFFFF))
 		return buf, false, nil
 	case "INT32":
 		v, err := toInt64(value)
@@ -175,7 +180,7 @@ func (d *MCDecoder) EncodeValue(addr *MCAddress, dataType string, value interfac
 			return nil, false, err
 		}
 		buf := make([]byte, 4)
-		binary.LittleEndian.PutUint32(buf, uint32(int32(v)))
+		binary.LittleEndian.PutUint32(buf, uint32(v&0xFFFFFFFF))
 		return buf, false, nil
 	case "UINT32":
 		v, err := toUint64(value)
@@ -183,7 +188,7 @@ func (d *MCDecoder) EncodeValue(addr *MCAddress, dataType string, value interfac
 			return nil, false, err
 		}
 		buf := make([]byte, 4)
-		binary.LittleEndian.PutUint32(buf, uint32(v))
+		binary.LittleEndian.PutUint32(buf, uint32(v&0xFFFFFFFF))
 		return buf, false, nil
 	case "FLOAT", "FLOAT32":
 		v, err := toFloat64(value)
@@ -207,7 +212,7 @@ func (d *MCDecoder) EncodeValue(addr *MCAddress, dataType string, value interfac
 			return nil, false, err
 		}
 		buf := make([]byte, 2)
-		binary.LittleEndian.PutUint16(buf, uint16(int16(v)))
+		binary.LittleEndian.PutUint16(buf, uint16(v&0xFFFF))
 		return buf, false, nil
 	}
 }

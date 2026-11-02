@@ -106,26 +106,29 @@ func (d *SNMPDecoder) DecodePDU(pdu gosnmp.SnmpPDU, dataType string) (any, strin
 		}
 	case "UINT8":
 		if v, ok := toUint64(pdu); ok {
-			return uint8(v), "Good"
+			return uint8(v & 0xFF), "Good"
 		}
 	case "INT8":
 		if v, ok := toInt64(pdu); ok {
+			// #nosec G115 -- 按 int8 位宽截断 SNMP 整数值
 			return int8(v), "Good"
 		}
 	case "UINT16":
 		if v, ok := toUint64(pdu); ok {
-			return uint16(v), "Good"
+			return uint16(v & 0xFFFF), "Good"
 		}
 	case "INT16":
 		if v, ok := toInt64(pdu); ok {
+			// #nosec G115 -- 按 int16 位宽截断 SNMP 整数值
 			return int16(v), "Good"
 		}
 	case "UINT32":
 		if v, ok := toUint64(pdu); ok {
-			return uint32(v), "Good"
+			return uint32(v & 0xFFFFFFFF), "Good"
 		}
 	case "INT32":
 		if v, ok := toInt64(pdu); ok {
+			// #nosec G115 -- 按 int32 位宽截断 SNMP 整数值
 			return int32(v), "Good"
 		}
 	case "UINT64":
@@ -206,8 +209,14 @@ func (d *SNMPDecoder) EncodeValue(value any, dataType string) (interface{}, gosn
 		case float64:
 			return uint64(v), gosnmp.Counter64, nil
 		case int:
+			if v < 0 {
+				return nil, gosnmp.Null, fmt.Errorf("negative value for UINT64: %d", v)
+			}
 			return uint64(v), gosnmp.Counter64, nil
 		case int64:
+			if v < 0 {
+				return nil, gosnmp.Null, fmt.Errorf("negative value for UINT64: %d", v)
+			}
 			return uint64(v), gosnmp.Counter64, nil
 		case uint64:
 			return v, gosnmp.Counter64, nil
@@ -249,10 +258,16 @@ func toInt64(pdu gosnmp.SnmpPDU) (int64, bool) {
 	case int64:
 		return v, true
 	case uint:
+		if v > math.MaxInt64 {
+			return 0, false
+		}
 		return int64(v), true
 	case uint32:
 		return int64(v), true
 	case uint64:
+		if v > math.MaxInt64 {
+			return 0, false
+		}
 		return int64(v), true
 	case string:
 		parsed, err := strconv.ParseInt(v, 10, 64)

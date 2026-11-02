@@ -156,7 +156,7 @@ func buildFrame(meterAddr [AddrLen]byte, control byte, data []byte) []byte {
 	if len(data) > 255 {
 		return nil
 	}
-	length := byte(len(data))
+	length := byte(len(data) & 0xFF)
 	frame := make([]byte, 0, 12+len(data))
 	frame = append(frame, FrameStart)
 	frame = append(frame, meterAddr[:]...)

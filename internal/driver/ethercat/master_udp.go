@@ -157,7 +157,8 @@ func (m *udpMaster) bringToOP(positions []int) error {
 	// Each transition writes to AL Control register (0x0120) and waits for AL Status (0x0130)
 
 	for _, pos := range positions {
-		slavePos := int16(pos - 1) // 0-based for positional addressing
+		// #nosec G115 -- 从站位置以 uint16 位模式承载，再映射到库的 int16 位置地址
+		slavePos := int16((pos - 1) & 0xFFFF) // 0-based for positional addressing
 
 		// Step 1: INIT -> PREOP (state=2)
 		if err := m.requestState(slavePos, ecad.ALControl, 0x02); err != nil {
@@ -226,7 +227,8 @@ func (m *udpMaster) sendProcessdata() error {
 		sio.mu.Lock()
 		if len(sio.rxPDO) > 0 {
 			// Write RxPDO data to slave
-			addr := ecfr.PositionalAddr(int16(sio.position-1), 0x0F00) // SM3 start address
+			// #nosec G115 -- 从站位置以 uint16 位模式承载，再映射到库的 int16 位置地址
+			addr := ecfr.PositionalAddr(int16((sio.position-1)&0xFFFF), 0x0F00) // SM3 start address
 			if err := ecmd.ExecuteWrite(m.cmdFramer, addr, sio.rxPDO, 1); err != nil {
 				sio.mu.Unlock()
 				return fmt.Errorf("ethercat: send processdata to slave %d: %w", sio.position, err)
@@ -251,7 +253,8 @@ func (m *udpMaster) receiveProcessdata() error {
 		if len(sio.txPDO) == 0 {
 			continue
 		}
-		addr := ecfr.PositionalAddr(int16(sio.position-1), 0x0E00) // SM2 start address
+		// #nosec G115 -- 从站位置以 uint16 位模式承载，再映射到库的 int16 位置地址
+		addr := ecfr.PositionalAddr(int16((sio.position-1)&0xFFFF), 0x0E00) // SM2 start address
 		data, err := ecmd.ExecuteRead(m.cmdFramer, addr, len(sio.txPDO), 1)
 		if err != nil {
 			return fmt.Errorf("ethercat: receive processdata from slave %d: %w", sio.position, err)
@@ -302,21 +305,22 @@ func (m *udpMaster) readSDO(position int, index, subindex uint16) ([]byte, error
 	// CoE SDO Upload Request via mailbox
 	// Mailbox protocol header (6 bytes) + CoE header (10 bytes) + optional data
 	mbxHeader := make([]byte, 6)
-	mbxHeader[0] = byte(len(mbxHeader) + 10) // length low byte (header + CoE header)
-	mbxHeader[2] = 2 << 4                    // type: CoE (2)
-	mbxHeader[4] = 0x03                      // channel: SDO request (3)
+	mbxHeader[0] = byte((len(mbxHeader) + 10) & 0xFF) // length low byte (header + CoE header)
+	mbxHeader[2] = 2 << 4                             // type: CoE (2)
+	mbxHeader[4] = 0x03                               // channel: SDO request (3)
 
 	// CoE SDO Upload Request
 	coeHeader := make([]byte, 10)
-	coeHeader[0] = byte(0x40)       // SDO Upload Request (expedited, no size indicator)
-	coeHeader[1] = byte(index)      // index low byte
-	coeHeader[2] = byte(index >> 8) // index high byte
-	coeHeader[3] = byte(subindex)
+	coeHeader[0] = byte(0x40)                // SDO Upload Request (expedited, no size indicator)
+	coeHeader[1] = byte(index & 0xFF)        // index low byte
+	coeHeader[2] = byte((index >> 8) & 0xFF) // index high byte
+	coeHeader[3] = byte(subindex & 0xFF)
 
 	mbxData := append(mbxHeader, coeHeader...)
 
 	// Write mailbox to SM0 (output mailbox) at 0x1000
-	slavePos := int16(position - 1)
+	// #nosec G115 -- 从站位置以 uint16 位模式承载，再映射到库的 int16 位置地址
+	slavePos := int16((position - 1) & 0xFFFF)
 	addr := ecfr.PositionalAddr(slavePos, 0x1000)
 	if err := ecmd.ExecuteWrite(m.cmdFramer, addr, mbxData, 1); err != nil {
 		return nil, fmt.Errorf("ethercat: SDO read request to slave %d: %w", position, err)
@@ -378,8 +382,8 @@ func (m *udpMaster) writeSDO(position int, index, subindex uint16, data []byte) 
 	// CoE SDO Download Request
 	mbxHeader := make([]byte, 6)
 	coelen := 10 + len(data)
-	mbxHeader[0] = byte(coelen) // length low byte
-	mbxHeader[1] = byte(coelen >> 8)
+	mbxHeader[0] = byte(coelen & 0xFF) // length low byte
+	mbxHeader[1] = byte((coelen >> 8) & 0xFF)
 	mbxHeader[2] = 2 << 4 // type: CoE (2)
 	mbxHeader[4] = 0x03   // channel: SDO request (3)
 
@@ -389,18 +393,19 @@ func (m *udpMaster) writeSDO(position int, index, subindex uint16, data []byte) 
 	} else {
 		coeHeader[0] = 0x21 // SDO Download Request (segmented)
 	}
-	coeHeader[1] = byte(index)
-	coeHeader[2] = byte(index >> 8)
-	coeHeader[3] = byte(subindex)
-	coeHeader[4] = byte(len(data))
-	coeHeader[5] = byte(len(data) >> 8)
-	coeHeader[6] = byte(len(data) >> 16)
-	coeHeader[7] = byte(len(data) >> 24)
+	coeHeader[1] = byte(index & 0xFF)
+	coeHeader[2] = byte((index >> 8) & 0xFF)
+	coeHeader[3] = byte(subindex & 0xFF)
+	coeHeader[4] = byte(len(data) & 0xFF)
+	coeHeader[5] = byte((len(data) >> 8) & 0xFF)
+	coeHeader[6] = byte((len(data) >> 16) & 0xFF)
+	coeHeader[7] = byte((len(data) >> 24) & 0xFF)
 	copy(coeHeader[8:], data)
 
 	mbxData := append(mbxHeader, coeHeader...)
 
-	slavePos := int16(position - 1)
+	// #nosec G115 -- 从站位置以 uint16 位模式承载，再映射到库的 int16 位置地址
+	slavePos := int16((position - 1) & 0xFFFF)
 	addr := ecfr.PositionalAddr(slavePos, 0x1000)
 	if err := ecmd.ExecuteWrite(m.cmdFramer, addr, mbxData, 1); err != nil {
 		return fmt.Errorf("ethercat: SDO write to slave %d: %w", position, err)

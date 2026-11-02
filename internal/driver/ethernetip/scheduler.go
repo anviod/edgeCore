@@ -475,19 +475,22 @@ func (s *ENIPScheduler) WritePoint(ctx context.Context, p model.Point, value int
 			return fmt.Errorf("invalid type for BOOL: %T", value)
 		}
 	case "SINT":
+		// #nosec G115 -- 按 SINT 8 位有符号位模式截断写入值
 		tag.SetInt8(int8(toInt64(value)))
 	case "INT":
+		// #nosec G115 -- 按 INT 16 位有符号位模式截断写入值
 		tag.SetInt16(int16(toInt64(value)))
 	case "DINT":
+		// #nosec G115 -- 按 DINT 32 位有符号位模式截断写入值
 		tag.SetInt32(int32(toInt64(value)))
 	case "LINT":
 		tag.SetInt64(toInt64(value))
 	case "USINT":
-		tag.SetUInt8(uint8(toUint64(value)))
+		tag.SetUInt8(uint8(toUint64(value) & 0xFF))
 	case "UINT":
-		tag.SetUInt16(uint16(toUint64(value)))
+		tag.SetUInt16(uint16(toUint64(value) & 0xFFFF))
 	case "UDINT":
-		tag.SetUInt32(uint32(toUint64(value)))
+		tag.SetUInt32(uint32(toUint64(value) & 0xFFFFFFFF))
 	case "ULINT":
 		tag.SetUInt64(toUint64(value))
 	case "REAL":

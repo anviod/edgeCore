@@ -27,6 +27,7 @@ func (s *Server) AuthenticateLDAP(username, password string) (bool, *model.UserC
 	var err error
 
 	if ldapCfg.UseSSL {
+		// #nosec G402 -- 由 LDAP 配置显式开关，用于企业内网自签证书场景；默认 false
 		tlsConfig := &tls.Config{InsecureSkipVerify: ldapCfg.SkipVerify}
 		conn, err = ldap.DialTLS("tcp", address, tlsConfig)
 	} else {

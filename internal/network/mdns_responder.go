@@ -306,7 +306,7 @@ func (r *mdnsResponder) serviceRecords(svc mdnsServiceRecord, ttl uint32, flush 
 	return []dns.RR{
 		&dns.SRV{
 			Hdr:  dns.RR_Header{Name: svc.serviceInstanceName, Rrtype: dns.TypeSRV, Class: class, Ttl: ttl},
-			Port: uint16(svc.Port), Target: r.hostName,
+			Port: uint16(svc.Port & 0xFFFF), Target: r.hostName,
 		},
 		&dns.TXT{
 			Hdr: dns.RR_Header{Name: svc.serviceInstanceName, Rrtype: dns.TypeTXT, Class: class, Ttl: ttl},

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"net/http"
+	// #nosec G108 -- pprof 由 startPprof 单独监听 127.0.0.1（PPROF_ADDR=off 可关闭），不挂到业务端口
 	_ "net/http/pprof"
 	"os"
 	"os/signal"

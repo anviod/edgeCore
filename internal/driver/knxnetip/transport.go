@@ -257,7 +257,7 @@ func (t *KNXTransport) Disconnect() error {
 	t.stopHeartbeat()
 
 	if t.connected.Load() && t.channelID.Load() > 0 {
-		_ = t.sendRaw(buildDisconnectRequest(byte(t.channelID.Load())))
+		_ = t.sendRaw(buildDisconnectRequest(byte(t.channelID.Load() & 0xFF)))
 	}
 
 	if t.conn != nil {
@@ -318,7 +318,7 @@ func (t *KNXTransport) WriteGroup(ctx context.Context, group uint16, payload []b
 		return err
 	}
 	seq := byte(t.nextSeq())
-	req := buildTunnelingRequest(byte(t.channelID.Load()), seq, cemi)
+	req := buildTunnelingRequest(byte(t.channelID.Load()&0xFF), seq, cemi)
 	respFrame, err := t.transact(ctx, req)
 	if err != nil {
 		return err
@@ -357,7 +357,7 @@ func (t *KNXTransport) WriteGroup(ctx context.Context, group uint16, payload []b
 
 func (t *KNXTransport) requestGroupValue(ctx context.Context, group uint16, cemi []byte) ([]byte, error) {
 	seq := byte(t.nextSeq())
-	req := buildTunnelingRequest(byte(t.channelID.Load()), seq, cemi)
+	req := buildTunnelingRequest(byte(t.channelID.Load()&0xFF), seq, cemi)
 
 	deadline := time.Now().Add(t.cfg.timeout)
 	for {
@@ -508,7 +508,7 @@ func (t *KNXTransport) sendConnectionState(ctx context.Context) {
 	if !t.connected.Load() {
 		return
 	}
-	req := buildConnectionStateRequest(byte(t.channelID.Load()))
+	req := buildConnectionStateRequest(byte(t.channelID.Load() & 0xFF))
 	respFrame, err := t.transact(ctx, req)
 	if err != nil {
 		zap.L().Warn("[KNXnet/IP] connection state heartbeat failed", zap.Error(err))

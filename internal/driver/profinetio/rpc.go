@@ -95,29 +95,35 @@ func (c *rpcClient) WriteIO(slot, subslot, index int, data []byte) error {
 func buildReadRequest(callID uint32, slot, subslot, index, length int) []byte {
 	// Simplified PNIO acyclic read frame: header + slot/subslot/index/length.
 	payload := make([]byte, 16)
-	binary.BigEndian.PutUint16(payload[0:2], uint16(slot))
-	binary.BigEndian.PutUint16(payload[2:4], uint16(subslot))
+	binary.BigEndian.PutUint16(payload[0:2], uint16(slot&0xFFFF))
+	binary.BigEndian.PutUint16(payload[2:4], uint16(subslot&0xFFFF))
+	// #nosec G115 -- PNIO 槽位/索引为非负协议字段，取值域受 uint32 约束
 	binary.BigEndian.PutUint32(payload[4:8], uint32(index))
+	// #nosec G115 -- 读取长度为非负协议字段，取值域受 uint32 约束
 	binary.BigEndian.PutUint32(payload[8:12], uint32(length))
 	payload[12] = 0x01 // read op
 
 	header := make([]byte, 8)
 	binary.BigEndian.PutUint32(header[0:4], callID)
+	// #nosec G115 -- payload 长度为正且受 uint32 约束
 	binary.BigEndian.PutUint32(header[4:8], uint32(len(payload)))
 	return append(header, payload...)
 }
 
 func buildWriteRequest(callID uint32, slot, subslot, index int, data []byte) []byte {
 	payload := make([]byte, 16+len(data))
-	binary.BigEndian.PutUint16(payload[0:2], uint16(slot))
-	binary.BigEndian.PutUint16(payload[2:4], uint16(subslot))
+	binary.BigEndian.PutUint16(payload[0:2], uint16(slot&0xFFFF))
+	binary.BigEndian.PutUint16(payload[2:4], uint16(subslot&0xFFFF))
+	// #nosec G115 -- PNIO 槽位/索引为非负协议字段，取值域受 uint32 约束
 	binary.BigEndian.PutUint32(payload[4:8], uint32(index))
+	// #nosec G115 -- 写入数据长度为非负协议字段，取值域受 uint32 约束
 	binary.BigEndian.PutUint32(payload[8:12], uint32(len(data)))
 	payload[12] = 0x02 // write op
 	copy(payload[16:], data)
 
 	header := make([]byte, 8)
 	binary.BigEndian.PutUint32(header[0:4], callID)
+	// #nosec G115 -- payload 长度为正且受 uint32 约束
 	binary.BigEndian.PutUint32(header[4:8], uint32(len(payload)))
 	return append(header, payload...)
 }

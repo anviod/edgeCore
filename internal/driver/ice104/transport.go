@@ -184,8 +184,8 @@ func (t *ICE104Transport) sendIFrame(ctx context.Context, asdu []byte) error {
 	t.sendSeq.Add(1)
 	recv := t.recvSeq.Load()
 	ctrl := make([]byte, 4)
-	binary.LittleEndian.PutUint16(ctrl[0:2], uint16(send<<1))
-	binary.LittleEndian.PutUint16(ctrl[2:4], uint16(recv<<1))
+	binary.LittleEndian.PutUint16(ctrl[0:2], uint16((send<<1)&0xFFFF))
+	binary.LittleEndian.PutUint16(ctrl[2:4], uint16((recv<<1)&0xFFFF))
 
 	apduLen := 4 + len(asdu)
 	// IEC 60870-5-104 长度域为单字节（标准上限 253），超长帧无法编码
@@ -307,8 +307,8 @@ func buildASDU(typeID byte, count int, cot uint16, ca uint16, info []byte) []byt
 	vsq := byte(count & 0x7F)
 	out := make([]byte, 0, 6+len(info))
 	out = append(out, typeID, vsq)
-	out = append(out, byte(cot), byte(cot>>8))
-	out = append(out, byte(ca), byte(ca>>8))
+	out = append(out, byte(cot&0xFF), byte((cot>>8)&0xFF))
+	out = append(out, byte(ca&0xFF), byte((ca>>8)&0xFF))
 	out = append(out, info...)
 	return out
 }

@@ -276,18 +276,21 @@ func parseInteger(raw []byte, order binary.ByteOrder, signed bool) (int64, error
 	switch len(raw) {
 	case 1:
 		if signed {
+			// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 			return int64(int8(raw[0])), nil
 		}
 		return int64(raw[0]), nil
 	case 2:
 		u := order.Uint16(raw)
 		if signed {
+			// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 			return int64(int16(u)), nil
 		}
 		return int64(u), nil
 	case 4:
 		u := order.Uint32(raw)
 		if signed {
+			// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 			return int64(int32(u)), nil
 		}
 		if u > math.MaxUint32 {

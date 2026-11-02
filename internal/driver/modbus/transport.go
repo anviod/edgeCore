@@ -468,7 +468,7 @@ func (t *ModbusTransport) connectOnce(ctx context.Context) error {
 	if slaveID, ok := t.cfg.Config["slave_id"]; ok {
 		switch v := slaveID.(type) {
 		case int:
-			sid = uint8(v)
+			sid = uint8(v & 0xFF)
 		case float64:
 			sid = uint8(v)
 		case uint8:

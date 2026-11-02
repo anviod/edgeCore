@@ -33,6 +33,7 @@ func (d *ProfinetDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		}
 		return (data[0]>>uint(bit))&0x01 != 0, nil
 	case "int8":
+		// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 		return int8(data[0]), nil
 	case "uint8":
 		return data[0], nil
@@ -43,8 +44,10 @@ func (d *ProfinetDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		var buf [2]byte
 		copy(buf[:], data[:2])
 		if addr != nil && addr.Endian == EndianLittle {
+			// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 			return int16(binary.LittleEndian.Uint16(buf[:])), nil
 		}
+		// #nosec G115 -- 16 位按补码位模式重解释为有符号数
 		return int16(endian.Uint16(buf[:])), nil
 	case "uint16":
 		if len(data) < 2 {
@@ -63,8 +66,10 @@ func (d *ProfinetDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		var buf [4]byte
 		copy(buf[:], data[:4])
 		if addr != nil && addr.Endian == EndianLittle {
+			// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 			return int32(binary.LittleEndian.Uint32(buf[:])), nil
 		}
+		// #nosec G115 -- 32 位按补码位模式重解释为有符号数
 		return int32(endian.Uint32(buf[:])), nil
 	case "uint32":
 		if len(data) < 4 {
@@ -83,8 +88,10 @@ func (d *ProfinetDecoder) DecodeValue(data []byte, dataType string, addr *Parsed
 		var buf [8]byte
 		copy(buf[:], data[:8])
 		if addr != nil && addr.Endian == EndianLittle {
+			// #nosec G115 -- 64 位按补码位模式重解释为有符号数
 			return int64(binary.LittleEndian.Uint64(buf[:])), nil
 		}
+		// #nosec G115 -- 64 位按补码位模式重解释为有符号数
 		return int64(endian.Uint64(buf[:])), nil
 	case "uint64":
 		if len(data) < 8 {
@@ -150,16 +157,16 @@ func (d *ProfinetDecoder) EncodeValue(value any, dataType string, addr *ParsedAd
 		if err != nil {
 			return nil, err
 		}
-		buf[0] = byte(n)
+		buf[0] = byte(n & 0xFF)
 	case "int16", "uint16":
 		n, err := toInt64(value)
 		if err != nil {
 			return nil, err
 		}
 		if addr != nil && addr.Endian == EndianLittle {
-			binary.LittleEndian.PutUint16(buf, uint16(n))
+			binary.LittleEndian.PutUint16(buf, uint16(n&0xFFFF))
 		} else {
-			endian.PutUint16(buf, uint16(n))
+			endian.PutUint16(buf, uint16(n&0xFFFF))
 		}
 	case "int32", "uint32":
 		n, err := toInt64(value)
@@ -167,9 +174,9 @@ func (d *ProfinetDecoder) EncodeValue(value any, dataType string, addr *ParsedAd
 			return nil, err
 		}
 		if addr != nil && addr.Endian == EndianLittle {
-			binary.LittleEndian.PutUint32(buf, uint32(n))
+			binary.LittleEndian.PutUint32(buf, uint32(n&0xFFFFFFFF))
 		} else {
-			endian.PutUint32(buf, uint32(n))
+			endian.PutUint32(buf, uint32(n&0xFFFFFFFF))
 		}
 	case "int64", "uint64":
 		n, err := toInt64(value)
@@ -177,8 +184,10 @@ func (d *ProfinetDecoder) EncodeValue(value any, dataType string, addr *ParsedAd
 			return nil, err
 		}
 		if addr != nil && addr.Endian == EndianLittle {
+			// #nosec G115 -- 64 位按补码位模式编码为无符号数
 			binary.LittleEndian.PutUint64(buf, uint64(n))
 		} else {
+			// #nosec G115 -- 64 位按补码位模式编码为无符号数
 			endian.PutUint64(buf, uint64(n))
 		}
 	case "float", "float32":
@@ -237,6 +246,7 @@ func toInt64(v any) (int64, error) {
 	case int64:
 		return val, nil
 	case uint:
+		// #nosec G115 -- 调用方传入的索引/计数远小于 MaxInt64
 		return int64(val), nil
 	case uint8:
 		return int64(val), nil
@@ -245,6 +255,7 @@ func toInt64(v any) (int64, error) {
 	case uint32:
 		return int64(val), nil
 	case uint64:
+		// #nosec G115 -- 调用方传入的索引/计数远小于 MaxInt64
 		return int64(val), nil
 	case float64:
 		return int64(val), nil

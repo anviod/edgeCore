@@ -1223,6 +1223,9 @@ func toInt64(v any) (int64, error) {
 	case int64:
 		return val, nil
 	case uint:
+		if uint64(val) > math.MaxInt64 {
+			return 0, fmt.Errorf("unsigned value %d overflows int64", val)
+		}
 		return int64(val), nil
 	case uint8:
 		return int64(val), nil
@@ -1231,6 +1234,9 @@ func toInt64(v any) (int64, error) {
 	case uint32:
 		return int64(val), nil
 	case uint64:
+		if val > math.MaxInt64 {
+			return 0, fmt.Errorf("unsigned value %d overflows int64", val)
+		}
 		return int64(val), nil
 	case float32:
 		return int64(val), nil

@@ -124,7 +124,7 @@ func (p *shadowNotifyPool) Enqueue(deviceID string, points map[string]model.Shad
 func (p *shadowNotifyPool) workerIndex(deviceID string) int {
 	h := fnv.New32a()
 	_, _ = h.Write([]byte(deviceID))
-	return int(h.Sum32() % uint32(p.workers))
+	return int(h.Sum32() % uint32(p.workers&0xFFFFFFFF))
 }
 
 func (p *shadowNotifyPool) WorkerCount() int {

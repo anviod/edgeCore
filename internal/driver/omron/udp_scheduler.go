@@ -157,21 +157,21 @@ func (s *udpScheduler) WritePoint(ctx context.Context, point finslib.Point, valu
 			bitArea = parsed.AreaCode
 		}
 		boolVal := len(encoded) > 0 && encoded[0] != 0
-		if err := s.client.WriteBits(bitArea, uint16(parsed.Address), uint8(parsed.Bit), []bool{boolVal}); err != nil {
+		if err := s.client.WriteBits(bitArea, uint16(parsed.Address&0xFFFF), uint8(parsed.Bit&0xFF), []bool{boolVal}); err != nil {
 			s.failureCount.Add(1)
 			return err
 		}
 	} else {
-		wordCount := uint16((len(encoded) + 1) / 2)
+		wordCount := uint16(((len(encoded) + 1) / 2) & 0xFFFF)
 		if point.DataType == finslib.DataTypeSTRING && parsed.StringLen > 0 {
-			wordCount = uint16((parsed.StringLen + 1) / 2)
+			wordCount = uint16(((parsed.StringLen + 1) / 2) & 0xFFFF)
 			if len(encoded) < int(wordCount)*2 {
 				padded := make([]byte, int(wordCount)*2)
 				copy(padded, encoded)
 				encoded = padded
 			}
 		}
-		if err := s.client.WriteBytes(parsed.AreaCode, uint16(parsed.Address), encoded); err != nil {
+		if err := s.client.WriteBytes(parsed.AreaCode, uint16(parsed.Address&0xFFFF), encoded); err != nil {
 			s.failureCount.Add(1)
 			return err
 		}
@@ -227,7 +227,7 @@ func (s *udpScheduler) groupPoints(parsedPoints []struct {
 			for _, p := range points {
 				result = append(result, pointGroup{
 					areaCode:  key.areaCode,
-					startAddr: uint16(p.parsed.Address),
+					startAddr: uint16(p.parsed.Address & 0xFFFF),
 					count:     1,
 					points:    []groupedPoint{p},
 					isBit:     true,
@@ -251,8 +251,8 @@ func (s *udpScheduler) groupPoints(parsedPoints []struct {
 			wordCount := (typeSize + 1) / 2
 
 			if len(current.points) == 0 {
-				current.startAddr = uint16(wordOffset)
-				current.count = uint16(wordCount)
+				current.startAddr = uint16(wordOffset & 0xFFFF)
+				current.count = uint16(wordCount & 0xFFFF)
 				p.offset = 0
 				current.points = append(current.points, p)
 				continue
@@ -263,7 +263,7 @@ func (s *udpScheduler) groupPoints(parsedPoints []struct {
 			totalBytes := (newEnd - int(current.startAddr)) * 2
 			if wordOffset <= endAddr+10 && totalBytes <= maxBytes {
 				if wordOffset+wordCount > int(current.startAddr)+int(current.count) {
-					current.count = uint16(wordOffset + wordCount - int(current.startAddr))
+					current.count = uint16((wordOffset + wordCount - int(current.startAddr)) & 0xFFFF)
 				}
 				p.offset = (wordOffset - int(current.startAddr)) * 2
 				current.points = append(current.points, p)
@@ -271,8 +271,8 @@ func (s *udpScheduler) groupPoints(parsedPoints []struct {
 				result = append(result, current)
 				current = pointGroup{
 					areaCode:  key.areaCode,
-					startAddr: uint16(wordOffset),
-					count:     uint16(wordCount),
+					startAddr: uint16(wordOffset & 0xFFFF),
+					count:     uint16(wordCount & 0xFFFF),
 					points:    []groupedPoint{p},
 				}
 				p.offset = 0
@@ -294,7 +294,7 @@ func (s *udpScheduler) readBitGroup(group pointGroup) ([]byte, error) {
 		return nil, nil
 	}
 	p := group.points[0]
-	bits, err := s.client.ReadBits(group.areaCode, uint16(p.parsed.Address), uint8(p.parsed.Bit), 1)
+	bits, err := s.client.ReadBits(group.areaCode, uint16(p.parsed.Address&0xFFFF), uint8(p.parsed.Bit&0xFF), 1)
 	if err != nil {
 		return nil, err
 	}

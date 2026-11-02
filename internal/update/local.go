@@ -244,7 +244,7 @@ func (m *Manager) installTarPath(path string) error {
 	}
 	defer os.RemoveAll(tmp)
 	extractDir := filepath.Join(tmp, "extract")
-	if err := os.MkdirAll(extractDir, 0o755); err != nil {
+	if err := os.MkdirAll(extractDir, 0o750); err != nil {
 		return err
 	}
 	if err := untar(path, extractDir); err != nil {
@@ -255,7 +255,7 @@ func (m *Manager) installTarPath(path string) error {
 
 // installPkg 通过系统包管理器安装 deb/rpm。安装前备份当前二进制与前端供回滚。
 func (m *Manager) installPkg(path, format string) error {
-	if err := os.MkdirAll(m.installDir, 0o755); err != nil {
+	if err := os.MkdirAll(m.installDir, 0o750); err != nil {
 		return err
 	}
 	curBin := filepath.Join(m.installDir, "edgeCore")

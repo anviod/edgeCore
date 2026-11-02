@@ -135,7 +135,7 @@ func modbusGenOptionsFromDevice(dev *model.Device) (ModbusRegisterGenOptions, bo
 	if v, ok := dev.Config["auto_points_function_code"]; ok {
 		switch n := v.(type) {
 		case int:
-			opts.FunctionCode = byte(n)
+			opts.FunctionCode = byte(n & 0xFF)
 		case float64:
 			opts.FunctionCode = byte(n)
 		}

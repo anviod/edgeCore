@@ -242,7 +242,7 @@ func buildGroupValueWriteCEMI(destGroup uint16, srcAddr uint16, data []byte) ([]
 	cemi[3] = ctrl2Group
 	binary.BigEndian.PutUint16(cemi[4:6], srcAddr)
 	binary.BigEndian.PutUint16(cemi[6:8], destGroup)
-	cemi[8] = byte(1 + len(data))
+	cemi[8] = byte((1 + len(data)) & 0xFF)
 	cemi[9] = apciGroupValueWrite
 	copy(cemi[10:], data)
 	return cemi, nil

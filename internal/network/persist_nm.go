@@ -91,9 +91,11 @@ func (b *networkManagerBackend) ApplyInterfaceConfig(iface model.NetworkInterfac
 		}
 	}
 
+	// #nosec G204 -- 可执行文件固定为 nmcli，参数逐项传入不经 shell，连接名/地址来自服务端网络配置
 	if out, err := exec.Command("nmcli", args...).CombinedOutput(); err != nil {
 		return fmt.Errorf("nmcli con mod failed: %v, output: %s", err, out)
 	}
+	// #nosec G204 -- 同上，固定 nmcli 且参数不经 shell
 	if out, err := exec.Command("nmcli", "con", "up", conn).CombinedOutput(); err != nil {
 		return fmt.Errorf("nmcli con up failed: %v, output: %s", err, out)
 	}
@@ -109,6 +111,7 @@ func (b *networkManagerBackend) ApplyStaticRoute(route model.StaticRoute) error 
 	if route.Gateway != "" {
 		args[len(args)-1] = fmt.Sprintf("%s %s", dest, route.Gateway)
 	}
+	// #nosec G204 -- 同上，固定 nmcli 且参数不经 shell
 	if out, err := exec.Command("nmcli", args...).CombinedOutput(); err != nil {
 		return fmt.Errorf("nmcli route failed: %v, output: %s", err, out)
 	}

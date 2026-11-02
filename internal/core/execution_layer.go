@@ -511,7 +511,7 @@ func (el *ExecutionLayer) readPoints(d driver.Driver, task *ScanTask, ctx contex
 			case float64:
 				d.SetSlaveID(uint8(v))
 			case int:
-				d.SetSlaveID(uint8(v))
+				d.SetSlaveID(uint8(v & 0xFF))
 			}
 		}
 	}

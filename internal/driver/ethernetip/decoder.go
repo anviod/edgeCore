@@ -124,6 +124,7 @@ func (d *ENIPDecoder) EncodeValue(value interface{}, dataType string) ([]byte, e
 	case "SINT", "INT8":
 		switch v := value.(type) {
 		case int8:
+			// #nosec G115 -- SINT 为 8 位有符号，负数按补码位模式编码
 			return []byte{byte(v)}, nil
 		case int:
 			// CIP SINT 为 8 位有符号：域校验后负数按补码位模式编码
@@ -431,6 +432,7 @@ func (d *ENIPDecoder) DecodeValue(data []byte, dataType string) (interface{}, er
 		return false, nil
 	case "SINT", "INT8":
 		if len(data) >= 1 {
+			// #nosec G115 -- 单字节按补码位模式重解释为有符号数
 			return int8(data[0]), nil
 		}
 		return int8(0), nil

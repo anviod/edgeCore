@@ -23,6 +23,9 @@ const (
 	upgradeTmpPrefix  = "edgeCore-upgrade-"
 	healthTimeout     = 30 * time.Second
 
+	// 单个归档条目解压上限，防止解压炸弹耗尽磁盘
+	maxArchiveEntryBytes = 512 << 20
+
 	// 升级阶段
 	StageIdle        = "idle"
 	StageDownloading = "downloading"
@@ -177,7 +180,7 @@ func (m *Manager) run(ctx context.Context, targetVersion string) {
 	}
 
 	extractDir := filepath.Join(tmp, "extract")
-	if err := os.MkdirAll(extractDir, 0o755); err != nil {
+	if err := os.MkdirAll(extractDir, 0o750); err != nil {
 		fail("创建解压目录失败: " + err.Error())
 		return
 	}
@@ -205,7 +208,7 @@ func (m *Manager) run(ctx context.Context, targetVersion string) {
 
 // install 备份当前二进制与前端，再原子替换归档内容。
 func (m *Manager) install(extractDir string) error {
-	if err := os.MkdirAll(m.installDir, 0o755); err != nil {
+	if err := os.MkdirAll(m.installDir, 0o750); err != nil {
 		return err
 	}
 	binSrc := filepath.Join(extractDir, "edgeCore")
@@ -359,19 +362,23 @@ func untar(src, dest string) error {
 		}
 		switch hdr.Typeflag {
 		case tar.TypeDir:
-			if err := os.MkdirAll(target, os.FileMode(hdr.Mode)); err != nil {
+			if err := os.MkdirAll(target, os.FileMode(uint32(hdr.Mode&0xFFFF))); err != nil {
 				return err
 			}
 		case tar.TypeReg:
-			if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(target), 0o750); err != nil {
 				return err
 			}
+			if hdr.Size > maxArchiveEntryBytes {
+				return fmt.Errorf("归档条目过大: %s (%d bytes)", hdr.Name, hdr.Size)
+			}
 			// #nosec G304 -- target 已通过上方路径穿越检查（限定在 dest 内）
-			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(hdr.Mode))
+			out, err := os.OpenFile(target, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, os.FileMode(uint32(hdr.Mode&0xFFFF)))
 			if err != nil {
 				return err
 			}
-			if _, err := io.Copy(out, tr); err != nil {
+			// #nosec G110 -- 已按 maxArchiveEntryBytes 校验条目大小，CopyN 精确复制 hdr.Size 字节
+			if _, err := io.CopyN(out, tr, hdr.Size); err != nil {
 				out.Close()
 				return err
 			}
@@ -431,6 +438,7 @@ func copyDir(src, dst string) error {
 			if lerr != nil {
 				return lerr
 			}
+			// #nosec G122 -- 源目录为 SHA256 校验后的升级包解压目录，target 已限定在 installDir 内
 			return os.Symlink(link, target)
 		}
 		return copyFile(path, target, info.Mode())

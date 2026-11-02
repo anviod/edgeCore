@@ -77,7 +77,7 @@ func buildDirectDevice(deviceID int, ip string, port int) (btypes.Device, bool) 
 	addr := datalink.IPPortToAddress(parsedIP, port)
 	return btypes.Device{
 		Addr:     *addr,
-		ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID)},
+		ID:       btypes.ObjectID{Type: btypes.DeviceType, Instance: btypes.ObjectInstance(deviceID & 0xFFFFFFFF)},
 		DeviceID: deviceID,
 		Ip:       ip,
 		Port:     port,
@@ -102,7 +102,7 @@ func verifyDeviceObjectName(client bacnetlib.Client, deviceID int, ip string, po
 		Object: btypes.Object{
 			ID: btypes.ObjectID{
 				Type:     btypes.DeviceType,
-				Instance: btypes.ObjectInstance(deviceID),
+				Instance: btypes.ObjectInstance(deviceID & 0xFFFFFFFF),
 			},
 			Properties: []btypes.Property{{
 				Type:       btypes.PropObjectName,

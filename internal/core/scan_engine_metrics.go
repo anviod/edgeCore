@@ -176,6 +176,7 @@ func (m *ScanEngineMetrics) RecordDriftForChannel(channelID string, driftMicros 
 }
 
 func (m *ScanEngineMetrics) recordDriftInternal(driftMicros int64) {
+	// #nosec G115 -- 调用方已保证 driftMicros > 0
 	m.ScanDriftMicrosTotal.Add(uint64(driftMicros))
 	m.ScanDriftSamples.Add(1)
 	now := time.Now()
